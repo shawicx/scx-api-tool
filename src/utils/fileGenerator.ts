@@ -1,0 +1,200 @@
+/*
+ * @Author: shawicx d35f3153@proton.me
+ * @Date: 2025-08-09 23:30:00
+ * @LastEditors: shawicx d35f3153@proton.me
+ * @LastEditTime: 2025-08-13 23:07:23
+ * @Description: 文件生成相关的工具函数
+ */
+import fs from 'fs-extra';
+import path from 'path';
+import { DEFAULT_CONFIG } from './constants';
+import { getNormalizedRelativePath } from './path';
+import { dedent } from './string';
+
+export interface FileGeneratorOptions {
+  cwd: string;
+  outputDir: string;
+}
+
+/**
+ * 生成index.ts文件，将目录中的所有方法和interface类型导出
+ * @param directoryPaths 目录路径
+ * @param outputDir 输出目录
+ * @param cwd 当前工作目录
+ */
+export async function generateIndexFile(
+  directoryPaths: string[],
+  outputDir: string = DEFAULT_CONFIG.OUTPUT_DIR,
+  cwd: string = process.cwd(),
+): Promise<void> {
+  // 确保目录存在
+  const serviceDir = path.resolve(cwd, outputDir);
+  await fs.ensureDir(serviceDir);
+
+  // 递归获取所有包含 index.ts 的目录
+  const allDirectories = await getAllDirectoriesWithIndex(serviceDir);
+
+  // 检查目录是否存在
+  if (!(await fs.pathExists(path.resolve(cwd, `${outputDir}/index.ts`)))) {
+    // 创建index.ts文件
+    await fs.writeFile(path.resolve(cwd, `${outputDir}/index.ts`), '');
+  }
+
+  const indexContent = transformDirectoryPaths(allDirectories, outputDir).join('\n');
+  await fs.writeFile(path.resolve(cwd, `${outputDir}/index.ts`), indexContent);
+}
+
+/**
+ * 递归获取所有包含 index.ts 的目录
+ * @param rootDir 根目录
+ * @returns 所有包含 index.ts 的目录路径数组
+ */
+export async function getAllDirectoriesWithIndex(rootDir: string): Promise<string[]> {
+  const directories: string[] = [];
+
+  async function scanDirectory(dir: string) {
+    try {
+      const items = await fs.readdir(dir);
+
+      for (const item of items) {
+        const fullPath = path.join(dir, item);
+        // eslint-disable-next-line no-await-in-loop
+        const stat = await fs.stat(fullPath);
+
+        if (stat.isDirectory()) {
+          // 检查目录下是否有 index.ts 文件
+          const indexPath = path.join(fullPath, 'index.ts');
+          // eslint-disable-next-line no-await-in-loop
+          if (await fs.pathExists(indexPath)) {
+            directories.push(fullPath);
+          }
+          // 递归扫描子目录
+          // eslint-disable-next-line no-await-in-loop
+          await scanDirectory(fullPath);
+        }
+      }
+    } catch {
+      // 忽略读取目录失败的情况
+      // console.warn(`Warning: Failed to scan directory ${dir}:`, error);
+    }
+  }
+
+  await scanDirectory(rootDir);
+  return directories;
+}
+
+/**
+ * 转换目录路径为导入语句
+ * @param directories 目录路径数组
+ * @param outputDir 输出目录
+ * @returns 转换后的导入语句数组
+ */
+export function transformDirectoryPaths(directories: string[], outputDir: string): string[] {
+  return directories.map((dir) => {
+    const relativePath = path.relative(outputDir, dir);
+    const normalizedPath = relativePath.replace(/\\/g, '/');
+    return `export * from './${normalizedPath}';`;
+  });
+}
+
+/**
+ * 生成React Hook Maker文件
+ * @param filePath 文件路径
+ * @param outputFilePath 输出文件路径
+ * @param requestFunctionFilePath 请求函数文件路径
+ * @returns 生成的Hook Maker代码
+ */
+export function generateReactHookMaker(
+  filePath: string,
+  outputFilePath: string,
+  requestFunctionFilePath: string,
+): string {
+  return dedent`
+    import { useState, useEffect } from 'react'
+    import type { RequestConfig } from '@scxfe/api-tool'
+    import type { Request } from ${JSON.stringify(
+      getNormalizedRelativePath(filePath, outputFilePath),
+    )}
+    import baseRequest from ${JSON.stringify(
+      getNormalizedRelativePath(filePath, requestFunctionFilePath),
+    )}
+
+    export default function makeRequestHook<TRequestData, TRequestConfig extends RequestConfig, TRequestResult extends ReturnType<typeof baseRequest>>(request: Request<TRequestData, TRequestConfig, TRequestResult>) {
+        type Data = TRequestResult extends Promise<infer R> ? R : TRequestResult
+        return function useRequest(requestData: TRequestData) {
+            // 一个简单的 Hook 实现，实际项目可结合其他库使用，比如：
+            // @umijs/hooks 的 useRequest (https://github.com/umijs/hooks)
+            // swr (https://github.com/zeit/swr)
+            const [data, setData] = useState<Data | null>(null)
+            const [loading, setLoading] = useState(false)
+            const [error, setError] = useState<Error | null>(null)
+
+            useEffect(() => {
+                setLoading(true)
+                request(requestData)
+                    .then(setData)
+                    .catch(setError)
+                    .finally(() => setLoading(false))
+            }, [requestData])
+
+            return { data, loading, error }
+        }
+    }
+  `;
+}
+
+/**
+ * 生成默认的request.ts文件内容
+ * @returns 默认的request.ts文件内容
+ */
+export function getDefaultRequestContent(): string {
+  return dedent`
+    import type { RequestConfig } from '@scxfe/api-tool'
+
+    export default function request<T = any>(
+      url: string,
+      config: RequestConfig = {}
+    ): Promise<T> {
+      // 这里实现你的请求逻辑
+      // 可以使用 axios、fetch 等
+      throw new Error('请实现 request 函数')
+    }
+  `;
+}
+
+/**
+ * 确保文件目录存在
+ * @param filePath 文件路径
+ */
+export async function ensureFileDirectory(filePath: string): Promise<void> {
+  const dir = path.dirname(filePath);
+  await fs.ensureDir(dir);
+}
+
+/**
+ * 写入文件内容
+ * @param filePath 文件路径
+ * @param content 文件内容
+ */
+export async function writeFileContent(filePath: string, content: string): Promise<void> {
+  await ensureFileDirectory(filePath);
+  await fs.outputFile(filePath, content);
+}
+
+/**
+ * 检查文件是否存在
+ * @param filePath 文件路径
+ * @returns 文件是否存在
+ */
+export async function checkFileExists(filePath: string): Promise<boolean> {
+  return await fs.pathExists(filePath);
+}
+
+/**
+ * 读取文件内容
+ * @param filePath 文件路径
+ * @returns 文件内容
+ */
+export async function readFileContent(filePath: string): Promise<string> {
+  return await fs.readFile(filePath, 'utf-8');
+}

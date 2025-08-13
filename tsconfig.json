@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": false,
+    "target": "ESNext",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "declaration": true,
+    "removeComments": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "newLine": "LF",
+    "preserveSymlinks": true,
+    "skipLibCheck": true,
+    "jsx": "preserve",
+    "lib": ["ESNext", "DOM"],
+    "paths": {
+      "cis-api-tool": ["./src/index.ts"],
+      "@/*": ["./src/*"]
+    },
+    "outDir": "./dist",
+    "plugins": [
+      {
+        "name": "typescript-snapshots-plugin",
+        "snapshotCallIdentifiers": [
+          "toMatchSnapshot",
+          "toThrowErrorMatchingSnapshot",
+          "toMatchDiffSnapshot"
+        ]
+      }
+    ]
+  },
+  "include": ["src/**/*", "tsdown.config.ts", "docs/**/*"],
+  "exclude": ["node_modules", "apiPower.config.ts", "src/service/**/*", "lib/**/*", "assets/**/*"]
+}
