@@ -44,40 +44,26 @@ export class FileManager {
         const { syntheticalConfig } = outputFileList[outputFilePath];
         const { requestFunctionFilePath, requestHookMakerFilePath } =
           outputFileList[outputFilePath];
-
         const rawRequestFunctionFilePath = requestFunctionFilePath;
         const rawRequestHookMakerFilePath = requestHookMakerFilePath;
-
         // 支持 .jsx? 后缀
-        const updatedOutputFilePath = outputFilePath.replace(/\.js(x)?$/, '.ts$1');
-        const updatedRequestFunctionFilePath = requestFunctionFilePath.replace(
-          /\.js(x)?$/,
-          '.ts$1',
-        );
+        const updatedOutputFilePath = outputFilePath.replace(/\.jsx?$/, '.ts$1');
+        const updatedRequestFunctionFilePath = requestFunctionFilePath.replace(/\.jsx?$/, '.ts$1');
         const updatedRequestHookMakerFilePath = requestHookMakerFilePath.replace(
-          /\.js(x)?$/,
+          /\.jsx?$/,
           '.ts$1',
         );
 
         if (!syntheticalConfig.typesOnly) {
-          if (!(await fs.pathExists(rawRequestFunctionFilePath))) {
-            // 如果requestFunctionFilePath没有配置，则在outputDir下生成request.ts文件
-            if (!syntheticalConfig.requestFunctionFilePath) {
-              // 读取默认的request.ts文件内容
-              const defaultRequestContent = await fs.readFile(
-                path.resolve(this.options.cwd, DEFAULT_CONFIG.REQUEST_FUNCTION_FILE_PATH),
-                'utf-8',
-              );
-
-              // 在outputDir下生成request.ts文件
-              const outputRequestPath = path.resolve(
-                this.options.cwd,
-                syntheticalConfig.outputDir || DEFAULT_CONFIG.OUTPUT_DIR,
-                'request.ts',
-              );
-
-              await fs.outputFile(outputRequestPath, defaultRequestContent);
-            }
+          // 检查request文件是否存在，如果不存在则生成默认的request.ts文件
+          if (!requestFunctionFilePath || !(await fs.pathExists(rawRequestFunctionFilePath))) {
+            // 读取默认的request.ts文件内容
+            const defaultRequestContent = await fs.readFile(
+              path.resolve(this.options.cwd, DEFAULT_CONFIG.REQUEST_FUNCTION_FILE_PATH),
+              'utf-8',
+            );
+            // 在requestFunctionFilePath指定的路径下生成request.ts文件
+            await fs.outputFile(rawRequestFunctionFilePath, defaultRequestContent);
           }
           if (
             syntheticalConfig.reactHooks &&

@@ -2,7 +2,7 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:30:00
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-13 21:59:26
+ * @LastEditTime: 2025-08-14 20:34:13
  * @Description: 接口代码生成相关的工具函数
  */
 import * as changeCase from 'change-case';
@@ -138,7 +138,7 @@ export class InterfaceCodeGenerator {
         },
         hasTag && {
           label: 'tags',
-          value: extendedInterfaceInfo.tag.map((tag) => `\`${tag}\``),
+          value: extendedInterfaceInfo.tag.map((tag) => `${tag}`),
         },
         hasRequestHeader && {
           label: 'method',
@@ -207,7 +207,7 @@ export class InterfaceCodeGenerator {
         ${genComment((title) => `@description 接口 ${title} 的 **请求函数**`)}
         export const ${requestFunctionName || 'ErrorRequestFunctionName'} = (params: ${requestDataTypeName!}) => {
           ${destructuringLine}${destructuringLine ? '\n' : ''}return request(
-            ${useTemplate ? `\`${processedPath}\`` : JSON.stringify(processedPath)}, 
+            ${useTemplate ? `\`${processedPath}\`` : JSON.stringify(processedPath)},
             {
               method: '${requestMethod}',
               ${requestDataKey}: ${requestDataValue}

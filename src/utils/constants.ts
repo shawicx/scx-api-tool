@@ -2,7 +2,7 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-10 00:15:00
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-13 21:59:27
+ * @LastEditTime: 2025-08-14 20:14:59
  * @Description: 配置默认常量
  */
 
@@ -14,7 +14,7 @@ export const DEFAULT_CONFIG = {
   OUTPUT_DIR: 'src/service',
 
   // 请求函数文件路径默认值
-  REQUEST_FUNCTION_FILE_PATH: 'src/service/request.ts',
+  REQUEST_FUNCTION_FILE_PATH: 'src/templates/request.ts',
 
   // 代码缩进默认值
   INDENT_SIZE: 2,
