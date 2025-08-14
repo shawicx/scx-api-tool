@@ -8,6 +8,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { DEFAULT_CONFIG } from './constants';
+import { formatFile } from './index';
 import { getNormalizedRelativePath } from './path';
 import { dedent } from './string';
 
@@ -41,7 +42,14 @@ export async function generateIndexFile(
   }
 
   const indexContent = transformDirectoryPaths(allDirectories, outputDir).join('\n');
-  await fs.writeFile(path.resolve(cwd, `${outputDir}/index.ts`), indexContent);
+
+  // 格式化 index.ts 内容
+  const formattedIndexContent = await formatFile(
+    path.resolve(cwd, `${outputDir}/index.ts`),
+    indexContent,
+  );
+
+  await fs.writeFile(path.resolve(cwd, `${outputDir}/index.ts`), formattedIndexContent);
 }
 
 /**

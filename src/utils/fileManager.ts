@@ -1,8 +1,9 @@
+import consola from 'consola';
 import fs from 'fs-extra';
 import path from 'path';
 import { SyntheticalConfig } from './config';
 import { getAllDirectoriesWithIndex } from './fileGenerator';
-import { DEFAULT_CONFIG, getNormalizedRelativePath, transformPaths } from './index';
+import { DEFAULT_CONFIG, formatFile, getNormalizedRelativePath, transformPaths } from './index';
 
 export interface OutputFileList {
   [outputFilePath: string]: {
@@ -15,6 +16,62 @@ export interface OutputFileList {
 
 export class FileManager {
   constructor(private options: { cwd: string } = { cwd: process.cwd() }) {}
+
+  /**
+   * @description 清理输出目录，删除所有文件但保留request文件
+   * @param outputDir 输出目录
+   * @param requestFunctionFilePath request文件路径
+   */
+  async cleanOutputDirectory(outputDir: string, requestFunctionFilePath?: string): Promise<void> {
+    const serviceDir = path.resolve(this.options.cwd, outputDir);
+
+    // 如果目录不存在，直接返回
+    if (!(await fs.pathExists(serviceDir))) {
+      return;
+    }
+
+    consola.info(`开始清理输出目录: ${outputDir}`);
+
+    // 获取需要保留的request文件路径
+    let requestFileToPreserve: string | null = null;
+    if (requestFunctionFilePath) {
+      const absoluteRequestPath = path.resolve(this.options.cwd, requestFunctionFilePath);
+      // 检查request文件是否在outputDir下
+      if (absoluteRequestPath.startsWith(serviceDir)) {
+        requestFileToPreserve = absoluteRequestPath;
+      }
+    }
+
+    // 遍历 outputDir 下的第一层，删除目录和文件
+    const items = fs.readdirSync(serviceDir);
+
+    for (const item of items) {
+      const itemPath = path.join(serviceDir, item);
+      const stat = fs.statSync(itemPath);
+
+      if (stat.isDirectory()) {
+        // 删除目录及其所有内容
+        fs.removeSync(itemPath);
+        consola.info(`删除目录: ${itemPath}`);
+      } else if (stat.isFile()) {
+        // 如果是需要保留的request文件，跳过删除
+        if (requestFileToPreserve && itemPath === requestFileToPreserve) {
+          continue;
+        }
+        fs.removeSync(itemPath);
+        consola.info(`删除文件: ${itemPath}`);
+      }
+    }
+    // 重新创建根目录（如果被删除了）
+    await fs.ensureDir(serviceDir);
+
+    if (requestFileToPreserve) {
+      consola.info(
+        `已保留 request 文件: ${path.relative(this.options.cwd, requestFileToPreserve)}`,
+      );
+    }
+    consola.success(`输出目录清理完成: ${outputDir}`);
+  }
 
   /**
    * 生成index.ts文件，将目录中的所有方法和interface类型导出
@@ -35,20 +92,39 @@ export class FileManager {
       await fs.writeFile(path.resolve(this.options.cwd, `${outputDir}/index.ts`), '');
     }
     const indexContent = transformPaths(allDirectories, outputDir).join('\n');
-    await fs.writeFile(path.resolve(this.options.cwd, `${outputDir}/index.ts`), indexContent);
+
+    // 格式化 index.ts 内容
+    const formattedIndexContent = await formatFile(
+      path.resolve(this.options.cwd, `${outputDir}/index.ts`),
+      indexContent,
+    );
+
+    await fs.writeFile(
+      path.resolve(this.options.cwd, `${outputDir}/index.ts`),
+      formattedIndexContent,
+    );
   }
 
   async write(outputFileList: OutputFileList) {
+    // 获取配置信息
+    const firstConfig = Object.values(outputFileList)[0]?.syntheticalConfig;
+    const outputDir = firstConfig?.outputDir || DEFAULT_CONFIG.OUTPUT_DIR;
+    const requestFunctionFilePath = firstConfig?.requestFunctionFilePath;
+
+    // 在生成代码前清理输出目录，保留request文件
+    await this.cleanOutputDirectory(outputDir, requestFunctionFilePath);
+
     const result = await Promise.all(
       Object.keys(outputFileList).map(async (outputFilePath) => {
         const { syntheticalConfig } = outputFileList[outputFilePath];
-        const { requestFunctionFilePath, requestHookMakerFilePath } =
+        const { requestFunctionFilePath: loopRequestFunctionFilePath, requestHookMakerFilePath } =
           outputFileList[outputFilePath];
-        const rawRequestFunctionFilePath = requestFunctionFilePath;
+        const rawRequestFunctionFilePath = loopRequestFunctionFilePath;
         const rawRequestHookMakerFilePath = requestHookMakerFilePath;
         // 支持 .jsx? 后缀
         const updatedOutputFilePath = outputFilePath.replace(/\.jsx?$/, '.ts$1');
-        const updatedRequestFunctionFilePath = requestFunctionFilePath.replace(/\.jsx?$/, '.ts$1');
+        const updatedRequestFunctionFilePath =
+          loopRequestFunctionFilePath?.replace(/\.jsx?$/, '.ts$1') || '';
         const updatedRequestHookMakerFilePath = requestHookMakerFilePath.replace(
           /\.jsx?$/,
           '.ts$1',
@@ -56,7 +132,7 @@ export class FileManager {
 
         if (!syntheticalConfig.typesOnly) {
           // 检查request文件是否存在，如果不存在则生成默认的request.ts文件
-          if (!requestFunctionFilePath || !(await fs.pathExists(rawRequestFunctionFilePath))) {
+          if (!loopRequestFunctionFilePath || !(await fs.pathExists(rawRequestFunctionFilePath))) {
             // 读取默认的request.ts文件内容
             const defaultRequestContent = await fs.readFile(
               path.resolve(this.options.cwd, DEFAULT_CONFIG.REQUEST_FUNCTION_FILE_PATH),
@@ -70,19 +146,17 @@ export class FileManager {
             syntheticalConfig.reactHooks.enabled &&
             !(await fs.pathExists(rawRequestHookMakerFilePath))
           ) {
-            await fs.outputFile(
-              updatedRequestHookMakerFilePath,
-              `import { useState, useEffect } from 'react'
+            const hookContent = `import { useState, useEffect } from 'react'
 import type { RequestConfig } from '@scxfe/api-tool'
 import type { Request } from ${JSON.stringify(
-                getNormalizedRelativePath(updatedRequestHookMakerFilePath, updatedOutputFilePath),
-              )}
+              getNormalizedRelativePath(updatedRequestHookMakerFilePath, updatedOutputFilePath),
+            )}
 import baseRequest from ${JSON.stringify(
-                getNormalizedRelativePath(
-                  updatedRequestHookMakerFilePath,
-                  updatedRequestFunctionFilePath,
-                ),
-              )}
+              getNormalizedRelativePath(
+                updatedRequestHookMakerFilePath,
+                updatedRequestFunctionFilePath,
+              ),
+            )}
 
 export default function makeRequestHook<TRequestData, TRequestConfig extends RequestConfig, TRequestResult extends ReturnType<typeof baseRequest>>(request: Request<TRequestData, TRequestConfig, TRequestResult>) {
     type Data = TRequestResult extends Promise<infer R> ? R : TRequestResult
@@ -104,8 +178,14 @@ export default function makeRequestHook<TRequestData, TRequestConfig extends Req
 
         return { data, loading, error }
     }
-}`,
+}`;
+
+            // 格式化 hook 内容
+            const formattedHookContent = await formatFile(
+              updatedRequestHookMakerFilePath,
+              hookContent,
             );
+            await fs.outputFile(updatedRequestHookMakerFilePath, formattedHookContent);
           }
         }
 
@@ -136,7 +216,10 @@ export default function makeRequestHook<TRequestData, TRequestConfig extends Req
         }
 
         const finalContent = importStatement + interfaceCode;
-        await fs.outputFile(updatedOutputFilePath, finalContent);
+
+        // 格式化接口代码内容
+        const formattedContent = await formatFile(updatedOutputFilePath, finalContent);
+        await fs.outputFile(updatedOutputFilePath, formattedContent);
 
         return {
           outputFilePath: updatedOutputFilePath,
@@ -159,10 +242,6 @@ export default function makeRequestHook<TRequestData, TRequestConfig extends Req
           }),
       ),
     );
-
-    // 获取outputDir配置，从第一个配置中获取
-    const firstConfig = Object.values(outputFileList)[0]?.syntheticalConfig;
-    const outputDir = firstConfig?.outputDir || DEFAULT_CONFIG.OUTPUT_DIR;
 
     await this.generateIndexFile(rootDirs, outputDir);
     return outputFileList;
