@@ -106,9 +106,10 @@ api/
 ytt.config.*
 package-lock.json
 
-# VitePress cache
+# VitePress cache and build output
 .vitepress/cache/
 .vitepress/dist/
+docs/.vitepress/dist/
 
 # Local configuration files
 .gitconfig.local
