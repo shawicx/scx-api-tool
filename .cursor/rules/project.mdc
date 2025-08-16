@@ -1,0 +1,23 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+<!--
+ * @Author: shawicx d35f3153@proton.me
+ * @Date: 2025-08-08 20:57:10
+ * @LastEditors: shawicx d35f3153@proton.me
+ * @LastEditTime: 2025-08-14 20:11:30
+ * @Description: 项目介绍
+-->
+
+## 项目介绍
+
+1. 这是一个 nodejs + ts 的 cli 项目，作用是通过apiPower.config.ts中的配置请求swagger、yapi或者apifox 接口数据，然后生成接口request方法以及接口请求参数和返回数据的类型。
+2. 功能实现在src中，其中的service 文件夹是生成的文件，非必要不要改动，改动之前需要经过允许。
+3. apiPower.config.ts 是示例配置。
+4. 修改完代码之后，通过执行 npx ts-node src/cli.ts，然后观察service 下生成的文件是否存在问题，即可验证修改是否正确。
+5. 修改完后不需要执行单元测试。
+6. 修改文件以及终端命令执行不需要询问，直接执行即可。
+7. 生成代码时不得使用delete关键字、不得使用eval语法、尽量不用闭包 除非可以利用闭包的特性。

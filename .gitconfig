@@ -1,0 +1,113 @@
+[core]
+    # 设置默认分支名
+    defaultBranch = main
+
+    # 设置行尾符处理
+    autocrlf = input
+    eol = lf
+
+    # 设置文件权限
+    fileMode = false
+
+    # 设置忽略大小写
+    ignorecase = false
+
+    # 设置换行符标准化
+    safecrlf = warn
+
+[init]
+    # 初始化时创建默认分支
+    defaultBranch = main
+
+[push]
+    # 推送时设置上游分支
+    setUpstream = auto
+
+    # 推送时自动设置跟踪
+    autoSetupRemote = true
+
+[pull]
+    # 拉取时使用 rebase 策略
+    rebase = true
+
+[rebase]
+    # rebase 时自动 stash
+    autoStash = true
+
+[merge]
+    # 合并时使用 fast-forward
+    ff = only
+
+[fetch]
+    # 获取时修剪远程分支
+    prune = true
+
+[status]
+    # 显示简短状态
+    short = false
+
+    # 显示分支信息
+    branch = true
+
+    # 显示未跟踪文件
+    untrackedFiles = all
+
+[log]
+    # 日志格式
+    decoration = short
+
+    # 显示图形
+    graph = true
+
+    # 显示合并提交
+    showSignature = true
+
+[color]
+    # 启用颜色
+    ui = auto
+
+    # 分支颜色
+    branch = auto
+
+    # 差异颜色
+    diff = auto
+
+    # 状态颜色
+    status = auto
+
+[alias]
+    # 常用别名
+    st = status
+    co = checkout
+    br = branch
+    ci = commit
+    ca = commit -a
+    cm = commit -m
+    unstage = reset HEAD --
+    last = log -1 HEAD
+    visual = !gitk
+    lg = log --oneline --graph --decorate
+    ll = log --oneline --graph --decorate --all
+    hist = log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short
+    type = cat-file -t
+    dump = cat-file -p
+
+[filter "lfs"]
+    # Git LFS 配置
+    clean = git-lfs clean -- %f
+    smudge = git-lfs smudge -- %f
+    process = git-lfs filter-process
+    required = true
+
+[user]
+    # 用户信息（需要根据实际情况修改）
+    name = shawicx
+    email = d35f3153@proton.me
+
+[credential]
+    # 凭证助手
+    helper = osxkeychain
+
+[url "https://github.com/"]
+    # GitHub 配置
+    insteadOf = git@github.com:

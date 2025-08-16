@@ -1,27 +1,111 @@
-<!--
- * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-07 22:13:56
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-09 00:30:04
- * @Description:
--->
+# @scx/api-tool
 
-# scx-api-tool
+一个强大的 Node.js CLI 工具，专门用于从各种 API 管理平台（如 Swagger、YApi、Apifox）自动生成 TypeScript/JavaScript 代码。
 
-`scx-api-tool` 是一个代码生成工具，其可根据 [YApi](https://github.com/YMFE/yapi) 、[Swagger](https://swagger.io/) 或者 [Apifox](https://apifox.com) 的接口定义生成 TypeScript 或 JavaScript 的接口类型及其请求函数代码。
+## ✨ 主要特性
 
-此仓库来源于 yapi-to-typescript，经过了功能改造、文件结构调整、ts以及eslint报错解决等工作，形成了一个新的分支。在此特别感谢原作者的工作与付出。
+- 🚀 **多平台支持**: 支持 Swagger、YApi、Apifox 等主流 API 管理平台
+- 📝 **类型生成**: 自动生成完整的 TypeScript 类型定义
+- 🔧 **代码生成**: 自动生成 HTTP 请求函数和接口代码
+- 🎨 **模板定制**: 支持自定义代码生成模板
+- ⚙️ **配置灵活**: 丰富的配置选项和钩子函数
+- 📦 **多格式输出**: 支持 TypeScript 和 JavaScript
 
-## 与原版的区别
+## 🚀 快速开始
 
-1. 解决了项目TS报错，支持 TS 4.9.5
-2. 移除了 `vtils` 、`haoma`依赖
-3. serviceType 支持 apifox 项目。有两种配置方式
-   1. 可写死 `https://api.apifox.com` ，然后配置 `apifoxProjectId`
-   2. 使用全路径，`https://api.apifox.com/v1/projects/{apifoxProjectId}/export-openapi` ，此时可以不设置 `apifoxProjectId`，代码会从URL中自动提取。
+### 安装
 
-4. 采用按模块生成 request 方法以及 interface 类型，随后在 `index.ts` 中导出，因此 `outputFilePath` 不再起作用，目前生成目录写死的 `src/service` ，后续改成配置。
+```bash
+# 全局安装
+npm install -g @scxfe/api-tool
 
-## 许可
+# 或项目本地安装
+npm install --save-dev @scxfe/api-tool
 
-[MIT](https://github.com/x011223/cis-api-tool.git/blob/master/LICENSE) © [x011223](https://github.com/x011223)
+# 或使用 npx（推荐）
+npx @scxfe/api-tool
+```
+
+### 基本使用
+
+```bash
+# 1. 初始化配置文件
+npx apiPower init
+
+# 2. 编辑配置文件 apiPower.config.ts
+
+# 3. 生成代码
+npx apiPower
+```
+
+## 📖 文档
+
+- [CLI 工具介绍](./docs/cli/introduction.md) - 工具介绍和安装说明
+- [CLI 使用说明](./docs/cli/usage.md) - 详细的使用方法和命令说明
+- [配置说明](./docs/cli/configuration.md) - 完整的配置项说明和示例
+
+## 🔧 配置示例
+
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
+
+export default defineConfig([
+  {
+    serverUrl: 'https://api.apifox.com',
+    serverType: 'apifox',
+    apifoxProjectId: 'your-project-id',
+    typesOnly: false,
+    target: 'typescript',
+    outputDir: 'src/service',
+    projects: [
+      {
+        token: 'your-project-token',
+        categories: [{ id: 0 }],
+      },
+    ],
+  },
+]);
+```
+
+## 📁 项目结构
+
+```
+project/
+├── apiPower.config.ts          # 配置文件
+├── src/
+│   └── service/               # 生成的代码目录
+│       ├── types.ts           # 类型定义
+│       ├── request.ts         # 请求函数
+│       └── index.ts           # 导出文件
+└── package.json
+```
+
+## 🛠️ 开发
+
+```bash
+# 安装依赖
+pnpm install
+
+# 开发模式
+pnpm run docs:dev
+
+# 构建文档
+pnpm run docs:build
+
+# 预览构建结果
+pnpm run docs:preview
+```
+
+## 📄 许可证
+
+MIT License - 详见 [LICENSE](LICENSE) 文件
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+## 📞 联系方式
+
+- 作者: shawicx
+- 邮箱: d35f3153@proton.me
+- GitHub: [@shawicx](https://github.com/shawicx)

@@ -52,14 +52,12 @@ export class FileManager {
       if (stat.isDirectory()) {
         // 删除目录及其所有内容
         fs.removeSync(itemPath);
-        consola.info(`删除目录: ${itemPath}`);
       } else if (stat.isFile()) {
         // 如果是需要保留的request文件，跳过删除
         if (requestFileToPreserve && itemPath === requestFileToPreserve) {
           continue;
         }
         fs.removeSync(itemPath);
-        consola.info(`删除文件: ${itemPath}`);
       }
     }
     // 重新创建根目录（如果被删除了）

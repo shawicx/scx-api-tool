@@ -1,7 +1,18 @@
----
-title: 更新日志
-toc: content
-order: 5
----
+# 更新日志
 
-<embed src="../CHANGELOG.md"></embed>
+## [0.0.0] - 2025-08-15
+
+### 新增
+
+- 初始版本发布
+- 支持 Swagger、YApi、Apifox 平台
+- 自动生成 TypeScript 类型定义
+- 自动生成 HTTP 请求函数
+- 支持自定义配置和钩子函数
+
+### 特性
+
+- 多平台 API 数据获取
+- 灵活的配置选项
+- 代码生成模板定制
+- 完整的类型安全支持

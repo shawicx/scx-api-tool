@@ -2,12 +2,12 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:30:00
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-13 23:03:35
+ * @LastEditTime: 2025-08-14 23:37:25
  * @Description: 服务器相关的工具函数
  */
-import getAvailablePort from 'get-port';
 import http from 'http';
-import onExit from 'signal-exit';
+import net from 'net';
+import { onExit } from 'signal-exit';
 import url from 'url';
 
 // 通用服务器配置接口
@@ -42,12 +42,39 @@ export interface ServerResponseHandler {
 }
 
 /**
+ * @description 检查端口是否可用
+ * @param port 端口号
+ * @returns Promise<boolean> 端口是否可用
+ */
+function isPortAvailable(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    server.listen(port, () => {
+      server.once('close', () => {
+        resolve(true);
+      });
+      server.close();
+    });
+    server.on('error', () => {
+      resolve(false);
+    });
+  });
+}
+
+/**
  * @description 获取可用端口 - 通用版本
  * @param preferredPort 首选端口
  * @returns 可用端口号
  */
 export async function getAvailablePortAsync(preferredPort = 50505): Promise<number> {
-  return await getAvailablePort({ port: preferredPort });
+  let port = preferredPort;
+  while (!(await isPortAvailable(port))) {
+    port++;
+    if (port > 65535) {
+      throw new Error('无法找到可用端口');
+    }
+  }
+  return port;
 }
 
 /**
@@ -56,10 +83,16 @@ export async function getAvailablePortAsync(preferredPort = 50505): Promise<numb
  * @returns 可用端口号
  */
 export async function getAvailableServerPort(options: ServerPortOptions): Promise<number> {
-  return getAvailablePort({
-    port: options.defaultPort,
-    ...(options.portRange && { port: options.portRange }),
-  });
+  let port = options.defaultPort;
+  const maxPort = options.portRange ? options.portRange[1] : 65535;
+
+  while (!(await isPortAvailable(port))) {
+    port++;
+    if (port > maxPort) {
+      throw new Error('在指定范围内无法找到可用端口');
+    }
+  }
+  return port;
 }
 
 /**
@@ -168,7 +201,9 @@ export async function startYApiServer(
     const server = createYApiServer(port, yapiData, responseHandler);
 
     server.listen(port, '127.0.0.1', () => {
-      onExit(() => server.close());
+      onExit(() => {
+        server.close();
+      });
       resolve(server);
     });
   });

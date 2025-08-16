@@ -2,11 +2,11 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-08 23:50:48
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-09 06:43:37
+ * @LastEditTime: 2025-08-14 22:44:14
  * @Description:
  */
-import nodeFetch from 'node-fetch';
-import ProxyAgent from 'proxy-agent';
+import axios from 'axios';
+import { ProxyAgent } from 'proxy-agent';
 import { URL } from 'url';
 
 /**
@@ -24,10 +24,11 @@ export async function httpGet<T>(url: string, query?: Record<string, any>): Prom
   }
   const finalUrl = _url.toString();
 
-  const res = await nodeFetch(finalUrl, {
+  const response = await axios.get(finalUrl, {
     method: 'GET',
-    agent: new ProxyAgent() as any,
+    httpsAgent: new ProxyAgent() as any,
+    httpAgent: new ProxyAgent() as any,
   });
 
-  return res.json();
+  return response.data;
 }

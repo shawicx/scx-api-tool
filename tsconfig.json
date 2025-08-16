@@ -30,6 +30,12 @@
       }
     ]
   },
-  "include": ["src/**/*", "tsdown.config.ts", "docs/**/*"],
+  "include": [
+    "src/**/*",
+    "tsdown.config.ts",
+    "docs/**/*",
+    ".vitepress/**/*",
+    ".vitepress/config.mts"
+  ],
   "exclude": ["node_modules", "apiPower.config.ts", "src/service/**/*", "lib/**/*", "assets/**/*"]
 }

@@ -1,11 +1,9 @@
 #!/usr/bin/env node
+import * as p from '@clack/prompts';
 import consola from 'consola';
 import fs from 'fs-extra';
-import ora from 'ora';
 import path from 'path';
-import prompt from 'prompts';
 import * as TSNode from 'ts-node';
-import yargs from 'yargs';
 import { Generator } from './Generator';
 import { ConfigWithHooks, dedent, wait } from './utils';
 import { generateConfigContent } from './utils/templateUtils';
@@ -75,12 +73,10 @@ export async function run(
   } else if (cmd === 'init') {
     if (configFileExist) {
       consola.info(`检测到配置文件: ${configFile}`);
-      const answers = await prompt({
+      const override = await p.confirm({
         message: '是否覆盖已有配置文件?',
-        name: 'override',
-        type: 'confirm',
       });
-      if (!answers.override) return;
+      if (!override) return;
     }
     let outputConfigFile!: string;
     let outputConfigFileType!: 'ts' | 'js';
@@ -88,17 +84,16 @@ export async function run(
       outputConfigFile = configFile;
       outputConfigFileType = configFile.endsWith('.js') ? 'js' : 'ts';
     } else {
-      const answers = await prompt({
+      const configFileType = await p.select({
         message: '选择配置文件类型?',
-        name: 'configFileType',
-        type: 'select',
-        choices: [
-          { title: 'TypeScript(apiPower.config.ts)', value: 'ts' },
-          { title: 'JavaScript(apiPower.config.js)', value: 'js' },
+        options: [
+          { label: 'TypeScript(apiPower.config.ts)', value: 'ts' },
+          { label: 'JavaScript(apiPower.config.js)', value: 'js' },
         ],
       });
-      outputConfigFile = answers.configFileType === 'js' ? configJSFile : configTSFile;
-      outputConfigFileType = answers.configFileType;
+      if (p.isCancel(configFileType)) return;
+      outputConfigFile = configFileType === 'js' ? configJSFile : configTSFile;
+      outputConfigFileType = configFileType as 'ts' | 'js';
     }
     await fs.outputFile(outputConfigFile, generateConfigContent(outputConfigFileType));
     consola.success('写入配置文件完毕');
@@ -113,22 +108,25 @@ export async function run(
     consola.success(`找到配置文件: ${configFile}`);
     let config: ConfigWithHooks | undefined;
     let generator: Generator | undefined;
-    let spinner: ora.Ora | undefined;
+    let spinner: ReturnType<typeof p.spinner> | undefined;
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       config = require(configFile).default;
       generator = new Generator(config!, { cwd });
 
-      spinner = ora('正在获取数据并生成代码...').start();
+      spinner = p.spinner();
+      spinner.start('正在获取数据并生成代码...');
       const delayNotice = wait(5000);
       delayNotice.then(() => {
-        spinner!.text = `正在获取数据并生成代码... (若长时间处于此状态，请检查是否有接口定义的数据过大导致拉取或解析缓慢)`;
+        spinner!.message(
+          '正在获取数据并生成代码... (若长时间处于此状态，请检查是否有接口定义的数据过大导致拉取或解析缓慢)',
+        );
       });
       await generator.prepare();
       delayNotice.cancel();
 
       const output = await generator.generate();
-      spinner.stop();
+      spinner.stop('获取数据并生成代码完毕');
       consola.success('获取数据并生成代码完毕');
 
       await generator.write(output);
@@ -136,7 +134,7 @@ export async function run(
       await generator.destroy();
       await config!.hooks?.success?.();
     } catch (err) {
-      spinner?.stop();
+      spinner?.stop('操作失败');
       await generator?.destroy();
       await config?.hooks?.fail?.();
       /* istanbul ignore next */
@@ -148,8 +146,15 @@ export async function run(
 
 /* istanbul ignore next */
 if (require.main === module) {
-  const { argv } = yargs(process.argv).alias('c', 'config');
-  run(argv._[2] as any, {
-    configFile: argv.config ? path.resolve(process.cwd(), argv.config as string) : undefined,
+  const args = process.argv.slice(2);
+  const cmd = args[0];
+  const configIndex = args.indexOf('-c') !== -1 ? args.indexOf('-c') : args.indexOf('--config');
+  const configFile =
+    configIndex !== -1 && args[configIndex + 1]
+      ? path.resolve(process.cwd(), args[configIndex + 1])
+      : undefined;
+
+  run(cmd, {
+    configFile,
   });
 }
