@@ -3,6 +3,7 @@ import { defineConfig } from 'vitepress';
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   srcDir: 'docs',
+  outDir: '.vitepress/dist',
   // 站点配置
   title: '@scx/api-tool',
   description:
@@ -101,31 +102,6 @@ export default defineConfig({
     outline: {
       level: [2, 3],
       label: '目录',
-    },
-  },
-
-  // 构建配置
-  vite: {
-    build: {
-      outDir: '.vitepress/dist',
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            vue: ['vue'],
-            vitepress: ['vitepress'],
-          },
-        },
-      },
-    },
-    // 开发服务器配置
-    server: {
-      port: 3000,
-      open: true,
-    },
-    // 预览配置
-    preview: {
-      port: 4173,
-      open: true,
     },
   },
 });
