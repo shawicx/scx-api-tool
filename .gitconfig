@@ -107,7 +107,3 @@
 [credential]
     # 凭证助手
     helper = osxkeychain
-
-[url "https://github.com/"]
-    # GitHub 配置
-    insteadOf = git@github.com:
