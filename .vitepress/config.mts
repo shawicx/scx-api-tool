@@ -12,7 +12,13 @@ export default defineConfig({
   lang: 'zh-CN',
   // 头部配置
   head: [
-    ['link', { rel: 'icon', href: '/logo.svg' }],
+    [
+      'link',
+      {
+        rel: 'icon',
+        href: '/favicon/favicon.ico',
+      },
+    ],
     ['meta', { name: 'theme-color', content: '#3c8772' }],
     ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }],
   ],

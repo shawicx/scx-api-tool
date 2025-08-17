@@ -1,0 +1,6 @@
+This favicon was generated using the following font:
+
+- Font Title: Material Icons Round
+- Font Author: undefined
+- Font Source: https://fonts.gstatic.com/s/materialiconsround/v109/LDItaoyNOAY6Uewc665JcIzCKsKc_M9flwmMq_fTTvg-.otf
+- Font License: undefined)

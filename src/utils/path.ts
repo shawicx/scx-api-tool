@@ -2,7 +2,7 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-08 23:50:48
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-09 00:46:29
+ * @LastEditTime: 2025-08-17 09:07:43
  * @Description:
  */
 import path from 'path';
@@ -52,8 +52,11 @@ export function getOutputFilePath(
       // 客户管理
       return segment
         .split('')
+        .filter(Boolean)
         .map((item) => {
-          return changeCase.upperCaseFirst(changeCase.lowerCase(TinyPinyin.convertToPinyin(item)));
+          return changeCase.upperCaseFirst(
+            changeCase.lowerCase(TinyPinyin.convertToPinyin(item)).trim(),
+          );
         })
         .join('');
     })
