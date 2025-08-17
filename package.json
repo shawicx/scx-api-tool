@@ -1,6 +1,9 @@
 {
   "name": "@scxfe/api-tool",
   "version": "0.0.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "根据 swagger/yapi/apifox 的接口定义生成 TypeScript/JavaScript 的接口类型及其请求函数代码。",
   "keywords": [
     "yapi",
