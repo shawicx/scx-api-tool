@@ -24,6 +24,7 @@ export default defineConfig({
   ],
   // 主题配置
   themeConfig: {
+    logo: '/favicon/favicon-32x32.png',
     // 导航栏
     nav: [
       { text: '首页', link: '/' },
