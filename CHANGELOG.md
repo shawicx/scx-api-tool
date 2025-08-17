@@ -1,5 +1,11 @@
 # @scxfe/api-tool
 
+## 0.0.2
+
+### Patch Changes
+
+- feat: favicon
+
 ## 0.0.1
 
 ### Patch Changes

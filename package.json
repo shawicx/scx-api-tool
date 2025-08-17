@@ -1,6 +1,6 @@
 {
   "name": "@scxfe/api-tool",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publishConfig": {
     "access": "public"
   },
@@ -55,7 +55,32 @@
   "commitlint": {
     "extends": [
       "@commitlint/config-conventional"
-    ]
+    ],
+    "rules": {
+      "type-case": [
+        2,
+        "always",
+        [
+          "lower-case",
+          "upper-case"
+        ]
+      ],
+      "type-enum": [
+        2,
+        "always",
+        [
+          "RELEASING",
+          "feat",
+          "fix",
+          "docs",
+          "style",
+          "test",
+          "refactor",
+          "chore",
+          "revert"
+        ]
+      ]
+    }
   },
   "lint-staged": {
     "*.{cjs,cts,js,jsx,mjs,mts,ts,tsx,vue}": "eslint --fix",
