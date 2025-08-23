@@ -1,5 +1,11 @@
 # @scxfe/api-tool
 
+## 0.1.2
+
+### Patch Changes
+
+- fix: main entry
+
 ## 0.1.1
 
 ### Patch Changes

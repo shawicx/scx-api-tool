@@ -1,6 +1,6 @@
 {
   "name": "@scxfe/api-tool",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -31,9 +31,12 @@
   "sideEffects": false,
   "types": "dist/index.d.ts",
   "bin": "dist/cli.js",
-  "main": "dist/index.js",
+  "main": "./lib/index.js",
+  "module": "./dist/index.js",
   "files": [
-    "dist"
+    "dist",
+    "umd",
+    "lib"
   ],
   "scripts": {
     "build": "tsdown",
