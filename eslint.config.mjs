@@ -27,6 +27,7 @@ export default [
       'src/templates/**/*',
       'lib/**/*',
       'assets/**/*',
+      'scripts/**/*',
       'apiPower.config.ts',
       '.vitepress/cache/**/*',
     ],

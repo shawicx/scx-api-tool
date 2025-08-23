@@ -32,6 +32,7 @@
   },
   "include": [
     "src/**/*",
+    "scripts/**/*",
     "tsdown.config.ts",
     "docs/**/*",
     ".vitepress/**/*",

@@ -19,7 +19,7 @@ export default defineConfig({
         href: '/favicon/favicon.ico',
       },
     ],
-    ['meta', { name: 'theme-color', content: '#3c8772' }],
+    ['meta', { name: 'theme-color', content: '#1996ff' }],
     ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }],
   ],
   // 主题配置

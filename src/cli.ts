@@ -3,32 +3,67 @@ import * as p from '@clack/prompts';
 import consola from 'consola';
 import fs from 'fs-extra';
 import path from 'path';
-import * as TSNode from 'ts-node';
 import { Generator } from './Generator';
 import { ConfigWithHooks, dedent, wait } from './utils';
 import { generateConfigContent } from './utils/templateUtils';
 
-TSNode.register({
-  // 不加载本地的 tsconfig.json
-  // skipProject: true,
-  // 仅转译，不做类型检查
-  transpileOnly: true,
-  // 自定义编译选项
-  compilerOptions: {
-    strict: false,
-    target: 'es2017',
-    module: 'commonjs',
-    moduleResolution: 'node',
-    declaration: false,
-    removeComments: false,
-    esModuleInterop: true,
-    allowSyntheticDefaultImports: true,
-    importHelpers: false,
-    // 转换 js，支持在 apiPower.config.js 里使用最新语法
-    allowJs: true,
-    lib: ['ESNext'],
-  },
-});
+// 只在开发环境中注册 ts-node
+// 使用更严格的条件判断来避免在生产构建中包含ts-node
+if (process.env.NODE_ENV === 'development' && __filename.endsWith('.ts')) {
+  // 动态导入 ts-node 以避免在生产构建中包含它
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const TSNode = require('ts-node');
+    TSNode.register({
+      // 不加载本地的 tsconfig.json
+      // skipProject: true,
+      // 仅转译，不做类型检查
+      transpileOnly: true,
+      // 自定义编译选项
+      compilerOptions: {
+        strict: false,
+        target: 'es2017',
+        module: 'commonjs',
+        moduleResolution: 'node',
+        declaration: false,
+        removeComments: false,
+        esModuleInterop: true,
+        allowSyntheticDefaultImports: true,
+        importHelpers: false,
+        // 转换 js，支持在 apiPower.config.js 里使用最新语法
+        allowJs: true,
+        lib: ['ESNext'],
+      },
+    });
+  } catch {
+    // 如果 ts-node 不可用，忽略错误（在生产环境中这是正常的）
+    // console.warn('ts-node not available, skipping registration');
+  }
+} else if (__filename.endsWith('.ts')) {
+  // 在直接运行TypeScript文件时（开发环境下）注册ts-node
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const TSNode = require('ts-node');
+    TSNode.register({
+      transpileOnly: true,
+      compilerOptions: {
+        strict: false,
+        target: 'es2017',
+        module: 'commonjs',
+        moduleResolution: 'node',
+        declaration: false,
+        removeComments: false,
+        esModuleInterop: true,
+        allowSyntheticDefaultImports: true,
+        importHelpers: false,
+        allowJs: true,
+        lib: ['ESNext'],
+      },
+    });
+  } catch {
+    // 忽略错误
+  }
+}
 
 export async function run(
   cmd: string | undefined,

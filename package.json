@@ -38,7 +38,8 @@
     "lib"
   ],
   "scripts": {
-    "build": "tsdown",
+    "build": "node scripts/build-templates.js && tsdown",
+    "build:templates": "node scripts/build-templates.js",
     "ci:eslint": "eslint -f json src -o ./.ci/eslint.json",
     "docs": "pnpm run dumi build",
     "docs:build": "vitepress build",
@@ -47,7 +48,7 @@
     "lint:fix": "prettier --write . && eslint --fix .",
     "postaction": "git push origin main --tags",
     "prepare": "husky",
-    "prepublish": "tsdown",
+    "prepublish": "node scripts/build-templates.js && tsdown",
     "publish": "changeset add && changeset version && changeset publish",
     "release": "pnpm run prepublish && pnpm run publish && pnpm run postaction",
     "docs:preview": "vitepress preview"
@@ -141,7 +142,7 @@
     "type-fest": "^4.41.0",
     "typedoc": "^0.14.2",
     "typescript": "^5.9.2",
-    "vitepress": "2.0.0-alpha.11"
+    "vitepress": "2.0.0-alpha.12"
   },
   "engines": {
     "node": ">=20.0.0"
