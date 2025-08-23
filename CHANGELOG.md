@@ -1,5 +1,11 @@
 # @scxfe/api-tool
 
+## 0.1.4
+
+### Patch Changes
+
+- chore: build opts
+
 ## 0.1.3
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@scxfe/api-tool",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -30,7 +30,9 @@
   },
   "sideEffects": false,
   "types": "dist/index.d.ts",
-  "bin": "dist/cli.js",
+  "bin": {
+    "apiPower": "dist/cli.js"
+  },
   "main": "./lib/index.js",
   "module": "./dist/index.js",
   "files": [
