@@ -11,7 +11,7 @@ export default defineConfig([
       enabled: false,
     },
     prodEnvName: 'production',
-    outputFilePath: 'src/api/index.{{EXTENSION}}',
+    outputDir: 'src/api',
     requestFunctionFilePath: 'src/api/request.{{EXTENSION}}',
     dataKey: 'data',
     projects: [

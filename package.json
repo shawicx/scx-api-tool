@@ -1,6 +1,6 @@
 {
   "name": "@scxfe/api-tool",
-  "version": "0.0.3",
+  "version": "0.0.6",
   "publishConfig": {
     "access": "public"
   },
@@ -38,7 +38,7 @@
     "lib"
   ],
   "scripts": {
-    "build": "node scripts/build-templates.js && tsdown",
+    "build": "tsdown",
     "build:templates": "node scripts/build-templates.js",
     "ci:eslint": "eslint -f json src -o ./.ci/eslint.json",
     "docs": "pnpm run dumi build",
@@ -48,7 +48,7 @@
     "lint:fix": "prettier --write . && eslint --fix .",
     "postaction": "git push origin main --tags",
     "prepare": "husky",
-    "prepublish": "node scripts/build-templates.js && tsdown",
+    "prepublish": "tsdown",
     "publish": "changeset add && changeset version && changeset publish",
     "release": "pnpm run prepublish && pnpm run publish && pnpm run postaction",
     "docs:preview": "vitepress preview"
