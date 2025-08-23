@@ -1,5 +1,11 @@
 # @scxfe/api-tool
 
+## 0.1.5
+
+### Patch Changes
+
+- fix: bin
+
 ## 0.1.4
 
 ### Patch Changes
