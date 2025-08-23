@@ -1,10 +1,7 @@
-import _ from 'lodash';
+import { isEmpty, memoize, omit } from 'lodash-es';
 import { CategoryList, InterfaceList, Project } from './apiTypes';
 import { SyntheticalConfig } from './config';
 import { httpGet, throwError } from './index';
-
-// 从lodash主包中提取需要的函数
-const { memoize, isEmpty, omit } = _;
 
 export class ProjectFetcher {
   fetchProject = memoize(async ({ serverUrl, token }: SyntheticalConfig) => {

@@ -1,6 +1,6 @@
 {
   "name": "@scxfe/api-tool",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -37,12 +37,12 @@
   "module": "./dist/index.js",
   "files": [
     "dist",
-    "umd",
     "lib"
   ],
   "scripts": {
-    "build": "tsdown",
+    "build": "node scripts/build-templates.js && tsdown && node scripts/post-build.js",
     "build:templates": "node scripts/build-templates.js",
+    "analyze:deps": "node scripts/analyze-deps.js",
     "ci:eslint": "eslint -f json src -o ./.ci/eslint.json",
     "docs": "pnpm run dumi build",
     "docs:build": "vitepress build",
@@ -101,7 +101,7 @@
     "fs-extra": "^11.3.1",
     "json-schema-to-typescript": "^15.0.4",
     "json5": "^2.2.3",
-    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "proxy-agent": "^6.5.0",
     "signal-exit": "^4.1.0",
     "swagger-client": "^3.35.6",
@@ -120,6 +120,7 @@
     "@types/json-schema": "^7.0.9",
     "@types/json5": "^0.0.30",
     "@types/lodash": "^4.17.20",
+    "@types/lodash-es": "^4.17.12",
     "@types/node": "^10.12.10",
     "@types/prompts": "^1.2.0",
     "@types/react": "^16.9.2",

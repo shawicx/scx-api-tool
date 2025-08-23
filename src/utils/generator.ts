@@ -2,10 +2,10 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-10 10:42:43
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 00:46:01
+ * @LastEditTime: 2025-08-24 02:26:13
  * @Description: Generator类，负责协调各个工具类完成代码生成任务
  */
-import _ from 'lodash';
+import { castArray } from 'lodash-es';
 import { Config, ServerConfig } from './config';
 import { OutputFileList } from './fileManager';
 import {
@@ -16,9 +16,6 @@ import {
   InterfaceCodeGenerator,
   ProjectFetcher,
 } from './index';
-
-// 从lodash主包中提取需要的函数
-const { castArray } = _;
 
 export class Generator {
   /** 配置 */

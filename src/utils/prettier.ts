@@ -2,17 +2,14 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-08 23:50:48
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 00:12:48
+ * @LastEditTime: 2025-08-24 02:26:58
  * @Description:
  */
 import consola from 'consola';
 import fs from 'fs-extra';
-import _ from 'lodash';
+import { memoize } from 'lodash-es';
 import path from 'path';
 import prettier from 'prettier';
-
-// 从lodash主包中提取需要的函数
-const { memoize } = _;
 
 /**
  * @description 获取 prettier 配置。

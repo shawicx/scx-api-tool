@@ -2,14 +2,11 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:30:00
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 00:49:22
+ * @LastEditTime: 2025-08-24 02:26:27
  * @Description: 接口处理相关的工具函数
  */
-import _ from 'lodash';
+import { isEmpty, omit } from 'lodash-es';
 import { InterfaceList } from './apiTypes';
-
-// 从lodash主包中提取需要的函数
-const { isEmpty, omit } = _;
 
 /**
  * @description 获取分类的接口列表

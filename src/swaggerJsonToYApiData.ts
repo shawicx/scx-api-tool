@@ -1,7 +1,8 @@
 // ref: https://github.com/YMFE/yapi/blob/master/exts/yapi-plugin-import-swagger/run.js
 import dayjs from 'dayjs';
-import _ from 'lodash';
+import { each, find } from 'lodash-es';
 import { OpenAPIV2 as SwaggerType } from 'openapi-types';
+// 动态导入swagger-client以减少bundle大小
 import swagger from 'swagger-client';
 import { Category, Interface, Project } from './utils';
 import {
@@ -10,9 +11,6 @@ import {
   openapi2swagger,
   processParameter,
 } from './utils/swaggerUtils';
-
-// 从lodash主包中提取需要的函数
-const { each, find } = _;
 
 let SwaggerData;
 let isOAS3;

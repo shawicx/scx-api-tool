@@ -2,15 +2,12 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:30:00
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 00:36:36
+ * @LastEditTime: 2025-08-24 02:26:06
  * @Description: 数据处理相关的工具函数
  */
-import _ from 'lodash';
+import { castArray, isEmpty, omit, uniq } from 'lodash-es';
 import { InterfaceList } from './apiTypes';
 import { SyntheticalConfig } from './config';
-
-// 从lodash主包中提取需要的函数
-const { castArray, uniq, isEmpty, omit } = _;
 
 /**
  * 处理分类ID列表

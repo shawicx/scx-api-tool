@@ -1,6 +1,6 @@
 import { JSONSchema4, JSONSchema4TypeName } from 'json-schema';
 import { compile, Options } from 'json-schema-to-typescript';
-import _ from 'lodash';
+import { castArray, cloneDeep, forOwn, isArray, isEmpty, isObject, mapKeys } from 'lodash-es';
 import path from 'path';
 import toJsonSchema from 'to-json-schema';
 import { PropDefinitions } from './apiTypes';
@@ -8,9 +8,6 @@ import { FileData } from './file';
 import { traverse } from './object';
 import { toUnixPath } from './path';
 import { Defined, OneOrMore } from './types';
-
-// 从lodash主包中提取需要的函数
-const { castArray, cloneDeep, forOwn, isArray, isEmpty, isObject, mapKeys } = _;
 
 /**
  * @description 原地遍历 JSONSchema。

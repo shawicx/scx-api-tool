@@ -2,11 +2,11 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:30:00
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 00:36:14
+ * @LastEditTime: 2025-08-24 02:25:49
  * @Description: 代码生成相关的工具函数
  */
 import dayjs from 'dayjs';
-import _ from 'lodash';
+import { castArray, groupBy, last, uniq, values } from 'lodash-es';
 import path from 'path';
 import { ExtendedInterface } from './apiTypes';
 import { CommentConfig, ProjectConfig, ServerConfig, SyntheticalConfig } from './config';
@@ -14,9 +14,6 @@ import { DATE_TIME_FORMAT, sortByWeights } from './index';
 import { InterfaceCodeGenerator } from './interfaceCodeGenerator';
 import { ProjectFetcher } from './projectFetcher';
 import { dedent } from './string';
-
-// 从lodash主包中提取需要的函数
-const { castArray, uniq, groupBy, last, values } = _;
 
 /**
  * 处理路径参数，将 {paramName} 格式替换为模板字符串格式
