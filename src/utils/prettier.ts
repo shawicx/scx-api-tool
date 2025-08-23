@@ -7,7 +7,7 @@
  */
 import consola from 'consola';
 import fs from 'fs-extra';
-import { memoize } from 'lodash-es';
+import { memoize } from 'lodash';
 import path from 'path';
 import prettier from 'prettier';
 

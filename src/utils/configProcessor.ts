@@ -5,7 +5,7 @@
  * @LastEditTime: 2025-08-24 02:25:55
  * @Description:
  */
-import { castArray } from 'lodash-es';
+import { castArray } from 'lodash';
 import { ApifoxToYApiServer } from '../ApifoxToYApiServer';
 import { SwaggerToYApiServer } from '../SwaggerToYApiServer';
 import { ServerConfig } from './config';

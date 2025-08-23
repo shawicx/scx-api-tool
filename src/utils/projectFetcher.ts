@@ -1,4 +1,4 @@
-import { isEmpty, memoize, omit } from 'lodash-es';
+import { isEmpty, memoize, omit } from 'lodash';
 import { CategoryList, InterfaceList, Project } from './apiTypes';
 import { SyntheticalConfig } from './config';
 import { httpGet, throwError } from './index';

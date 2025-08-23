@@ -5,7 +5,7 @@
  * @LastEditTime: 2025-08-24 02:26:52
  * @Description: 对象处理工具函数
  */
-import { forOwn, has, isPlainObject, omit } from 'lodash-es';
+import { forOwn, has, isPlainObject, omit } from 'lodash';
 import { OmitStrict, OneOrMore } from './index';
 
 /**

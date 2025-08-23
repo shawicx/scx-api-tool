@@ -18,10 +18,10 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     treeshake: true,
-    external: ['swagger-client', 'lodash-es', 'typescript', 'prettier', 'babel'],
+    external: ['swagger-client', 'lodash', 'typescript', 'prettier', 'babel'],
   },
   {
-    entry: ['src/**/*.ts', '!src/service/**/*', '!src/templates/', '!apiPower.config.ts'],
+    entry: ['src/**/*.ts', '!src/service/**/*', '!src/templates/', '!api-power.config.ts'],
     format: 'cjs',
     target: 'node20',
     outDir: 'lib',
@@ -30,6 +30,6 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     treeshake: true,
-    external: ['swagger-client', 'lodash-es', 'typescript', 'prettier', 'babel'],
+    external: ['swagger-client', 'lodash', 'typescript', 'prettier', 'babel'],
   },
 ]);

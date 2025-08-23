@@ -5,7 +5,7 @@
  * @LastEditTime: 2025-08-24 02:26:06
  * @Description: 数据处理相关的工具函数
  */
-import { castArray, isEmpty, omit, uniq } from 'lodash-es';
+import { castArray, isEmpty, omit, uniq } from 'lodash';
 import { InterfaceList } from './apiTypes';
 import { SyntheticalConfig } from './config';
 

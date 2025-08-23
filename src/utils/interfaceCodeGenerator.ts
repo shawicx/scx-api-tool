@@ -7,7 +7,7 @@
  */
 import * as changeCase from 'change-case';
 import dayjs from 'dayjs';
-import { isFunction } from 'lodash-es';
+import { isFunction } from 'lodash';
 import path from 'path';
 import { ExtendedInterface, Interface } from './apiTypes';
 import { CommentConfig, SyntheticalConfig } from './config';

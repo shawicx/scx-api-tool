@@ -38,5 +38,5 @@
     ".vitepress/**/*",
     ".vitepress/config.mts"
   ],
-  "exclude": ["node_modules", "apiPower.config.ts", "src/service/**/*", "lib/**/*", "assets/**/*"]
+  "exclude": ["node_modules", "api-power.config.ts", "src/service/**/*", "lib/**/*", "assets/**/*"]
 }

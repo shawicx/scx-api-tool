@@ -6,7 +6,7 @@
  * @Description:
  */
 import { Server } from 'http';
-import { isEmpty } from 'lodash-es';
+import { isEmpty } from 'lodash';
 import { OpenAPIV2 as SwaggerType } from 'openapi-types';
 import { swaggerJsonToYApiData } from './swaggerJsonToYApiData';
 import type { AsyncReturnType, YApiData } from './utils';

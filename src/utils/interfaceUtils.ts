@@ -1,6 +1,6 @@
 import { JSONSchema4, JSONSchema4TypeName } from 'json-schema';
 import JSON5 from 'json5';
-import { isArray } from 'lodash-es';
+import { isArray } from 'lodash';
 import { Interface, PropDefinition } from './apiTypes';
 import {
   isPostLikeMethod,

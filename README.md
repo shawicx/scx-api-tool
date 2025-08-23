@@ -30,12 +30,12 @@ npx @scxfe/api-tool
 
 ```bash
 # 1. 初始化配置文件
-npx apiPower init
+npx api-power init
 
-# 2. 编辑配置文件 apiPower.config.ts
+# 2. 编辑配置文件 api-power.config.ts
 
 # 3. 生成代码
-npx apiPower
+npx api-power
 ```
 
 ## 📖 文档
@@ -71,7 +71,7 @@ export default defineConfig([
 
 ```
 project/
-├── apiPower.config.ts          # 配置文件
+├── api-power.config.ts          # 配置文件
 ├── src/
 │   └── service/               # 生成的代码目录
 │       ├── types.ts           # 类型定义
