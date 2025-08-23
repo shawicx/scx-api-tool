@@ -2,7 +2,7 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-07 22:13:56
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 02:31:09
+ * @LastEditTime: 2025-08-24 03:21:42
  * @Description: tsdown 配置 - 优化构建体积和外部化依赖
  */
 import { defineConfig } from 'tsdown';

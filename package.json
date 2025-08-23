@@ -1,6 +1,6 @@
 {
   "name": "@scxfe/api-tool",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -51,7 +51,7 @@
     "lint:fix": "prettier --write . && eslint --fix .",
     "postaction": "git push origin main --tags",
     "prepare": "husky",
-    "prepublish": "tsdown",
+    "prepublish": "pnpm run build",
     "publish": "changeset add && changeset version && changeset publish",
     "release": "pnpm run prepublish && pnpm run publish && pnpm run postaction",
     "docs:preview": "vitepress preview"
@@ -108,8 +108,7 @@
     "tiny-pinyin": "^1.3.2",
     "to-json-schema": "^0.2.5",
     "traverse": "^0.6.11",
-    "ts-dedent": "^2.2.0",
-    "yargs": "^18.0.0"
+    "ts-dedent": "^2.2.0"
   },
   "devDependencies": {
     "@babel/runtime": "^7.28.3",
@@ -126,7 +125,6 @@
     "@types/signal-exit": "^3.0.0",
     "@types/swagger-schema-official": "^2.0.21",
     "@types/to-json-schema": "^0.2.0",
-    "@types/yargs": "^16.0.1",
     "eslint": "^9.32.0",
     "eslint-config-ali": "^16.3.0",
     "eslint-config-prettier": "^10.1.8",
