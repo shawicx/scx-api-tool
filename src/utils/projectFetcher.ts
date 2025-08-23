@@ -1,9 +1,10 @@
-import isEmpty from 'lodash/isEmpty';
-import memoize from 'lodash/memoize';
-import omit from 'lodash/omit';
+import _ from 'lodash';
 import { CategoryList, InterfaceList, Project } from './apiTypes';
 import { SyntheticalConfig } from './config';
 import { httpGet, throwError } from './index';
+
+// 从lodash主包中提取需要的函数
+const { memoize, isEmpty, omit } = _;
 
 export class ProjectFetcher {
   fetchProject = memoize(async ({ serverUrl, token }: SyntheticalConfig) => {
@@ -66,7 +67,7 @@ export class ProjectFetcher {
   async fetchInterfaceList({ serverUrl, token, id }: SyntheticalConfig): Promise<InterfaceList> {
     const category = ((await this.fetchExport({ serverUrl, token })) || []).find(
       (cat: any) => !isEmpty(cat) && !isEmpty(cat.list) && cat.list[0].catid === id,
-    );
+    ) as any;
 
     if (category) {
       category.list.forEach((interfaceInfo: any) => {

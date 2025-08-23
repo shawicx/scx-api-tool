@@ -2,11 +2,11 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:37:57
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-10 09:07:07
+ * @LastEditTime: 2025-08-24 00:39:31
  * @Description:
  */
 import { Server } from 'http';
-import isEmpty from 'lodash/isEmpty';
+import _ from 'lodash';
 import { OpenAPIV3 } from 'openapi-types';
 import { swaggerJsonToYApiData } from './swaggerJsonToYApiData';
 import type { ApifoxConfig, AsyncReturnType, YApiData } from './utils';
@@ -17,6 +17,9 @@ import {
   startServer,
   stopServerSync as stopServer,
 } from './utils';
+
+// 从lodash主包中提取需要的函数
+const { isEmpty } = _;
 
 export interface ApifoxToYApiServerOptions {
   serverUrl: string;

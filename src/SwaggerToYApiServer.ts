@@ -2,11 +2,11 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:37:57
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-10 10:38:19
+ * @LastEditTime: 2025-08-24 00:45:47
  * @Description:
  */
 import { Server } from 'http';
-import isEmpty from 'lodash/isEmpty';
+import _ from 'lodash';
 import { OpenAPIV2 as SwaggerType } from 'openapi-types';
 import { swaggerJsonToYApiData } from './swaggerJsonToYApiData';
 import type { AsyncReturnType, YApiData } from './utils';
@@ -17,6 +17,9 @@ import {
   startServer,
   stopServerSync as stopServer,
 } from './utils';
+
+// 从lodash主包中提取需要的函数
+const { isEmpty } = _;
 
 export interface SwaggerToYApiServerOptions {
   swaggerJsonUrl: string;

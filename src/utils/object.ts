@@ -5,8 +5,11 @@
  * @LastEditTime: 2025-08-13 23:02:38
  * @Description: 对象处理工具函数
  */
-import { forOwn, has, isPlainObject, omit } from 'lodash';
+import _ from 'lodash';
 import { OmitStrict, OneOrMore } from './index';
+
+// 从lodash主包中提取需要的函数
+const { forOwn, has, isPlainObject, omit } = _;
 
 /**
  * @description 遍历对象和数组。

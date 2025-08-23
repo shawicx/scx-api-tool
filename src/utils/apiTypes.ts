@@ -206,13 +206,13 @@ export interface Category {
   /** ID */
   _id: number;
   /** 分类在 YApi 上的地址（由 @scxfe/api-tool 自行实现） */
-  _url: string;
+  _url?: string;
   /** 分类名称 */
   name: string;
   /** 分类备注 */
   desc: string;
   /** 分类接口列表 */
-  list: InterfaceList;
+  list?: InterfaceList;
   /** 创建时间（unix时间戳） */
   add_time: number;
   /** 更新时间（unix时间戳） */
@@ -227,7 +227,7 @@ export interface Project {
   /** ID */
   _id: number;
   /** 项目在 YApi 上的地址（由 @scxfe/api-tool 自行实现） */
-  _url: string;
+  _url?: string;
   /** 名称 */
   name: string;
   /** 描述 */

@@ -2,13 +2,16 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-10 10:42:43
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-10 10:45:30
+ * @LastEditTime: 2025-08-24 00:39:08
  * @Description:
  */
-import castArray from 'lodash/castArray';
+import _ from 'lodash';
 import { ApifoxToYApiServer } from '../ApifoxToYApiServer';
 import { SwaggerToYApiServer } from '../SwaggerToYApiServer';
 import { ServerConfig } from './config';
+
+// 从lodash主包中提取需要的函数
+const { castArray } = _;
 
 export class ConfigProcessor {
   private disposes: Array<() => any> = [];

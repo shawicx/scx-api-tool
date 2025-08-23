@@ -1,8 +1,6 @@
-// @ts-nocheck - 此文件包含复杂的swagger转换逻辑，需要禁用类型检查
 // ref: https://github.com/YMFE/yapi/blob/master/exts/yapi-plugin-import-swagger/run.js
-
 import dayjs from 'dayjs';
-import { each, find } from 'lodash';
+import _ from 'lodash';
 import { OpenAPIV2 as SwaggerType } from 'openapi-types';
 import swagger from 'swagger-client';
 import { Category, Interface, Project } from './utils';
@@ -13,6 +11,9 @@ import {
   processParameter,
 } from './utils/swaggerUtils';
 
+// 从lodash主包中提取需要的函数
+const { each, find } = _;
+
 let SwaggerData;
 let isOAS3;
 
@@ -20,7 +21,7 @@ let isOAS3;
 
 // 使用 utils/swaggerUtils.ts 中的 openapi2swagger 函数
 
-async function handleSwaggerData(res) {
+async function handleSwaggerData(res: SwaggerType.Document) {
   return new Promise((resolve) => {
     const data = swagger({
       spec: res,
@@ -32,18 +33,18 @@ async function handleSwaggerData(res) {
   });
 }
 
-async function run(resParam): {
+async function run(resParam): Promise<{
   apis: Interface[];
   cats: Category[];
   basePath: string;
   swaggerData: SwaggerType.Document;
-} {
-  const interfaceData = { apis: [], cats: [], basePath: '', swaggerData: {} };
+}> {
+  const interfaceData = { apis: [], cats: [], basePath: '', swaggerData: {} } as any;
   let res = resParam;
   if (typeof res === 'string' && res) {
     try {
       res = JSON.parse(res);
-    } catch (error) {
+    } catch (error: any) {
       // eslint-disable-next-line no-console
       console.error('json 解析出错', error.message);
     }
@@ -53,7 +54,7 @@ async function run(resParam): {
   if (isOAS3) {
     res = openapi2swagger(res);
   }
-  const processedRes = await handleSwaggerData(res);
+  const processedRes = (await handleSwaggerData(res)) as SwaggerType.Document;
   SwaggerData = processedRes;
   interfaceData.swaggerData = SwaggerData;
 
@@ -77,12 +78,12 @@ async function run(resParam): {
       const apiCopy = { ...api };
       apiCopy.path = path;
       apiCopy.method = method;
-      let data = null;
+      let data = {} as any;
       try {
-        data = handleSwagger(apiCopy, processedRes.tags);
+        data = handleSwagger(apiCopy, (processedRes?.tags || {}) as any) as any;
         if (data.catname) {
           if (!find(interfaceData.cats, (item) => item.name === data.catname)) {
-            if (processedRes.tags.length === 0) {
+            if ((processedRes?.tags || []).length === 0) {
               interfaceData.cats.push({
                 name: data.catname,
                 desc: data.catname,
@@ -110,7 +111,7 @@ async function run(resParam): {
 }
 
 function handleSwagger(data, originTags = []) {
-  const api = {};
+  const api = {} as any;
   // 处理基本信息
   api.method = data.method.toUpperCase();
   api.title = data.summary || data.path;
@@ -126,7 +127,7 @@ function handleSwagger(data, originTags = []) {
       // 如果根路径有 tags，使用根路径 tags,不使用每个接口定义的 tag 做完分类
       if (
         originTags.length > 0 &&
-        find(originTags, (item) => {
+        find(originTags, (item: any) => {
           return item.name === data.tags[i];
         })
       ) {
@@ -196,7 +197,7 @@ export async function swaggerJsonToYApiData(data: any): Promise<{
   cats: Category[];
   interfaces: Interface[];
 }> {
-  const yapiData = await run(data);
+  const yapiData = (await run(data)) as any;
 
   // 兼容没有分类的情况
   if (!yapiData.cats.length) {
@@ -228,14 +229,14 @@ export async function swaggerJsonToYApiData(data: any): Promise<{
       },
     ],
   };
-  const cats = yapiData.cats.map<Category>((cat, index) => ({
+  const cats = yapiData.cats.map((cat: any, index: number) => ({
     _id: index + 1,
     name: cat.name,
     desc: cat.desc,
     add_time: currentTime,
     up_time: currentTime,
   }));
-  const interfaces = yapiData.apis.map<Interface>((api, index) => ({
+  const interfaces = yapiData.apis.map((api, index) => ({
     ...api,
     _id: index + 1,
     project_id: 1, // 修改为1，与project._id保持一致

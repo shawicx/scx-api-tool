@@ -1,6 +1,6 @@
 import { JSONSchema4, JSONSchema4TypeName } from 'json-schema';
 import JSON5 from 'json5';
-import isArray from 'lodash/isArray';
+import _ from 'lodash';
 import { Interface, PropDefinition } from './apiTypes';
 import {
   isPostLikeMethod,
@@ -17,6 +17,9 @@ import {
   reachJsonSchema,
 } from './jsonSchema';
 import { OneOrMore } from './types';
+
+// 从lodash主包中提取需要的函数
+const { isArray } = _;
 
 /**
  * @description 获得请求数据 JSONSchema 对象。

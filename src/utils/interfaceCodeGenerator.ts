@@ -2,12 +2,12 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:30:00
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-14 23:28:40
+ * @LastEditTime: 2025-08-24 00:37:28
  * @Description: 接口代码生成相关的工具函数
  */
 import * as changeCase from 'change-case';
 import dayjs from 'dayjs';
-import isFunction from 'lodash/isFunction';
+import _ from 'lodash';
 import path from 'path';
 import { ExtendedInterface, Interface } from './apiTypes';
 import { CommentConfig, SyntheticalConfig } from './config';
@@ -23,6 +23,9 @@ import {
   getResponseDataTypeName,
   jsonSchemaToType,
 } from './index';
+
+// 从lodash主包中提取需要的函数
+const { isFunction } = _;
 
 export class InterfaceCodeGenerator {
   /** 生成接口代码 */

@@ -2,29 +2,26 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-07 22:13:56
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-23 23:36:09
+ * @LastEditTime: 2025-08-24 00:34:17
  * @Description: tsdown 配置
  */
-
 import { defineConfig } from 'tsdown';
 
 export default defineConfig([
+  // {
+  //   entry: ['src/**/*.ts', '!src/service/**/*', '!src/templates/'],
+  //   format: 'esm',
+  //   target: 'ESNext',
+  //   outDir: 'dist',
+  //   dts: true,
+  //   copy: ['src/templates/'],
+  // },
   {
-    // ESM配置
-    entry: ['src/**/*.ts', '!src/service/**/*', '!src/templates/'],
-    format: 'esm',
-    target: 'ESNext',
-    outDir: 'lib/esm',
-    dts: true,
-    copy: ['src/templates/'],
-  },
-  {
-    // CJS配置
-    entry: ['src/**/*.ts', '!src/service/**/*', '!src/templates/'],
+    entry: ['src/**/*.ts', '!src/service/**/*', '!src/templates/', '!apiPower.config.ts'],
     format: 'cjs',
-    target: 'node18',
-    outDir: 'lib/cjs',
-    dts: false,
+    target: 'node20',
+    outDir: 'dist',
+    dts: true,
     copy: ['src/templates/'],
   },
 ]);

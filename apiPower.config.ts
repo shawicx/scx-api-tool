@@ -2,7 +2,7 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-07 22:13:56
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-17 09:10:06
+ * @LastEditTime: 2025-08-24 00:46:16
  * @Description: apiPower 配置文件，本地开发调试使用
  */
 import { defineConfig } from './src';

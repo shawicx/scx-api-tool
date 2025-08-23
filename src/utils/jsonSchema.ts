@@ -1,12 +1,6 @@
 import { JSONSchema4, JSONSchema4TypeName } from 'json-schema';
 import { compile, Options } from 'json-schema-to-typescript';
-import castArray from 'lodash/castArray';
-import cloneDeep from 'lodash/cloneDeep';
-import forOwn from 'lodash/forOwn';
-import isArray from 'lodash/isArray';
-import isEmpty from 'lodash/isEmpty';
-import isObject from 'lodash/isObject';
-import mapKeys from 'lodash/mapKeys';
+import _ from 'lodash';
 import path from 'path';
 import toJsonSchema from 'to-json-schema';
 import { PropDefinitions } from './apiTypes';
@@ -14,6 +8,9 @@ import { FileData } from './file';
 import { traverse } from './object';
 import { toUnixPath } from './path';
 import { Defined, OneOrMore } from './types';
+
+// 从lodash主包中提取需要的函数
+const { castArray, cloneDeep, forOwn, isArray, isEmpty, isObject, mapKeys } = _;
 
 /**
  * @description 原地遍历 JSONSchema。
@@ -109,7 +106,7 @@ export function processJsonSchema(
         bigdecimal: 'number',
         char: 'string',
         void: 'null',
-        ...mapKeys(customTypeMapping, (_: any, key: string) => key.toLowerCase()),
+        ...mapKeys(customTypeMapping, (_any: any, key: string) => key.toLowerCase()),
       };
       const isMultiple = Array.isArray(jsonSchema.type);
       const types = castArray(jsonSchema.type).map((type: any) => {

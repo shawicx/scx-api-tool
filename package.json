@@ -1,8 +1,9 @@
 {
   "name": "@scxfe/api-tool",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "description": "根据 swagger/yapi/apifox 的接口定义生成 TypeScript/JavaScript 的接口类型及其请求函数代码。",
   "keywords": [
@@ -28,14 +29,10 @@
     "url": "https://github.com/shawicx"
   },
   "sideEffects": false,
-  "main": "lib/cjs/index.js",
-  "module": "lib/esm/index.mjs",
-  "types": "lib/esm/index.d.mts",
-  "bin": {
-    "apiPower": "lib/cjs/cli.js"
-  },
+  "types": "dist/index.d.ts",
+  "bin": "dist/cli.js",
   "files": [
-    "lib"
+    "dist"
   ],
   "scripts": {
     "build": "tsdown",
