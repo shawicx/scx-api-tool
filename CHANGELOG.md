@@ -1,5 +1,11 @@
 # @scxfe/api-tool
 
+## 0.0.7
+
+### Patch Changes
+
+- fix: 模版问题
+
 ## 0.0.5
 
 ### Patch Changes
