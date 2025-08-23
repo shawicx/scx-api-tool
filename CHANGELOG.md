@@ -1,5 +1,11 @@
 # @scxfe/api-tool
 
+## 0.1.1
+
+### Patch Changes
+
+- fix: 构建
+
 ## 0.0.7
 
 ### Patch Changes

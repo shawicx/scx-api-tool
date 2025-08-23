@@ -1,6 +1,6 @@
 {
   "name": "@scxfe/api-tool",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -31,6 +31,7 @@
   "sideEffects": false,
   "types": "dist/index.d.ts",
   "bin": "dist/cli.js",
+  "main": "dist/index.js",
   "files": [
     "dist"
   ],
@@ -107,7 +108,7 @@
   },
   "devDependencies": {
     "@babel/runtime": "^7.28.3",
-    "@changesets/cli": "^2.29.5",
+    "@changesets/cli": "^2.29.6",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@types/fs-extra": "^5.0.4",
