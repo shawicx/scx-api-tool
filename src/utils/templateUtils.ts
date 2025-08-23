@@ -1,11 +1,3 @@
-/*
- * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-23 18:02:25
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-23 18:05:18
- * @Description: 模版工具函数 - 自动生成，请勿手动修改
- */
-
 // 构建时自动注入的模板内容
 const TEMPLATES = {
   config: `// @ts-ignore @ts-nocheck 模版文件不需要检查错误
