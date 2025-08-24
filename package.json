@@ -28,27 +28,25 @@
     "email": "d35f3153@proton.me",
     "url": "https://github.com/shawicx"
   },
+  "type": "module",
   "sideEffects": false,
   "types": "dist/index.d.ts",
   "bin": {
-    "api-power": "./lib/index.js"
+    "api-power": "./dist/index.js"
   },
-  "main": "./lib/index.js",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./lib/index.js",
+      "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist",
-    "lib"
+    "dist"
   ],
   "scripts": {
-    "build": "node scripts/build-templates.js && tsdown && node scripts/post-build.js",
-    "build:templates": "node scripts/build-templates.js",
+    "build": "tsdown && node scripts/post-build.js",
     "analyze:deps": "node scripts/analyze-deps.js",
     "ci:eslint": "eslint -f json src -o ./.ci/eslint.json",
     "docs": "pnpm run dumi build",
@@ -109,7 +107,7 @@
     "fs-extra": "^11.3.1",
     "json-schema-to-typescript": "^15.0.4",
     "json5": "^2.2.3",
-    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "proxy-agent": "^6.5.0",
     "signal-exit": "^4.1.0",
     "swagger-client": "^3.35.6",

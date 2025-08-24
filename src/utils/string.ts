@@ -5,7 +5,7 @@
  * @LastEditTime: 2025-08-13 23:03:44
  * @Description: 字符串处理工具函数
  */
-import { QueryStringArrayFormat } from './enums';
+import { QueryStringArrayFormat } from './enums.js';
 
 /**
  * @description 移除每一行的公共前导空白。

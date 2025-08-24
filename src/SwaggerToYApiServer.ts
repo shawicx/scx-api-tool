@@ -6,17 +6,17 @@
  * @Description:
  */
 import { Server } from 'http';
-import { isEmpty } from 'lodash';
+import { isEmpty } from 'lodash-es';
 import { OpenAPIV2 as SwaggerType } from 'openapi-types';
-import { swaggerJsonToYApiData } from './swaggerJsonToYApiData';
-import type { AsyncReturnType, YApiData } from './utils';
+import { swaggerJsonToYApiData } from './swaggerJsonToYApiData.js';
+import type { AsyncReturnType, YApiData } from './utils/index.js';
 import {
   defaultResponseHandler,
   getAvailableServerPort,
   httpGet,
   startServer,
   stopServerSync as stopServer,
-} from './utils';
+} from './utils/index.js';
 
 export interface SwaggerToYApiServerOptions {
   swaggerJsonUrl: string;

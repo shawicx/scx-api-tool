@@ -1,6 +1,6 @@
 import { JSONSchema4, JSONSchema4TypeName } from 'json-schema';
 import { compile, Options } from 'json-schema-to-typescript';
-import { castArray, cloneDeep, forOwn, isArray, isEmpty, isObject, mapKeys } from 'lodash';
+import { castArray, cloneDeep, forOwn, isArray, isEmpty, isObject, mapKeys } from 'lodash-es';
 import path from 'path';
 import toJsonSchema from 'to-json-schema';
 import { PropDefinitions } from './apiTypes';

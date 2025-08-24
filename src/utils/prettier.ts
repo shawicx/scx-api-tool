@@ -6,7 +6,7 @@
  * @Description:
  */
 import consola from 'consola';
-import { memoize } from 'lodash';
+import { memoize } from 'lodash-es';
 import path from 'path';
 
 // 动态导入 prettier，缓存 promise

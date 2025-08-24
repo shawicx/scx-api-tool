@@ -4,12 +4,17 @@
  * @Date: 2025-08-24 01:44:14
  * @LastEditors: shawicx d35f3153@proton.me
  * @LastEditTime: 2025-08-24 02:22:38
- * @Description: 依赖体积分析脚本
+ * @Description: 依赖体积分析脚本（ESM 版本）
  */
 
-const fs = require('fs-extra');
-const path = require('path');
-const { execSync } = require('child_process');
+import { execSync } from 'child_process';
+import fs from 'fs-extra';
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// ESM 环境下的 __filename 和 __dirname 替代方案
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 async function analyzeDependencies() {
   console.log('🔍 开始分析依赖体积...');
@@ -105,8 +110,15 @@ async function analyzeDependencies() {
   }
 }
 
-if (require.main === module) {
+// 检查是否为直接运行（ESM 模式）
+function isMainModule() {
+  const modulePath = fileURLToPath(import.meta.url);
+  const mainPath = process.argv[1];
+  return modulePath === mainPath;
+}
+
+if (isMainModule()) {
   analyzeDependencies();
 }
 
-module.exports = { analyzeDependencies };
+export { analyzeDependencies };

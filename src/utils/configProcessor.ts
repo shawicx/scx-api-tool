@@ -5,10 +5,10 @@
  * @LastEditTime: 2025-08-24 02:25:55
  * @Description:
  */
-import { castArray } from 'lodash';
-import { ApifoxToYApiServer } from '../ApifoxToYApiServer';
-import { SwaggerToYApiServer } from '../SwaggerToYApiServer';
-import { ServerConfig } from './config';
+import { castArray } from 'lodash-es';
+import { ApifoxToYApiServer } from '../ApifoxToYApiServer.js';
+import { SwaggerToYApiServer } from '../SwaggerToYApiServer.js';
+import { ServerConfig } from './config.js';
 
 export class ConfigProcessor {
   private disposes: Array<() => any> = [];

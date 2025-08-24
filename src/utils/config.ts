@@ -6,9 +6,9 @@
  * @Description: 配置相关工具函数和类型定义
  */
 import { JSONSchema4TypeName } from 'json-schema';
-import type { ChangeCase, ExtendedInterface, Interface } from './apiTypes';
-import { QueryStringArrayFormat } from './enums';
-import type { AsyncOrSync, OneOrMore } from './index';
+import type { ChangeCase, ExtendedInterface, Interface } from './apiTypes.js';
+import { QueryStringArrayFormat } from './enums.js';
+import type { AsyncOrSync, OneOrMore } from './index.js';
 
 /** 支持生成 React Hooks 代码的相关配置 */
 export interface ReactHooksConfig {

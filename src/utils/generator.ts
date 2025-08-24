@@ -5,9 +5,9 @@
  * @LastEditTime: 2025-08-24 02:26:13
  * @Description: Generator类，负责协调各个工具类完成代码生成任务
  */
-import { castArray } from 'lodash';
-import { Config, ServerConfig } from './config';
-import { OutputFileList } from './fileManager';
+import { castArray } from 'lodash-es';
+import { Config, ServerConfig } from './config.js';
+import { OutputFileList } from './fileManager.js';
 import {
   CodeGenerator,
   ConfigProcessor,
@@ -15,7 +15,7 @@ import {
   FileManager,
   InterfaceCodeGenerator,
   ProjectFetcher,
-} from './index';
+} from './index.js';
 
 export class Generator {
   /** 配置 */

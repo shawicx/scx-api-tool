@@ -7,10 +7,10 @@
  */
 import * as changeCase from 'change-case';
 import dayjs from 'dayjs';
-import { isFunction } from 'lodash';
+import { isFunction } from 'lodash-es';
 import path from 'path';
-import { ExtendedInterface, Interface } from './apiTypes';
-import { CommentConfig, SyntheticalConfig } from './config';
+import { ExtendedInterface, Interface } from './apiTypes.js';
+import { CommentConfig, SyntheticalConfig } from './config.js';
 import {
   DATE_TIME_FORMAT,
   dedent,
@@ -22,7 +22,7 @@ import {
   getResponseDataJsonSchema,
   getResponseDataTypeName,
   jsonSchemaToType,
-} from './index';
+} from './index.js';
 
 export class InterfaceCodeGenerator {
   /** 生成接口代码 */

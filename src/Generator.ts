@@ -5,7 +5,7 @@
  * @LastEditTime: 2025-08-24 02:25:21
  * @Description: Generator类，负责协调各个工具类完成代码生成任务
  */
-import { castArray } from 'lodash';
+import { castArray } from 'lodash-es';
 import {
   CodeGenerator,
   ConfigProcessor,
@@ -16,7 +16,7 @@ import {
   type Config,
   type OutputFileList,
   type ServerConfig,
-} from './utils';
+} from './utils/index.js';
 
 export class Generator {
   /** 配置 */

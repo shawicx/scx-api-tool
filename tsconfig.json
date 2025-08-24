@@ -3,8 +3,8 @@
     "strict": true,
     "noImplicitAny": false,
     "target": "ESNext",
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "declaration": true,
     "removeComments": false,
     "resolveJsonModule": true,
@@ -39,5 +39,5 @@
     ".vitepress/**/*",
     ".vitepress/config.mts"
   ],
-  "exclude": ["node_modules", "api-power.config.ts", "src/service/**/*", "lib/**/*", "assets/**/*"]
+  "exclude": ["node_modules", "api-power.config.ts", "src/service/**/*", "assets/**/*"]
 }

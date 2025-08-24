@@ -2,7 +2,7 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-24 09:00:00
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 09:17:40
+ * @LastEditTime: 2025-08-24 10:46:55
  * @Description: CLI 命令处理器
  */
 
@@ -10,9 +10,9 @@ import * as p from '@clack/prompts';
 import consola from 'consola';
 import fs from 'fs-extra';
 import path from 'path';
-import { Generator } from '../Generator';
-import { ConfigWithHooks, dedent, wait } from '../utils';
-import { generateConfigContent } from '../utils/templateUtils';
+import { Generator } from '../Generator.js';
+import { ConfigWithHooks, dedent, wait } from '../utils/index.js';
+import { generateConfigContent } from '../utils/templateUtils.js';
 
 /**
  * 配置文件加载器
@@ -23,27 +23,30 @@ export class ConfigLoader {
    */
   static async loadConfig(configFile: string): Promise<ConfigWithHooks> {
     try {
-      // 清除缓存
-      const resolvedPath = require.resolve(configFile);
-      if (require.cache[resolvedPath]) {
-        require.cache[resolvedPath] = undefined;
-      }
+      // 在 ESM 中，我们使用动态 import
+      let configModule;
 
-      // TypeScript 配置文件需要特殊处理
       if (configFile.endsWith('.ts')) {
-        // 尝试使用 ts-node 加载
+        // TypeScript 配置文件需要特殊处理
         try {
-          require('ts-node/register');
-        } catch {
-          // 如果没有 ts-node，提示用户安装或使用 JS 配置
-          throw new Error('加载 TypeScript 配置文件需要 ts-node，请安装: npm install -D ts-node');
+          // 尝试使用 ts-node ESM 加载器
+          configModule = await import(`${configFile}?t=${Date.now()}`);
+        } catch (error: any) {
+          if (error.code === 'ERR_UNKNOWN_FILE_EXTENSION') {
+            throw new Error(
+              '加载 TypeScript 配置文件需要配置 ts-node ESM 支持。请使用 JS 配置文件或配置 ts-node ESM 加载器。',
+            );
+          }
+          throw error;
         }
+      } else {
+        // JavaScript 配置文件
+        configModule = await import(`${configFile}?t=${Date.now()}`);
       }
 
-      const configModule = require(configFile);
       return configModule.default || configModule;
     } catch (error: any) {
-      if (error.code === 'MODULE_NOT_FOUND') {
+      if (error.code === 'ERR_MODULE_NOT_FOUND') {
         throw new Error(`配置文件不存在: ${configFile}`);
       }
       throw error;

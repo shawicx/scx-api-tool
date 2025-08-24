@@ -1,22 +1,22 @@
 import { JSONSchema4, JSONSchema4TypeName } from 'json-schema';
 import JSON5 from 'json5';
-import { isArray } from 'lodash';
-import { Interface, PropDefinition } from './apiTypes';
+import { isArray } from 'lodash-es';
+import { Interface, PropDefinition } from './apiTypes.js';
 import {
   isPostLikeMethod,
   RequestBodyType,
   RequestFormItemType,
   Required,
   ResponseBodyType,
-} from './enums';
+} from './enums.js';
 import {
   jsonSchemaStringToJsonSchema,
   jsonToJsonSchema,
   mockjsTemplateToJsonSchema,
   propDefinitionsToJsonSchema,
   reachJsonSchema,
-} from './jsonSchema';
-import { OneOrMore } from './types';
+} from './jsonSchema.js';
+import { OneOrMore } from './types.js';
 
 /**
  * @description 获得请求数据 JSONSchema 对象。

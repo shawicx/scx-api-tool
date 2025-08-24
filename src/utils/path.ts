@@ -7,7 +7,7 @@
  */
 import path from 'path';
 import TinyPinyin from 'tiny-pinyin';
-import { ChangeCase, Interface } from './apiTypes';
+import { ChangeCase, Interface } from './apiTypes.js';
 
 /**
  * @description 将路径统一为 unix 风格的路径。

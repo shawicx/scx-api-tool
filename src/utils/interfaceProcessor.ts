@@ -5,7 +5,7 @@
  * @LastEditTime: 2025-08-24 02:26:27
  * @Description: 接口处理相关的工具函数
  */
-import { isEmpty, omit } from 'lodash';
+import { isEmpty, omit } from 'lodash-es';
 import { InterfaceList } from './apiTypes';
 
 /**

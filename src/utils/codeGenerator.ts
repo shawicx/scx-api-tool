@@ -6,7 +6,7 @@
  * @Description: 代码生成相关的工具函数
  */
 import dayjs from 'dayjs';
-import { castArray, groupBy, last, uniq, values } from 'lodash';
+import { castArray, groupBy, last, uniq, values } from 'lodash-es';
 import path from 'path';
 import { ExtendedInterface } from './apiTypes';
 import { CommentConfig, ProjectConfig, ServerConfig, SyntheticalConfig } from './config';

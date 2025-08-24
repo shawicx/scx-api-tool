@@ -2,21 +2,21 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:37:57
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 02:25:00
+ * @LastEditTime: 2025-08-24 10:46:47
  * @Description:
  */
 import { Server } from 'http';
-import { isEmpty } from 'lodash';
+import { isEmpty } from 'lodash-es';
 import { OpenAPIV3 } from 'openapi-types';
-import { swaggerJsonToYApiData } from './swaggerJsonToYApiData';
-import type { ApifoxConfig, AsyncReturnType, YApiData } from './utils';
+import { swaggerJsonToYApiData } from './swaggerJsonToYApiData.js';
+import type { ApifoxConfig, AsyncReturnType, YApiData } from './utils/index.js';
 import {
   defaultResponseHandler,
   fetchApifoxOpenAPI,
   getAvailableServerPort,
   startServer,
   stopServerSync as stopServer,
-} from './utils';
+} from './utils/index.js';
 
 export interface ApifoxToYApiServerOptions {
   serverUrl: string;

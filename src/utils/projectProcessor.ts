@@ -5,9 +5,9 @@
  * @LastEditTime: 2025-08-13 23:02:56
  * @Description: 项目处理相关的工具函数
  */
-import { CategoryList, Project } from './apiTypes';
-import { SyntheticalConfig } from './config';
-import { httpGet, throwError } from './index';
+import { CategoryList, Project } from './apiTypes.js';
+import { SyntheticalConfig } from './config.js';
+import { httpGet, throwError } from './index.js';
 
 /**
  * @description 获取项目信息

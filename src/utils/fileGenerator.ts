@@ -7,10 +7,10 @@
  */
 import fs from 'fs-extra';
 import path from 'path';
-import { DEFAULT_CONFIG } from './constants';
-import { formatFile } from './index';
-import { getNormalizedRelativePath } from './path';
-import { dedent } from './string';
+import { DEFAULT_CONFIG } from './constants.js';
+import { formatFile } from './index.js';
+import { getNormalizedRelativePath } from './path.js';
+import { dedent } from './string.js';
 
 export interface FileGeneratorOptions {
   cwd: string;

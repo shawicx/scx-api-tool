@@ -1,9 +1,9 @@
 import consola from 'consola';
 import fs from 'fs-extra';
 import path from 'path';
-import { SyntheticalConfig } from './config';
-import { getAllDirectoriesWithIndex } from './fileGenerator';
-import { DEFAULT_CONFIG, formatFile, getNormalizedRelativePath, transformPaths } from './index';
+import { SyntheticalConfig } from './config.js';
+import { getAllDirectoriesWithIndex } from './fileGenerator.js';
+import { DEFAULT_CONFIG, formatFile, getNormalizedRelativePath, transformPaths } from './index.js';
 
 export interface OutputFileList {
   [outputFilePath: string]: {

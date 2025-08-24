@@ -2,14 +2,14 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-24 09:00:00
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 09:14:53
+ * @LastEditTime: 2025-08-24 11:19:21
  * @Description: CLI 程序入口
  */
 
 import { Command } from 'commander';
 import consola from 'consola';
 import packageJson from '../../package.json';
-import { GenerateCommand, HelpCommand, InitCommand } from './commands';
+import { GenerateCommand, HelpCommand, InitCommand } from './commands.js';
 
 // 获取版本信息
 const version = packageJson.version || '0.0.0';
