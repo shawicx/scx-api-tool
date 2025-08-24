@@ -1,5 +1,11 @@
 # @scxfe/api-tool
 
+## 0.3.0
+
+### Minor Changes
+
+- refacotr: 只支持esm
+
 ## 0.2.2
 
 ### Patch Changes
