@@ -1,15 +1,14 @@
-// @ts-nocheck
-import { Request_Method } from '@scxfe/api-tool';
+import { Request_Method, ValueOf } from '@scxfe/api-tool';
 import type { AxiosRequestConfig } from 'axios';
 import axios from 'axios';
-import { AESToken } from '.';
+// import { AESToken } from '.';
 
 type Method = ValueOf<typeof Request_Method>;
 
 // 用于转发请求的代理地址
 const BASE_LINE_PROXY_PATH = '/api';
 // 用于 token 加密（基线）
-const BASE_LINE_KEY_24 = 'HKCADQN7E5WJ3KQRPACNZ3QH';
+// const BASE_LINE_KEY_24 = 'HKCADQN7E5WJ3KQRPACNZ3QH';
 
 // 取消请求白名单
 const CANCEL_WHITE_LIST: Array<{ path: string; method: Method }> = [];
@@ -42,14 +41,14 @@ type HttpStatus = (typeof HttpStatus)[keyof typeof HttpStatus];
 
 // https 状态提示语
 const HttpStatusMessage = new Map<HttpStatus, string>([
-  [HttpStatus.BadRequest, ['参数错误']],
-  [HttpStatus.Unauthorized, ['未授权']],
-  [HttpStatus.Forbidden, ['禁止访问']],
-  [HttpStatus.NotFound, ['请求不存在']],
-  [HttpStatus.InternalServerError, ['服务器错误']],
-  [HttpStatus.ClientError, ['客户端错误']],
-  [HttpStatus.ServerError, ['服务器错误']],
-  [HttpStatus.UnKnownError, ['未知错误']],
+  [HttpStatus.BadRequest, '参数错误'],
+  [HttpStatus.Unauthorized, '未授权'],
+  [HttpStatus.Forbidden, '禁止访问'],
+  [HttpStatus.NotFound, '请求不存在'],
+  [HttpStatus.InternalServerError, '服务器错误'],
+  [HttpStatus.ClientError, '客户端错误'],
+  [HttpStatus.ServerError, '服务器错误'],
+  [HttpStatus.UnKnownError, '未知错误'],
 ]);
 
 function hashObject(obj: unknown): string {
@@ -134,7 +133,7 @@ export default async function request(url: string, config: AxiosRequestConfig) {
   }
   pendingRequests.set(requestKey, controller);
 
-  const secret = AESToken(BASE_LINE_KEY_24);
+  // const secret = AESToken(BASE_LINE_KEY_24);
   const { headers = {}, params: configParams, ...axiosRequestConfig } = config;
 
   // 防止 GET 请求缓存GET
@@ -145,7 +144,7 @@ export default async function request(url: string, config: AxiosRequestConfig) {
     const response = await axios(url, {
       headers: {
         ...headers,
-        token: secret,
+        token: 'secret',
       },
       ...axiosRequestConfig,
       baseURL: BASE_LINE_PROXY_PATH,
@@ -156,7 +155,11 @@ export default async function request(url: string, config: AxiosRequestConfig) {
     const httpStatus = getHttpStatus(status);
     const httpStatusMessage = HttpStatusMessage.get(httpStatus);
 
-    if ([HttpStatus.OK, HttpStatus.OK_OTHER, HttpStatus.Redirection].includes(httpStatus)) {
+    if (
+      [HttpStatus.OK, HttpStatus.OK_OTHER, HttpStatus.Redirection].includes(
+        httpStatus as ValueOf<HttpStatus>,
+      )
+    ) {
       if (!response.data.success && response.data.status === TOKEN_ERROR_STATUS) {
         return null;
       }

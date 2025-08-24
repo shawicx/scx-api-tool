@@ -2,7 +2,7 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:30:00
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 02:25:49
+ * @LastEditTime: 2025-08-24 11:40:06
  * @Description: 代码生成相关的工具函数
  */
 import dayjs from 'dayjs';
@@ -77,8 +77,7 @@ export function generateInterfaceComment(
   }
 
   // 转义标题中的 /
-  const escapedTitle = String(extendedInterfaceInfo.title).replace(/\//g, '\\/');
-  const description = hasLink ? `[${escapedTitle}↗](${extendedInterfaceInfo._url})` : escapedTitle;
+  const description = String(extendedInterfaceInfo.title).replace(/\//g, '\\/');
 
   const summary: Array<
     | false
@@ -91,7 +90,7 @@ export function generateInterfaceComment(
       label: 'category',
       value: (() => {
         if (hasLink) {
-          return `[${extendedInterfaceInfo._category.name}↗](${extendedInterfaceInfo._category._url})`;
+          return `${extendedInterfaceInfo._category.name}`;
         }
         return extendedInterfaceInfo._category.name;
       })(),
