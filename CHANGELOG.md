@@ -1,5 +1,17 @@
 # @scxfe/api-tool
 
+## 0.1.10
+
+### Patch Changes
+
+- fix: bin
+
+## 0.1.8
+
+### Patch Changes
+
+- fix: esm配置
+
 ## 0.1.7
 
 ### Patch Changes

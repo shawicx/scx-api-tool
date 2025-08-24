@@ -1,8 +1,8 @@
 /*
  * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-23 03:20:48
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 03:22:52
+ * @Date: 2025-08-24 09:27:06
+ * @LastEditors: Build Script
+ * @LastEditTime: 2025-08-24T01:27:06.983Z
  * @Description: 模版工具函数 - 自动生成，请勿手动修改
  */
 
@@ -232,7 +232,8 @@ export default async function request(url: string, config: AxiosRequestConfig) {
   } finally {
     pendingRequests.delete(requestKey);
   }
-}`,
+}
+`,
 };
 
 /**

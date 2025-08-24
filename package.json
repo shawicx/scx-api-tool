@@ -1,6 +1,6 @@
 {
   "name": "@scxfe/api-tool",
-  "version": "0.1.7",
+  "version": "0.1.11",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -31,10 +31,21 @@
   "sideEffects": false,
   "types": "dist/index.d.ts",
   "bin": {
-    "api-power": "lib/cli.js"
+    "api-power": "./lib/index.js"
   },
   "main": "./lib/index.js",
   "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./lib/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./cli": {
+      "require": "./lib/cli.js",
+      "types": "./lib/cli.d.ts"
+    }
+  },
   "files": [
     "dist",
     "lib"
@@ -95,6 +106,7 @@
     "@clack/prompts": "^0.11.0",
     "axios": "^1.11.0",
     "change-case": "3.1.0",
+    "commander": "^14.0.0",
     "consola": "^3.4.2",
     "dayjs": "^1.11.13",
     "form-data": "^4.0.4",

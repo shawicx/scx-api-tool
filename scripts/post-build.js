@@ -47,7 +47,7 @@ async function postBuild() {
 
     // 2. 设置 CLI 文件权限和 shebang
     console.log('🔧 设置 CLI 文件权限和 shebang...');
-    const cliFile = path.join(libDir, 'cli.js');
+    const cliFile = path.join(libDir, 'index.js');
     if (await fs.pathExists(cliFile)) {
       // 读取 CLI 文件内容
       let cliContent = await fs.readFile(cliFile, 'utf8');
@@ -57,12 +57,12 @@ async function postBuild() {
         // 在文件开头添加 shebang
         cliContent = '#!/usr/bin/env node\n' + cliContent;
         await fs.writeFile(cliFile, cliContent);
-        console.log('✅ 已添加 shebang 到 lib/cli.js');
+        console.log('✅ 已添加 shebang 到 lib/index.js');
       }
 
       // 设置文件为可执行
       await fs.chmod(cliFile, 0o755);
-      console.log('✅ 已设置 lib/cli.js 为可执行');
+      console.log('✅ 已设置 lib/index.js 为可执行');
     }
 
     // 3. 清理模板文件（如果使用了构建时注入）
