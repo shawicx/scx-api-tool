@@ -2,36 +2,46 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-08 23:50:48
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 02:26:58
+ * @LastEditTime: 2025-08-24 09:41:51
  * @Description:
  */
 import consola from 'consola';
-import fs from 'fs-extra';
 import { memoize } from 'lodash';
 import path from 'path';
-import prettier from 'prettier';
+
+// 动态导入 prettier，缓存 promise
+let prettierPromise: Promise<typeof import('prettier')> | null = null;
+
+function loadPrettier(): Promise<typeof import('prettier')> {
+  if (!prettierPromise) {
+    // 使用字符串拼接来避免构建工具解析模块名
+    const moduleName = 'prettier';
+    prettierPromise = import(moduleName).catch((error) => {
+      consola.error('Prettier 加载失败:', error);
+      throw error;
+    });
+  }
+  return prettierPromise;
+}
 
 /**
  * @description 获取 prettier 配置。
  * @param cwd 当前工作目录
  * @returns prettier 配置
  */
-export async function getPrettier(cwd: string): Promise<typeof prettier> {
-  const projectPrettierPath = path.join(cwd, 'node_modules/prettier');
-  if (await fs.pathExists(projectPrettierPath)) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require(projectPrettierPath);
-  }
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return require('prettier');
+export async function getPrettier(): Promise<typeof import('prettier')> {
+  // 始终使用全局的 prettier，避免路径问题
+  return await loadPrettier();
 }
 
 /**
  * @description 获取 prettier 配置。
  * @returns prettier 配置
  */
-export async function getPrettierOptions(): Promise<prettier.Options> {
-  const prettierOptions: prettier.Options = {
+export async function getPrettierOptions(): Promise<import('prettier').Options> {
+  const prettier = await loadPrettier();
+
+  const prettierOptions: import('prettier').Options = {
     parser: 'typescript',
     printWidth: 120,
     tabWidth: 2,
@@ -79,9 +89,13 @@ export const getCachedPrettierOptions = memoize(getPrettierOptions);
  * @param options prettier 配置选项
  * @returns 格式化后的代码内容
  */
-export async function formatCode(content: string, options?: prettier.Options): Promise<string> {
+export async function formatCode(
+  content: string,
+  options?: import('prettier').Options,
+): Promise<string> {
   consola.debug('开始格式化代码内容，内容长度:', content.length);
   try {
+    const prettier = await loadPrettier();
     const prettierOptions = options || (await getCachedPrettierOptions());
     consola.debug('使用 prettier 配置:', prettierOptions);
 
@@ -104,15 +118,16 @@ export async function formatCode(content: string, options?: prettier.Options): P
 export async function formatFile(
   filePath: string,
   content: string,
-  options?: prettier.Options,
+  options?: import('prettier').Options,
 ): Promise<string> {
   consola.debug(`开始格式化文件: ${filePath}, 内容长度: ${content.length}`);
   try {
+    const prettier = await loadPrettier();
     const prettierOptions = options || (await getCachedPrettierOptions());
 
     // 根据文件扩展名自动选择 parser
     const ext = path.extname(filePath).toLowerCase();
-    let parser: prettier.BuiltInParserName = 'typescript';
+    let parser: import('prettier').BuiltInParserName = 'typescript';
 
     if (ext === '.js' || ext === '.jsx') {
       parser = 'babel';

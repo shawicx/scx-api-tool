@@ -1,5 +1,11 @@
 # @scxfe/api-tool
 
+## 0.1.12
+
+### Patch Changes
+
+- refactor: 重构
+
 ## 0.1.10
 
 ### Patch Changes
