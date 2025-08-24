@@ -1,5 +1,11 @@
 # @scxfe/api-tool
 
+## 0.2.2
+
+### Patch Changes
+
+- 21e7b50: chore: changeset cfg
+
 ## 0.2.1
 
 ### Patch Changes
