@@ -1,8 +1,5 @@
 /*
  * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-09 23:30:00
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 11:40:06
  * @Description: 代码生成相关的工具函数
  */
 import dayjs from 'dayjs';
@@ -11,7 +8,9 @@ import path from 'path';
 import {
   CommentConfig,
   ExtendedInterface,
+  OutputFileList,
   ProjectConfig,
+  RequestFunctionConfig,
   ServerConfig,
   SyntheticalConfig,
 } from '../types';
@@ -150,14 +149,6 @@ export function generateInterfaceComment(
   `;
 }
 
-interface RequestFunctionConfig {
-  name: string;
-  type: string;
-  path: string;
-  method: string;
-  useTemplate: boolean;
-}
-
 export function generateRequestFunction(config: RequestFunctionConfig): string {
   const { name, type, path: apiPath, method, useTemplate } = config;
   const isGetMethod = method.toUpperCase() === 'GET';
@@ -206,15 +197,6 @@ export function generateCompleteInterfaceCode(
  */
 export function generateIndent(size: number): string {
   return ' '.repeat(size);
-}
-
-interface OutputFileList {
-  [outputFilePath: string]: {
-    syntheticalConfig: SyntheticalConfig;
-    content: string[];
-    requestFunctionFilePath: string;
-    requestHookMakerFilePath: string;
-  };
 }
 
 export class CodeGenerator {

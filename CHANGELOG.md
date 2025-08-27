@@ -1,5 +1,11 @@
 # @scxfe/api-tool
 
+## 0.3.1
+
+### Patch Changes
+
+- refactor: 重构项目结构和类型定义
+
 ## 0.3.0
 
 ### Minor Changes

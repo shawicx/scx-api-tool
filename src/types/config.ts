@@ -125,3 +125,22 @@ export function defineConfig(config: Config, hooks?: CliHooks): ConfigWithHooks 
   }
   return config;
 }
+
+/** 输出文件列表 */
+export interface OutputFileList {
+  [outputFilePath: string]: {
+    syntheticalConfig: SyntheticalConfig;
+    content: string[];
+    requestFunctionFilePath: string;
+    requestHookMakerFilePath: string;
+  };
+}
+
+/** 请求函数配置 */
+export interface RequestFunctionConfig {
+  name: string;
+  type: string;
+  path: string;
+  method: string;
+  useTemplate: boolean;
+}
