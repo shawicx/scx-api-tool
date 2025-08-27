@@ -39,6 +39,9 @@ const HttpStatus = {
 
 type HttpStatus = (typeof HttpStatus)[keyof typeof HttpStatus];
 
+// 扩展 HttpStatus 类型以包含所有可能的值
+type ExtendedHttpStatus = HttpStatus | 200 | 300 | 9200;
+
 // https 状态提示语
 const HttpStatusMessage = new Map<HttpStatus, string>([
   [HttpStatus.BadRequest, '参数错误'],
@@ -155,11 +158,7 @@ export default async function request(url: string, config: AxiosRequestConfig) {
     const httpStatus = getHttpStatus(status);
     const httpStatusMessage = HttpStatusMessage.get(httpStatus);
 
-    if (
-      [HttpStatus.OK, HttpStatus.OK_OTHER, HttpStatus.Redirection].includes(
-        httpStatus as ValueOf<HttpStatus>,
-      )
-    ) {
+    if ([HttpStatus.OK, HttpStatus.OK_OTHER, HttpStatus.Redirection].includes(httpStatus as any)) {
       if (!response.data.success && response.data.status === TOKEN_ERROR_STATUS) {
         return null;
       }

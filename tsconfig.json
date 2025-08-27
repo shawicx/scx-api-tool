@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "rootDir": ".",
     "strict": true,
     "noImplicitAny": false,
     "target": "ESNext",
@@ -19,17 +20,7 @@
       "cis-api-tool": ["./src/index.ts"],
       "@/*": ["./src/*"]
     },
-    "outDir": "./dist",
-    "plugins": [
-      {
-        "name": "typescript-snapshots-plugin",
-        "snapshotCallIdentifiers": [
-          "toMatchSnapshot",
-          "toThrowErrorMatchingSnapshot",
-          "toMatchDiffSnapshot"
-        ]
-      }
-    ]
+    "outDir": "./dist"
   },
   "include": [
     "src/**/*",

@@ -1,13 +1,10 @@
 /*
  * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-08 23:50:48
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-17 09:07:43
- * @Description:
+ * @Description: 路径处理工具函数
  */
 import path from 'path';
 import TinyPinyin from 'tiny-pinyin';
-import { ChangeCase, Interface } from './apiTypes.js';
+import { ChangeCase, Interface } from '../types';
 
 /**
  * @description 将路径统一为 unix 风格的路径。

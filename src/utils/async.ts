@@ -1,20 +1,8 @@
 /*
  * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-08 23:27:42
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-08 23:44:57
  * @Description: 异步处理工具函数
  */
-
-/**
- * @public
- */
-export interface WaitResult<T> extends Promise<T> {
-  /**
-   * 取消等待，不执行后续逻辑。
-   */
-  cancel: () => void;
-}
+import { WaitResult } from '../types';
 
 /**
  * @description 等待一段时间 resolve。

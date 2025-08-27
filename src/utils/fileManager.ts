@@ -1,18 +1,11 @@
 import consola from 'consola';
 import fs from 'fs-extra';
 import path from 'path';
-import { SyntheticalConfig } from './config.js';
-import { getAllDirectoriesWithIndex } from './fileGenerator.js';
-import { DEFAULT_CONFIG, formatFile, getNormalizedRelativePath, transformPaths } from './index.js';
+import { OutputFileList } from '../types';
+import { getAllDirectoriesWithIndex } from './fileGenerator';
+import { DEFAULT_CONFIG, formatFile, getNormalizedRelativePath, transformPaths } from './index';
 
-export interface OutputFileList {
-  [outputFilePath: string]: {
-    syntheticalConfig: SyntheticalConfig;
-    content: string[];
-    requestFunctionFilePath: string;
-    requestHookMakerFilePath: string;
-  };
-}
+// 接口定义已移至 types/server.ts
 
 export class FileManager {
   constructor(private options: { cwd: string } = { cwd: process.cwd() }) {}
@@ -145,7 +138,6 @@ export class FileManager {
             !(await fs.pathExists(rawRequestHookMakerFilePath))
           ) {
             const hookContent = `import { useState, useEffect } from 'react'
-import type { RequestConfig } from '@scxfe/api-tool'
 import type { Request } from ${JSON.stringify(
               getNormalizedRelativePath(updatedRequestHookMakerFilePath, updatedOutputFilePath),
             )}
@@ -156,7 +148,7 @@ import baseRequest from ${JSON.stringify(
               ),
             )}
 
-export default function makeRequestHook<TRequestData, TRequestConfig extends RequestConfig, TRequestResult extends ReturnType<typeof baseRequest>>(request: Request<TRequestData, TRequestConfig, TRequestResult>) {
+export default function makeRequestHook<TRequestData, TRequestConfig, TRequestResult extends ReturnType<typeof baseRequest>>(request: Request<TRequestData, TRequestConfig, TRequestResult>) {
     type Data = TRequestResult extends Promise<infer R> ? R : TRequestResult
     return function useRequest(requestData: TRequestData) {
         // 一个简单的 Hook 实现，实际项目可结合其他库使用，比如：

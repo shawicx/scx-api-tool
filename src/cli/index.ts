@@ -6,5 +6,5 @@
  * @Description: CLI 模块导出
  */
 
-export * from './commands.js';
-export * from './program.js';
+export * from './commands';
+export * from './program';

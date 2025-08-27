@@ -1,13 +1,9 @@
 /*
  * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-09 23:30:00
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-13 23:02:56
  * @Description: 项目处理相关的工具函数
  */
-import { CategoryList, Project } from './apiTypes.js';
-import { SyntheticalConfig } from './config.js';
-import { httpGet, throwError } from './index.js';
+import { CategoryList, Project, SyntheticalConfig } from '../types';
+import { httpGet, throwError } from './index';
 
 /**
  * @description 获取项目信息
@@ -26,7 +22,7 @@ export async function fetchProject({ serverUrl, token }: SyntheticalConfig): Pro
 
   if (projectInfo && projectInfo.errcode) {
     throwError(
-      `${projectInfo.errmsg} [请求地址: ${serverUrl}/api/project/get] [请求参数: ${new URLSearchParams({ token: token! }).toString()}]`,
+      `${projectInfo.errmsg} [请求地址: ${serverUrl}/api/project/get] [请求参数: ${new URLSearchParams({ token: Array.isArray(token) ? token[0] : token || '' }).toString()}]`,
     );
   }
 
@@ -63,7 +59,7 @@ export async function fetchProjectCategories(
 
   if (projectCats && projectCats.errcode) {
     throwError(
-      `${projectCats.errmsg} [请求地址: ${syntheticalConfig.serverUrl}/api/interface/getCatMenu] [请求参数: ${new URLSearchParams({ token: Array.isArray(syntheticalConfig.token) ? syntheticalConfig.token[0] : syntheticalConfig.token, project_id: projectInfo._id.toString() }).toString()}]`,
+      `${projectCats.errmsg} [请求地址: ${syntheticalConfig.serverUrl}/api/interface/getCatMenu] [请求参数: ${new URLSearchParams({ token: Array.isArray(syntheticalConfig.token) ? syntheticalConfig.token[0] : syntheticalConfig.token || '', project_id: projectInfo._id.toString() }).toString()}]`,
     );
   }
 
@@ -114,7 +110,7 @@ export async function fetchProjectExport({ serverUrl, token }: SyntheticalConfig
 
   if (categoryList && categoryList.errcode) {
     throwError(
-      `${categoryList.errmsg} [请求地址: ${serverUrl}/api/plugin/export] [请求参数: ${new URLSearchParams({ type: 'json', status: 'all', isWiki: 'false', token: Array.isArray(token) ? token[0] : token }).toString()}]`,
+      `${categoryList.errmsg} [请求地址: ${serverUrl}/api/plugin/export] [请求参数: ${new URLSearchParams({ type: 'json', status: 'all', isWiki: 'false', token: Array.isArray(token) ? token[0] : token || '' }).toString()}]`,
     );
   }
 

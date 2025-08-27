@@ -85,6 +85,9 @@ logs
 # Editor directories and files
 .vscode/
 .idea/
+.codebuddy/
+.cursor/
+.qoder/
 *.swp
 *.swo
 *~

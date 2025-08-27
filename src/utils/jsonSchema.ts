@@ -3,11 +3,10 @@ import { compile, Options } from 'json-schema-to-typescript';
 import { castArray, cloneDeep, forOwn, isArray, isEmpty, isObject, mapKeys } from 'lodash-es';
 import path from 'path';
 import toJsonSchema from 'to-json-schema';
-import { PropDefinitions } from './apiTypes';
+import { Defined, OneOrMore, PropDefinitions } from '../types';
 import { FileData } from './file';
 import { traverse } from './object';
 import { toUnixPath } from './path';
-import { Defined, OneOrMore } from './types';
 
 /**
  * @description 原地遍历 JSONSchema。
@@ -245,7 +244,7 @@ export function mockjsTemplateToJsonSchema(
 ): JSONSchema4 {
   const jsonSchema = toJsonSchema(template) as JSONSchema4;
   const actions: Array<() => void> = [];
-  // https://github.com/nuysoft/Mock/blob/refactoring/src/mock/constant.js#L27
+  // https://github.com/nuysoft/Mock/blob/refactoring/src/mock/constant#L27
   const keyRe = /(.+)\|(?:\+(\d+)|([+-]?\d+-?[+-]?\d*)?(?:\.(\d+-?\d*))?)/;
   // https://github.com/nuysoft/Mock/wiki/Mock.Random
   const numberPatterns: string[] = ['natural', 'integer', 'float', 'range', 'increment'];
@@ -268,7 +267,7 @@ export function mockjsTemplateToJsonSchema(
         Reflect.deleteProperty(parent, key);
         // eslint-disable-next-line no-param-reassign
         parent[
-          // https://github.com/nuysoft/Mock/blob/refactoring/src/mock/schema/schema.js#L16
+          // https://github.com/nuysoft/Mock/blob/refactoring/src/mock/schema/schema#L16
           key.replace(keyRe, '$1')
         ] = normalizeValue(value);
       });

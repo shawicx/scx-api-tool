@@ -1,8 +1,5 @@
 /*
  * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-08 23:27:42
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-09 23:11:53
  * @Description: 枚举类型定义
  */
 

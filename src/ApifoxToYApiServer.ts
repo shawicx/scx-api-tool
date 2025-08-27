@@ -1,79 +1,38 @@
 /*
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:37:57
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 10:46:47
- * @Description:
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2025-08-27 20:22:57
+ * @Description: Apifox转YApi服务器
  */
-import { Server } from 'http';
-import { isEmpty } from 'lodash-es';
 import { OpenAPIV3 } from 'openapi-types';
-import { swaggerJsonToYApiData } from './swaggerJsonToYApiData.js';
-import type { ApifoxConfig, AsyncReturnType, YApiData } from './utils/index.js';
-import {
-  defaultResponseHandler,
-  fetchApifoxOpenAPI,
-  getAvailableServerPort,
-  startServer,
-  stopServerSync as stopServer,
-} from './utils/index.js';
+import type { ApifoxConfig, ApifoxToYApiServerOptions } from './types';
+import { BaseYApiServer } from './utils/BaseYApiServer';
+import { fetchApifoxOpenAPI } from './utils/index';
 
-export interface ApifoxToYApiServerOptions {
-  serverUrl: string;
-  token: string;
-  projectId: string; // 改为必需参数
-}
+// 接口定义已移至 types/server.ts
 
-export class ApifoxToYApiServer {
-  private port = 0;
+export class ApifoxToYApiServer extends BaseYApiServer {
   private openApiData: OpenAPIV3.Document = {} as any;
-  private httpServer: Server | null = null;
-  private yapiData: AsyncReturnType<typeof swaggerJsonToYApiData> = {} as any;
 
-  constructor(private readonly options: ApifoxToYApiServerOptions) {}
-
-  async getPort(): Promise<number> {
-    if (this.port === 0) {
-      this.port = await getAvailableServerPort({ defaultPort: 50506 }); // 使用不同的端口避免冲突
-    }
-    return this.port;
+  constructor(protected readonly options: ApifoxToYApiServerOptions) {
+    super({ defaultPort: 50506 });
   }
 
-  async getUrl(): Promise<string> {
-    return `http://127.0.0.1:${await this.getPort()}`;
-  }
-
-  async getOpenApiData(): Promise<OpenAPIV3.Document> {
-    if (isEmpty(this.openApiData)) {
-      const config: ApifoxConfig = {
-        serverUrl: this.options.serverUrl,
-        token: this.options.token,
-        projectId: this.options.projectId,
-      };
-      this.openApiData = await fetchApifoxOpenAPI(config);
+  /**
+   * 获取OpenAPI数据，带缓存
+   */
+  protected async getSourceData(): Promise<OpenAPIV3.Document> {
+    if (this.openApiData && Object.keys(this.openApiData).length > 0) {
+      return this.openApiData;
     }
+
+    const config: ApifoxConfig = {
+      serverUrl: this.options.serverUrl,
+      token: this.options.token,
+      projectId: this.options.projectId,
+    };
+    this.openApiData = await fetchApifoxOpenAPI(config);
     return this.openApiData;
-  }
-
-  async getYApiData(): Promise<AsyncReturnType<typeof swaggerJsonToYApiData>> {
-    if (isEmpty(this.yapiData)) {
-      this.yapiData = await swaggerJsonToYApiData(await this.getOpenApiData());
-    }
-    return this.yapiData;
-  }
-
-  async start(): Promise<string> {
-    const yapiData = await this.getYApiData();
-    this.httpServer = await startServer(
-      await this.getPort(),
-      yapiData as YApiData,
-      defaultResponseHandler,
-    );
-    return this.getUrl();
-  }
-
-  async stop(): Promise<void> {
-    stopServer(this.httpServer);
-    this.httpServer = null;
   }
 }

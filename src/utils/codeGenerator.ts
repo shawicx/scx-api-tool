@@ -8,8 +8,13 @@
 import dayjs from 'dayjs';
 import { castArray, groupBy, last, uniq, values } from 'lodash-es';
 import path from 'path';
-import { ExtendedInterface } from './apiTypes';
-import { CommentConfig, ProjectConfig, ServerConfig, SyntheticalConfig } from './config';
+import {
+  CommentConfig,
+  ExtendedInterface,
+  ProjectConfig,
+  ServerConfig,
+  SyntheticalConfig,
+} from '../types';
 import { DATE_TIME_FORMAT, sortByWeights } from './index';
 import { InterfaceCodeGenerator } from './interfaceCodeGenerator';
 import { ProjectFetcher } from './projectFetcher';

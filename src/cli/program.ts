@@ -9,7 +9,7 @@
 import { Command } from 'commander';
 import consola from 'consola';
 import packageJson from '../../package.json';
-import { GenerateCommand, HelpCommand, InitCommand } from './commands.js';
+import { GenerateCommand, HelpCommand, InitCommand } from './commands';
 
 // 获取版本信息
 const version = packageJson.version || '0.0.0';

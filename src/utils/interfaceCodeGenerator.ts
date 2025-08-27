@@ -9,8 +9,7 @@ import * as changeCase from 'change-case';
 import dayjs from 'dayjs';
 import { isFunction } from 'lodash-es';
 import path from 'path';
-import { ExtendedInterface, Interface } from './apiTypes.js';
-import { CommentConfig, SyntheticalConfig } from './config.js';
+import { CommentConfig, ExtendedInterface, Interface, SyntheticalConfig } from '../types';
 import {
   DATE_TIME_FORMAT,
   dedent,
@@ -22,7 +21,7 @@ import {
   getResponseDataJsonSchema,
   getResponseDataTypeName,
   jsonSchemaToType,
-} from './index.js';
+} from './index';
 
 export class InterfaceCodeGenerator {
   /** 生成接口代码 */
@@ -38,20 +37,20 @@ export class InterfaceCodeGenerator {
     };
     const requestFunctionName = isFunction(syntheticalConfig.getRequestFunctionName)
       ? await syntheticalConfig.getRequestFunctionName?.(extendedInterfaceInfo, changeCase)
-      : getRequestFunctionName(extendedInterfaceInfo, changeCase);
+      : getRequestFunctionName(extendedInterfaceInfo as any, changeCase);
     const requestDataTypeName = isFunction(syntheticalConfig.getRequestDataTypeName)
       ? await syntheticalConfig.getRequestDataTypeName?.(extendedInterfaceInfo, changeCase)
-      : getRequestDataTypeName(extendedInterfaceInfo, changeCase);
+      : getRequestDataTypeName(extendedInterfaceInfo as any, changeCase);
     const responseDataTypeName = isFunction(syntheticalConfig.getResponseDataTypeName)
       ? await syntheticalConfig.getResponseDataTypeName?.(extendedInterfaceInfo, changeCase)
-      : getResponseDataTypeName(extendedInterfaceInfo, changeCase);
+      : getResponseDataTypeName(extendedInterfaceInfo as any, changeCase);
 
     const requestDataJsonSchema = getRequestDataJsonSchema(
-      interfaceInfo,
+      interfaceInfo as any,
       syntheticalConfig.customTypeMapping || {},
     );
     const responseDataJsonSchema = getResponseDataJsonSchema(
-      interfaceInfo,
+      interfaceInfo as any,
       syntheticalConfig.customTypeMapping || {},
       syntheticalConfig.dataKey,
     );
@@ -226,7 +225,7 @@ ${responseDataType.trim()}
 ${generateRequestFunction()}`;
 
     const outputFilePath = getOutputFilePath(
-      interfaceInfo,
+      interfaceInfo as any,
       changeCase,
       syntheticalConfig.outputDir,
     );

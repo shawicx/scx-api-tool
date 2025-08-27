@@ -2,72 +2,35 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:37:57
  * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 02:25:35
- * @Description:
+ * @LastEditTime: 2025-08-24 10:46:47
+ * @Description: Swagger转YApi服务器
  */
-import { Server } from 'http';
-import { isEmpty } from 'lodash-es';
 import { OpenAPIV2 as SwaggerType } from 'openapi-types';
-import { swaggerJsonToYApiData } from './swaggerJsonToYApiData.js';
-import type { AsyncReturnType, YApiData } from './utils/index.js';
-import {
-  defaultResponseHandler,
-  getAvailableServerPort,
-  httpGet,
-  startServer,
-  stopServerSync as stopServer,
-} from './utils/index.js';
+import { BaseYApiServer } from './utils/BaseYApiServer';
+import { httpGet } from './utils/index';
+import type { SwaggerToYApiServerOptions } from './types';
 
-export interface SwaggerToYApiServerOptions {
-  swaggerJsonUrl: string;
-}
+// 接口定义已移至 types/server.ts
 
-export class SwaggerToYApiServer {
-  private port = 0;
+export class SwaggerToYApiServer extends BaseYApiServer {
   private swaggerJson: SwaggerType.Document = {} as any;
-  private httpServer: Server | null = null;
-  private yapiData: AsyncReturnType<typeof swaggerJsonToYApiData> = {} as any;
+  private swaggerJsonUrl: string;
 
-  constructor(private readonly options: SwaggerToYApiServerOptions) {}
-
-  async getPort(): Promise<number> {
-    if (this.port === 0) {
-      this.port = await getAvailableServerPort({ defaultPort: 50505 });
-    }
-    return this.port;
+  constructor(options: SwaggerToYApiServerOptions) {
+    super({ defaultPort: 50505 });
+    this.swaggerJsonUrl = options.swaggerJsonUrl;
   }
 
-  async getUrl(): Promise<string> {
-    return `http://127.0.0.1:${await this.getPort()}`;
-  }
-
-  async getSwaggerJson(): Promise<SwaggerType.Document> {
-    if (isEmpty(this.swaggerJson)) {
-      const res = await httpGet<SwaggerType.Document>(this.options.swaggerJsonUrl);
-      this.swaggerJson = res;
+  /**
+   * 获取Swagger数据，带缓存
+   */
+  protected async getSourceData(): Promise<SwaggerType.Document> {
+    if (this.swaggerJson && Object.keys(this.swaggerJson).length > 0) {
+      return this.swaggerJson;
     }
+
+    const res = await httpGet<SwaggerType.Document>(this.swaggerJsonUrl);
+    this.swaggerJson = res;
     return this.swaggerJson;
-  }
-
-  async getYApiData(): Promise<AsyncReturnType<typeof swaggerJsonToYApiData>> {
-    if (isEmpty(this.yapiData)) {
-      this.yapiData = await swaggerJsonToYApiData(await this.getSwaggerJson());
-    }
-    return this.yapiData;
-  }
-
-  async start(): Promise<string> {
-    const yapiData = await this.getYApiData();
-    this.httpServer = await startServer(
-      await this.getPort(),
-      yapiData as YApiData,
-      defaultResponseHandler,
-    );
-    return this.getUrl();
-  }
-
-  async stop(): Promise<void> {
-    stopServer(this.httpServer);
-    this.httpServer = null;
   }
 }

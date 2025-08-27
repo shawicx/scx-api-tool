@@ -1,45 +1,22 @@
 /*
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:30:00
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-14 23:37:25
- * @Description: 服务器相关的工具函数
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2025-08-27 20:09:25
+ * @Description: 服务器相关的工具函数 - 类型已移至 types/server.ts
  */
 import http from 'http';
 import net from 'net';
 import { onExit } from 'signal-exit';
 import url from 'url';
+import type {
+  CreateServerOptions,
+  ServerPortOptions,
+  ServerResponseHandler,
+  YApiData,
+} from '../types';
 
-// 通用服务器配置接口
-export interface HttpServerConfig {
-  port: number;
-  host: string;
-}
-
-export interface CreateServerOptions {
-  port?: number;
-  host?: string;
-  onRequest: (req: http.IncomingMessage, res: http.ServerResponse) => void;
-  onExit?: (cleanup: () => void) => void;
-}
-
-// YApi相关接口
-export interface ServerPortOptions {
-  defaultPort: number;
-  portRange?: [number, number];
-}
-
-export interface YApiData {
-  cats: any[];
-  interfaces: any[];
-  project: any;
-}
-
-export interface ServerResponseHandler {
-  handleExportRequest: (yapiData: YApiData) => string;
-  handleMenuRequest: (yapiData: YApiData) => string;
-  handleProjectRequest: (yapiData: YApiData) => string;
-}
+// 接口定义已移至 types/server.ts
 
 /**
  * @description 检查端口是否可用

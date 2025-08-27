@@ -1,100 +1,11 @@
 /*
  * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-08 23:27:42
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-09 00:34:00
- * @Description: 接口类型定义
+ * @Description: API相关的类型定义
  */
+
 import { JSONSchema4 } from 'json-schema';
 import { ParsedPath } from 'path';
-import {
-  Request_Method,
-  RequestBodyType,
-  RequestFormItemType,
-  RequestParamType,
-  RequestQueryType,
-  Required,
-  ResponseBodyType,
-} from './enums';
-import type { LiteralUnion, OmitStrict } from './index';
-
-export interface ChangeCase {
-  /**
-   * @example
-   * changeCase.camelCase('test string') // => 'testString'
-   */
-  camelCase: (value: string) => string;
-  /**
-   * @example
-   * changeCase.constantCase('test string') // => 'TEST_STRING'
-   */
-  constantCase: (value: string) => string;
-  /**
-   * @example
-   * changeCase.dotCase('test string') // => 'test.string'
-   */
-  dotCase: (value: string) => string;
-  /**
-   * @example
-   * changeCase.headerCase('test string') // => 'Test-String'
-   */
-  headerCase: (value: string) => string;
-  /**
-   * @example
-   * changeCase.lowerCase('TEST STRING') // => 'test string'
-   */
-  lowerCase: (value: string) => string;
-  /**
-   * @example
-   * changeCase.lowerCaseFirst('TEST') // => 'tEST'
-   */
-  lowerCaseFirst: (value: string) => string;
-  /**
-   * @example
-   * changeCase.paramCase('test string') // => 'test-string'
-   */
-  paramCase: (value: string) => string;
-  /**
-   * @example
-   * changeCase.pascalCase('test string') // => 'TestString'
-   */
-  pascalCase: (value: string) => string;
-  /**
-   * @example
-   * changeCase.pathCase('test string') // => 'test/string'
-   */
-  pathCase: (value: string) => string;
-  /**
-   * @example
-   * changeCase.sentenceCase('testString') // => 'Test string'
-   */
-  sentenceCase: (value: string) => string;
-  /**
-   * @example
-   * changeCase.snakeCase('test string') // => 'test_string'
-   */
-  snakeCase: (value: string) => string;
-  /**
-   * @example
-   * changeCase.swapCase('Test String') // => 'tEST sTRING'
-   */
-  swapCase: (value: string) => string;
-  /**
-   * @example
-   * changeCase.titleCase('a simple test') // => 'A Simple Test'
-   */
-  titleCase: (value: string) => string;
-  /**
-   * @example
-   * changeCase.upperCase('test string') // => 'TEST STRING'
-   */
-  upperCase: (value: string) => string;
-  /**
-   * @example
-   * changeCase.upperCaseFirst('test') // => 'Test'
-   */
-  upperCaseFirst: (value: string) => string;
-}
+import type { LiteralUnion, OmitStrict } from './utils';
 
 /** 接口定义 */
 export interface Interface {
@@ -115,7 +26,7 @@ export interface Interface {
   /** 请求路径 */
   path: string;
   /** 请求方式，HEAD、OPTIONS 处理与 GET 相似，其余处理与 POST 相似 */
-  method: Request_Method;
+  method: string;
   /** 所属项目 id */
   project_id: number;
   /** 所属分类 id */
@@ -133,7 +44,7 @@ export interface Interface {
     /** 示例 */
     example: string;
     /** 是否必需 */
-    required: Required;
+    required: string;
   }>;
   /** 路径参数 */
   req_params: Array<{
@@ -144,7 +55,7 @@ export interface Interface {
     /** 示例 */
     example: string;
     /** 类型（YApi-X） */
-    type?: RequestParamType;
+    type?: string;
   }>;
   /** 仅 GET：请求串 */
   req_query: Array<{
@@ -155,12 +66,12 @@ export interface Interface {
     /** 示例 */
     example: string;
     /** 是否必需 */
-    required: Required;
+    required: string;
     /** 类型（YApi-X） */
-    type?: RequestQueryType;
+    type?: string;
   }>;
   /** 仅 POST：请求内容类型。为 text, file, raw 时不必特殊处理。 */
-  req_body_type: RequestBodyType;
+  req_body_type: string;
   /** `req_body_type = json` 时是否为 json schema */
   req_body_is_json_schema: boolean;
   /** `req_body_type = form` 时的请求内容 */
@@ -168,18 +79,18 @@ export interface Interface {
     /** 名称 */
     name: string;
     /** 类型 */
-    type: RequestFormItemType;
+    type: string;
     /** 备注 */
     desc: string;
     /** 示例 */
     example: string;
     /** 是否必需 */
-    required: Required;
+    required: string;
   }>;
   /** `req_body_type = json` 时的请求内容 */
   req_body_other: string;
   /** 返回数据类型 */
-  res_body_type: ResponseBodyType;
+  res_body_type: string;
   /** `res_body_type = json` 时是否为 json schema */
   res_body_is_json_schema: boolean;
   /** 返回数据 */
@@ -259,3 +170,82 @@ export interface PropDefinition {
 
 /** 属性定义列表 */
 export type PropDefinitions = PropDefinition[];
+
+/** 大小写转换工具 */
+export interface ChangeCase {
+  /**
+   * @example
+   * changeCase.camelCase('test string') // => 'testString'
+   */
+  camelCase: (value: string) => string;
+  /**
+   * @example
+   * changeCase.constantCase('test string') // => 'TEST_STRING'
+   */
+  constantCase: (value: string) => string;
+  /**
+   * @example
+   * changeCase.dotCase('test string') // => 'test.string'
+   */
+  dotCase: (value: string) => string;
+  /**
+   * @example
+   * changeCase.headerCase('test string') // => 'Test-String'
+   */
+  headerCase: (value: string) => string;
+  /**
+   * @example
+   * changeCase.lowerCase('TEST STRING') // => 'test string'
+   */
+  lowerCase: (value: string) => string;
+  /**
+   * @example
+   * changeCase.lowerCaseFirst('TEST') // => 'tEST'
+   */
+  lowerCaseFirst: (value: string) => string;
+  /**
+   * @example
+   * changeCase.paramCase('test string') // => 'test-string'
+   */
+  paramCase: (value: string) => string;
+  /**
+   * @example
+   * changeCase.pascalCase('test string') // => 'TestString'
+   */
+  pascalCase: (value: string) => string;
+  /**
+   * @example
+   * changeCase.pathCase('test string') // => 'test/string'
+   */
+  pathCase: (value: string) => string;
+  /**
+   * @example
+   * changeCase.sentenceCase('testString') // => 'Test string'
+   */
+  sentenceCase: (value: string) => string;
+  /**
+   * @example
+   * changeCase.snakeCase('test string') // => 'test_string'
+   */
+  snakeCase: (value: string) => string;
+  /**
+   * @example
+   * changeCase.swapCase('Test String') // => 'tEST sTRING'
+   */
+  swapCase: (value: string) => string;
+  /**
+   * @example
+   * changeCase.titleCase('a simple test') // => 'A Simple Test'
+   */
+  titleCase: (value: string) => string;
+  /**
+   * @example
+   * changeCase.upperCase('test string') // => 'TEST STRING'
+   */
+  upperCase: (value: string) => string;
+  /**
+   * @example
+   * changeCase.upperCaseFirst('test') // => 'Test'
+   */
+  upperCaseFirst: (value: string) => string;
+}

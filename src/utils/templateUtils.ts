@@ -14,7 +14,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 // 模板文件路径配置
-const TEMPLATE_DIR = path.join(__dirname, './templates');
+const TEMPLATE_DIR = path.join(__dirname, '../templates');
 
 /**
  * @description 获取模板内容
@@ -23,7 +23,7 @@ const TEMPLATE_DIR = path.join(__dirname, './templates');
  */
 export function getTemplate(templateName: string): string {
   const templatePath = path.join(TEMPLATE_DIR, `${templateName}.ts`);
-  console.log(__filename, __dirname, templatePath, '文件名称');
+  console.log({ __filename, __dirname, templatePath }, '文件名称');
 
   if (!fs.existsSync(templatePath)) {
     throw new Error(`模板文件不存在: ${templatePath}`);

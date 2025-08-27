@@ -1,6 +1,6 @@
 import { isEmpty, memoize, omit } from 'lodash-es';
-import { CategoryList, InterfaceList, Project } from './apiTypes';
-import { SyntheticalConfig } from './config';
+import { CategoryList, InterfaceList, Project } from '../types';
+import { SyntheticalConfig } from '../types';
 import { httpGet, throwError } from './index';
 
 export class ProjectFetcher {

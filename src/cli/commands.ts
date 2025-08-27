@@ -1,8 +1,8 @@
 /*
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-24 09:00:00
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 10:46:55
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2025-08-27 20:19:18
  * @Description: CLI 命令处理器
  */
 
@@ -10,9 +10,10 @@ import * as p from '@clack/prompts';
 import consola from 'consola';
 import fs from 'fs-extra';
 import path from 'path';
-import { Generator } from '../Generator.js';
-import { ConfigWithHooks, dedent, wait } from '../utils/index.js';
-import { generateConfigContent } from '../utils/templateUtils.js';
+import { Generator } from '../Generator';
+import { ConfigWithHooks } from '../types';
+import { dedent, wait } from '../utils/index';
+import { generateConfigContent } from '../utils/templateUtils';
 
 /**
  * 配置文件加载器
@@ -29,13 +30,10 @@ export class ConfigLoader {
       if (configFile.endsWith('.ts')) {
         // TypeScript 配置文件需要特殊处理
         try {
-          // 尝试使用 ts-node ESM 加载器
-          configModule = await import(`${configFile}?t=${Date.now()}`);
+          configModule = await import(`${configFile}`);
         } catch (error: any) {
           if (error.code === 'ERR_UNKNOWN_FILE_EXTENSION') {
-            throw new Error(
-              '加载 TypeScript 配置文件需要配置 ts-node ESM 支持。请使用 JS 配置文件或配置 ts-node ESM 加载器。',
-            );
+            throw new Error('加载 TypeScript 配置文件失败。请使用 JS 配置文件。');
           }
           throw error;
         }

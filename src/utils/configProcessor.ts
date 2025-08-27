@@ -1,14 +1,11 @@
 /*
  * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-10 10:42:43
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 02:25:55
- * @Description:
+ * @Description: 配置处理器
  */
 import { castArray } from 'lodash-es';
-import { ApifoxToYApiServer } from '../ApifoxToYApiServer.js';
-import { SwaggerToYApiServer } from '../SwaggerToYApiServer.js';
-import { ServerConfig } from './config.js';
+import { ApifoxToYApiServer } from '../ApifoxToYApiServer';
+import { SwaggerToYApiServer } from '../SwaggerToYApiServer';
+import { ServerConfig } from '../types';
 
 export class ConfigProcessor {
   private disposes: Array<() => any> = [];
@@ -30,6 +27,7 @@ export class ConfigProcessor {
           const firstToken = firstProject ? castArray(firstProject.token)[0] : '';
 
           const apifoxToYApiServer = new ApifoxToYApiServer({
+            defaultPort: 50506,
             serverUrl: configItem.serverUrl,
             token: firstToken,
             projectId: configItem.apifoxProjectId || '6720131', // 使用配置中的项目ID，如果没有则使用默认值

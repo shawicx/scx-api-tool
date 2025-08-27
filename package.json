@@ -46,7 +46,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown && node scripts/post-build.js",
+    "dev": "tsx src/index.ts init",
+    "build": "tsdown",
     "analyze:deps": "node scripts/analyze-deps.js",
     "ci:eslint": "eslint -f json src -o ./.ci/eslint.json",
     "docs": "pnpm run dumi build",
@@ -144,8 +145,8 @@
     "shx": "^0.3.2",
     "tempy": "^0.3.0",
     "ts-essentials": "^10.1.1",
-    "ts-node": "^10.9.2",
     "tsdown": "^0.13.1",
+    "tsx": "^4.20.5",
     "type-fest": "^4.41.0",
     "typedoc": "^0.14.2",
     "typescript": "^5.9.2",

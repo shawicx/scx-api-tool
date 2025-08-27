@@ -12,7 +12,7 @@ export default defineConfig([
     // serverType: 'apifox',
     // 此时可以不设置apifoxProjectId，代码会自动从URL中提取
     typesOnly: false,
-    target: '{{TARGET}}',
+    target: 'typescript' as const,
     // 统一去掉接口路径的某部分，例如 '/api'
     pathPrefix: '',
     // 输出目录配置

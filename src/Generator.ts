@@ -13,10 +13,8 @@ import {
   FileManager,
   InterfaceCodeGenerator,
   ProjectFetcher,
-  type Config,
-  type OutputFileList,
-  type ServerConfig,
-} from './utils/index.js';
+} from './utils/index';
+import type { Config, OutputFileList, ServerConfig } from './types';
 
 export class Generator {
   /** 配置 */

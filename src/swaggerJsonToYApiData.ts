@@ -4,13 +4,13 @@ import { each, find } from 'lodash-es';
 import { OpenAPIV2 as SwaggerType } from 'openapi-types';
 // 动态导入swagger-client以减少bundle大小
 import swagger from 'swagger-client';
-import { Category, Interface, Project } from './utils/index.js';
+import { Category, Interface, Project } from './types';
 import {
   handlePath,
   handleResponse,
   openapi2swagger,
   processParameter,
-} from './utils/swaggerUtils.js';
+} from './utils/swaggerUtils';
 
 let SwaggerData;
 let isOAS3;

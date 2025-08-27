@@ -17,7 +17,7 @@ function createTemplateTransformer(
   options: TemplateTransformOptions,
 ): ts.TransformerFactory<ts.SourceFile> {
   return (context: ts.TransformationContext) => {
-    return (sourceFile: ts.SourceFile) => {
+    return (sourceFile: ts.SourceFile): ts.SourceFile => {
       if (!sourceFile.fileName.includes('templateUtils.ts')) {
         return sourceFile;
       }
@@ -65,7 +65,7 @@ function createTemplateTransformer(
         return ts.visitEachChild(node, visitor, context);
       };
 
-      return ts.visitNode(sourceFile, visitor);
+      return ts.visitNode(sourceFile, visitor) as ts.SourceFile;
     };
   };
 }

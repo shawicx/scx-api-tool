@@ -1,22 +1,54 @@
 import { JSONSchema4, JSONSchema4TypeName } from 'json-schema';
 import JSON5 from 'json5';
 import { isArray } from 'lodash-es';
-import { Interface, PropDefinition } from './apiTypes.js';
 import {
-  isPostLikeMethod,
+  Interface,
+  OneOrMore,
+  PropDefinition,
   RequestBodyType,
   RequestFormItemType,
   Required,
   ResponseBodyType,
-} from './enums.js';
+} from '../types';
 import {
   jsonSchemaStringToJsonSchema,
   jsonToJsonSchema,
   mockjsTemplateToJsonSchema,
   propDefinitionsToJsonSchema,
   reachJsonSchema,
-} from './jsonSchema.js';
-import { OneOrMore } from './types.js';
+} from './jsonSchema';
+
+/**
+ * @description 将字符串类型转换为有效的 JSONSchema4TypeName 类型
+ * @param type 原始类型字符串
+ * @returns 有效的 JSONSchema4TypeName 类型
+ */
+function normalizeType(type: string | undefined): JSONSchema4TypeName {
+  if (!type) return 'string';
+
+  // 类型映射表，键都为小写
+  const typeMapping: Record<string, JSONSchema4TypeName> = {
+    byte: 'integer',
+    short: 'integer',
+    int: 'integer',
+    long: 'integer',
+    float: 'number',
+    double: 'number',
+    bigdecimal: 'number',
+    char: 'string',
+    void: 'null',
+    string: 'string',
+    number: 'number',
+    integer: 'integer',
+    boolean: 'boolean',
+    array: 'array',
+    object: 'object',
+    null: 'null',
+  };
+
+  const lowerType = type.toLowerCase();
+  return typeMapping[lowerType] || 'string';
+}
 
 /**
  * @description 获得请求数据 JSONSchema 对象。
@@ -31,7 +63,7 @@ export function getRequestDataJsonSchema(
   let jsonSchema: JSONSchema4 | undefined;
 
   // 处理表单数据（仅 POST 类接口）
-  if (isPostLikeMethod(interfaceInfo.method)) {
+  if (interfaceInfo.method === 'POST') {
     switch (interfaceInfo.req_body_type) {
       case RequestBodyType.form:
         jsonSchema = propDefinitionsToJsonSchema(
@@ -63,7 +95,7 @@ export function getRequestDataJsonSchema(
       interfaceInfo.req_query.map<PropDefinition>((item) => ({
         name: item.name,
         required: item.required === Required.true,
-        type: item.type || 'string',
+        type: normalizeType(item.type),
         comment: item.desc,
       })),
       customTypeMapping,
@@ -89,7 +121,7 @@ export function getRequestDataJsonSchema(
       interfaceInfo.req_params.map<PropDefinition>((item) => ({
         name: item.name,
         required: true,
-        type: item.type || 'string',
+        type: normalizeType(item.type),
         comment: item.desc,
       })),
       customTypeMapping,

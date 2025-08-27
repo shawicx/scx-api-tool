@@ -6,8 +6,8 @@
  * @Description: 数据处理相关的工具函数
  */
 import { castArray, isEmpty, omit, uniq } from 'lodash-es';
-import { InterfaceList } from './apiTypes';
-import { SyntheticalConfig } from './config';
+import { InterfaceList } from '../types';
+import { SyntheticalConfig } from '../types';
 
 /**
  * 处理分类ID列表

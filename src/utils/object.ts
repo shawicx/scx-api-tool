@@ -1,12 +1,9 @@
 /*
  * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-08 23:27:42
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 02:26:52
  * @Description: 对象处理工具函数
  */
 import { forOwn, has, isPlainObject, omit } from 'lodash-es';
-import { OmitStrict, OneOrMore } from './index.js';
+import { OmitStrict, OneOrMore } from '../types';
 
 /**
  * @description 遍历对象和数组。

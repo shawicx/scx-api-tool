@@ -1,4 +1,4 @@
-import { ChangeCase, ExtendedInterface } from './apiTypes.js';
+import { ChangeCase, ExtendedInterface } from '../types';
 
 /**
  * @description 生成请求函数名称

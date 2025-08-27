@@ -1,26 +1,16 @@
+/*
+ * @Author: shawicx d35f3153@proton.me
+ * @Description:
+ */
 import axios from 'axios';
 import type { OpenAPIV3 } from 'openapi-types';
+import type { ApifoxConfig } from '../types';
 
-export interface ApifoxExportOptions {
-  scope?: {
-    type?: 'ALL' | 'FOLDER' | 'INTERFACE';
-    excludedByTags?: string[];
-  };
-  options?: {
-    includeApifoxExtensionProperties?: boolean;
-    addFoldersToTags?: boolean;
-  };
-  oasVersion?: '3.0' | '3.1';
-  exportFormat?: 'JSON' | 'YAML';
-}
-
-export interface ApifoxConfig {
-  serverUrl: string;
-  token: string;
-  projectId?: string;
-  exportOptions?: ApifoxExportOptions;
-}
-
+/**
+ * 从 Apifox 获取 OpenAPI 格式的数据
+ * @param config Apifox 配置
+ * @returns OpenAPI 文档
+ */
 /**
  * 从 Apifox 获取 OpenAPI 格式的数据
  * @param config Apifox 配置
@@ -31,17 +21,7 @@ export async function fetchApifoxOpenAPI(config: ApifoxConfig): Promise<OpenAPIV
     serverUrl,
     token,
     projectId, // 移除默认值，让调用方必须提供
-    exportOptions = {
-      scope: {
-        type: 'ALL',
-      },
-      options: {
-        includeApifoxExtensionProperties: false,
-        addFoldersToTags: true,
-      },
-      oasVersion: '3.1',
-      exportFormat: 'JSON',
-    },
+    format = 'json',
   } = config;
 
   if (!projectId) {
@@ -69,15 +49,15 @@ export async function fetchApifoxOpenAPI(config: ApifoxConfig): Promise<OpenAPIV
   };
 
   const requestBody = {
-    scope: exportOptions.scope || {
+    scope: {
       type: 'ALL',
     },
-    options: exportOptions.options || {
+    options: {
       includeApifoxExtensionProperties: false,
       addFoldersToTags: true,
     },
-    oasVersion: exportOptions.oasVersion || '3.1',
-    exportFormat: exportOptions.exportFormat || 'JSON',
+    oasVersion: '3.1',
+    exportFormat: format.toUpperCase(),
   };
 
   try {
