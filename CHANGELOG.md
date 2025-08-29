@@ -1,5 +1,11 @@
 # @scxfe/api-tool
 
+## 0.3.2
+
+### Patch Changes
+
+- 7cfb1a3: fix: 去掉不必要的生成代码
+
 ## 0.3.1
 
 ### Patch Changes
