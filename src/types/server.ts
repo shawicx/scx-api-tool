@@ -1,8 +1,5 @@
 /*
  * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-24 11:00:00
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 11:00:00
  * @Description: 服务器相关的类型定义
  */
 
@@ -61,14 +58,4 @@ export interface ApifoxToYApiServerOptions extends BaseYApiServerOptions {
 export interface FileGeneratorOptions {
   cwd: string;
   outputDir: string;
-}
-
-/** 输出文件列表 */
-export interface OutputFileList {
-  [outputFilePath: string]: {
-    syntheticalConfig: any;
-    content: string[];
-    requestFunctionFilePath: string;
-    requestHookMakerFilePath: string;
-  };
 }
