@@ -16,13 +16,13 @@
 ### 安装
 
 ```bash
-# 全局安装
-npm install -g @scxfe/api-tool
+# 全局安装（推荐）
+pnpm install -g @scxfe/api-tool
 
 # 或项目本地安装
-npm install --save-dev @scxfe/api-tool
+pnpm install --save-dev @scxfe/api-tool
 
-# 或使用 npx（推荐）
+# 或使用 npx
 npx @scxfe/api-tool
 ```
 
@@ -32,11 +32,16 @@ npx @scxfe/api-tool
 # 1. 初始化配置文件
 npx api-power init
 
-# 2. 编辑配置文件 api-power.config.ts
+# 2. 编辑配置文件 api-power.config.ts / api-power.config.js
 
 # 3. 生成代码
 npx api-power
 ```
+
+## features
+
+[x] 请求方法与数据类型分离
+[x]
 
 ## 📖 文档
 

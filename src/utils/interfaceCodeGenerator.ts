@@ -1,17 +1,15 @@
 /*
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:30:00
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-24 02:26:22
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2025-08-27 22:45:39
  * @Description: 接口代码生成相关的工具函数
  */
 import * as changeCase from 'change-case';
-import dayjs from 'dayjs';
 import { isFunction } from 'lodash-es';
 import path from 'path';
 import { CommentConfig, ExtendedInterface, Interface, SyntheticalConfig } from '../types';
 import {
-  DATE_TIME_FORMAT,
   dedent,
   DEFAULT_CONFIG,
   getOutputFilePath,
@@ -97,7 +95,6 @@ export class InterfaceCodeGenerator {
         category: hasCategory = true,
         tag: hasTag = true,
         requestHeader: hasRequestHeader = true,
-        updateTime: hasUpdateTime = true,
         link: hasLink = true,
         extraTags,
       } = {
@@ -128,12 +125,7 @@ export class InterfaceCodeGenerator {
       > = [
         hasCategory && {
           label: 'category',
-          value: (() => {
-            if (hasLink) {
-              return `[${extendedInterfaceInfo._category.name}↗](${extendedInterfaceInfo._category._url})`;
-            }
-            return extendedInterfaceInfo._category.name;
-          })(),
+          value: extendedInterfaceInfo._category.name,
         },
         hasTag && {
           label: 'tags',
@@ -146,10 +138,6 @@ export class InterfaceCodeGenerator {
         hasRequestHeader && {
           label: 'path',
           value: `${extendedInterfaceInfo.path}`,
-        },
-        hasUpdateTime && {
-          label: 'updateTime',
-          value: `${dayjs(extendedInterfaceInfo.up_time * 1000).format(DATE_TIME_FORMAT)}`,
         },
       ];
       if (typeof extraTags === 'function') {

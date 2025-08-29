@@ -2,7 +2,6 @@
  * @Author: shawicx d35f3153@proton.me
  * @Description: 代码生成相关的工具函数
  */
-import dayjs from 'dayjs';
 import { castArray, groupBy, last, uniq, values } from 'lodash-es';
 import path from 'path';
 import {
@@ -14,7 +13,7 @@ import {
   ServerConfig,
   SyntheticalConfig,
 } from '../types';
-import { DATE_TIME_FORMAT, sortByWeights } from './index';
+import { sortByWeights } from './index';
 import { InterfaceCodeGenerator } from './interfaceCodeGenerator';
 import { ProjectFetcher } from './projectFetcher';
 import { dedent } from './string';
@@ -61,8 +60,6 @@ export function generateInterfaceComment(
     category: hasCategory = true,
     tag: hasTag = true,
     requestHeader: hasRequestHeader = true,
-    updateTime: hasUpdateTime = true,
-    link: hasLink = true,
     extraTags,
   } = {
     ...syntheticalConfig.comment,
@@ -92,12 +89,7 @@ export function generateInterfaceComment(
   > = [
     hasCategory && {
       label: 'category',
-      value: (() => {
-        if (hasLink) {
-          return `${extendedInterfaceInfo._category.name}`;
-        }
-        return extendedInterfaceInfo._category.name;
-      })(),
+      value: extendedInterfaceInfo._category.name,
     },
     hasTag && {
       label: 'tags',
@@ -110,10 +102,6 @@ export function generateInterfaceComment(
     hasRequestHeader && {
       label: 'path',
       value: `${extendedInterfaceInfo.path}`,
-    },
-    hasUpdateTime && {
-      label: 'updateTime',
-      value: `${dayjs(extendedInterfaceInfo.up_time * 1000).format(DATE_TIME_FORMAT)}`,
     },
   ];
 
