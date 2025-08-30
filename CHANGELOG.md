@@ -1,5 +1,11 @@
 # @scxfe/api-tool
 
+## 0.3.3
+
+### Patch Changes
+
+- 64fb6ec: feat: update code generation utilities
+
 ## 0.3.2
 
 ### Patch Changes
