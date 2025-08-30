@@ -93,7 +93,7 @@ export function generateInterfaceComment(
     },
     hasTag && {
       label: 'tags',
-      value: extendedInterfaceInfo.tag.map((tag) => `${tag}`),
+      value: extendedInterfaceInfo.tag.map((tag) => `${tag}`).join('/'),
     },
     hasRequestHeader && {
       label: 'method',
@@ -118,7 +118,6 @@ export function generateInterfaceComment(
   const titleComment = hasTitle
     ? dedent`
         * ${genTitle(description)}
-        *
       `
     : '';
 

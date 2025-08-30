@@ -2,7 +2,7 @@
  * @Author: shawicx d35f3153@proton.me
  * @Date: 2025-08-09 23:30:00
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-08-27 22:45:39
+ * @LastEditTime: 2025-08-29 21:06:37
  * @Description: 接口代码生成相关的工具函数
  */
 import * as changeCase from 'change-case';
@@ -95,7 +95,6 @@ export class InterfaceCodeGenerator {
         category: hasCategory = true,
         tag: hasTag = true,
         requestHeader: hasRequestHeader = true,
-        link: hasLink = true,
         extraTags,
       } = {
         ...syntheticalConfig.comment,
@@ -112,10 +111,7 @@ export class InterfaceCodeGenerator {
         return '';
       }
       // 转义标题中的 /
-      const escapedTitle = String(extendedInterfaceInfo.title).replace(/\//g, '\\/');
-      const description = hasLink
-        ? `[${escapedTitle}↗](${extendedInterfaceInfo._url})`
-        : escapedTitle;
+      const description = String(extendedInterfaceInfo.title).replace(/\//g, '\\/');
       const summary: Array<
         | false
         | {
@@ -129,7 +125,7 @@ export class InterfaceCodeGenerator {
         },
         hasTag && {
           label: 'tags',
-          value: extendedInterfaceInfo.tag.map((tag) => `${tag}`),
+          value: extendedInterfaceInfo.tag.map((tag) => `${tag}`).join('/'),
         },
         hasRequestHeader && {
           label: 'method',
@@ -152,7 +148,6 @@ export class InterfaceCodeGenerator {
       const titleComment = hasTitle
         ? dedent`
                 * ${genTitle(description)}
-                *
               `
         : '';
       const extraComment: string = summary
