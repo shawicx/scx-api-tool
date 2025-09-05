@@ -1,6 +1,6 @@
 {
   "name": "@scxfe/api-tool",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -58,7 +58,7 @@
     "postaction": "git push origin main --tags",
     "prepare": "husky",
     "prepublish": "pnpm run build",
-    "publish": "changeset add && changeset version && changeset publish",
+    "publish": "standard-version",
     "release": "pnpm run prepublish && pnpm run publish && pnpm run postaction",
     "docs:preview": "vitepress preview"
   },
