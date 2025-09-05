@@ -3,7 +3,7 @@
  * @Description: 路径处理工具函数
  */
 import path from 'path';
-import TinyPinyin from 'tiny-pinyin';
+import { pinyin } from 'pinyin-pro';
 import { ChangeCase, Interface } from '../types';
 
 /**
@@ -51,9 +51,10 @@ export function getOutputFilePath(
         .split('')
         .filter(Boolean)
         .map((item) => {
-          return changeCase.upperCaseFirst(
-            changeCase.lowerCase(TinyPinyin.convertToPinyin(item)).trim(),
-          );
+          // Use pinyin-pro instead of tiny-pinyin
+          const pinyinResult = pinyin(item, { toneType: 'none', type: 'array' });
+          const pinyinStr = pinyinResult.length > 0 ? pinyinResult[0] : item;
+          return changeCase.upperCaseFirst(changeCase.lowerCase(pinyinStr).trim());
         })
         .join('');
     })
