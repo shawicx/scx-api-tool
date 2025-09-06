@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.1](https://github.com/shawicx/scx-api-tool/compare/v0.4.0...v0.4.1) (2025-09-06)
+
+### Documentation
+
+- 更新 CHANGELOG.md ([bf97d81](https://github.com/shawicx/scx-api-tool/commit/bf97d8168c656e56e18edd98b88fbd9b8efb9740))
+
 ## 0.4.0 (2025-09-06)
 
 ### ⚠ BREAKING CHANGES
