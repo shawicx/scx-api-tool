@@ -14,9 +14,7 @@ export * from './utils/index';
 export * from './types';
 
 // 导出核心类
-export { ApifoxToYApiServer } from './ApifoxToYApiServer';
 export { Generator } from './Generator';
-export { SwaggerToYApiServer } from './SwaggerToYApiServer';
 
 // 导出 CLI 相关功能
 export * from './cli/index';

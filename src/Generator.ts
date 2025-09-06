@@ -6,15 +6,14 @@
  * @Description: Generator类，负责协调各个工具类完成代码生成任务
  */
 import { castArray } from 'lodash-es';
+import { OpenAPI3CodeGenerator } from './generators/openapi3CodeGenerator';
+import type { Config, OutputFileList, ServerConfig } from './types';
 import {
-  CodeGenerator,
   ConfigProcessor,
   DEFAULT_CONFIG,
   FileManager,
   InterfaceCodeGenerator,
-  ProjectFetcher,
 } from './utils/index';
-import type { Config, OutputFileList, ServerConfig } from './types';
 
 export class Generator {
   /** 配置 */
@@ -22,11 +21,10 @@ export class Generator {
 
   private disposes: Array<() => any> = [];
 
-  private projectFetcher: ProjectFetcher;
   private interfaceCodeGenerator: InterfaceCodeGenerator;
   private fileManager: FileManager;
   private configProcessor: ConfigProcessor;
-  private codeGenerator: CodeGenerator;
+  private codeGenerator: OpenAPI3CodeGenerator;
 
   constructor(
     config: Config,
@@ -36,15 +34,10 @@ export class Generator {
     this.config = castArray(config);
 
     // 初始化工具类
-    this.projectFetcher = new ProjectFetcher();
     this.interfaceCodeGenerator = new InterfaceCodeGenerator();
     this.fileManager = new FileManager(this.options);
     this.configProcessor = new ConfigProcessor();
-    this.codeGenerator = new CodeGenerator(
-      this.projectFetcher,
-      this.interfaceCodeGenerator,
-      this.options,
-    );
+    this.codeGenerator = new OpenAPI3CodeGenerator(this.interfaceCodeGenerator, this.options);
   }
 
   async prepare(): Promise<void> {

@@ -103,8 +103,8 @@ export function validateConfig(config: any): { isValid: boolean; errors: string[
     errors.push('serverUrl必须是有效的URL');
   }
 
-  if (config.serverType && !['yapi', 'swagger', 'apifox'].includes(config.serverType)) {
-    errors.push('serverType必须是yapi、swagger或apifox之一');
+  if (config.serverType && !['swagger', 'apifox'].includes(config.serverType)) {
+    errors.push('serverType必须是swagger或apifox之一');
   }
 
   if (

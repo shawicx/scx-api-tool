@@ -1,8 +1,5 @@
 /*
  * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-09 23:30:00
- * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-08-27 21:17:55
  * @Description: 文件生成相关的工具函数 - 类型已移至 types/server.ts
  */
 import fs from 'fs-extra';

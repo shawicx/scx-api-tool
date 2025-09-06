@@ -105,7 +105,7 @@ export class HelpCommand {
     console.log(`
 ${dedent`
       # API Power CLI v${version}
-      一个强大的 API 代码生成工具，支持 Swagger、YApi、Apifox 等平台
+      一个强大的 API 代码生成工具，支持 Swagger、Apifox 等平台
 
       # 用法
           初始化配置文件: api-power init

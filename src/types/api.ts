@@ -15,7 +15,7 @@ export interface Interface {
   _category: OmitStrict<Category, 'list'>;
   /** 所属项目信息（由 @scxfe/api-tool 自行实现） */
   _project: Project;
-  /** 接口在 YApi 上的地址（由 @scxfe/api-tool 自行实现） */
+  /** 接口地址 */
   _url: string;
   /** 接口名称 */
   title: string;
@@ -54,7 +54,7 @@ export interface Interface {
     desc: string;
     /** 示例 */
     example: string;
-    /** 类型（YApi-X） */
+    /** 类型 */
     type?: string;
   }>;
   /** 仅 GET：请求串 */
@@ -67,7 +67,7 @@ export interface Interface {
     example: string;
     /** 是否必需 */
     required: string;
-    /** 类型（YApi-X） */
+    /** 类型 */
     type?: string;
   }>;
   /** 仅 POST：请求内容类型。为 text, file, raw 时不必特殊处理。 */
@@ -116,7 +116,7 @@ export type InterfaceList = Interface[];
 export interface Category {
   /** ID */
   _id: number;
-  /** 分类在 YApi 上的地址（由 @scxfe/api-tool 自行实现） */
+  /** 分类地址 */
   _url?: string;
   /** 分类名称 */
   name: string;
@@ -137,7 +137,7 @@ export type CategoryList = Category[];
 export interface Project {
   /** ID */
   _id: number;
-  /** 项目在 YApi 上的地址（由 @scxfe/api-tool 自行实现） */
+  /** 项目地址 */
   _url?: string;
   /** 名称 */
   name: string;

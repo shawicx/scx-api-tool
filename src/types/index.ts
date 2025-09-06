@@ -16,8 +16,5 @@ export * from './enums';
 // 配置相关类型
 export * from './config';
 
-// 服务器相关类型
-export * from './server';
-
 // 工具类型
 export * from './utils';

@@ -33,6 +33,7 @@ export class InterfaceCodeGenerator {
       ...interfaceInfo,
       parsedPath: path.parse(interfaceInfo.path),
     };
+
     const requestFunctionName = isFunction(syntheticalConfig.getRequestFunctionName)
       ? await syntheticalConfig.getRequestFunctionName?.(extendedInterfaceInfo, changeCase)
       : getRequestFunctionName(extendedInterfaceInfo as any, changeCase);
@@ -98,8 +99,8 @@ export class InterfaceCodeGenerator {
         extraTags,
       } = {
         ...syntheticalConfig.comment,
-        // Swagger 时总是禁用标签、更新时间、链接
-        ...(syntheticalConfig.serverType === 'swagger'
+        // Swagger 和 OpenAPI 3.0 时总是禁用标签、更新时间、链接
+        ...(syntheticalConfig.serverType === 'swagger' || syntheticalConfig.serverType === 'apifox'
           ? {
               tag: false,
               updateTime: false,

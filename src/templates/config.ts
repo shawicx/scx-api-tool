@@ -27,7 +27,7 @@ export default defineConfig([
     dataKey: 'data',
     projects: [
       {
-        token: 'token', // Swagger项目不需要token
+        token: 'token', // Apifox项目需要token
         categories: [
           {
             id: 0,

@@ -27,7 +27,7 @@ export default defineConfig([
     // dataKey: 'data',
     projects: [
       {
-        token: 'APS-UqOdFQhnaBMU2A2q9EbuXUuDf3aqS93t', // Swagger项目不需要token
+        token: 'APS-UqOdFQhnaBMU2A2q9EbuXUuDf3aqS93t', // Apifox项目需要token
         categories: [
           {
             id: 0,

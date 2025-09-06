@@ -33,7 +33,7 @@ export class CLIProgram {
   private setupProgram(): void {
     this.program
       .name('api-power')
-      .description('一个强大的 API 代码生成工具，支持 Swagger、YApi、Apifox 等平台')
+      .description('一个强大的 API 代码生成工具，支持 Swagger、Apifox 等平台')
       .version(version, '-v, --version', '显示版本号')
       .option('-c, --config <path>', '指定配置文件路径')
       .option('--verbose', '显示详细信息');

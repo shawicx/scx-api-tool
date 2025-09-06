@@ -2,11 +2,11 @@
 
 ## 什么是 @scx/api-tool
 
-`@scx/api-tool` 是一个强大的 Node.js CLI 工具，专门用于从各种 API 管理平台（如 Swagger、YApi、Apifox）自动生成 TypeScript/JavaScript 代码。
+`@scx/api-tool` 是一个强大的 Node.js CLI 工具，专门用于从各种 API 管理平台（如 Swagger/OpenAPI 3.0、Apifox）自动生成 TypeScript/JavaScript 代码。
 
 ## 主要特性
 
-- 🚀 **多平台支持**: 支持 Swagger、YApi、Apifox 等主流 API 管理平台
+- 🚀 **多平台支持**: 支持 Swagger/OpenAPI 3.0、Apifox 等主流 API 管理平台
 - 📝 **类型生成**: 自动生成完整的 TypeScript 类型定义
 - 🔧 **代码生成**: 自动生成 HTTP 请求函数和接口代码
 - 🎨 **模板定制**: 支持自定义代码生成模板

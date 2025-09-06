@@ -82,7 +82,7 @@ export interface ProjectConfig extends SharedConfig {
 /** 服务器的配置 */
 export interface ServerConfig extends SharedConfig {
   serverUrl: string;
-  serverType?: 'yapi' | 'swagger' | 'apifox';
+  serverType?: 'swagger' | 'apifox';
   apifoxProjectId?: string;
   projects: ProjectConfig[];
 }

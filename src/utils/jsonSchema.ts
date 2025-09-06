@@ -151,9 +151,7 @@ export function jsonSchemaToJSTTJsonSchema(
   }
   return traverseJsonSchema(jsonSchema, (schema, currentPath) => {
     // 支持类型引用
-    const refValue =
-      // YApi 低版本不支持配置 title，可以在 description 里配置
-      schema.title == null ? schema.description : schema.title;
+    const refValue = schema.title == null ? schema.description : schema.title;
     if (refValue?.startsWith('&')) {
       const typeRelativePath = refValue.substring(1);
       const typeAbsolutePath = toUnixPath(

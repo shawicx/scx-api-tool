@@ -1,8 +1,5 @@
 /*
  * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-10 00:15:00
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-14 20:14:59
  * @Description: 配置默认常量
  */
 
@@ -23,7 +20,7 @@ export const DEFAULT_CONFIG = {
   TARGET: 'typescript' as const,
 
   // 服务类型默认值
-  SERVER_TYPE: 'yapi' as const,
+  SERVER_TYPE: 'swagger' as const,
 
   // 生产环境名称默认值
   PROD_ENV_NAME: 'production',

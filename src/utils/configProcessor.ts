@@ -2,39 +2,17 @@
  * @Author: shawicx d35f3153@proton.me
  * @Description: 配置处理器
  */
-import { castArray } from 'lodash-es';
-import { ApifoxToYApiServer } from '../ApifoxToYApiServer';
-import { SwaggerToYApiServer } from '../SwaggerToYApiServer';
 import { ServerConfig } from '../types';
 
 export class ConfigProcessor {
   private disposes: Array<() => any> = [];
 
   async prepare(config: ServerConfig[]): Promise<ServerConfig[]> {
+    // 现在直接使用 OpenAPI 3.0 数据
     const processedConfig = await Promise.all(
       config.map(async (item) => {
         const configItem = { ...item };
-        if (configItem.serverType === 'swagger') {
-          const swaggerToYApiServer = new SwaggerToYApiServer({
-            swaggerJsonUrl: configItem.serverUrl,
-          });
-          configItem.serverUrl = await swaggerToYApiServer.start();
-          this.disposes.push(() => swaggerToYApiServer.stop());
-        }
-        if (configItem.serverType === 'apifox') {
-          // 获取第一个项目的第一个token
-          const firstProject = configItem.projects[0];
-          const firstToken = firstProject ? castArray(firstProject.token)[0] : '';
-
-          const apifoxToYApiServer = new ApifoxToYApiServer({
-            defaultPort: 50506,
-            serverUrl: configItem.serverUrl,
-            token: firstToken,
-            projectId: configItem.apifoxProjectId || '6720131', // 使用配置中的项目ID，如果没有则使用默认值
-          });
-          configItem.serverUrl = await apifoxToYApiServer.start();
-          this.disposes.push(() => apifoxToYApiServer.stop());
-        }
+        // 不再需要启动本地服务器来转换数据格式
         if (configItem.serverUrl) {
           // 去除地址后面的 /
           configItem.serverUrl = configItem.serverUrl.replace(/\/+$/, '');
@@ -47,6 +25,7 @@ export class ConfigProcessor {
   }
 
   async destroy() {
-    return Promise.all(this.disposes.map(async (dispose) => dispose()));
+    // 清理资源
+    return Promise.resolve();
   }
 }

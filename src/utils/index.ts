@@ -36,19 +36,17 @@ export * from './object';
 export * from './file';
 
 // apifox 相关
-export * from './apifox';
+export * from '../clients/apifox';
 
 // 常量相关
 export * from './constants';
 
-// Swagger相关工具函数
-export * from './swaggerUtils';
+// OpenAPI 3.0 相关工具函数
+export * from '../processors/openapi3Processor';
+export * from './openapi3Utils';
 
 // 代码生成相关工具函数
 export * from './codeGenerator';
-
-// 数据处理相关工具函数
-export * from './dataProcessor';
 
 // 项目获取器相关工具函数
 export * from './projectFetcher';
@@ -61,6 +59,3 @@ export * from './fileManager';
 
 // 配置处理器相关工具函数
 export * from './configProcessor';
-
-// Generator类相关工具函数
-export * from './generator';

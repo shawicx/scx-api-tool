@@ -8,11 +8,11 @@
 
 ### 服务器配置
 
-| 配置项            | 类型                              | 必填 | 说明           | 示例                       |
-| ----------------- | --------------------------------- | ---- | -------------- | -------------------------- |
-| `serverUrl`       | `string`                          | ✅   | API 服务器地址 | `'https://api.apifox.com'` |
-| `serverType`      | `'swagger' \| 'yapi' \| 'apifox'` | ✅   | API 平台类型   | `'apifox'`                 |
-| `apifoxProjectId` | `string`                          | ❌   | Apifox 项目 ID | `'6720131'`                |
+| 配置项            | 类型                    | 必填 | 说明           | 示例                       |
+| ----------------- | ----------------------- | ---- | -------------- | -------------------------- |
+| `serverUrl`       | `string`                | ✅   | API 服务器地址 | `'https://api.apifox.com'` |
+| `serverType`      | `'swagger' \| 'apifox'` | ✅   | API 平台类型   | `'apifox'`                 |
+| `apifoxProjectId` | `string`                | ❌   | Apifox 项目 ID | `'6720131'`                |
 
 ### 输出配置
 
@@ -41,16 +41,17 @@
 
 ### React Hooks 配置
 
-```typescript
+``typescript
 reactHooks: {
-  enabled: boolean; // 是否启用 React Hooks
-  // 其他 hooks 相关配置
+enabled: boolean; // 是否启用 React Hooks
+// 其他 hooks 相关配置
 }
+
 ```
 
 ### 项目配置
 
-```typescript
+``typescript
 projects: [
   {
     token: string;         // 项目访问令牌
@@ -69,15 +70,15 @@ projects: [
 
 ### 基础配置示例
 
-```typescript
+``typescript
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig([
-  {
-    // 服务器配置
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: '6720131',
+{
+// 服务器配置
+serverUrl: 'https://api.apifox.com',
+serverType: 'apifox',
+apifoxProjectId: '6720131',
 
     // 输出配置
     typesOnly: false,
@@ -113,13 +114,15 @@ export default defineConfig([
         ],
       },
     ],
-  },
+
+},
 ]);
+
 ```
 
 ### Swagger 配置示例
 
-```typescript
+``typescript
 export default defineConfig([
   {
     serverUrl: 'https://petstore.swagger.io/v2',
@@ -142,37 +145,9 @@ export default defineConfig([
 ]);
 ```
 
-### YApi 配置示例
-
-```typescript
-export default defineConfig([
-  {
-    serverUrl: 'https://your-yapi-server.com',
-    serverType: 'yapi',
-    typesOnly: false,
-    target: 'typescript',
-    outputDir: 'src/api',
-    projects: [
-      {
-        token: 'your-yapi-token',
-        categories: [
-          {
-            id: 1,
-            getRequestFunctionName(interfaceInfo, changeCase) {
-              // 添加前缀避免命名冲突
-              return changeCase.camelCase(`api_${interfaceInfo.path}`);
-            },
-          },
-        ],
-      },
-    ],
-  },
-]);
-```
-
 ### 多项目配置示例
 
-```typescript
+```
 export default defineConfig([
   // 用户服务 API
   {
@@ -210,18 +185,19 @@ export default defineConfig([
 
 ### 成功钩子
 
-```typescript
+``typescript
 hooks: {
-  success: async () => {
-    console.log('代码生成成功！');
-    // 可以在这里执行后续操作，如格式化代码、运行测试等
-  },
+success: async () => {
+console.log('代码生成成功！');
+// 可以在这里执行后续操作，如格式化代码、运行测试等
+},
 }
+
 ```
 
 ### 失败钩子
 
-```typescript
+``typescript
 hooks: {
   fail: async (error) => {
     console.error('代码生成失败:', error);
@@ -232,56 +208,64 @@ hooks: {
 
 ### 完成钩子
 
-```typescript
+``typescript
 hooks: {
-  complete: async () => {
-    console.log('操作完成');
-    // 无论成功还是失败都会执行
-  },
+complete: async () => {
+console.log('操作完成');
+// 无论成功还是失败都会执行
+},
 }
+
 ```
 
 ## 环境变量配置
 
 ### 敏感信息管理
 
-```typescript
+```
+
 export default defineConfig([
-  {
-    serverUrl: process.env.API_SERVER_URL || 'https://api.apifox.com',
-    projects: [
-      {
-        token: process.env.API_TOKEN || '',
-        // ... 其他配置
-      },
-    ],
-  },
+{
+serverUrl: process.env.API_SERVER_URL || 'https://api.apifox.com',
+projects: [
+{
+token: process.env.API_TOKEN || '',
+// ... 其他配置
+},
+],
+},
 ]);
+
 ```
 
 ### 环境变量文件 (.env)
 
-```bash
+```
+
 # .env
+
 API_SERVER_URL=https://api.apifox.com
 API_TOKEN=your-secret-token
+
 ```
 
 ## 配置验证
 
 ### TypeScript 类型检查
 
-```typescript
+```
+
 import { defineConfig, ConfigWithHooks } from '@scxfe/api-tool';
 
 // 使用类型注解确保配置正确
 const config: ConfigWithHooks[] = defineConfig([
-  {
-    // 配置项...
-  },
+{
+// 配置项...
+},
 ]);
 
 export default config;
+
 ```
 
 ### 运行时验证
@@ -298,12 +282,14 @@ export default config;
 ### 1. 项目结构
 
 ```
+
 project/
-├── apiPower.config.ts          # 主配置文件
-├── .env                        # 环境变量（可选）
+├── apiPower.config.ts # 主配置文件
+├── .env # 环境变量（可选）
 ├── src/
-│   └── service/               # 生成的代码目录
+│ └── service/ # 生成的代码目录
 └── package.json
+
 ```
 
 ### 2. 配置管理
@@ -325,3 +311,4 @@ project/
 - 在 README 中说明配置要求
 - 提供配置模板和示例
 - 建立配置审查流程
+```
