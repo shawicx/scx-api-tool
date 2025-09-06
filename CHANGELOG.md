@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.2](https://github.com/shawicx/scx-api-tool/compare/v0.4.1...v0.4.2) (2025-09-06)
+
+### Features
+
+- add api-power configuration files and update TypeScript modules ([101d15a](https://github.com/shawicx/scx-api-tool/commit/101d15a23b039f831a9b6f4c1dc469981470dc00))
+
+### Refactors
+
+- major architecture refactoring and OpenAPI 3.0 support ([190c53c](https://github.com/shawicx/scx-api-tool/commit/190c53c2d6cabbb9e060b995c54b6692a24326bd))
+
 ### [0.4.1](https://github.com/shawicx/scx-api-tool/compare/v0.4.0...v0.4.1) (2025-09-06)
 
 ### Documentation
