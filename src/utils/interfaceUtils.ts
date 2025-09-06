@@ -161,18 +161,50 @@ export function getResponseDataJsonSchema(
   switch (interfaceInfo.res_body_type) {
     case ResponseBodyType.json:
       if (interfaceInfo.res_body) {
-        jsonSchema = interfaceInfo.res_body_is_json_schema
-          ? jsonSchemaStringToJsonSchema(interfaceInfo.res_body, customTypeMapping)
-          : mockjsTemplateToJsonSchema(JSON5.parse(interfaceInfo.res_body), customTypeMapping);
+        try {
+          // 检查是否已经是有效的JSON
+          const parsedBody = JSON.parse(interfaceInfo.res_body);
+
+          // 如果是JSON Schema格式
+          if (interfaceInfo.res_body_is_json_schema) {
+            jsonSchema = jsonSchemaStringToJsonSchema(interfaceInfo.res_body, customTypeMapping);
+          }
+          // 如果是普通JSON对象
+          else {
+            jsonSchema = jsonToJsonSchema(parsedBody, customTypeMapping);
+          }
+        } catch {
+          // 如果解析失败，尝试使用mockjs模板解析
+          try {
+            jsonSchema = mockjsTemplateToJsonSchema(
+              JSON5.parse(interfaceInfo.res_body),
+              customTypeMapping,
+            );
+          } catch {
+            // 如果所有方法都失败，返回 any 类型
+            jsonSchema = { __is_any__: true };
+          }
+        }
       }
+      break;
+    case ResponseBodyType.text:
+    case ResponseBodyType.xml:
+    case ResponseBodyType.raw:
+      // 对于文本、XML和原始数据类型，返回 string 类型
+      jsonSchema = { type: 'string' };
       break;
     default:
       jsonSchema = { __is_any__: true };
       break;
   }
 
-  if (dataKey && jsonSchema) {
-    jsonSchema = reachJsonSchema(jsonSchema, dataKey);
+  // 如果指定了 dataKey，尝试提取指定路径的数据
+  if (dataKey && jsonSchema && !jsonSchema.__is_any__) {
+    try {
+      jsonSchema = reachJsonSchema(jsonSchema, dataKey);
+    } catch {
+      // 如果提取失败，保持原样
+    }
   }
 
   return jsonSchema;

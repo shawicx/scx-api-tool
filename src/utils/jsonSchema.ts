@@ -24,6 +24,7 @@ export function traverseJsonSchema(
     const processedProperties = (jsonSchema.properties as unknown as JSONSchema4[]).reduce<
       Defined<JSONSchema4['properties']>
     >((props, js) => {
+      // eslint-disable-next-line no-param-reassign
       props[js.name] = js;
       return props;
     }, {});
@@ -173,6 +174,7 @@ export function jsonSchemaToJSTTJsonSchema(
       }
       const tsType = `${tsTypeLeft}${tsTypeRight}`;
 
+      // eslint-disable-next-line no-param-reassign
       schema.tsType = tsType;
     }
 
@@ -184,8 +186,9 @@ export function jsonSchemaToJSTTJsonSchema(
     Reflect.deleteProperty(schema, 'minItems');
     Reflect.deleteProperty(schema, 'maxItems');
 
-    if (schema.type === 'object') {
+    if (jsonSchema.type === 'object') {
       // 将 additionalProperties 设为 false
+      // eslint-disable-next-line no-param-reassign
       schema.additionalProperties = false;
     }
 
@@ -323,33 +326,61 @@ export async function jsonSchemaToType(
   typeName: string,
   indentSize = 4,
 ): Promise<string> {
+  // 处理空的 JSON Schema
   if (isEmpty(jsonSchema)) {
     return `export interface ${typeName} {}`;
   }
+
+  // 处理标记为 any 的类型
   if (jsonSchema.__is_any__) {
     Reflect.deleteProperty(jsonSchema, '__is_any__');
     return `export type ${typeName} = any`;
   }
-  // JSTT 会转换 typeName，因此传入一个全大写的假 typeName，生成代码后再替换回真正的 typeName
-  const fakeTypeName = 'THISISAFAKETYPENAME';
-  const JSTTOptionsWithIndent: Partial<Options> = {
-    bannerComment: '',
-    style: {
-      bracketSpacing: false,
-      printWidth: 120,
-      semi: true,
-      singleQuote: true,
-      tabWidth: indentSize,
-      trailingComma: 'none',
-      useTabs: false,
-    },
-  };
-  const code = await compile(
-    jsonSchemaToJSTTJsonSchema(cloneDeep(jsonSchema), typeName),
-    fakeTypeName,
-    JSTTOptionsWithIndent,
-  );
-  return code.replace(fakeTypeName, typeName).trim();
+
+  // 处理基本类型
+  if (jsonSchema.type && typeof jsonSchema.type === 'string') {
+    switch (jsonSchema.type) {
+      case 'string':
+        return `export type ${typeName} = string`;
+      case 'number':
+        return `export type ${typeName} = number`;
+      case 'integer':
+        return `export type ${typeName} = number`;
+      case 'boolean':
+        return `export type ${typeName} = boolean`;
+      case 'null':
+        return `export type ${typeName} = null`;
+      default:
+        // 继续到下面的代码处理其他类型
+        break;
+    }
+  }
+
+  try {
+    // JSTT 会转换 typeName，因此传入一个全大写的假 typeName，生成代码后再替换回真正的 typeName
+    const fakeTypeName = 'THISISAFAKETYPENAME';
+    const JSTTOptionsWithIndent: Partial<Options> = {
+      bannerComment: '',
+      style: {
+        bracketSpacing: false,
+        printWidth: 120,
+        semi: true,
+        singleQuote: true,
+        tabWidth: indentSize,
+        trailingComma: 'none',
+        useTabs: false,
+      },
+    };
+    const code = await compile(
+      jsonSchemaToJSTTJsonSchema(cloneDeep(jsonSchema), typeName),
+      fakeTypeName,
+      JSTTOptionsWithIndent,
+    );
+    return code.replace(fakeTypeName, typeName).trim();
+  } catch {
+    // 如果 json-schema-to-typescript 编译失败，返回 any 类型
+    return `export type ${typeName} = any`;
+  }
 }
 
 /**

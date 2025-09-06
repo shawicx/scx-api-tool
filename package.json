@@ -46,7 +46,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "tsx src/index.ts init",
+    "dev": "tsx src/index.ts",
     "build": "tsdown",
     "analyze:deps": "node scripts/analyze-deps.js",
     "ci:eslint": "eslint -f json src -o ./.ci/eslint.json",
@@ -59,7 +59,7 @@
     "prepare": "husky",
     "prepublish": "pnpm run build",
     "versioning": "standard-version",
-    "release": "pnpm run prepublish && pnpm run versioning && pnpm run postaction",
+    "release": "pnpm run prepublish && pnpm run versioning && pnpm run postaction && pnpm publish",
     "docs:preview": "vitepress preview"
   },
   "commitlint": {

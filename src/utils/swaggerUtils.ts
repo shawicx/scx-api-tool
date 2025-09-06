@@ -1,8 +1,5 @@
 /*
  * @Author: shawicx d35f3153@proton.me
- * @Date: 2025-08-08 20:57:10
- * @LastEditors: shawicx d35f3153@proton.me
- * @LastEditTime: 2025-08-13 23:00:43
  * @Description: Swagger相关的工具函数
  */
 
@@ -32,6 +29,12 @@ export function openapi2swagger(dataParam: any): any {
   const data = { ...dataParam };
   data.swagger = '2.0';
 
+  // 处理 components.schemas 到 definitions 的转换
+  if (data.components && data.components.schemas) {
+    data.definitions = data.components.schemas;
+    delete data.components.schemas;
+  }
+
   Object.values(data.paths).forEach((apis: any) => {
     Object.values(apis).forEach((api: any) => {
       // 处理响应内容
@@ -56,11 +59,18 @@ export function openapi2swagger(dataParam: any): any {
           Object.assign(res, res.content['*/*']);
           Reflect.deleteProperty(res, 'content');
         }
+
+        // 处理引用类型
+        if (res.schema && res.schema.$ref) {
+          // 将 OpenAPI 3.0 的引用路径转换为 Swagger 2.0 的引用路径
+          res.schema.$ref = res.schema.$ref.replace('#/components/schemas/', '#/definitions/');
+        }
       });
 
       // 处理请求体
       if (api.requestBody) {
         if (!api.parameters) {
+          // eslint-disable-next-line no-param-reassign
           (api as any).parameters = [];
         }
         const body: any = {
@@ -69,26 +79,59 @@ export function openapi2swagger(dataParam: any): any {
           in: 'body',
         };
         try {
-          body.schema = api.requestBody.content['application/json'].schema;
+          if (api.requestBody.content && api.requestBody.content['application/json']) {
+            body.schema = api.requestBody.content['application/json'].schema;
 
-          // 处理数组类型
-          if (body.schema && body.schema.properties) {
-            Object.keys(body.schema.properties).forEach((propName) => {
-              const prop = body.schema.properties[propName];
-              if (prop.type === 'array' && prop.items && prop.items.type) {
-                // 为数组类型添加特殊标记
-                prop.__isArrayType = true;
-                prop.__arrayItemType = prop.items.type;
-              }
-            });
+            // 处理引用类型
+            if (body.schema && body.schema.$ref) {
+              // 将 OpenAPI 3.0 的引用路径转换为 Swagger 2.0 的引用路径
+              body.schema.$ref = body.schema.$ref.replace(
+                '#/components/schemas/',
+                '#/definitions/',
+              );
+            }
+
+            // 处理数组类型
+            if (body.schema && body.schema.properties) {
+              Object.keys(body.schema.properties).forEach((propName) => {
+                const prop = body.schema.properties[propName];
+                if (prop.type === 'array' && prop.items && prop.items.type) {
+                  // 为数组类型添加特殊标记
+                  prop.__isArrayType = true;
+                  prop.__arrayItemType = prop.items.type;
+                }
+                // 处理属性中的引用类型
+                if (prop && prop.$ref) {
+                  prop.$ref = prop.$ref.replace('#/components/schemas/', '#/definitions/');
+                }
+              });
+            }
           }
         } catch {
           body.schema = {};
         }
         api.parameters.push(body);
       }
+
+      // 处理参数中的引用类型
+      if (api.parameters && Array.isArray(api.parameters)) {
+        api.parameters.forEach((param: any) => {
+          if (param.schema && param.schema.$ref) {
+            // eslint-disable-next-line no-param-reassign
+            param.schema.$ref = param.schema.$ref.replace(
+              '#/components/schemas/',
+              '#/definitions/',
+            );
+          }
+        });
+      }
     });
   });
+
+  // 删除不再需要的 components
+  if (data.components) {
+    delete data.components;
+  }
 
   return data;
 }
@@ -109,9 +152,10 @@ export function isJson(json: string): any {
 /**
  * @description 处理响应数据
  * @param api 响应对象
+ * @param swaggerData 完整的Swagger数据（用于解析引用）
  * @returns 处理后的响应体
  */
-export function handleResponse(api: any): string {
+export function handleResponse(api: any, swaggerData?: any): string {
   let res_body = '';
   if (!api || typeof api !== 'object') {
     return res_body;
@@ -121,16 +165,66 @@ export function handleResponse(api: any): string {
   let curCode;
 
   if (codes.length > 0) {
-    if (codes.indexOf('200') > -1) {
+    // 优先选择2xx状态码
+    const successCodes = codes.filter((code) => code.startsWith('2'));
+    if (successCodes.length > 0) {
+      curCode = successCodes[0];
+    } else if (codes.indexOf('200') > -1) {
       curCode = '200';
+    } else if (codes.indexOf('201') > -1) {
+      // 201 也是成功状态码
+      curCode = '201';
     } else {
       curCode = codes[0];
     }
 
     const res = api[curCode];
     if (res && typeof res === 'object') {
-      if (res.schema) {
-        res_body = JSON.stringify(res.schema, null, 2);
+      // 优先使用 content 中的 schema
+      if (res.content && typeof res.content === 'object') {
+        const contentTypes = Object.keys(res.content);
+        // 优先选择 application/json，否则选择第一个
+        const contentType =
+          contentTypes.find((type) => type.includes('application/json')) || contentTypes[0];
+        if (contentType && res.content[contentType] && res.content[contentType].schema) {
+          let { schema } = res.content[contentType];
+
+          // 处理引用类型
+          if (schema.$ref && swaggerData) {
+            const refData = simpleJsonPathParse(schema.$ref, swaggerData);
+            if (refData) {
+              schema = refData;
+            }
+          }
+
+          res_body = JSON.stringify(schema, null, 2);
+        } else if (res.schema) {
+          let { schema } = res;
+
+          // 处理引用类型
+          if (schema.$ref && swaggerData) {
+            const refData = simpleJsonPathParse(schema.$ref, swaggerData);
+            if (refData) {
+              schema = refData;
+            }
+          }
+
+          res_body = JSON.stringify(schema, null, 2);
+        } else if (res.description) {
+          res_body = res.description;
+        }
+      } else if (res.schema) {
+        let { schema } = res;
+
+        // 处理引用类型
+        if (schema.$ref && swaggerData) {
+          const refData = simpleJsonPathParse(schema.$ref, swaggerData);
+          if (refData) {
+            schema = refData;
+          }
+        }
+
+        res_body = JSON.stringify(schema, null, 2);
       } else if (res.description) {
         res_body = res.description;
       }
@@ -184,10 +278,13 @@ export function handleBodyParams(data: any, api: any): void {
 
   // 处理数组类型
   const processedData = processArrayTypes(data);
+  // eslint-disable-next-line no-param-reassign
   (api as any).req_body_other = JSON.stringify(processedData, null, 2);
 
   if (isJson((api as any).req_body_other)) {
+    // eslint-disable-next-line no-param-reassign
     (api as any).req_body_type = 'json';
+    // eslint-disable-next-line no-param-reassign
     (api as any).req_body_is_json_schema = true;
   }
 }
@@ -209,7 +306,9 @@ export function simpleJsonPathParse(key: string, jsonParam: any): any {
   let json = jsonParam;
   for (let i = 0, l = keys.length; i < l; i++) {
     try {
-      json = json[keys[i]];
+      // 处理特殊字符解码
+      const decodedKey = decodeURIComponent(keys[i]);
+      json = json[decodedKey];
     } catch {
       json = '';
       break;
@@ -245,6 +344,7 @@ export function processParameter(param: any, api: any, swaggerData: any): void {
   if (param && typeof param === 'object' && param.$ref) {
     paramCopy = simpleJsonPathParse(param.$ref, {
       parameters: swaggerData.parameters,
+      definitions: swaggerData.definitions, // 添加对 definitions 的支持
     });
   }
 

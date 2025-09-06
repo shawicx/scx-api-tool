@@ -78,7 +78,7 @@ async function run(resParam): Promise<{
       apiCopy.method = method;
       let data = {} as any;
       try {
-        data = handleSwagger(apiCopy, (processedRes?.tags || {}) as any) as any;
+        data = handleSwagger(apiCopy, (processedRes?.tags || {}) as any, processedRes) as any;
         if (data.catname) {
           if (!find(interfaceData.cats, (item) => item.name === data.catname)) {
             if ((processedRes?.tags || []).length === 0) {
@@ -108,7 +108,7 @@ async function run(resParam): Promise<{
   return interfaceData;
 }
 
-function handleSwagger(data, originTags = []) {
+function handleSwagger(data, originTags = [], swaggerData = null) {
   const api = {} as any;
   // 处理基本信息
   api.method = data.method.toUpperCase();
@@ -148,11 +148,14 @@ function handleSwagger(data, originTags = []) {
   api.req_body_type = 'raw';
   api.res_body_type = 'raw';
 
-  if (data.produces && data.produces.indexOf('application/json') > -1) {
-    api.res_body_type = 'json';
-    api.res_body_is_json_schema = true;
+  if (data.produces && Array.isArray(data.produces)) {
+    if (data.produces.indexOf('application/json') > -1) {
+      api.res_body_type = 'json';
+      api.res_body_is_json_schema = true;
+    }
   }
 
+  // 处理 consumes
   if (data.consumes && Array.isArray(data.consumes)) {
     if (
       data.consumes.indexOf('application/x-www-form-urlencoded') > -1 ||
@@ -165,19 +168,32 @@ function handleSwagger(data, originTags = []) {
     }
   }
 
-  // 处理response
-  api.res_body = handleResponse(data.responses);
-  try {
-    JSON.parse(api.res_body);
-    api.res_body_type = 'json';
-    api.res_body_is_json_schema = true;
-  } catch {
-    api.res_body_type = 'raw';
+  // 处理response，传递 swaggerData 用于解析引用
+  api.res_body = handleResponse(data.responses, swaggerData);
+
+  // 确保响应体类型正确设置
+  if (api.res_body) {
+    try {
+      // 尝试解析响应体，如果成功则设置为JSON类型
+      JSON.parse(api.res_body);
+      api.res_body_type = 'json';
+      api.res_body_is_json_schema = true;
+    } catch {
+      // 如果解析失败，保持为原始类型
+      if (api.res_body_type === 'raw') {
+        // 检查是否包含JSON特征
+        if (api.res_body.trim().startsWith('{') || api.res_body.trim().startsWith('[')) {
+          api.res_body_type = 'json';
+          api.res_body_is_json_schema = true;
+        }
+      }
+    }
   }
+
   // 处理参数 - 使用工具函数
   if (data.parameters && Array.isArray(data.parameters)) {
     data.parameters.forEach((param) => {
-      processParameter(param, api, SwaggerData);
+      processParameter(param, api, swaggerData);
     });
   }
 

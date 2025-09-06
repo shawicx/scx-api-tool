@@ -26,9 +26,10 @@
     "src/**/*",
     "scripts/**/*",
     "tsdown.config.ts",
+    "api-power.config.ts",
     "docs/**/*",
     ".vitepress/**/*",
     ".vitepress/config.mts"
   ],
-  "exclude": ["node_modules", "api-power.config.ts", "src/service/**/*", "assets/**/*"]
+  "exclude": ["node_modules", "src/service/**/*", "assets/**/*"]
 }
