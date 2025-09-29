@@ -1,66 +1,58 @@
-/*
- * @Author: shawicx d35f3153@proton.me
- * @Description:
- */
 import axios from 'axios';
-import type { OpenAPIV3 } from 'openapi-types';
-import type { ApifoxConfig } from '../types';
+import consola from 'consola';
+import { ApiConfig } from '../types';
 
-/**
- * 从 Apifox 获取 OpenAPI 格式的数据
- * @param config Apifox 配置
- * @returns OpenAPI 文档
- */
-/**
- * 从 Apifox 获取 OpenAPI 格式的数据
- * @param config Apifox 配置
- * @returns OpenAPI 文档
- */
-export async function fetchApifoxOpenAPI(config: ApifoxConfig): Promise<OpenAPIV3.Document> {
-  const {
-    serverUrl,
-    token,
-    projectId, // 移除默认值，让调用方必须提供
-    format = 'json',
-  } = config;
-
-  if (!projectId) {
-    throw new Error('Apifox 项目 ID 是必需的');
-  }
-
-  // 检查serverUrl是否已经包含完整路径
-  let url: string;
-  if (serverUrl.includes('/v1/projects/') && serverUrl.includes('/export-openapi')) {
-    // 如果已经包含完整路径，直接使用
-    url = serverUrl;
-  } else {
-    // 否则拼接完整路径
-    const baseUrl = serverUrl.replace(/\/+$/, '');
-    url = `${baseUrl}/v1/projects/${projectId}/export-openapi`;
-  }
-
-  // 添加查询参数
-  url += '?locale=zh-CN';
-
-  const headers = {
-    'X-Apifox-Api-Version': '2024-03-28',
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
-
-  const requestBody = {
-    scope: {
-      type: 'ALL',
-    },
-    options: {
-      includeApifoxExtensionProperties: false,
-      addFoldersToTags: true,
-    },
-    oasVersion: '3.1',
-    exportFormat: format.toUpperCase(),
-  };
-
+export async function fetchApifoxData(config: ApiConfig): Promise<any> {
   try {
+    const { serverUrl, apifoxProjectId: projectId, project } = config;
+
+    const token = project?.token;
+
+    if (!projectId) {
+      throw new Error('Apifox 项目 ID 是必需的');
+    }
+
+    // 检查serverUrl是否已经包含完整路径
+    let url: string;
+    if (serverUrl.includes('/v1/projects/') && serverUrl.includes('/export-openapi')) {
+      // 如果已经包含完整路径，直接使用
+      url = serverUrl;
+    } else {
+      // 否则拼接完整路径
+      const baseUrl = serverUrl.replace(/\/+$/, '');
+      url = `${baseUrl}/v1/projects/${projectId}/export-openapi`;
+    }
+
+    // 添加查询参数
+    url += '?locale=zh-CN';
+
+    const headers = {
+      'X-Apifox-Api-Version': '2024-03-28',
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Connection: 'keep-alive',
+    };
+
+    const requestBody = {
+      scope: {
+        type: 'ALL',
+        excludedByTags: ['pet'],
+      },
+      options: {
+        includeApifoxExtensionProperties: false,
+        addFoldersToTags: false,
+      },
+      oasVersion: '3.1',
+      exportFormat: 'JSON',
+    };
+
+    // Log debug information if enabled
+    if (process.env.DEBUG) {
+      consola.debug(`Fetching Apifox data from: ${url}`);
+    }
+
+    consola.info('Apifox API request config:', headers, requestBody, url);
+
     const response = await axios.post(url, requestBody, {
       headers,
       timeout: 30000, // 30秒超时
@@ -76,12 +68,19 @@ export async function fetchApifoxOpenAPI(config: ApifoxConfig): Promise<OpenAPIV
       throw new Error(`Apifox API 返回的不是JSON格式: ${contentType}`);
     }
 
+    if (process.env.DEBUG) {
+      consola.debug('Apifox response status:', response.status);
+      consola.debug('Apifox response data type:', typeof response.data);
+    }
+
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     if (axios.isAxiosError(error)) {
       const message = error.response?.data?.message || error.message;
+      consola.error('Apifox API 请求失败 - axios错误:', error);
       throw new Error(`Apifox API 请求失败: ${message}`);
     }
+    consola.error('Failed to fetch data from Apifox:', error.message);
     throw error;
   }
 }

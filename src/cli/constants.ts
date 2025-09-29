@@ -1,4 +1,4 @@
-import { defineConfig } from '@scxfe/api-tool';
+export const DEFAULT_CONFIG = `import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
   serverUrl: 'https://api.apifox.com',
@@ -15,7 +15,7 @@ export default defineConfig({
   prodEnvName: 'production',
   requestFunctionFilePath: 'src/service/request.ts',
   project: {
-    token: 'APS-fTMhwIRsNiQNbkW5jIRzoeTS8FXbUfFG',
+    token: 'APS-UqOdFQhnaBMU2A2q9EbuXUuDf3aqS93t',
     categories: [
       {
         id: 0,
@@ -23,3 +23,4 @@ export default defineConfig({
     ],
   },
 });
+`;

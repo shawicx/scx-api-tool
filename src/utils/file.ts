@@ -1,47 +1,27 @@
-/*
- * @Author: shawicx d35f3153@proton.me
- * @Description: 文件处理相关工具函数
- */
-import type { AppendOptions } from 'form-data';
+import { access, mkdir, writeFile } from 'fs/promises';
+import { dirname } from 'path';
 
-/**
- * 文件数据辅助类，统一网页、小程序等平台的文件上传。
- */
-export class FileData<T = any> {
-  /**
-   * 原始文件数据。
-   */
-  private originalFileData: T;
-
-  /**
-   * 选项。
-   */
-  private options: AppendOptions | undefined;
-
-  /**
-   * 文件数据辅助类，统一网页、小程序等平台的文件上传。
-   *
-   * @param originalFileData 原始文件数据
-   * @param options 若使用内部的 getFormData，则选项会被其使用
-   */
-  constructor(originalFileData: T, options?: AppendOptions) {
-    this.originalFileData = originalFileData;
-    this.options = options;
+export async function ensureDir(dirPath: string): Promise<void> {
+  try {
+    await access(dirPath);
+  } catch {
+    await mkdir(dirPath, { recursive: true });
   }
+}
 
-  /**
-   * 获取原始文件数据。
-   *
-   * @returns 原始文件数据
-   */
-  getOriginalFileData(): T {
-    return this.originalFileData;
-  }
+export async function writeFormattedFile(filePath: string, content: string): Promise<void> {
+  // Ensure the directory exists
+  await ensureDir(dirname(filePath));
 
-  /**
-   * 获取选项。
-   */
-  getOptions(): AppendOptions | undefined {
-    return this.options;
+  // Write the file
+  await writeFile(filePath, content, 'utf8');
+}
+
+export async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await access(filePath);
+    return true;
+  } catch {
+    return false;
   }
 }
