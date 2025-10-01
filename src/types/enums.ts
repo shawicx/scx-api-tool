@@ -4,7 +4,7 @@
  */
 
 /** 请求方式 */
-export enum Request_Method {
+export enum RequestMethod {
   GET = 'GET',
   POST = 'POST',
   PUT = 'PUT',
@@ -99,11 +99,11 @@ export enum QueryStringArrayFormat {
  * @param method 请求方式
  * @returns 是否为 GET 类请求
  */
-export function isGetLikeMethod(method: Request_Method): boolean {
+export function isGetLikeMethod(method: RequestMethod): boolean {
   return (
-    method === Request_Method.GET ||
-    method === Request_Method.OPTIONS ||
-    method === Request_Method.HEAD
+    method === RequestMethod.GET ||
+    method === RequestMethod.OPTIONS ||
+    method === RequestMethod.HEAD
   );
 }
 
@@ -112,6 +112,6 @@ export function isGetLikeMethod(method: Request_Method): boolean {
  * @param method 请求方式
  * @returns 是否为 POST 类请求
  */
-export function isPostLikeMethod(method: Request_Method): boolean {
+export function isPostLikeMethod(method: RequestMethod): boolean {
   return !isGetLikeMethod(method);
 }

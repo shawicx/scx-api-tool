@@ -46,7 +46,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "tsx src/index.ts",
+    "dev": "tsx src/index.ts generate --config api-power.config.js --watch",
     "build": "tsdown",
     "analyze:deps": "node scripts/analyze-deps.js",
     "ci:eslint": "eslint -f json src -o ./.ci/eslint.json",
@@ -99,6 +99,7 @@
   "prettier": "prettier-config-ali",
   "dependencies": {
     "@clack/prompts": "^0.11.0",
+    "@types/handlebars": "^4.1.0",
     "axios": "^1.11.0",
     "change-case": "3.1.0",
     "commander": "^14.0.0",
@@ -106,6 +107,7 @@
     "dayjs": "^1.11.13",
     "form-data": "^4.0.4",
     "fs-extra": "^11.3.1",
+    "handlebars": "^4.7.8",
     "json-schema-to-typescript": "^15.0.4",
     "json5": "^2.2.3",
     "lodash-es": "^4.17.21",
