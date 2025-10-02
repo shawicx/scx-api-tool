@@ -14,7 +14,7 @@ export function compileTemplate(template: string): (data: any) => string {
             // Handle #unless blocks within each
             itemContent = itemContent.replace(
               /{{#unless\s+(\w+)}}([\s\S]*?){{\/unless}}/g,
-              (m, prop, innerContent) => {
+              (_m, prop, innerContent) => {
                 return !item[prop] ? innerContent : '';
               },
             );
@@ -46,7 +46,7 @@ export function compileTemplate(template: string): (data: any) => string {
     // Handle #unless blocks
     result = result.replace(
       /{{#unless\s+(\w+)}}([\s\S]*?){{\/unless}}/g,
-      (match, condition, content) => {
+      (_match, condition, content) => {
         return !data[condition] ? content : '';
       },
     );
@@ -101,28 +101,31 @@ export async function request<T = any>(config: RequestConfig): Promise<T> {
 }
 `;
 
-export const interfaceTemplate = `// Interface for {{interfaceName}}
+export const interfaceTemplate = `/**
+ * @description {{description}} 的请求参数类型
+ */
 export interface {{interfaceName}}Request {
-  {{#if hasParameters}}
-  {{#each parameters}}
-  /** {{description}} */
+{{#if hasParameters}}
+{{#each parameters}}  /** @description {{description}} */
   {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
-  {{/each}}
-  {{/if}}
-}
-
-export interface {{interfaceName}}Response {
-  {{#if hasResponse}}
-  {{#each responseProperties}}
-  /** {{description}} */
-  {{name}}: {{{type}}};
-  {{/each}}
-  {{/if}}
+{{/each}}
+{{/if}}
 }
 
 /**
- * {{description}}
- * @param params Request parameters
+ * @description {{description}} 的返回数据类型
+ */
+export interface {{interfaceName}}Response {
+{{#if hasResponse}}
+{{#each responseProperties}}  /** @description {{description}} */
+  {{name}}: {{{type}}};
+{{/each}}
+{{/if}}
+}
+
+/**
+ * @description {{description}}
+ * @param params {{interfaceName}}
  * @returns Promise<{{interfaceName}}Response>
  */
 export async function {{functionName}}(params: {{interfaceName}}Request): Promise<{{interfaceName}}Response> {
@@ -138,17 +141,16 @@ export async function {{functionName}}(params: {{interfaceName}}Request): Promis
     {{/if}}
     {{/unless}}
   };
-
   return request<{{interfaceName}}Response>(config);
 }
 `;
 
 export const typeTemplate = `/**
- * {{description}}
+ * @description {{description}}
  */
 export interface {{typeName}} {
   {{#each properties}}
-  /** {{description}} */
+  /** @description {{description}} */
   {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
   {{/each}}
 }

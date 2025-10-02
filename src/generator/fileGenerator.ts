@@ -134,7 +134,7 @@ export async function generateInterfaceFileForTag(
   const relativePath = getRelativeImportPath(dirPath, config.requestFunctionFilePath);
   // Remove .ts extension if present
   const cleanRelativePath = relativePath.replace(/\.ts$/, '');
-  combinedCode += `import type { AxiosRequestConfig } from 'axios';\n`;
+  // combinedCode += `import type { AxiosRequestConfig } from 'axios';\n`;
   combinedCode += `import { RequestConfig, request } from '${cleanRelativePath}';\n`;
 
   // Add imports for used types
@@ -298,7 +298,7 @@ export async function generateRootIndexFile(
   }
 
   // Add default category if it exists
-  tagDirs.push('default');
+  // tagDirs.push('default');
 
   for (const tagDir of tagDirs) {
     rootIndexContent += `export * as ${tagDir} from './${tagDir}';\n`;
