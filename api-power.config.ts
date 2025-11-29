@@ -1,8 +1,8 @@
-import { defineConfig } from '@scxfe/api-tool';
+import { defineConfig, ServerType } from '@scxfe/api-tool';
 
 export default defineConfig({
   serverUrl: 'https://api.apifox.com',
-  serverType: 'apifox',
+  serverType: ServerType.Apifox,
   apifoxProjectId: '6997172',
   typesOnly: false,
   target: 'javascript',
@@ -15,7 +15,7 @@ export default defineConfig({
   prodEnvName: 'production',
   requestFunctionFilePath: 'src/service/request.ts',
   project: {
-    token: 'APS-fTMhwIRsNiQNbkW5jIRzoeTS8FXbUfFG',
+    token: 'APS-bEl8yPD58wfRzsXXkx4psEekqm4k2YhD',
     categories: [
       {
         id: 0,

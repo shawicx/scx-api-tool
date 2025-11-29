@@ -91,12 +91,12 @@ export enum QueryStringArrayFormat {
 }
 
 /** 服务类型 */
-export enum ServerType {
+export const ServerType = {
   /** Apifox */
-  Apifox = 'apifox',
+  Apifox: 'apifox',
   /** Swagger/OpenAPI */
-  Swagger = 'swagger',
-}
+  Swagger: 'swagger',
+} as const;
 
 /**
  * @description 判断是否为 GET 类请求。

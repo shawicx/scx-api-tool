@@ -48,10 +48,8 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
 
     // Log debug information if enabled
     if (process.env.DEBUG) {
-      consola.debug(`Fetching Apifox data from: ${url}`);
+      consola.debug('Apifox API request config:', headers, requestBody, url);
     }
-
-    consola.info('Apifox API request config:', headers, requestBody, url);
 
     const response = await axios.post(url, requestBody, {
       headers,

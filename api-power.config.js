@@ -25,7 +25,7 @@ export default defineConfig({
   dataKey: 'data',
   projects: [
     {
-      token: 'APS-fTMhwIRsNiQNbkW5jIRzoeTS8FXbUfFG', // Swagger项目不需要token
+      token: 'APS-bEl8yPD58wfRzsXXkx4psEekqm4k2YhD', // Swagger项目不需要token
       categories: [
         {
           id: 0,

@@ -16,5 +16,7 @@ export function defineConfig(config: ApiConfig): ApiConfig {
   return config;
 }
 
+export { ServerType, RequestMethod } from './types/index';
+
 // Execute the CLI program
 program.parse(process.argv);
