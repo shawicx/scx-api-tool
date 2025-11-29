@@ -6,10 +6,12 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
   try {
     const { serverUrl, apifoxProjectId: projectId, project } = config;
 
-    const token = project?.token;
-
     if (!projectId) {
       throw new Error('Apifox 项目 ID 是必需的');
+    }
+
+    if (!project?.token) {
+      throw new Error('Apifox 项目 token 是必需的');
     }
 
     // 检查serverUrl是否已经包含完整路径
@@ -28,7 +30,7 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
 
     const headers = {
       'X-Apifox-Api-Version': '2024-03-28',
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${project?.token}`,
       'Content-Type': 'application/json',
       Connection: 'keep-alive',
     };

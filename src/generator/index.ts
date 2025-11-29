@@ -31,7 +31,9 @@ async function processConfig(config: ApiConfig): Promise<void> {
     // Fetch data from the API source
     const rawData = await fetchData(config);
 
-    consola.info('Fetched raw data from API source', rawData);
+    if (process.env.DEBUG) {
+      consola.debug('Fetched raw data from API source', rawData);
+    }
 
     // Process the OpenAPI data
     const processedData = processOpenApiData(rawData, config);

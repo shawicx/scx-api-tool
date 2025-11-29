@@ -46,7 +46,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "tsx src/index.ts generate --config api-power.config.js --watch",
+    "dev": "tsx src/index.ts generate --config api-power.config.ts --watch",
     "build": "tsdown",
     "analyze:deps": "node scripts/analyze-deps.js",
     "ci:eslint": "eslint -f json src -o ./.ci/eslint.json",
