@@ -99,7 +99,6 @@
   "prettier": "prettier-config-ali",
   "dependencies": {
     "@clack/prompts": "^0.11.0",
-    "@types/handlebars": "^4.1.0",
     "axios": "^1.11.0",
     "change-case": "3.1.0",
     "commander": "^14.0.0",

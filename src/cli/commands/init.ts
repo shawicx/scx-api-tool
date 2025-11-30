@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import consola from 'consola';
-import { access, writeFile } from 'fs/promises';
+import { access, writeFile } from 'fs-extra';
 import { join } from 'path';
 import { cwd } from 'process';
 import { DEFAULT_CONFIG } from '../constants';
