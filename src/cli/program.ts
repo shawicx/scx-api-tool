@@ -12,20 +12,18 @@ export const program = new Command();
 
 program
   .name('api-power')
-  .description(
-    'CLI tool for generating API request functions and types from OpenAPI/Swagger definitions',
-  )
+  .description('用于从 OpenAPI/Swagger 定义生成 API 请求函数和类型的 CLI 工具')
   .version(version);
 
-// Register commands
+// 注册命令
 program.addCommand(initCommand);
 program.addCommand(generateCommand);
 program.addCommand(debugCommand);
 
-// Default help command
-program.helpOption('-h, --help', 'Display help for command');
+// 默认帮助命令
+program.helpOption('-h, --help', '显示命令帮助');
 
-// If no command is specified, show help
+// 如果未指定命令，则显示帮助
 program.action(() => {
   program.help();
 });

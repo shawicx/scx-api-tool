@@ -9,6 +9,6 @@ export async function fetchData(config: ApiConfig): Promise<any> {
     case ServerType.Swagger:
       return fetchSwaggerData(config);
     default:
-      throw new Error(`Unsupported server type: ${config.serverType}`);
+      throw new Error(`不支持的服务器类型: ${config.serverType}`);
   }
 }

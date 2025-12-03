@@ -3,13 +3,13 @@ import { ProcessedApiData } from '../processors/openapi';
 export function extractRequestProperties(operation: any, processedData: ProcessedApiData): any[] {
   const properties: any[] = [];
 
-  // Handle request body
+  // 处理请求体
   if (operation.requestBody && operation.requestBody.content) {
     const jsonContent = operation.requestBody.content['application/json'];
     if (jsonContent && jsonContent.schema) {
       const { schema } = jsonContent;
 
-      // Handle reference schemas
+      // 处理引用模式
       if (schema.$ref) {
         const refName = schema.$ref.split('/').pop();
         const refSchema = processedData.types.find((t: any) => t.name === refName)?.schema;
@@ -24,7 +24,7 @@ export function extractRequestProperties(operation: any, processedData: Processe
           }
         }
       } else if (schema.properties) {
-        // Handle inline schemas
+        // 处理内联模式
         for (const [name, property] of Object.entries(schema.properties)) {
           properties.push({
             name,
@@ -37,7 +37,7 @@ export function extractRequestProperties(operation: any, processedData: Processe
     }
   }
 
-  // Handle query/path parameters
+  // 处理查询/路径参数
   if (operation.parameters && Array.isArray(operation.parameters)) {
     for (const param of operation.parameters) {
       properties.push({
@@ -57,14 +57,14 @@ export function extractResponseProperties(responses: any, processedData: Process
 
   const properties: any[] = [];
 
-  // Extract properties from 200 response
+  // 从200响应中提取属性
   const successResponse = responses['200'] || responses['201'];
   if (successResponse && successResponse.content) {
     const jsonContent = successResponse.content['application/json'];
     if (jsonContent && jsonContent.schema) {
       const { schema } = jsonContent;
 
-      // Handle reference schemas
+      // 处理引用模式
       if (schema.$ref) {
         const refName = schema.$ref.split('/').pop();
         const refSchema = processedData.types.find((t: any) => t.name === refName)?.schema;
@@ -78,25 +78,25 @@ export function extractResponseProperties(responses: any, processedData: Process
             });
           }
         } else if (refSchema) {
-          // If we found the reference schema but it has no properties,
-          // it might be a direct type reference
+          // 如果我们找到了引用模式但没有属性，
+          // 它可能是一个直接类型引用
           properties.push({
             name: 'data',
             type: refName,
-            description: 'Response data',
+            description: '响应数据',
             required: true,
           });
         } else {
-          // If we can't find the reference, add a generic response
+          // 如果我们找不到引用，添加一个通用响应
           properties.push({
             name: 'data',
             type: refName,
-            description: 'Response data',
+            description: '响应数据',
             required: true,
           });
         }
       } else if (schema.properties) {
-        // Handle inline schemas
+        // 处理内联模式
         for (const [name, property] of Object.entries(schema.properties)) {
           properties.push({
             name,
@@ -106,27 +106,27 @@ export function extractResponseProperties(responses: any, processedData: Process
           });
         }
       } else if (schema.type === 'array' && schema.items) {
-        // Handle array responses
+        // 处理数组响应
         properties.push({
           name: 'data',
           type: `${getPropertyType(schema.items)}[]`,
-          description: 'Response data array',
+          description: '响应数据数组',
           required: true,
         });
       } else if (schema.type) {
-        // Handle primitive types
+        // 处理基本类型
         properties.push({
           name: 'data',
           type: getPropertyType(schema),
-          description: 'Response data',
+          description: '响应数据',
           required: true,
         });
       } else {
-        // Handle generic object responses
+        // 处理通用对象响应
         properties.push({
           name: 'data',
           type: 'any',
-          description: 'Response data',
+          description: '响应数据',
           required: true,
         });
       }
@@ -141,11 +141,11 @@ export function extractTypeProperties(schema: any): any[] {
     return [];
   }
 
-  // Handle reference schemas
+  // 处理引用模式
   if (schema.$ref) {
-    // For now, we'll return an empty array for reference types
-    // In a more complete implementation, we would resolve the reference
-    // and extract properties from the referenced schema
+    // 目前，我们对引用类型返回空数组
+    // 在更完整的实现中，我们将解析引用
+    // 并从引用的模式中提取属性
     return [];
   }
 

@@ -25,7 +25,7 @@ export interface {{interfaceName}}Response {
 
 /**
  * {{description}}
- * @param params Request parameters
+ * @param params 请求参数
  * @returns Promise<{{interfaceName}}Response>
  */
 export async function {{functionName}}(params: {{interfaceName}}Request): Promise<{{interfaceName}}Response> {

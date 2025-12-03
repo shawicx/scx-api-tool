@@ -48,9 +48,9 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
       exportFormat: 'JSON',
     };
 
-    // Log debug information if enabled
+    // 如果启用，则记录调试信息
     if (process.env.DEBUG) {
-      consola.debug('Apifox API request config:', headers, requestBody, url);
+      consola.debug('Apifox API 请求配置:', headers, requestBody, url);
     }
 
     const response = await axios.post(url, requestBody, {
@@ -80,7 +80,7 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
       consola.error('Apifox API 请求失败 - axios错误:', error);
       throw new Error(`Apifox API 请求失败: ${message}`);
     }
-    consola.error('Failed to fetch data from Apifox:', error.message);
+    consola.error('从 Apifox 获取数据失败:', error.message);
     throw error;
   }
 }

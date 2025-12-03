@@ -6,17 +6,17 @@ export async function fetchSwaggerData(config: ApiConfig): Promise<any> {
   try {
     const apiUrl = config.serverUrl;
 
-    // Log debug information if enabled
+    // 如果启用，则记录调试信息
     if (process.env.DEBUG) {
-      consola.debug(`Fetching Swagger data from: ${apiUrl}`);
+      consola.debug(`正在从以下位置获取 Swagger 数据: ${apiUrl}`);
     }
 
-    // Make the API request
+    // 发起 API 请求
     const response = await axios.get(apiUrl);
 
     return response.data;
   } catch (error: any) {
-    consola.error('Failed to fetch data from Swagger:', error.message);
+    consola.error('从 Swagger 获取数据失败:', error.message);
     throw error;
   }
 }

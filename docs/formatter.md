@@ -1,27 +1,27 @@
-# Formatter
+# 格式化器
 
-The formatter module provides code formatting capabilities for the API code generation tool. It uses Prettier to format code with consistent styling based on file type.
+格式化器模块为 API 代码生成工具提供了代码格式化功能。它使用 Prettier 根据文件类型对代码进行一致的样式格式化。
 
-## Overview
+## 概述
 
-The formatter is primarily used in the code generation pipeline to ensure that all generated files are properly formatted according to established style conventions. The main function `formatCode` takes source code and a file path, then applies appropriate formatting rules based on the file extension.
+格式化器主要在代码生成管道中使用，以确保所有生成的文件都根据既定的样式约定进行正确格式化。主要函数 `formatCode` 接收源代码和文件路径，然后根据文件扩展名应用适当的格式化规则。
 
-## Functions
+## 函数
 
 ### `formatCode(code: string, filePath: string): Promise<string>`
 
-Formats the provided code string using Prettier based on the file extension specified in the `filePath` parameter.
+使用 Prettier 根据 `filePath` 参数中指定的文件扩展名格式化提供的代码字符串。
 
-**Parameters:**
+**参数：**
 
-- `code` (`string`): The source code to format
-- `filePath` (`string`): The path to the file, used to determine the appropriate parser
+- `code` (`string`): 要格式化的源代码
+- `filePath` (`string`): 文件路径，用于确定适当的解析器
 
-**Returns:**
+**返回：**
 
-- `Promise<string>`: A promise that resolves to the formatted code string, or the original code if formatting fails
+- `Promise<string>`: 一个 Promise，解析为格式化后的代码字符串，如果格式化失败则返回原始代码
 
-**Example:**
+**示例：**
 
 ```typescript
 import { formatCode } from '@scxfe/api-tool/dist/utils/formatter';
@@ -29,44 +29,44 @@ import { formatCode } from '@scxfe/api-tool/dist/utils/formatter';
 const sourceCode = "function hello( ) { console.log('Hello World');}";
 const formatted = await formatCode(sourceCode, 'example.ts');
 console.log(formatted);
-// Output:
+// 输出:
 // function hello() {
 //   console.log('Hello World');
 // }
 ```
 
-## File Type Support
+## 文件类型支持
 
-The formatter automatically detects the appropriate parser based on the file extension:
+格式化器根据文件扩展名自动检测适当的解析器：
 
-- **`.ts` / `.tsx`**: Uses the TypeScript parser
-- **`.js` / `.jsx`**: Uses the Babel parser
-- **`.json`**: Uses the JSON parser
-- **Other extensions**: Defaults to the TypeScript parser
+- **`.ts` / `.tsx`**: 使用 TypeScript 解析器
+- **`.js` / `.jsx`**: 使用 Babel 解析器
+- **`.json`**: 使用 JSON 解析器
+- **其他扩展名**: 默认使用 TypeScript 解析器
 
-## Formatting Options
+## 格式化选项
 
-The formatter applies the following Prettier options:
+格式化器应用以下 Prettier 选项：
 
-- `singleQuote: true` - Uses single quotes instead of double quotes
-- `trailingComma: 'es5'` - Adds trailing commas where valid in ES5
-- `tabWidth: 2` - Uses 2 spaces for indentation
-- `semi: true` - Adds semicolons at the end of statements
+- `singleQuote: true` - 使用单引号而不是双引号
+- `trailingComma: 'es5'` - 在 ES5 中有效的位置添加尾随逗号
+- `tabWidth: 2` - 使用 2 个空格作为缩进
+- `semi: true` - 在语句末尾添加分号
 
-## Error Handling
+## 错误处理
 
-If Prettier fails to format the code, the formatter logs a warning and returns the original unformatted code. This ensures that the code generation process continues even if formatting fails, while providing visibility into formatting issues.
+如果 Prettier 无法格式化代码，格式化器将记录警告并返回原始的未格式化代码。这确保即使格式化失败，代码生成过程也能继续进行，同时提供对格式化问题的可见性。
 
-## Integration
+## 集成
 
-The formatter is used internally by the code generation system in several places:
+格式化器在代码生成系统中的多个位置被内部使用：
 
-- `generateRequestFile()`: Formats the request function template before writing to file
-- `generateInterfaceFileForTag()`: Formats combined interface code before writing to the tag-specific index.ts file
-- `generateTypeFile()`: Formats individual type definition code before writing to file
+- `generateRequestFile()`: 在写入文件之前格式化请求函数模板
+- `generateInterfaceFileForTag()`: 在写入标签特定的 index.ts 文件之前格式化组合的接口代码
+- `generateTypeFile()`: 在写入文件之前格式化单个类型定义代码
 
-This ensures all generated code follows consistent formatting standards, making it easier to read and maintain. The formatter is an essential part of the generation process that maintains code quality across all generated files.
+这确保所有生成的代码都遵循一致的格式化标准，使其更易于阅读和维护。格式化器是生成过程的重要组成部分，可在所有生成的文件中保持代码质量。
 
-## Configuration
+## 配置
 
-The formatter is configured through the project's Prettier settings, though the formatter module uses its own internal configuration that ensures consistency regardless of project-specific Prettier configurations.
+格式化器通过项目的 Prettier 设置进行配置，尽管格式化器模块使用其自己的内部配置，确保无论项目特定的 Prettier 配置如何，都能保持一致性。

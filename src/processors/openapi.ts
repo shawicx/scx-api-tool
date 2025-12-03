@@ -8,23 +8,23 @@ export interface ProcessedApiData {
 }
 
 export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiData {
-  // Log debug information if enabled
+  // 如果启用，则记录调试信息
   if (process.env.DEBUG) {
-    consola.debug('Processing OpenAPI data');
-    consola.debug('Data type:', typeof data);
+    consola.debug('处理 OpenAPI 数据');
+    consola.debug('数据类型:', typeof data);
     if (typeof data === 'object' && data !== null) {
-      consola.debug('Data keys:', Object.keys(data));
-      // Log first path entry for debugging
+      consola.debug('数据键:', Object.keys(data));
+      // 记录第一个路径条目用于调试
       if (data.paths) {
         const firstPath = Object.keys(data.paths)[0];
         const firstMethod = Object.keys(data.paths[firstPath])[0];
-        consola.debug('First path entry:', firstPath, firstMethod);
-        consola.debug('First operation keys:', Object.keys(data.paths[firstPath][firstMethod]));
+        consola.debug('第一个路径条目:', firstPath, firstMethod);
+        consola.debug('第一个操作键:', Object.keys(data.paths[firstPath][firstMethod]));
       }
 
-      // Log tags information
+      // 记录标签信息
       if (data.tags) {
-        consola.debug('Tags:', data.tags);
+        consola.debug('标签:', data.tags);
       }
     }
   }
@@ -42,13 +42,13 @@ export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiDa
         : path;
 
       for (const [method, operation] of Object.entries(methods as any)) {
-        // Process operation for Apifox specific format
+        // 处理 Apifox 特定格式的操作
         const processedOperation = processOperation(operation, config);
 
         if (process.env.DEBUG) {
-          // Log first few operations for debugging
+          // 记录前几个操作用于调试
           if (interfaces.length < 3) {
-            consola.debug(`Operation ${path} ${method}:`, Object.keys(processedOperation));
+            consola.debug(`操作 ${path} ${method}:`, Object.keys(processedOperation));
           }
         }
 
@@ -71,12 +71,12 @@ export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiDa
     }
   }
 
-  // Handle different server types for category extraction
+  // 处理不同服务器类型的类别提取
   if (config.serverType === ServerType.Apifox && data.tags) {
-    // For Apifox, use tags as categories
+    // 对于 Apifox，使用标签作为类别
     categories.push(...data.tags);
   } else if (config.serverType === ServerType.Swagger && data.tags) {
-    // For Swagger, also use tags as categories
+    // 对于 Swagger，也使用标签作为类别
     categories.push(...data.tags);
   }
 

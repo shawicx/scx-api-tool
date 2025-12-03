@@ -10,17 +10,17 @@ export async function loadConfig(configPath: string): Promise<any> {
   }
 
   try {
-    // Convert file path to file URL for ESM compatibility
+    // 为 ESM 兼容性将文件路径转换为文件 URL
     const fileUrl = pathToFileURL(absolutePath).href;
 
-    // Dynamically import the configuration
+    // 动态导入配置
     const configModule = await import(fileUrl);
 
-    // Handle both default and named exports
+    // 处理默认导出和命名导出
     const config = configModule.default || configModule;
 
     return config;
   } catch (error: any) {
-    throw new Error(`Failed to load configuration from ${absolutePath}: ${error.message}`);
+    throw new Error(`从 ${absolutePath} 加载配置失败: ${error.message}`);
   }
 }

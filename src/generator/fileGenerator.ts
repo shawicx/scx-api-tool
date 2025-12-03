@@ -17,24 +17,24 @@ import { compileTemplate, interfaceTemplate, requestTemplate, typeTemplate } fro
 export async function generateRequestFile(config: ApiConfig): Promise<void> {
   const requestFilePath = config.requestFunctionFilePath;
 
-  // Check if file already exists
+  // 检查文件是否已存在
   if (await fileExists(requestFilePath)) {
     if (process.env.DEBUG) {
-      consola.debug(`Request file already exists, skipping: ${requestFilePath}`);
+      consola.debug(`请求文件已存在，跳过: ${requestFilePath}`);
     }
     return;
   }
 
   try {
-    // Format the template code
+    // 格式化模板代码
     const formattedCode = await formatCode(requestTemplate, requestFilePath);
 
-    // Write the file
+    // 写入文件
     await writeFormattedFile(requestFilePath, formattedCode);
 
-    consola.info(`Created request function file: ${requestFilePath}`);
+    consola.info(`创建请求函数文件: ${requestFilePath}`);
   } catch (error: any) {
-    consola.error('Failed to generate request file:', error.message);
+    consola.error('生成请求文件失败:', error.message);
     throw error;
   }
 }
@@ -44,25 +44,25 @@ export async function generateInterfaceFiles(
   config: ApiConfig,
 ): Promise<void> {
   if (process.env.DEBUG) {
-    consola.debug(`Generating ${processedData.interfaces.length} interface files...`);
+    consola.debug(`正在生成 ${processedData.interfaces.length} 个接口文件...`);
   }
 
-  // Create output directory
+  // 创建输出目录
   const { outputDir } = config;
 
-  // Group interfaces by tag
+  // 按标签分组接口
   const interfacesByTag: Record<string, any[]> = {};
 
   for (const apiInterface of processedData.interfaces) {
     const tags = apiInterface.operation.tags || [];
     if (tags.length > 0) {
-      const tag = tags[0]; // Use the first tag
+      const tag = tags[0]; // 使用第一个标签
       if (!interfacesByTag[tag]) {
         interfacesByTag[tag] = [];
       }
       interfacesByTag[tag].push(apiInterface);
     } else {
-      // For interfaces without tags, group them under a default category
+      // 对于没有标签的接口，将它们分组到默认类别下
       if (!interfacesByTag.default) {
         interfacesByTag.default = [];
       }
@@ -70,19 +70,19 @@ export async function generateInterfaceFiles(
     }
   }
 
-  // Generate one index.ts file per tag directory containing all interfaces for that tag
+  // 为每个标签目录生成一个索引.ts文件，其中包含该标签的所有接口
   for (const [tag, interfaces] of Object.entries(interfacesByTag)) {
     const tagDir = chineseToPinyinCamelCase(tag);
     const dirPath = join(outputDir, tagDir);
 
-    // Create directory if it doesn't exist
+    // 如果目录不存在则创建
     await ensureDir(dirPath);
 
-    // Generate all interfaces in this directory in a single index.ts file
+    // 在单个 index.ts 文件中生成此目录中的所有接口
     await generateInterfaceFileForTag(tag, interfaces, processedData, config, dirPath);
   }
 
-  // Generate root index.ts file
+  // 生成根目录 index.ts 文件
   await generateRootIndexFile(processedData, config);
 }
 
@@ -93,34 +93,34 @@ export async function generateInterfaceFileForTag(
   config: ApiConfig,
   dirPath: string,
 ): Promise<void> {
-  // Generate code for all interfaces in this tag
+  // 为该标签中的所有接口生成代码
   let combinedCode = '';
 
-  // Collect all used types
+  // 收集所有使用的类型
   const usedTypes = new Set<string>();
 
-  // Process each interface to collect used types
+  // 处理每个接口以收集使用的类型
   for (const apiInterface of interfaces) {
-    // Collect types from request parameters
+    // 从请求参数收集类型
     const requestProps = extractRequestProperties(apiInterface.operation, processedData);
     for (const prop of requestProps) {
-      // Check if the type is a reference to another type
+      // 检查类型是否引用另一个类型
       if (processedData.types.some((t: any) => t.name === prop.type)) {
         usedTypes.add(prop.type);
       }
     }
 
-    // Collect types from response properties
+    // 从响应属性收集类型
     const responseProps = extractResponseProperties(
       apiInterface.operation.responses,
       processedData,
     );
     for (const prop of responseProps) {
-      // Check if the type is a reference to another type
+      // 检查类型是否引用另一个类型
       if (processedData.types.some((t: any) => t.name === prop.type)) {
         usedTypes.add(prop.type);
       }
-      // Check if the type is an array of references
+      // 检查类型是否为引用数组
       if (prop.type.endsWith('[]')) {
         const baseType = prop.type.slice(0, -2);
         if (processedData.types.some((t: any) => t.name === baseType)) {
@@ -130,30 +130,30 @@ export async function generateInterfaceFileForTag(
     }
   }
 
-  // Add import statement at the top
+  // 在顶部添加导入语句
   const relativePath = getRelativeImportPath(dirPath, config.requestFunctionFilePath);
-  // Remove .ts extension if present
+  // 如果存在则移除.ts扩展名
   const cleanRelativePath = relativePath.replace(/\.ts$/, '');
   // combinedCode += `import type { AxiosRequestConfig } from 'axios';\n`;
   combinedCode += `import { RequestConfig, request } from '${cleanRelativePath}';\n`;
 
-  // Add imports for used types
+  // 为使用的类型添加导入
   if (usedTypes.size > 0) {
-    // Calculate path to types directory (without index.ts)
+    // 计算到类型目录的路径（不包括index.ts）
     const typesDirPath = join(config.outputDir, 'types');
     const typesRelativePath = getRelativeImportPath(dirPath, typesDirPath);
-    const cleanTypesRelativePath = typesRelativePath.replace(/\/$/, ''); // Remove trailing slash if present
+    const cleanTypesRelativePath = typesRelativePath.replace(/\/$/, ''); // 如果存在则移除尾部斜杠
     combinedCode += `import type { ${Array.from(usedTypes).join(', ')} } from '${cleanTypesRelativePath}';\n`;
   }
 
   combinedCode += '\n';
 
-  // Process each interface
+  // 处理每个接口
   for (const apiInterface of interfaces) {
-    // Generate interface name from path and method
+    // 根据路径和方法生成接口名称
     const interfaceName = generateInterfaceName(apiInterface.path, apiInterface.method);
 
-    // Prepare template data
+    // 准备模板数据
     const templateData = {
       interfaceName,
       functionName: generateFunctionName(apiInterface.path, apiInterface.method),
@@ -170,16 +170,16 @@ export async function generateInterfaceFileForTag(
       hasBody: hasRequestBody(apiInterface.operation),
     };
 
-    // Remove debug information
+    // 移除调试信息
     if (process.env.DEBUG && interfaceName === 'ApiRolesGET') {
-      consola.debug(`Template data for ${interfaceName}:`, JSON.stringify(templateData, null, 2));
+      consola.debug(`${interfaceName} 的模板数据:`, JSON.stringify(templateData, null, 2));
     }
 
-    // Generate code from template
+    // 从模板生成代码
     const template = compileTemplate(interfaceTemplate);
     const code = template(templateData);
 
-    // Remove import statements from individual templates since we added it at the top
+    // 移除单个模板中的导入语句，因为我们在顶部已添加
     const codeWithoutImport = code.replace(
       /import type \{ AxiosRequestConfig \} from 'axios';\nimport \{ RequestConfig, request \} from '[^']*';\n\n?/,
       '',
@@ -187,15 +187,15 @@ export async function generateInterfaceFileForTag(
     combinedCode += `${codeWithoutImport}\n\n`;
   }
 
-  // Format the combined code
+  // 格式化合并的代码
   const formattedCode = await formatCode(combinedCode, join(dirPath, 'index.ts'));
 
-  // Write the file
+  // 写入文件
   const filePath = join(dirPath, 'index.ts');
   await writeFormattedFile(filePath, formattedCode);
 
   if (process.env.DEBUG) {
-    consola.debug(`Created combined interface file: ${filePath}`);
+    consola.debug(`创建合并接口文件: ${filePath}`);
   }
 }
 
@@ -204,19 +204,19 @@ export async function generateTypeFiles(
   config: ApiConfig,
 ): Promise<void> {
   if (process.env.DEBUG) {
-    consola.debug(`Generating ${processedData.types.length} type files...`);
+    consola.debug(`正在生成 ${processedData.types.length} 个类型文件...`);
   }
 
-  // Create types directory (for backward compatibility)
+  // 创建类型目录（用于向后兼容）
   const typesDir = join(config.outputDir, 'types');
   await ensureDir(typesDir);
 
-  // Generate each type file
+  // 生成每个类型文件
   for (const type of processedData.types) {
     await generateTypeFile(type, processedData, config, typesDir);
   }
 
-  // Generate index.ts file for types directory
+  // 为类型目录生成 index.ts 文件
   await generateTypesIndexFile(processedData, config);
 }
 
@@ -226,28 +226,28 @@ async function generateTypeFile(
   config: ApiConfig,
   typesDir: string,
 ): Promise<void> {
-  // Compile template
+  // 编译模板
   const template = compileTemplate(typeTemplate);
 
-  // Prepare template data
+  // 准备模板数据
   const templateData = {
     typeName: type.name,
     description: type.schema.description || type.name,
     properties: extractTypeProperties(type.schema),
   };
 
-  // Generate code from template
+  // 从模板生成代码
   const code = template(templateData);
 
-  // Format the code
+  // 格式化代码
   const formattedCode = await formatCode(code, join(typesDir, `${type.name}.ts`));
 
-  // Write the file
+  // 写入文件
   const filePath = join(typesDir, `${type.name}.ts`);
   await writeFormattedFile(filePath, formattedCode);
 
   if (process.env.DEBUG) {
-    consola.debug(`Created type file: ${filePath}`);
+    consola.debug(`创建类型文件: ${filePath}`);
   }
 }
 
@@ -257,19 +257,19 @@ async function generateTypesIndexFile(
 ): Promise<void> {
   const typesDir = join(config.outputDir, 'types');
 
-  // Generate exports for all types
+  // 为所有类型生成导出
   let indexContent = '';
 
   for (const type of processedData.types) {
     indexContent += `export type { ${type.name} } from './${type.name}';\n`;
   }
 
-  // Write index.ts file
+  // 写入 index.ts 文件
   const indexPath = join(typesDir, 'index.ts');
   await writeFormattedFile(indexPath, indexContent);
 
   if (process.env.DEBUG) {
-    consola.debug(`Created types index file: ${indexPath}`);
+    consola.debug(`创建类型索引文件: ${indexPath}`);
   }
 }
 
@@ -279,60 +279,60 @@ export async function generateRootIndexFile(
 ): Promise<void> {
   const { outputDir } = config;
 
-  // Generate exports for all tag directories
+  // 为所有标签目录生成导出
   let rootIndexContent = '';
 
-  // Add request function export
+  // 添加请求函数导出
   const relativePath = getRelativeImportPath(outputDir, config.requestFunctionFilePath);
-  // Remove .ts extension if present
+  // 如果存在则移除.ts扩展名
   const cleanRelativePath = relativePath.replace(/\.ts$/, '');
   rootIndexContent += `export * from '${cleanRelativePath}';\n\n`;
 
-  // Add exports for each tag directory
+  // 为每个标签目录添加导出
   const tagDirs: string[] = [];
 
-  // Collect all tag directories
+  // 收集所有标签目录
   for (const category of processedData.categories) {
     const tagDir = chineseToPinyinCamelCase(category.name);
     tagDirs.push(tagDir);
   }
 
-  // Add default category if it exists
+  // 如果存在则添加默认类别
   // tagDirs.push('default');
 
   for (const tagDir of tagDirs) {
     rootIndexContent += `export * as ${tagDir} from './${tagDir}';\n`;
   }
 
-  // Write root index.ts file
+  // 写入根目录 index.ts 文件
   const rootIndexPath = join(outputDir, 'index.ts');
   await writeFormattedFile(rootIndexPath, rootIndexContent);
 
   if (process.env.DEBUG) {
-    consola.debug(`Created root index file: ${rootIndexPath}`);
+    consola.debug(`创建根索引文件: ${rootIndexPath}`);
   }
 }
 
 function generateInterfaceName(path: string, method: string): string {
-  // Convert path to camelCase name
+  // 将路径转换为驼峰命名
   const pathName = path
-    .replace(/\{([^}]+)\}/g, 'By$1') // Replace path parameters
-    .replace(/[^a-zA-Z0-9]/g, '-') // Replace non-alphanumeric characters
-    .replace(/^-+|-+$/g, '') // Trim leading/trailing dashes
-    .replace(/-([a-z])/g, (g) => g[1].toUpperCase()); // Convert to camelCase
+    .replace(/\{([^}]+)\}/g, 'By$1') // 替换路径参数
+    .replace(/[^a-zA-Z0-9]/g, '-') // 替换非字母数字字符
+    .replace(/^-+|-+$/g, '') // 修剪前导/尾随破折号
+    .replace(/-([a-z])/g, (g) => g[1].toUpperCase()); // 转换为驼峰命名
 
-  // Capitalize first letter and add method
+  // 首字母大写并添加方法
   return pathName.charAt(0).toUpperCase() + pathName.slice(1) + method.toUpperCase();
 }
 
 function generateFunctionName(path: string, method: string): string {
-  // Convert path to camelCase name
+  // 将路径转换为驼峰命名
   const pathName = path
-    .replace(/\{([^}]+)\}/g, 'By$1') // Replace path parameters
-    .replace(/[^a-zA-Z0-9]/g, '-') // Replace non-alphanumeric characters
-    .replace(/^-+|-+$/g, '') // Trim leading/trailing dashes
-    .replace(/-([a-z])/g, (g) => g[1].toUpperCase()); // Convert to camelCase
+    .replace(/\{([^}]+)\}/g, 'By$1') // 替换路径参数
+    .replace(/[^a-zA-Z0-9]/g, '-') // 替换非字母数字字符
+    .replace(/^-+|-+$/g, '') // 修剪前导/尾随破折号
+    .replace(/-([a-z])/g, (g) => g[1].toUpperCase()); // 转换为驼峰命名
 
-  // Convert to camelCase and add method
+  // 转换为驼峰命名并添加方法
   return pathName + method.toUpperCase();
 }

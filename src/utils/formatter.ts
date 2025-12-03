@@ -3,10 +3,10 @@ import { format } from 'prettier';
 
 export async function formatCode(code: string, filePath: string): Promise<string> {
   try {
-    // Determine parser based on file extension
+    // 根据文件扩展名确定解析器
     const parser = getFileParser(filePath);
 
-    // Format the code using prettier
+    // 使用 prettier 格式化代码
     const formattedCode = await format(code, {
       parser,
       singleQuote: true,
@@ -17,7 +17,7 @@ export async function formatCode(code: string, filePath: string): Promise<string
 
     return formattedCode;
   } catch (error: any) {
-    consola.warn('Failed to format code with Prettier, returning original code:', error.message);
+    consola.warn('使用 Prettier 格式化代码失败，返回原始代码:', error.message);
     return code;
   }
 }
@@ -32,5 +32,5 @@ function getFileParser(filePath: string): string {
   if (filePath.endsWith('.json')) {
     return 'json';
   }
-  return 'typescript'; // default
+  return 'typescript'; // 默认
 }
