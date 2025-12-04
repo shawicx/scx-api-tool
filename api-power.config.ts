@@ -6,6 +6,7 @@ export default defineConfig({
   apifoxProjectId: '6997172',
   typesOnly: false,
   target: 'javascript',
+  // comment: false,
   pathPrefix: '',
   outputDir: 'src/service',
   indentSize: 2,

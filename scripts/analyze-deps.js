@@ -8,7 +8,7 @@
  */
 
 import { execSync } from 'child_process';
-import fs from 'fs-extra';
+import { pathExists } from 'fs-extra';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -22,7 +22,7 @@ async function analyzeDependencies() {
   try {
     const nodeModulesPath = path.join(__dirname, '../node_modules');
 
-    if (!(await fs.pathExists(nodeModulesPath))) {
+    if (!(await pathExists(nodeModulesPath))) {
       console.log('❌ node_modules 目录不存在，请先安装依赖');
       return;
     }
@@ -57,7 +57,7 @@ async function analyzeDependencies() {
     console.log('\n🎯 关键依赖体积分析:');
     for (const dep of keyDependencies) {
       const depPath = path.join(nodeModulesPath, dep);
-      if (await fs.pathExists(depPath)) {
+      if (await pathExists(depPath)) {
         try {
           const size = execSync(`du -sh "${depPath}"`, { encoding: 'utf8' }).trim().split('\t')[0];
           console.log(`   ${dep.padEnd(30)} ${size}`);
@@ -74,7 +74,7 @@ async function analyzeDependencies() {
     const distDir = path.join(__dirname, '../dist');
 
     console.log('\n📦 构建产物分析:');
-    if (await fs.pathExists(libDir)) {
+    if (await pathExists(libDir)) {
       try {
         const libFiles = execSync(
           `find "${libDir}" -name "*.js" -exec wc -c {} + | sort -nr | head -10`,
@@ -87,7 +87,7 @@ async function analyzeDependencies() {
       }
     }
 
-    if (await fs.pathExists(distDir)) {
+    if (await pathExists(distDir)) {
       try {
         const distFiles = execSync(
           `find "${distDir}" -name "*.js" -exec wc -c {} + | sort -nr | head -10`,

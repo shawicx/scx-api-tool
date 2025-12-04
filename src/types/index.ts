@@ -207,6 +207,8 @@ export interface ApiConfig {
   outputDir: string;
   /** 缩进大小 */
   indentSize: number;
+  /** 是否生成注释 */
+  comment?: boolean;
   /** React Hooks 配置 */
   reactHooks: {
     enabled: boolean;
@@ -244,10 +246,44 @@ export interface CliHooks {
 }
 
 /**
+ * 默认配置值
+ */
+const DEFAULT_CONFIG_VALUES: Partial<ApiConfig> = {
+  typesOnly: false,
+  target: 'typescript',
+  pathPrefix: '',
+  outputDir: 'src/service',
+  indentSize: 2,
+  comment: true, // 默认生成注释
+  reactHooks: {
+    enabled: false,
+  },
+  prodEnvName: 'production',
+  requestFunctionFilePath: 'src/service/request.ts',
+  project: {
+    categories: [],
+  },
+};
+
+/**
  * 定义配置的函数
  * @param config 配置对象
  * @returns 配置对象
  */
 export function defineConfig(config: ApiConfig): ApiConfig {
-  return config;
+  // 合并默认配置和用户配置
+  return {
+    ...DEFAULT_CONFIG_VALUES,
+    ...config,
+    // 深度合并嵌套对象
+    reactHooks: {
+      ...DEFAULT_CONFIG_VALUES.reactHooks,
+      ...config.reactHooks,
+    },
+    project: {
+      ...DEFAULT_CONFIG_VALUES.project,
+      ...config.project,
+      categories: config.project?.categories || DEFAULT_CONFIG_VALUES.project!.categories!,
+    },
+  };
 }

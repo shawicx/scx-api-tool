@@ -1,12 +1,12 @@
-import { access, mkdir, writeFile } from 'fs/promises';
+import {
+  ensureDir as fseEnsureDir,
+  outputFile as fseOutputFile,
+  pathExists as fsePathExists,
+} from 'fs-extra';
 import { dirname } from 'path';
 
 export async function ensureDir(dirPath: string): Promise<void> {
-  try {
-    await access(dirPath);
-  } catch {
-    await mkdir(dirPath, { recursive: true });
-  }
+  await fseEnsureDir(dirPath);
 }
 
 export async function writeFormattedFile(filePath: string, content: string): Promise<void> {
@@ -14,14 +14,9 @@ export async function writeFormattedFile(filePath: string, content: string): Pro
   await ensureDir(dirname(filePath));
 
   // Write the file
-  await writeFile(filePath, content, 'utf8');
+  await fseOutputFile(filePath, content);
 }
 
 export async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    await access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
+  return await fsePathExists(filePath);
 }

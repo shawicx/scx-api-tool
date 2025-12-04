@@ -11,6 +11,15 @@ export function compileTemplate(template: string): (data: any) => string {
         return array
           .map((item: any) => {
             let itemContent = content;
+
+            // Handle #if blocks with parent context access within each
+            itemContent = itemContent.replace(
+              /{{#if\s+\.\.\/(\w+)}}([\s\S]*?){{\/if}}/g,
+              (_m, parentProp, innerContent) => {
+                return data[parentProp] ? innerContent : '';
+              },
+            );
+
             // Handle #unless blocks within each
             itemContent = itemContent.replace(
               /{{#unless\s+(\w+)}}([\s\S]*?){{\/unless}}/g,
@@ -101,57 +110,49 @@ export async function request<T = any>(config: RequestConfig): Promise<T> {
 }
 `;
 
-export const interfaceTemplate = `/**
+export const interfaceTemplate = `{{#if comment}}/**
  * @description {{description}} 的请求参数类型
  */
-export interface {{interfaceName}}Request {
+{{/if}}export interface {{interfaceName}}Request {
 {{#if hasParameters}}
-{{#each parameters}}  /** @description {{description}} */
-  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+{{#each parameters}}{{#if ../comment}}  /** @description {{description}} */
+{{/if}}  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
 {{/each}}
 {{/if}}
 }
 
-/**
+{{#if comment}}/**
  * @description {{description}} 的返回数据类型
  */
-export interface {{interfaceName}}Response {
+{{/if}}export interface {{interfaceName}}Response {
 {{#if hasResponse}}
-{{#each responseProperties}}  /** @description {{description}} */
-  {{name}}: {{{type}}};
+{{#each responseProperties}}{{#if ../comment}}  /** @description {{description}} */
+{{/if}}  {{name}}: {{{type}}};
 {{/each}}
 {{/if}}
 }
 
-/**
+{{#if comment}}/**
  * @description {{description}}
  * @param params {{interfaceName}}
  * @returns Promise<{{interfaceName}}Response>
  */
-export async function {{functionName}}(params: {{interfaceName}}Request): Promise<{{interfaceName}}Response> {
+{{/if}}export async function {{functionName}}(params: {{interfaceName}}Request): Promise<{{interfaceName}}Response> {
   const config: RequestConfig = {
     url: '{{path}}',
-    method: '{{method}}',
-    {{#if hasBody}}
-    data: params,
-    {{/if}}
-    {{#unless hasBody}}
-    {{#if hasParameters}}
-    params,
-    {{/if}}
-    {{/unless}}
+    method: '{{method}}',{{#if hasBody}}
+    data: params,{{/if}}{{#unless hasBody}}{{#if hasParameters}}
+    params,{{/if}}{{/unless}}
   };
   return request<{{interfaceName}}Response>(config);
 }
 `;
 
-export const typeTemplate = `/**
+export const typeTemplate = `{{#if comment}}/**
  * @description {{description}}
  */
-export interface {{typeName}} {
-  {{#each properties}}
-  /** @description {{description}} */
-  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
-  {{/each}}
-}
+{{/if}}export interface {{typeName}} {
+{{#each properties}}{{#if ../comment}}  /** @description {{description}} */
+{{/if}}  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+{{/each}}}
 `;

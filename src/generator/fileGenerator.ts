@@ -168,6 +168,7 @@ export async function generateInterfaceFileForTag(
         processedData,
       ),
       hasBody: hasRequestBody(apiInterface.operation),
+      comment: config.comment,
     };
 
     // 移除调试信息
@@ -234,6 +235,7 @@ async function generateTypeFile(
     typeName: type.name,
     description: type.schema.description || type.name,
     properties: extractTypeProperties(type.schema),
+    comment: config.comment,
   };
 
   // 从模板生成代码

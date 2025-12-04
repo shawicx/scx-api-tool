@@ -9,6 +9,7 @@ export default defineConfig({
   pathPrefix: '',
   outputDir: 'src/service',
   indentSize: 2,
+  comment: true,
   reactHooks: {
     enabled: false,
   },

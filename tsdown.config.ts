@@ -1,8 +1,10 @@
-/*
- * @Author: shawicx d35f3153@proton.me
- * @Description: tsdown 配置 - 纯 ESM 构建配置
+/**
+ * @author: shawicx d35f3153@proton.me
+ * @description: tsdown
  */
 import { defineConfig } from 'tsdown';
+
+const isProd = process.env.NODE_ENV === 'production';
 
 export default defineConfig([
   {
@@ -12,8 +14,8 @@ export default defineConfig([
     outDir: 'dist',
     dts: true,
     copy: ['src/templates/'],
-    minify: false, // 保持代码可读性，方便调试
-    sourcemap: false,
+    minify: isProd,
+    sourcemap: !isProd,
     treeshake: true,
     // 所有 node_modules 中的包都标记为 external
     external: (id) => /node_modules/.test(id),
