@@ -12,9 +12,6 @@ export default defineConfig([
     pathPrefix: '{{pathPrefix}}',
     outputDir: '{{outputDir}}',
     indentSize: {{indentSize}},
-    reactHooks: {
-      enabled: {{reactHooksEnabled}},
-    },
     prodEnvName: '{{prodEnvName}}',
     requestFunctionFilePath: '{{requestFunctionFilePath}}',
     projects: [

@@ -209,10 +209,6 @@ export interface ApiConfig {
   indentSize: number;
   /** 是否生成注释 */
   comment?: boolean;
-  /** React Hooks 配置 */
-  reactHooks: {
-    enabled: boolean;
-  };
   /** 生产环境名称 */
   prodEnvName: string;
   /** 请求函数文件路径 */
@@ -255,9 +251,6 @@ const DEFAULT_CONFIG_VALUES: Partial<ApiConfig> = {
   outputDir: 'src/service',
   indentSize: 2,
   comment: true, // 默认生成注释
-  reactHooks: {
-    enabled: false,
-  },
   prodEnvName: 'production',
   requestFunctionFilePath: 'src/service/request.ts',
   project: {
@@ -276,10 +269,6 @@ export function defineConfig(config: ApiConfig): ApiConfig {
     ...DEFAULT_CONFIG_VALUES,
     ...config,
     // 深度合并嵌套对象
-    reactHooks: {
-      ...DEFAULT_CONFIG_VALUES.reactHooks,
-      ...config.reactHooks,
-    },
     project: {
       ...DEFAULT_CONFIG_VALUES.project,
       ...config.project,

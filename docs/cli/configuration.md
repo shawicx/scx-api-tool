@@ -39,31 +39,22 @@
 
 ## 高级配置项
 
-### React Hooks 配置
-
-``typescript
-reactHooks: {
-enabled: boolean; // 是否启用 React Hooks
-// 其他 hooks 相关配置
-}
-
-```
-
 ### 项目配置
 
 ``typescript
 projects: [
-  {
-    token: string;         // 项目访问令牌
-    categories: [          // 分类配置
-      {
-        id: number;        // 分类 ID
-        // 自定义请求函数名生成规则
-        getRequestFunctionName?: (interfaceInfo, changeCase) => string;
-      }
-    ];
-  }
+{
+token: string; // 项目访问令牌
+categories: [ // 分类配置
+{
+id: number; // 分类 ID
+// 自定义请求函数名生成规则
+getRequestFunctionName?: (interfaceInfo, changeCase) => string;
+}
+];
+}
 ]
+
 ```
 
 ## 配置示例
@@ -94,11 +85,6 @@ apifoxProjectId: '6720131',
     prodEnvName: 'production',
     dataKey: 'data',
 
-    // React Hooks 配置
-    reactHooks: {
-      enabled: false,
-    },
-
     // 项目配置
     projects: [
       {
@@ -124,61 +110,64 @@ apifoxProjectId: '6720131',
 
 ``typescript
 export default defineConfig([
-  {
-    serverUrl: 'https://petstore.swagger.io/v2',
-    serverType: 'swagger',
-    typesOnly: false,
-    target: 'typescript',
-    outputDir: 'src/api',
-    pathPrefix: '/api',
-    projects: [
-      {
-        token: '', // Swagger 通常不需要 token
-        categories: [
-          {
-            id: 0,
-          },
-        ],
-      },
-    ],
-  },
+{
+serverUrl: 'https://petstore.swagger.io/v2',
+serverType: 'swagger',
+typesOnly: false,
+target: 'typescript',
+outputDir: 'src/api',
+pathPrefix: '/api',
+projects: [
+{
+token: '', // Swagger 通常不需要 token
+categories: [
+{
+id: 0,
+},
+],
+},
+],
+},
 ]);
+
 ```
 
 ### 多项目配置示例
 
 ```
-export default defineConfig([
-  // 用户服务 API
-  {
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: 'user-service-id',
-    outputDir: 'src/service/user',
-    pathPrefix: '/user',
-    projects: [
-      {
-        token: 'user-service-token',
-        categories: [{ id: 0 }],
-      },
-    ],
-  },
 
-  // 订单服务 API
-  {
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: 'order-service-id',
-    outputDir: 'src/service/order',
-    pathPrefix: '/order',
-    projects: [
-      {
-        token: 'order-service-token',
-        categories: [{ id: 0 }],
-      },
-    ],
-  },
+export default defineConfig([
+// 用户服务 API
+{
+serverUrl: 'https://api.apifox.com',
+serverType: 'apifox',
+apifoxProjectId: 'user-service-id',
+outputDir: 'src/service/user',
+pathPrefix: '/user',
+projects: [
+{
+token: 'user-service-token',
+categories: [{ id: 0 }],
+},
+],
+},
+
+// 订单服务 API
+{
+serverUrl: 'https://api.apifox.com',
+serverType: 'apifox',
+apifoxProjectId: 'order-service-id',
+outputDir: 'src/service/order',
+pathPrefix: '/order',
+projects: [
+{
+token: 'order-service-token',
+categories: [{ id: 0 }],
+},
+],
+},
 ]);
+
 ```
 
 ## 钩子函数配置
@@ -199,11 +188,12 @@ console.log('代码生成成功！');
 
 ``typescript
 hooks: {
-  fail: async (error) => {
-    console.error('代码生成失败:', error);
-    // 可以在这里执行错误处理逻辑
-  },
+fail: async (error) => {
+console.error('代码生成失败:', error);
+// 可以在这里执行错误处理逻辑
+},
 }
+
 ```
 
 ### 完成钩子
@@ -311,4 +301,7 @@ project/
 - 在 README 中说明配置要求
 - 提供配置模板和示例
 - 建立配置审查流程
+
+```
+
 ```

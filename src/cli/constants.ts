@@ -10,9 +10,6 @@ export default defineConfig({
   outputDir: 'src/service',
   indentSize: 2,
   comment: true,
-  reactHooks: {
-    enabled: false,
-  },
   prodEnvName: 'production',
   requestFunctionFilePath: 'src/service/request.ts',
   project: {

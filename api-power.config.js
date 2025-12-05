@@ -17,9 +17,6 @@ export default defineConfig({
   outputDir: 'src/service',
   // 代码缩进配置
   indentSize: 2,
-  reactHooks: {
-    enabled: false,
-  },
   prodEnvName: 'production',
   requestFunctionFilePath: 'src/service/request.ts',
   dataKey: 'data',

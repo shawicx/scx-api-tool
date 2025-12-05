@@ -13,9 +13,6 @@ const DEFAULT_CONFIG_VALUES: Partial<ApiConfig> = {
   outputDir: 'src/service',
   indentSize: 2,
   comment: true, // 默认生成注释
-  reactHooks: {
-    enabled: false,
-  },
   prodEnvName: 'production',
   requestFunctionFilePath: 'src/service/request.ts',
   project: {
@@ -31,10 +28,6 @@ function mergeWithDefaults(userConfig: Partial<ApiConfig>): ApiConfig {
     ...DEFAULT_CONFIG_VALUES,
     ...userConfig,
     // 深度合并嵌套对象
-    reactHooks: {
-      ...DEFAULT_CONFIG_VALUES.reactHooks,
-      ...userConfig.reactHooks,
-    },
     project: {
       ...DEFAULT_CONFIG_VALUES.project,
       ...userConfig.project,
