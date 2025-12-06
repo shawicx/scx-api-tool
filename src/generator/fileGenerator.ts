@@ -12,12 +12,18 @@ import {
   hasRequestBody,
 } from './extractor';
 import { getRelativeImportPath } from './pathUtils';
-import { compileTemplate, interfaceTemplate, requestTemplate, typeTemplate } from './template';
+import {
+  compileTemplate,
+  getTypeTemplate,
+  generateRequestFile as generateRequestFileContent,
+  generateInterfaceFunction,
+  registerTemplateHelpers,
+  registerTemplatePartials,
+} from './template';
 
 export async function generateRequestFile(config: ApiConfig): Promise<void> {
   const requestFilePath = config.requestFunctionFilePath;
 
-  // 检查文件是否已存在
   if (await fileExists(requestFilePath)) {
     if (process.env.DEBUG) {
       consola.debug(`请求文件已存在，跳过: ${requestFilePath}`);
@@ -26,8 +32,15 @@ export async function generateRequestFile(config: ApiConfig): Promise<void> {
   }
 
   try {
+    // 注册模板辅助函数和 partials
+    registerTemplateHelpers();
+    registerTemplatePartials();
+
+    // 使用新的模板生成函数
+    const requestFileContent = generateRequestFileContent(config);
+
     // 格式化模板代码
-    const formattedCode = await formatCode(requestTemplate, requestFilePath);
+    const formattedCode = await formatCode(requestFileContent, requestFilePath);
 
     // 写入文件
     await writeFormattedFile(requestFilePath, formattedCode);
@@ -134,8 +147,16 @@ export async function generateInterfaceFileForTag(
   const relativePath = getRelativeImportPath(dirPath, config.requestFunctionFilePath);
   // 如果存在则移除.ts扩展名
   const cleanRelativePath = relativePath.replace(/\.ts$/, '');
-  // combinedCode += `import type { AxiosRequestConfig } from 'axios';\n`;
-  combinedCode += `import { RequestConfig, request } from '${cleanRelativePath}';\n`;
+
+  // 根据配置决定导入的内容
+  const requestFunctionName = config.requestFunctionName || 'request';
+  const requestMethodsObjectName = config.requestMethodsObjectName || 'requestMethods';
+
+  if (config.requestMethodStyle === 'method-specific' || config.requestMethodStyle === 'both') {
+    combinedCode += `import { RequestConfig, ${requestFunctionName}, ${requestMethodsObjectName} } from '${cleanRelativePath}';\n`;
+  } else {
+    combinedCode += `import { RequestConfig, ${requestFunctionName} } from '${cleanRelativePath}';\n`;
+  }
 
   // 为使用的类型添加导入
   if (usedTypes.size > 0) {
@@ -169,20 +190,17 @@ export async function generateInterfaceFileForTag(
       ),
       hasBody: hasRequestBody(apiInterface.operation),
       comment: config.comment,
+      requestMethodStyle: config.requestMethodStyle,
+      requestFunctionName: config.requestFunctionName || 'request',
+      requestMethodsObjectName: config.requestMethodsObjectName || 'requestMethods',
     };
 
-    // 移除调试信息
-    if (process.env.DEBUG && interfaceName === 'ApiRolesGET') {
-      consola.debug(`${interfaceName} 的模板数据:`, JSON.stringify(templateData, null, 2));
-    }
-
-    // 从模板生成代码
-    const template = compileTemplate(interfaceTemplate);
-    const code = template(templateData);
+    // 使用新的模板生成函数
+    const code = generateInterfaceFunction(templateData, config);
 
     // 移除单个模板中的导入语句，因为我们在顶部已添加
     const codeWithoutImport = code.replace(
-      /import type \{ AxiosRequestConfig \} from 'axios';\nimport \{ RequestConfig, request \} from '[^']*';\n\n?/,
+      /import type \{ AxiosRequestConfig \} from 'axios';\nimport axios from 'axios';\nimport consola from 'consola';\n\n?/g,
       '',
     );
     combinedCode += `${codeWithoutImport}\n\n`;
@@ -228,7 +246,7 @@ async function generateTypeFile(
   typesDir: string,
 ): Promise<void> {
   // 编译模板
-  const template = compileTemplate(typeTemplate);
+  const template = compileTemplate(getTypeTemplate());
 
   // 准备模板数据
   const templateData = {

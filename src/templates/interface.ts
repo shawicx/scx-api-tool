@@ -24,7 +24,7 @@ export interface {{interfaceName}}Response {
 }
 
 /**
- * {{description}}
+ * @description {{description}}
  * @param params 请求参数
  * @returns Promise<{{interfaceName}}Response>
  */

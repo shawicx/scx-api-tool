@@ -99,6 +99,40 @@ export const ServerType = {
 } as const;
 
 /**
+ * 请求方法调用风格
+ */
+export enum RequestMethodStyle {
+  /** 标准配置方式 - request(config) */
+  CONFIG = 'config',
+  /** 方法特定方式 - request.get/post/delete 等 */
+  METHOD_SPECIFIC = 'method-specific',
+  /** 两者都提供 - 用户可以选择使用方式 */
+  BOTH = 'both',
+}
+
+/**
+ * HTTP 方法映射
+ */
+export const HTTP_METHODS = {
+  GET: 'get',
+  POST: 'post',
+  PUT: 'put',
+  DELETE: 'delete',
+  PATCH: 'patch',
+  HEAD: 'head',
+  OPTIONS: 'options',
+} as const;
+
+/**
+ * 验证 HTTP 方法有效性
+ */
+export function assertValidMethod(method: string): asserts method is keyof typeof HTTP_METHODS {
+  if (!Object.keys(HTTP_METHODS).includes(method.toUpperCase())) {
+    throw new Error(`Invalid HTTP method: ${method}`);
+  }
+}
+
+/**
  * @description 判断是否为 GET 类请求。
  * @param method 请求方式
  * @returns 是否为 GET 类请求
@@ -194,7 +228,7 @@ export interface ApiConfig {
   /** 服务器地址 */
   serverUrl: string;
   /** 服务器类型 */
-  serverType: ServerType;
+  serverType: typeof ServerType;
   /** Apifox 项目 ID */
   apifoxProjectId?: string;
   /** 是否只生成类型 */
@@ -213,6 +247,12 @@ export interface ApiConfig {
   prodEnvName: string;
   /** 请求函数文件路径 */
   requestFunctionFilePath: string;
+  /** 请求方法调用风格 */
+  requestMethodStyle?: RequestMethodStyle;
+  /** 自定义请求函数名 */
+  requestFunctionName?: string;
+  /** 自定义方法对象名 */
+  requestMethodsObjectName?: string;
   /** 项目配置 */
   project: {
     /** 项目 token */
@@ -253,6 +293,9 @@ const DEFAULT_CONFIG_VALUES: Partial<ApiConfig> = {
   comment: true, // 默认生成注释
   prodEnvName: 'production',
   requestFunctionFilePath: 'src/service/request.ts',
+  requestMethodStyle: RequestMethodStyle.CONFIG, // 默认为标准配置方式
+  requestFunctionName: 'request',
+  requestMethodsObjectName: 'requestMethods',
   project: {
     categories: [],
   },
@@ -264,6 +307,14 @@ const DEFAULT_CONFIG_VALUES: Partial<ApiConfig> = {
  * @returns 配置对象
  */
 export function defineConfig(config: ApiConfig): ApiConfig {
+  // 验证 HTTP 方法
+  if (
+    config.requestMethodStyle === RequestMethodStyle.METHOD_SPECIFIC ||
+    config.requestMethodStyle === RequestMethodStyle.BOTH
+  ) {
+    // 这里可以添加额外的验证逻辑
+  }
+
   // 合并默认配置和用户配置
   return {
     ...DEFAULT_CONFIG_VALUES,

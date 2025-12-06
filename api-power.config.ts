@@ -1,4 +1,4 @@
-import { defineConfig, ServerType } from '@scxfe/api-tool';
+import { defineConfig, ServerType, RequestMethodStyle } from '@scxfe/api-tool';
 
 export default defineConfig({
   serverUrl: 'https://api.apifox.com',
@@ -7,6 +7,7 @@ export default defineConfig({
   typesOnly: false,
   target: 'javascript',
   // comment: false,
+  requestMethodStyle: RequestMethodStyle.config,
   pathPrefix: '',
   outputDir: 'src/service',
   indentSize: 2,
