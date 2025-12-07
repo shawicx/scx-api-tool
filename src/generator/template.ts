@@ -1,4 +1,5 @@
-import { RequestMethodStyle, HTTP_METHODS } from '../types';
+import { RequestMethodStyle } from '../types';
+import { HTTP_METHODS } from '../utils/config';
 import Handlebars from 'handlebars';
 
 // 注册辅助函数

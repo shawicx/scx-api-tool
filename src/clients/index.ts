@@ -3,7 +3,7 @@
  * 根据配置选择合适的 API 客户端
  */
 
-import { ApiConfig, ServerType } from '../types';
+import type { ApiConfig, ServerType } from '@/types';
 import { fetchApifoxData } from './apifox';
 import { fetchSwaggerData } from './swagger';
 

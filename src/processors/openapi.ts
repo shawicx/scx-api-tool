@@ -1,5 +1,5 @@
 import consola from 'consola';
-import { ApiConfig, ServerType } from '../types';
+import type { ApiConfig, ServerType } from '@/types';
 
 export interface ProcessedApiData {
   interfaces: any[];
@@ -10,8 +10,6 @@ export interface ProcessedApiData {
 export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiData {
   // 如果启用，则记录调试信息
   if (process.env.DEBUG) {
-    consola.debug('处理 OpenAPI 数据');
-    consola.debug('数据类型:', typeof data);
     if (typeof data === 'object' && data !== null) {
       consola.debug('数据键:', Object.keys(data));
       // 记录第一个路径条目用于调试

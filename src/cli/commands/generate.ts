@@ -6,7 +6,7 @@ import { Command } from 'commander';
 import consola from 'consola';
 import { watch } from 'fs';
 import { join } from 'path';
-import { generateCode } from '../../generator';
+import { generateCode } from '@/generator';
 
 export const generateCommand = new Command('generate')
   .alias('gen')

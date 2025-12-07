@@ -5,7 +5,8 @@
 import { existsSync } from 'fs';
 import { resolve } from 'path';
 import { pathToFileURL } from 'url';
-import { ApiConfig, defineConfig } from '../types';
+import type { ApiConfig } from '@/types';
+import { defineConfig } from '@/utils/config';
 
 /**
  * 合并默认配置和用户配置

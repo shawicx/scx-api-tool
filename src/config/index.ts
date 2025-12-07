@@ -1,1 +1,1 @@
-export { defineConfig } from '../types';
+export { defineConfig } from '../utils/config';

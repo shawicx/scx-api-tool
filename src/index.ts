@@ -1,16 +1,60 @@
 #!/usr/bin/env node
 
 import { program } from './cli/program';
-import { ApiConfig } from './types';
+import { defineConfig } from './utils/config';
+import {
+  ServerType,
+  RequestMethod,
+  RequestMethodStyle,
+  RequestBodyType,
+  ResponseBodyType,
+  RequestParamType,
+  RequestQueryType,
+  RequestFormItemType,
+  QueryStringArrayFormat,
+  Required,
+} from './types';
+import type {
+  OutputFileList,
+  RequestFunctionConfig,
+  ApiConfig,
+  UserConfig,
+  InterfaceInfo,
+  CategoryInfo,
+  ProjectInfo,
+  CliHooks,
+  PresetType,
+} from './types';
+import { PRESETS } from './types';
 
-/**
- * 定义配置
- */
-export function defineConfig(config: ApiConfig): ApiConfig {
-  return config;
-}
+// 导出纯类型
+export type {
+  OutputFileList,
+  RequestFunctionConfig,
+  ApiConfig,
+  UserConfig,
+  InterfaceInfo,
+  CategoryInfo,
+  ProjectInfo,
+  CliHooks,
+  PresetType,
+};
 
-export { ServerType, RequestMethod, RequestMethodStyle } from './types/index';
+// 导出常量和函数
+export {
+  defineConfig,
+  PRESETS,
+  ServerType,
+  RequestMethod,
+  RequestMethodStyle,
+  RequestBodyType,
+  ResponseBodyType,
+  RequestParamType,
+  RequestQueryType,
+  RequestFormItemType,
+  QueryStringArrayFormat,
+  Required,
+};
 
 // 执行 CLI 程序
 program.parse(process.argv);

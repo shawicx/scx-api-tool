@@ -4,7 +4,7 @@
 
 import axios from 'axios';
 import consola from 'consola';
-import { ApiConfig } from '../types';
+import type { ApiConfig } from '@/types';
 
 export async function fetchApifoxData(config: ApiConfig): Promise<any> {
   try {
