@@ -1,3 +1,7 @@
+/**
+ * @description 调试命令 启用调试输出生成代码
+ */
+
 import { Command } from 'commander';
 import consola from 'consola';
 import { generateCode } from '../../generator';

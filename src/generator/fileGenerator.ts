@@ -1,3 +1,7 @@
+/**
+ * @description 文件生成器
+ */
+
 import consola from 'consola';
 import { join } from 'path';
 import { ProcessedApiData } from '../processors/openapi';
@@ -36,10 +40,10 @@ export async function generateRequestFile(config: ApiConfig): Promise<void> {
     registerTemplateHelpers();
     registerTemplatePartials();
 
-    // 使用新的模板生成函数
+    // 生成请求文件内容
     const requestFileContent = generateRequestFileContent(config);
 
-    // 格式化模板代码
+    // 格式化代码
     const formattedCode = await formatCode(requestFileContent, requestFilePath);
 
     // 写入文件
@@ -106,18 +110,18 @@ export async function generateInterfaceFileForTag(
   config: ApiConfig,
   dirPath: string,
 ): Promise<void> {
-  // 为该标签中的所有接口生成代码
+  // 为该标签生成接口代码
   let combinedCode = '';
 
   // 收集所有使用的类型
   const usedTypes = new Set<string>();
 
-  // 处理每个接口以收集使用的类型
+  // 收集接口使用的类型
   for (const apiInterface of interfaces) {
-    // 从请求参数收集类型
+    // 收集请求参数类型
     const requestProps = extractRequestProperties(apiInterface.operation, processedData);
     for (const prop of requestProps) {
-      // 检查类型是否引用另一个类型
+      // 检查是否为引用类型
       if (processedData.types.some((t: any) => t.name === prop.type)) {
         usedTypes.add(prop.type);
       }
@@ -129,7 +133,7 @@ export async function generateInterfaceFileForTag(
       processedData,
     );
     for (const prop of responseProps) {
-      // 检查类型是否引用另一个类型
+      // 检查是否为引用类型
       if (processedData.types.some((t: any) => t.name === prop.type)) {
         usedTypes.add(prop.type);
       }
@@ -143,12 +147,12 @@ export async function generateInterfaceFileForTag(
     }
   }
 
-  // 在顶部添加导入语句
+  // 添加导入语句
   const relativePath = getRelativeImportPath(dirPath, config.requestFunctionFilePath);
-  // 如果存在则移除.ts扩展名
+  // 移除.ts扩展名
   const cleanRelativePath = relativePath.replace(/\.ts$/, '');
 
-  // 根据配置决定导入的内容
+  // 根据配置决定导入内容
   const requestFunctionName = config.requestFunctionName || 'request';
   const requestMethodsObjectName = config.requestMethodsObjectName || 'requestMethods';
 
@@ -158,20 +162,20 @@ export async function generateInterfaceFileForTag(
     combinedCode += `import { RequestConfig, ${requestFunctionName} } from '${cleanRelativePath}';\n`;
   }
 
-  // 为使用的类型添加导入
+  // 添加类型导入
   if (usedTypes.size > 0) {
-    // 计算到类型目录的路径（不包括index.ts）
+    // 计算类型目录路径
     const typesDirPath = join(config.outputDir, 'types');
     const typesRelativePath = getRelativeImportPath(dirPath, typesDirPath);
-    const cleanTypesRelativePath = typesRelativePath.replace(/\/$/, ''); // 如果存在则移除尾部斜杠
+    const cleanTypesRelativePath = typesRelativePath.replace(/\/$/, ''); // 移除尾部斜杠
     combinedCode += `import type { ${Array.from(usedTypes).join(', ')} } from '${cleanTypesRelativePath}';\n`;
   }
 
   combinedCode += '\n';
 
-  // 处理每个接口
+  // 处理接口
   for (const apiInterface of interfaces) {
-    // 根据路径和方法生成接口名称
+    // 生成接口名称
     const interfaceName = generateInterfaceName(apiInterface.path, apiInterface.method);
 
     // 准备模板数据
@@ -195,10 +199,10 @@ export async function generateInterfaceFileForTag(
       requestMethodsObjectName: config.requestMethodsObjectName || 'requestMethods',
     };
 
-    // 使用新的模板生成函数
+    // 生成接口代码
     const code = generateInterfaceFunction(templateData, config);
 
-    // 移除单个模板中的导入语句，因为我们在顶部已添加
+    // 移除模板中的导入语句（已在顶部添加）
     const codeWithoutImport = code.replace(
       /import type \{ AxiosRequestConfig \} from 'axios';\nimport axios from 'axios';\nimport consola from 'consola';\n\n?/g,
       '',
@@ -206,7 +210,7 @@ export async function generateInterfaceFileForTag(
     combinedCode += `${codeWithoutImport}\n\n`;
   }
 
-  // 格式化合并的代码
+  // 格式化代码
   const formattedCode = await formatCode(combinedCode, join(dirPath, 'index.ts'));
 
   // 写入文件
@@ -226,16 +230,16 @@ export async function generateTypeFiles(
     consola.debug(`正在生成 ${processedData.types.length} 个类型文件...`);
   }
 
-  // 创建类型目录（用于向后兼容）
+  // 创建类型目录
   const typesDir = join(config.outputDir, 'types');
   await ensureDir(typesDir);
 
-  // 生成每个类型文件
+  // 生成类型文件
   for (const type of processedData.types) {
     await generateTypeFile(type, processedData, config, typesDir);
   }
 
-  // 为类型目录生成 index.ts 文件
+  // 生成类型索引文件
   await generateTypesIndexFile(processedData, config);
 }
 
@@ -256,7 +260,7 @@ async function generateTypeFile(
     comment: config.comment,
   };
 
-  // 从模板生成代码
+  // 生成代码
   const code = template(templateData);
 
   // 格式化代码
@@ -277,7 +281,7 @@ async function generateTypesIndexFile(
 ): Promise<void> {
   const typesDir = join(config.outputDir, 'types');
 
-  // 为所有类型生成导出
+  // 生成类型导出
   let indexContent = '';
 
   for (const type of processedData.types) {
@@ -299,25 +303,25 @@ export async function generateRootIndexFile(
 ): Promise<void> {
   const { outputDir } = config;
 
-  // 为所有标签目录生成导出
+  // 生成标签目录导出
   let rootIndexContent = '';
 
   // 添加请求函数导出
   const relativePath = getRelativeImportPath(outputDir, config.requestFunctionFilePath);
-  // 如果存在则移除.ts扩展名
+  // 移除.ts扩展名
   const cleanRelativePath = relativePath.replace(/\.ts$/, '');
   rootIndexContent += `export * from '${cleanRelativePath}';\n\n`;
 
-  // 为每个标签目录添加导出
+  // 添加标签目录导出
   const tagDirs: string[] = [];
 
-  // 收集所有标签目录
+  // 收集标签目录
   for (const category of processedData.categories) {
     const tagDir = chineseToPinyinCamelCase(category.name);
     tagDirs.push(tagDir);
   }
 
-  // 如果存在则添加默认类别
+  // 添加默认类别（如果需要）
   // tagDirs.push('default');
 
   for (const tagDir of tagDirs) {
@@ -334,25 +338,25 @@ export async function generateRootIndexFile(
 }
 
 function generateInterfaceName(path: string, method: string): string {
-  // 将路径转换为驼峰命名
+  // 转换路径为驼峰命名
   const pathName = path
     .replace(/\{([^}]+)\}/g, 'By$1') // 替换路径参数
     .replace(/[^a-zA-Z0-9]/g, '-') // 替换非字母数字字符
     .replace(/^-+|-+$/g, '') // 修剪前导/尾随破折号
     .replace(/-([a-z])/g, (g) => g[1].toUpperCase()); // 转换为驼峰命名
 
-  // 首字母大写并添加方法
+  // 首字母大写并添加方法名
   return pathName.charAt(0).toUpperCase() + pathName.slice(1) + method.toUpperCase();
 }
 
 function generateFunctionName(path: string, method: string): string {
-  // 将路径转换为驼峰命名
+  // 转换路径为驼峰命名
   const pathName = path
     .replace(/\{([^}]+)\}/g, 'By$1') // 替换路径参数
     .replace(/[^a-zA-Z0-9]/g, '-') // 替换非字母数字字符
     .replace(/^-+|-+$/g, '') // 修剪前导/尾随破折号
     .replace(/-([a-z])/g, (g) => g[1].toUpperCase()); // 转换为驼峰命名
 
-  // 转换为驼峰命名并添加方法
+  // 转换为驼峰命名并添加方法名
   return pathName + method.toUpperCase();
 }

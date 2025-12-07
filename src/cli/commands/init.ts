@@ -1,3 +1,7 @@
+/**
+ * @description 初始化命令 创建配置文件
+ */
+
 import { Command } from 'commander';
 import consola from 'consola';
 import { fileExists, writeFormattedFile } from '@/utils/file';

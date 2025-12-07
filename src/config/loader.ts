@@ -1,39 +1,18 @@
+/**
+ * @description 配置文件加载器
+ */
+
 import { existsSync } from 'fs';
 import { resolve } from 'path';
 import { pathToFileURL } from 'url';
-import { ApiConfig } from '../types';
-
-/**
- * 默认配置值
- */
-const DEFAULT_CONFIG_VALUES: Partial<ApiConfig> = {
-  typesOnly: false,
-  target: 'typescript',
-  pathPrefix: '',
-  outputDir: 'src/service',
-  indentSize: 2,
-  comment: true, // 默认生成注释
-  prodEnvName: 'production',
-  requestFunctionFilePath: 'src/service/request.ts',
-  project: {
-    categories: [],
-  },
-};
+import { ApiConfig, defineConfig } from '../types';
 
 /**
  * 合并默认配置和用户配置
  */
 function mergeWithDefaults(userConfig: Partial<ApiConfig>): ApiConfig {
-  return {
-    ...DEFAULT_CONFIG_VALUES,
-    ...userConfig,
-    // 深度合并嵌套对象
-    project: {
-      ...DEFAULT_CONFIG_VALUES.project,
-      ...userConfig.project,
-      categories: userConfig.project?.categories || DEFAULT_CONFIG_VALUES.project!.categories!,
-    },
-  };
+  // 使用 defineConfig 函数来合并默认配置
+  return defineConfig(userConfig as ApiConfig);
 }
 
 export async function loadConfig(configPath: string): Promise<ApiConfig> {

@@ -1,10 +1,9 @@
 /*
- * @Author: shawicx d35f3153@proton.me
- * @Description:
+ * @description 接口模板
  */
 export const interfaceTemplate = `import { RequestConfig, request } from './request';
 
-// Interface for {{interfaceName}}
+// {{interfaceName}} 的接口定义
 export interface {{interfaceName}}Request {
   {{#if hasParameters}}
   {{#each parameters}}

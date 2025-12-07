@@ -33,10 +33,10 @@ export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiDa
   const types: any[] = [];
   const categories: any[] = [];
 
-  // Handle standard OpenAPI format for all server types including Apifox
+  // 处理包括 Apifox 在内的所有服务器类型的标准 OpenAPI 格式
   if (data.paths) {
     for (const [path, methods] of Object.entries(data.paths)) {
-      // Apply pathPrefix transformation
+      // 应用路径前缀转换
       const normalizedPath = config.pathPrefix
         ? path.replace(new RegExp(`^${config.pathPrefix}`), '')
         : path;
@@ -61,7 +61,7 @@ export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiDa
     }
   }
 
-  // Extract components/schemas for types
+  // 提取 components/schemas 用于类型定义
   if (data.components?.schemas) {
     for (const [name, schema] of Object.entries(data.components.schemas)) {
       types.push({
@@ -94,7 +94,7 @@ export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiDa
 }
 
 function processOperation(operation: any, config: ApiConfig): any {
-  // For Apifox, we need to process parameters and responses in a specific way
+  // 对于 Apifox，我们需要以特定方式处理参数和响应
   if (config.serverType === ServerType.Apifox) {
     return {
       ...operation,
@@ -104,7 +104,7 @@ function processOperation(operation: any, config: ApiConfig): any {
     };
   }
 
-  // For other server types, return as is
+  // 对于其他服务器类型，原样返回
   return operation;
 }
 

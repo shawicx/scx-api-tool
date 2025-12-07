@@ -1,3 +1,7 @@
+/**
+ * @description 代码生成器主模块
+ */
+
 import consola from 'consola';
 import { fetchData } from '../clients';
 import { loadConfig } from '../config/loader';

@@ -302,7 +302,7 @@ const DEFAULT_CONFIG_VALUES: Partial<ApiConfig> = {
 };
 
 /**
- * 定义配置的函数
+ * 定义配置
  * @param config 配置对象
  * @returns 配置对象
  */

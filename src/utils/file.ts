@@ -1,3 +1,7 @@
+/**
+ * @description 文件操作工具函数
+ */
+
 import {
   ensureDir as fseEnsureDir,
   outputFile as fseOutputFile,
@@ -10,10 +14,10 @@ export async function ensureDir(dirPath: string): Promise<void> {
 }
 
 export async function writeFormattedFile(filePath: string, content: string): Promise<void> {
-  // Ensure the directory exists
+  // 确保目录存在
   await ensureDir(dirname(filePath));
 
-  // Write the file
+  // 写入文件
   await fseOutputFile(filePath, content);
 }
 

@@ -121,7 +121,7 @@ export function getTypeTemplate(): string {
   return '{{#if comment}}/**\n * @description {{description}}\n */\n{{/if}}export interface {{typeName}} {\n{{#each properties}}{{#if ../comment}}  /** @description {{description}} */\n{{/if}}  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};\n{{/each}}\n}\n';
 }
 
-// Simple template function to handle basic Handlebars-like syntax (for backward compatibility)
+// 简单的模板函数，用于处理基本的 Handlebars 语法（向后兼容）
 export function compileTemplate(template: string): (data: any) => string {
   // 确保注册了所有的辅助函数和 partials
   registerTemplateHelpers();

@@ -1,3 +1,8 @@
+/**
+ * 代码格式化工具
+ * 使用 Prettier 格式化生成的代码
+ */
+
 import consola from 'consola';
 import { format } from 'prettier';
 
@@ -32,5 +37,5 @@ function getFileParser(filePath: string): string {
   if (filePath.endsWith('.json')) {
     return 'json';
   }
-  return 'typescript'; // 默认
+  return 'typescript'; // 默认使用 TypeScript 解析器
 }

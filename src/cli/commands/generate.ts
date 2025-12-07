@@ -1,3 +1,7 @@
+/**
+ * @description 代码生成命令 支持单次生成和监视模式
+ */
+
 import { Command } from 'commander';
 import consola from 'consola';
 import { watch } from 'fs';

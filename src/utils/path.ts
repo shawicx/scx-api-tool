@@ -1,6 +1,5 @@
 /*
- * @Author: shawicx d35f3153@proton.me
- * @Description:
+ * @description shawicx d35f3153@proton.me
  */
 import { pinyin } from 'pinyin-pro';
 

@@ -1,3 +1,7 @@
+/**
+ * @description 从 Apifox 平台获取 OpenAPI 数据
+ */
+
 import axios from 'axios';
 import consola from 'consola';
 import { ApiConfig } from '../types';

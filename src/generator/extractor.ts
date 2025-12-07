@@ -170,20 +170,20 @@ export function extractTypeProperties(schema: any): any[] {
 export function getPropertyType(property: any): string {
   if (!property) return 'any';
 
-  // Handle reference types
+  // 处理引用类型
   if (property.$ref) {
     const refName = property.$ref.split('/').pop();
     return refName;
   }
 
-  // Handle array types
+  // 处理数组类型
   if (property.type === 'array' && property.items) {
     return `${getPropertyType(property.items)}[]`;
   }
 
-  // Handle object types
+  // 处理对象类型
   if (property.type === 'object') {
-    // Check if it's a reference object
+    // 检查是否为引用对象
     if (property.additionalProperties && property.additionalProperties.$ref) {
       const refName = property.additionalProperties.$ref.split('/').pop();
       return `Record<string, ${refName}>`;
@@ -191,7 +191,7 @@ export function getPropertyType(property: any): string {
     return 'Record<string, any>';
   }
 
-  // Map basic types
+  // 映射基本类型
   switch (property.type) {
     case 'string':
       return 'string';

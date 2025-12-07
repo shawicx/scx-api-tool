@@ -1,4 +1,10 @@
-// 计算相对路径的辅助函数
+/**
+ * @description 路径工具函数
+ */
+
+/**
+ * 计算相对路径的辅助函数
+ */
 export function getRelativePath(from: string, to: string): string {
   // 如需要，转换为绝对路径
   const fromPath = from.startsWith('./') ? from : `./${from}`;
@@ -29,7 +35,12 @@ export function getRelativePath(from: string, to: string): string {
   return result ? `./${result}` : '.';
 }
 
-// 计算相对导入路径的辅助函数
+/**
+ * 计算相对导入路径的辅助函数
+ * @param fromDir 源目录
+ * @param toFile 目标文件
+ * @returns 相对导入路径
+ */
 export function getRelativeImportPath(fromDir: string, toFile: string): string {
   // 标准化路径
   const fromPath = fromDir.replace(/\\/g, '/');

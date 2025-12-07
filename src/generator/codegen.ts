@@ -1,3 +1,7 @@
+/**
+ * @description 代码生成协调器
+ */
+
 import consola from 'consola';
 import { ProcessedApiData } from '../processors/openapi';
 import { ApiConfig } from '../types';
