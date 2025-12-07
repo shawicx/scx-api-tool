@@ -90,13 +90,13 @@ export enum QueryStringArrayFormat {
   'json' = 'json',
 }
 
-/** 服务类型 */
-export const ServerType = {
+/** 服务类型枚举 */
+export enum ServerType {
   /** Apifox */
-  Apifox: 'apifox',
+  Apifox = 'apifox',
   /** Swagger/OpenAPI */
-  Swagger: 'swagger',
-} as const;
+  Swagger = 'swagger',
+}
 
 /**
  * 请求方法调用风格
@@ -225,12 +225,18 @@ export interface ProjectInfo {
  * API 配置接口
  */
 export interface ApiConfig {
-  /** 服务器地址 */
+  /** API 数据源 URL (包含完整的服务器信息) */
+  source: string;
+  /** 认证令牌 */
+  token: string;
+
+  /** 服务器地址 (从 source 解析) */
   serverUrl: string;
-  /** 服务器类型 */
-  serverType: typeof ServerType;
-  /** Apifox 项目 ID */
+  /** 服务器类型 (从 source 解析) */
+  serverType: ServerType;
+  /** Apifox 项目 ID (从 source 解析) */
   apifoxProjectId?: string;
+
   /** 是否只生成类型 */
   typesOnly: boolean;
   /** 目标语言 */
@@ -253,18 +259,13 @@ export interface ApiConfig {
   requestFunctionName?: string;
   /** 自定义方法对象名 */
   requestMethodsObjectName?: string;
-  /** 项目配置 */
-  project: {
-    /** 项目 token */
-    token?: string;
-    /** 分类配置 */
-    categories: Array<{
-      /** 分类 ID */
-      id: number;
-      /** 获取请求函数名称的钩子 */
-      getRequestFunctionName?: (interfaceInfo: any, changeCase: any) => string;
-    }>;
-  };
+  /** 分类配置 */
+  categories: Array<{
+    /** 分类 ID */
+    id: number;
+    /** 获取请求函数名称的钩子 */
+    getRequestFunctionName?: (interfaceInfo: any, changeCase: any) => string;
+  }>;
 }
 
 /**
@@ -284,7 +285,9 @@ export interface CliHooks {
 /**
  * 默认配置值
  */
-const DEFAULT_CONFIG_VALUES: Partial<ApiConfig> = {
+const DEFAULT_CONFIG_VALUES: Omit<ApiConfig, 'source' | 'token'> = {
+  serverUrl: '',
+  serverType: ServerType.Apifox,
   typesOnly: false,
   target: 'typescript',
   pathPrefix: '',
@@ -296,34 +299,96 @@ const DEFAULT_CONFIG_VALUES: Partial<ApiConfig> = {
   requestMethodStyle: RequestMethodStyle.CONFIG, // 默认为标准配置方式
   requestFunctionName: 'request',
   requestMethodsObjectName: 'requestMethods',
-  project: {
-    categories: [],
-  },
+  categories: [],
 };
+
+/**
+ * 从 source URL 解析服务器信息
+ */
+export function parseSourceUrl(source: string): {
+  serverUrl: string;
+  serverType: ServerType;
+  apifoxProjectId?: string;
+} {
+  try {
+    const url = new URL(source);
+
+    // 检测服务器类型
+    let serverType: ServerType;
+    let apifoxProjectId: string | undefined;
+
+    if (url.hostname.includes('apifox.com')) {
+      serverType = ServerType.Apifox;
+      // 从路径中提取项目 ID: https://api.apifox.com/v1/projects/6997172/export-openapi
+      const pathMatch = url.pathname.match(/\/projects\/(\d+)/);
+      if (pathMatch) {
+        apifoxProjectId = pathMatch[1];
+      }
+    } else {
+      serverType = ServerType.Swagger;
+    }
+
+    return {
+      serverUrl: `${url.protocol}//${url.host}`,
+      serverType,
+      apifoxProjectId,
+    };
+  } catch {
+    throw new Error(`Invalid source URL format: ${source}`);
+  }
+}
+
+/**
+ * @descriotion 验证配置
+ */
+// export function validateConfig(config: ApiConfig): void {
+//   // 验证必需字段
+//   if (!config.source) {
+//     throw new Error('配置验证失败：source 是必需的');
+//   }
+
+//   if (!config.token) {
+//     throw new Error('配置验证失败：token 是必需的');
+//   }
+
+//   // 验证 source URL 格式
+//   try {
+//     new URL(config.source);
+//   } catch (error) {
+//     throw new Error(`无效的 source URL: ${config.source}`);
+//   }
+
+//   // 验证 HTTP 方法
+//   if (
+//     config.requestMethodStyle === RequestMethodStyle.METHOD_SPECIFIC ||
+//     config.requestMethodStyle === RequestMethodStyle.BOTH
+//   ) {
+//     // 这里可以添加额外的验证逻辑
+//   }
+// }
 
 /**
  * 定义配置
  * @param config 配置对象
  * @returns 配置对象
  */
-export function defineConfig(config: ApiConfig): ApiConfig {
-  // 验证 HTTP 方法
-  if (
-    config.requestMethodStyle === RequestMethodStyle.METHOD_SPECIFIC ||
-    config.requestMethodStyle === RequestMethodStyle.BOTH
-  ) {
-    // 这里可以添加额外的验证逻辑
-  }
+export function defineConfig(
+  config: Partial<ApiConfig> & { source: string; token: string },
+): ApiConfig {
+  // 验证配置
+  // validateConfig(config as ApiConfig);
+
+  // 从 source 解析服务器信息
+  const { serverUrl, serverType, apifoxProjectId } = parseSourceUrl(config.source);
 
   // 合并默认配置和用户配置
-  return {
+  const finalConfig: ApiConfig = {
     ...DEFAULT_CONFIG_VALUES,
     ...config,
-    // 深度合并嵌套对象
-    project: {
-      ...DEFAULT_CONFIG_VALUES.project,
-      ...config.project,
-      categories: config.project?.categories || DEFAULT_CONFIG_VALUES.project!.categories!,
-    },
+    serverUrl,
+    serverType,
+    apifoxProjectId,
+    categories: config.categories || [],
   };
+  return finalConfig;
 }

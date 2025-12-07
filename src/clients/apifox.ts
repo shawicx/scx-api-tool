@@ -8,13 +8,13 @@ import { ApiConfig } from '../types';
 
 export async function fetchApifoxData(config: ApiConfig): Promise<any> {
   try {
-    const { serverUrl, apifoxProjectId: projectId, project } = config;
+    const { serverUrl, apifoxProjectId: projectId, token } = config;
 
     if (!projectId) {
       throw new Error('Apifox 项目 ID 是必需的');
     }
 
-    if (!project?.token) {
+    if (!token) {
       throw new Error('Apifox 项目 token 是必需的');
     }
 
@@ -34,7 +34,7 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
 
     const headers = {
       'X-Apifox-Api-Version': '2024-03-28',
-      Authorization: `Bearer ${project?.token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
       Connection: 'keep-alive',
     };
