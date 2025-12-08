@@ -10,14 +10,15 @@ import {
   ServerType,
   RequestMethodStyle,
   RequestMethod,
-} from '../types/index.js';
+} from '@/types';
 
 /**
  * 默认配置值
  */
-const DEFAULT_CONFIG_VALUES: Omit<ApiConfig, 'source' | 'token'> = {
-  serverUrl: '',
-  serverType: ServerType.Apifox,
+const DEFAULT_CONFIG_VALUES: Omit<
+  ApiConfig,
+  'source' | 'token' | 'serverUrl' | 'serverType' | 'apifoxProjectId'
+> = {
   typesOnly: false,
   target: 'typescript',
   pathPrefix: '',
@@ -98,12 +99,16 @@ export function parseSourceUrl(source: string): {
       serverType = ServerType.Swagger;
     }
 
+    // 确保返回完整的 serverUrl
+    const serverUrl = `${url.protocol}//${url.host}`;
+
     return {
-      serverUrl: `${url.protocol}//${url.host}`,
+      serverUrl,
       serverType,
       apifoxProjectId,
     };
-  } catch {
+  } catch (error) {
+    console.error('parseSourceUrl error:', error);
     throw new Error(`Invalid source URL format: ${source}`);
   }
 }
@@ -178,14 +183,14 @@ export function defineConfig(config: UserConfig): ApiConfig {
   // 应用预设和用户配置
   const mergedConfig = applyPreset(config);
 
-  // 创建最终配置
+  // 创建最终配置，确保解析的服务器信息不被覆盖
   const finalConfig: ApiConfig = {
+    ...mergedConfig,
     serverUrl,
     serverType,
     apifoxProjectId,
     source: config.source,
     token: config.token,
-    ...mergedConfig,
   };
 
   return finalConfig;

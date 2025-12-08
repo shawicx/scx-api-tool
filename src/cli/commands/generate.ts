@@ -27,9 +27,9 @@ export const generateCommand = new Command('generate')
             consola.error('重新生成失败:', error);
           }
         });
+      } else {
+        await generateCode(options.config);
       }
-
-      await generateCode(options.config);
     } catch (error: any) {
       consola.error('代码生成失败:', error.message);
       process.exit(1);

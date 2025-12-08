@@ -1,5 +1,6 @@
 import consola from 'consola';
-import type { ApiConfig, ServerType } from '@/types';
+import { ServerType } from '@/types';
+import type { ApiConfig } from '@/types';
 
 export interface ProcessedApiData {
   interfaces: any[];

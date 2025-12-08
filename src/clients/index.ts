@@ -1,13 +1,17 @@
 /**
- * 客户端工厂
- * 根据配置选择合适的 API 客户端
+ * @description 客户端主模块 负责与不同类型的 API 服务器通信
  */
-
-import type { ApiConfig, ServerType } from '@/types';
+import { ServerType } from '@/types';
+import type { ApiConfig } from '@/types';
 import { fetchApifoxData } from './apifox';
 import { fetchSwaggerData } from './swagger';
+import consola from 'consola';
 
 export async function fetchData(config: ApiConfig): Promise<any> {
+  if (process.env.DEBUG) {
+    consola.debug('Fetching data with config:', config);
+  }
+
   switch (config.serverType) {
     case ServerType.Apifox:
       return fetchApifoxData(config);

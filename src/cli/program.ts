@@ -24,6 +24,4 @@ program.addCommand(debugCommand);
 program.helpOption('-h, --help', '显示命令帮助');
 
 // 如果未指定命令，则显示帮助
-program.action(() => {
-  program.help();
-});
+// 注意：使用 action 会与子命令冲突，已移除

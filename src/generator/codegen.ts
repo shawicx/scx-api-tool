@@ -26,7 +26,7 @@ export async function generateFiles(
     // 生成类型文件
     await generateTypeFiles(processedData, config);
 
-    consola.success('文件生成成功！');
+    // 文件生成成功后，由上层 generateCode 输出成功消息
   } catch (error: any) {
     consola.error('生成文件失败:', error.message);
     throw error;
