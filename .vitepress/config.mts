@@ -28,31 +28,45 @@ export default defineConfig({
     // 导航栏
     nav: [
       { text: '首页', link: '/' },
-      { text: 'CLI 工具', link: '/cli/introduction' },
-      { text: 'Git 配置', link: '/git-configuration' },
-      { text: 'GitHub', link: 'https://github.com/shawicx/scx-api-tool' },
+      { text: '快速开始', link: '/getting-started/' },
+      { text: '使用指南', link: '/guides/configuration' },
+      // { text: 'API 参考', link: '/api/cli' },
+      { text: '开发指南', link: '/development/contributing' },
     ],
 
     // 侧边栏
     sidebar: [
       {
-        text: 'CLI 工具',
+        text: '快速开始',
         items: [
-          { text: '工具介绍', link: '/cli/introduction' },
-          { text: '使用说明', link: '/cli/usage' },
-          { text: '配置说明', link: '/cli/configuration' },
+          { text: '快速开始', link: '/getting-started/' },
+          { text: '安装指南', link: '/getting-started/installation' },
+          { text: '快速开始示例', link: '/getting-started/quick-start' },
         ],
       },
       {
-        text: 'Git 配置',
+        text: '使用指南',
         items: [
-          { text: '配置说明', link: '/git-configuration' },
-          { text: '设置总结', link: '/git-setup-summary' },
+          { text: 'CLI 命令', link: '/guides/cli' },
+          { text: '配置指南', link: '/guides/configuration' },
+          { text: '模板自定义', link: '/guides/templates' },
+          { text: '高级用法', link: '/guides/advanced' },
         ],
       },
+      // {
+      //   text: 'API 参考',
+      //   items: [
+      //     { text: 'CLI 命令参考', link: '/api/cli' },
+      //     { text: '配置文件 API', link: '/api/configuration' },
+      //   ],
+      // },
       {
-        text: '部署指南',
-        items: [{ text: 'GitHub Pages 部署', link: '/github-pages-deployment' }],
+        text: '开发指南',
+        items: [
+          { text: '贡献指南', link: '/development/contributing' },
+          { text: '架构说明', link: '/development/architecture' },
+          { text: '变更日志', link: '/changelog' },
+        ],
       },
     ],
 
