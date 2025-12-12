@@ -192,16 +192,19 @@ export const PRESETS: Record<
 > = {
   minimal: {
     typesOnly: true,
+    apiOnly: false,
     comment: false,
     requestMethodStyle: RequestMethodStyle.CONFIG,
   },
   standard: {
     typesOnly: false,
+    apiOnly: false,
     comment: true,
     requestMethodStyle: RequestMethodStyle.CONFIG,
   },
   verbose: {
     typesOnly: false,
+    apiOnly: false,
     comment: true,
     indentSize: 4,
     requestMethodStyle: RequestMethodStyle.BOTH,
@@ -222,6 +225,8 @@ export interface UserConfig {
 
   /** 是否只生成类型 */
   typesOnly?: boolean;
+  /** 是否只生成API接口（不包括请求函数） */
+  apiOnly?: boolean;
   /** 目标语言 */
   target?: 'javascript' | 'typescript';
   /** 路径前缀 */
@@ -269,6 +274,8 @@ export interface ApiConfig {
 
   /** 是否只生成类型 */
   typesOnly: boolean;
+  /** 是否只生成API接口（不包括请求函数） */
+  apiOnly: boolean;
   /** 目标语言 */
   target: 'javascript' | 'typescript';
   /** 路径前缀 */

@@ -156,19 +156,25 @@ export async function generateInterfaceFileForTag(
   const requestFunctionName = config.requestFunctionName || 'request';
   const requestMethodsObjectName = config.requestMethodsObjectName || 'requestMethods';
 
-  if (config.requestMethodStyle === 'method-specific' || config.requestMethodStyle === 'both') {
-    combinedCode += `import { RequestConfig, ${requestFunctionName}, ${requestMethodsObjectName} } from '${cleanRelativePath}';\n`;
+  if (config.apiOnly) {
+    // API Only 模式：只导入 request 函数
+    combinedCode += `import { ${requestFunctionName} } from '${cleanRelativePath}';\n`;
   } else {
-    combinedCode += `import { RequestConfig, ${requestFunctionName} } from '${cleanRelativePath}';\n`;
-  }
+    // 完整模式：导入 RequestConfig 和函数
+    if (config.requestMethodStyle === 'method-specific' || config.requestMethodStyle === 'both') {
+      combinedCode += `import { RequestConfig, ${requestFunctionName}, ${requestMethodsObjectName} } from '${cleanRelativePath}';\n`;
+    } else {
+      combinedCode += `import { RequestConfig, ${requestFunctionName} } from '${cleanRelativePath}';\n`;
+    }
 
-  // 添加类型导入
-  if (usedTypes.size > 0) {
-    // 计算类型目录路径
-    const typesDirPath = join(config.outputDir, 'types');
-    const typesRelativePath = getRelativeImportPath(dirPath, typesDirPath);
-    const cleanTypesRelativePath = typesRelativePath.replace(/\/$/, ''); // 移除尾部斜杠
-    combinedCode += `import type { ${Array.from(usedTypes).join(', ')} } from '${cleanTypesRelativePath}';\n`;
+    // 添加类型导入
+    if (usedTypes.size > 0) {
+      // 计算类型目录路径
+      const typesDirPath = join(config.outputDir, 'types');
+      const typesRelativePath = getRelativeImportPath(dirPath, typesDirPath);
+      const cleanTypesRelativePath = typesRelativePath.replace(/\/$/, ''); // 移除尾部斜杠
+      combinedCode += `import type { ${Array.from(usedTypes).join(', ')} } from '${cleanTypesRelativePath}';\n`;
+    }
   }
 
   combinedCode += '\n';

@@ -117,6 +117,11 @@ export function getInterfaceTemplate(): string {
   return '{{#if comment}}/**\n * @description {{description}}\n{{#if hasParameters}}\n * @param params {{interfaceName}}Request\n{{/if}}\n * @returns Promise<{{interfaceName}}Response>\n */{{/if}}\nexport interface {{interfaceName}}Request {\n{{#if hasParameters}}\n{{#each parameters}}{{#if ../comment}}  /** @description {{description}} */{{/if}}\n  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};\n{{/each}}{{/if}}\n}\n\n{{#if comment}}/**\n * @description {{description}} 的返回数据类型\n */{{/if}}\nexport interface {{interfaceName}}Response {\n{{#if hasResponse}}\n{{#each responseProperties}}{{#if ../comment}}  /** @description {{description}} */{{/if}}\n  {{name}}: {{{type}}};\n{{/each}}{{/if}}\n}\n\n{{#if comment}}/**\n * @description {{description}}\n * @param params {{interfaceName}}Request\n * @returns Promise<{{interfaceName}}Response>\n */{{/if}}\nexport async function {{functionName}}(params: {{interfaceName}}Request): Promise<{{interfaceName}}Response> {\n  {{> functionBody}}\n}\n';
 }
 
+// API Only 模式的接口模板 - 只生成请求方法，不包含类型定义
+export function getApiOnlyTemplate(): string {
+  return "{{#if comment}}/**\n * @description {{description}}\n * @param params {{interfaceName}}Request\n * @returns Promise<{{interfaceName}}Response>\n */{{/if}}\nexport async function {{functionName}}(\n  params\n) {\n  const config = {\n    url: '{{path}}',\n    method: '{{method}}',\n{{#if hasParameters}}\n{{#if hasBody}}\n    data: params,\n{{else}}\n    params,\n{{/if}}\n{{/if}}\n  };\n  return request(config);\n}";
+}
+
 // 类型模板 - 保持向后兼容
 export function getTypeTemplate(): string {
   return '{{#if comment}}/**\n * @description {{description}}\n */\n{{/if}}export interface {{typeName}} {\n{{#each properties}}{{#if ../comment}}  /** @description {{description}} */\n{{/if}}  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};\n{{/each}}\n}\n';
@@ -247,7 +252,8 @@ export function generateInterfaceFunction(interfaceInfo: any, config: any): stri
   registerTemplateHelpers();
   registerTemplatePartials();
 
-  const template = getInterfaceTemplate();
+  // 根据 apiOnly 配置选择模板
+  const template = config.apiOnly ? getApiOnlyTemplate() : getInterfaceTemplate();
   const compiledTemplate = Handlebars.compile(template);
 
   const result = compiledTemplate({

@@ -3,6 +3,7 @@
  * 处理配置验证、解析和应用逻辑
  */
 
+import consola from 'consola';
 import {
   ApiConfig,
   UserConfig,
@@ -20,6 +21,7 @@ const DEFAULT_CONFIG_VALUES: Omit<
   'source' | 'token' | 'serverUrl' | 'serverType' | 'apifoxProjectId'
 > = {
   typesOnly: false,
+  apiOnly: false,
   target: 'typescript',
   pathPrefix: '',
   outputDir: 'src/service',
@@ -145,6 +147,13 @@ export function validateConfig(config: UserConfig): void {
     config.requestMethodStyle === RequestMethodStyle.BOTH
   ) {
     // 这里可以添加额外的验证逻辑
+  }
+
+  // 验证 typesOnly 和 apiOnly 不能同时为 true
+  if (config.typesOnly && config.apiOnly) {
+    consola.warn('配置警告：typesOnly 和 apiOnly 同时为 true，将使用 typesOnly 模式');
+    // 强制设置为 typesOnly 模式
+    config.apiOnly = false;
   }
 }
 

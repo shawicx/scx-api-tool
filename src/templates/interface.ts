@@ -43,3 +43,31 @@ export async function {{functionName}}(params: {{interfaceName}}Request): Promis
   return request(config);
 }
 `;
+
+/*
+ * @description API Only 模式的接口模板 - 只生成请求方法，不包含类型定义
+ */
+export const apiOnlyTemplate = `import { request } from './request';
+
+/**
+ * @description {{description}}
+ * @param params {{interfaceName}}Request
+ * @returns Promise<{{interfaceName}}Response>
+ */
+export async function {{functionName}}(
+  params
+) {
+  const config = {
+    url: '{{path}}',
+    method: '{{method}}',
+    {{#if hasParameters}}
+    {{#if hasBody}}
+    data: params,
+    {{else}}
+    params,
+    {{/if}}
+    {{/if}}
+  };
+  return request(config);
+}
+`;

@@ -5,6 +5,7 @@ export default defineConfig({
   serverType: 'apifox',
   apifoxProjectId: '6997172',
   typesOnly: false,
+  apiOnly: false,
   target: 'javascript',
   pathPrefix: '',
   outputDir: 'src/service',

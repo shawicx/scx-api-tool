@@ -8,6 +8,7 @@ export default defineConfig([
     apifoxProjectId: '{{apifoxProjectId}}',
     {{/if}}
     typesOnly: {{typesOnly}},
+    apiOnly: {{apiOnly}},
     target: '{{target}}',
     pathPrefix: '{{pathPrefix}}',
     outputDir: '{{outputDir}}',
