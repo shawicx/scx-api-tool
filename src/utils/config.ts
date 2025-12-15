@@ -3,7 +3,6 @@
  * 处理配置验证、解析和应用逻辑
  */
 
-import consola from 'consola';
 import {
   ApiConfig,
   UserConfig,
@@ -116,48 +115,6 @@ export function parseSourceUrl(source: string): {
 }
 
 /**
- * 验证配置
- */
-export function validateConfig(config: UserConfig): void {
-  // 验证必需字段
-  if (!config.source) {
-    throw new Error('配置验证失败：source 是必需的');
-  }
-
-  if (!config.token) {
-    throw new Error('配置验证失败：token 是必需的');
-  }
-
-  // 验证预设类型
-  if (config.preset && !['minimal', 'standard', 'verbose'].includes(config.preset)) {
-    throw new Error(`无效的预设类型: ${config.preset}，支持的预设类型: minimal, standard, verbose`);
-  }
-
-  // 验证 source URL 格式
-  try {
-    // eslint-disable-next-line no-new
-    new URL(config.source);
-  } catch {
-    throw new Error(`无效的 source URL: ${config.source}`);
-  }
-
-  // 验证 HTTP 方法
-  if (
-    config.requestMethodStyle === RequestMethodStyle.METHOD_SPECIFIC ||
-    config.requestMethodStyle === RequestMethodStyle.BOTH
-  ) {
-    // 这里可以添加额外的验证逻辑
-  }
-
-  // 验证 typesOnly 和 apiOnly 不能同时为 true
-  if (config.typesOnly && config.apiOnly) {
-    consola.warn('配置警告：typesOnly 和 apiOnly 同时为 true，将使用 typesOnly 模式');
-    // 强制设置为 typesOnly 模式
-    config.apiOnly = false;
-  }
-}
-
-/**
  * 应用预设配置
  * @param config 用户配置
  * @returns 应用预设后的配置
@@ -183,9 +140,6 @@ function applyPreset(
  * @returns 配置对象
  */
 export function defineConfig(config: UserConfig): ApiConfig {
-  // 验证配置
-  validateConfig(config);
-
   // 从 source 解析服务器信息
   const { serverUrl, serverType, apifoxProjectId } = parseSourceUrl(config.source);
 

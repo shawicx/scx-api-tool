@@ -7,6 +7,7 @@ import { resolve } from 'path';
 import { pathToFileURL } from 'url';
 import type { ApiConfig } from '@/types';
 import { defineConfig } from '@/utils/config';
+import { validateConfiguration } from '@/validation';
 
 /**
  * 合并默认配置和用户配置
@@ -32,6 +33,9 @@ export async function loadConfig(configPath: string): Promise<ApiConfig> {
 
     // 处理默认导出和命名导出
     const userConfig = configModule.default || configModule;
+
+    // 验证配置
+    validateConfiguration(userConfig);
 
     // 合并默认配置和用户配置
     const finalConfig = mergeWithDefaults(userConfig);
