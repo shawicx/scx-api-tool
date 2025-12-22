@@ -10,7 +10,7 @@ import { ValidationReport, ValidationSeverity, ValidationError } from './errors'
  */
 export function displayValidationResults(report: ValidationReport): void {
   if (report.errors.length === 0) {
-    consola.success('✅ 配置验证通过');
+    consola.success('配置验证通过');
     return;
   }
 
@@ -23,17 +23,17 @@ export function displayValidationResults(report: ValidationReport): void {
   const infos = report.errors.filter((e) => e.severity === ValidationSeverity.INFO);
 
   if (errors.length > 0) {
-    consola.error(`\n❌ 发现 ${errors.length} 个错误：`);
+    consola.error(`\n发现 ${errors.length} 个错误：`);
     errors.forEach((error, index) => displayError(error, index + 1));
   }
 
   if (warnings.length > 0) {
-    consola.warn(`\n⚠️  发现 ${warnings.length} 个警告：`);
+    consola.warn(`\n发现 ${warnings.length} 个警告：`);
     warnings.forEach((warning, index) => displayWarning(warning, index + 1));
   }
 
   if (infos.length > 0) {
-    consola.info(`\n💡 ${infos.length} 个建议：`);
+    consola.info(`\n${infos.length} 个建议：`);
     infos.forEach((info, index) => displayInfo(info, index + 1));
   }
 }
@@ -46,12 +46,12 @@ function displaySummary(report: ValidationReport): void {
 
   if (summary.errors > 0) {
     consola.error(
-      `🔍 验证完成：发现 ${summary.errors} 个错误，${summary.warnings} 个警告，${summary.infos} 个建议`,
+      `验证完成：发现 ${summary.errors} 个错误，${summary.warnings} 个警告，${summary.infos} 个建议`,
     );
   } else if (summary.warnings > 0) {
-    consola.warn(`🔍 验证完成：发现 ${summary.warnings} 个警告，${summary.infos} 个建议`);
+    consola.warn(`验证完成：发现 ${summary.warnings} 个警告，${summary.infos} 个建议`);
   } else if (summary.infos > 0) {
-    consola.info(`🔍 验证完成：${summary.infos} 个建议`);
+    consola.info(`验证完成：${summary.infos} 个建议`);
   }
 }
 
@@ -66,10 +66,10 @@ function displayError(error: ValidationError, index: number): void {
   }
 
   if (error.suggestion) {
-    consola.log(`   💡 修复建议:`);
+    consola.info(`   修复建议:`);
     error.suggestion.split('\n').forEach((line) => {
       if (line.trim()) {
-        consola.log(`      ${line}`);
+        consola.info(`      ${line}`);
       }
     });
   }
@@ -82,14 +82,14 @@ function displayWarning(warning: ValidationError, index: number): void {
   consola.warn(`${index}. ${warning.field}: ${warning.message}`);
 
   if (warning.value !== undefined) {
-    consola.log(`   当前值: ${JSON.stringify(warning.value)}`);
+    consola.info(`   当前值: ${JSON.stringify(warning.value)}`);
   }
 
   if (warning.suggestion) {
-    consola.log(`   💡 建议:`);
+    consola.info(`   建议:`);
     warning.suggestion.split('\n').forEach((line) => {
       if (line.trim()) {
-        consola.log(`      ${line}`);
+        consola.info(`      ${line}`);
       }
     });
   }
@@ -102,10 +102,10 @@ function displayInfo(info: ValidationError, index: number): void {
   consola.info(`${index}. ${info.field}: ${info.message}`);
 
   if (info.suggestion) {
-    consola.log(`   💡 说明:`);
+    consola.info(`   说明:`);
     info.suggestion.split('\n').forEach((line) => {
       if (line.trim()) {
-        consola.log(`      ${line}`);
+        consola.info(`      ${line}`);
       }
     });
   }

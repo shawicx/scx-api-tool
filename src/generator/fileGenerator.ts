@@ -64,6 +64,14 @@ export async function generateInterfaceFiles(
     consola.debug(`正在生成 ${processedData.interfaces.length} 个接口文件...`);
   }
 
+  // typesOnly 模式下不生成接口文件
+  if (config.typesOnly) {
+    if (process.env.DEBUG) {
+      consola.debug('Types Only 模式：跳过接口文件生成');
+    }
+    return;
+  }
+
   // 创建输出目录
   const { outputDir } = config;
 
@@ -88,14 +96,17 @@ export async function generateInterfaceFiles(
   }
 
   // 为每个标签目录生成一个索引.ts文件，其中包含该标签的所有接口
+
   for (const [tag, interfaces] of Object.entries(interfacesByTag)) {
     const tagDir = chineseToPinyinCamelCase(tag);
     const dirPath = join(outputDir, tagDir);
 
     // 如果目录不存在则创建
+    // eslint-disable-next-line no-await-in-loop
     await ensureDir(dirPath);
 
     // 在单个 index.ts 文件中生成此目录中的所有接口
+    // eslint-disable-next-line no-await-in-loop
     await generateInterfaceFileForTag(tag, interfaces, processedData, config, dirPath);
   }
 
@@ -179,41 +190,43 @@ export async function generateInterfaceFileForTag(
 
   combinedCode += '\n';
 
-  // 处理接口
-  for (const apiInterface of interfaces) {
-    // 生成接口名称
-    const interfaceName = generateInterfaceName(apiInterface.path, apiInterface.method);
+  // 处理接口（跳过 typesOnly 模式）
+  if (!config.typesOnly) {
+    for (const apiInterface of interfaces) {
+      // 生成接口名称
+      const interfaceName = generateInterfaceName(apiInterface.path, apiInterface.method);
 
-    // 准备模板数据
-    const templateData = {
-      interfaceName,
-      functionName: generateFunctionName(apiInterface.path, apiInterface.method),
-      path: apiInterface.path,
-      method: apiInterface.method.toUpperCase(),
-      description: apiInterface.operation.summary || apiInterface.operation.description || '',
-      hasParameters: !!(apiInterface.operation.parameters || apiInterface.operation.requestBody),
-      parameters: extractRequestProperties(apiInterface.operation, processedData),
-      hasResponse: !!apiInterface.operation.responses,
-      responseProperties: extractResponseProperties(
-        apiInterface.operation.responses,
-        processedData,
-      ),
-      hasBody: hasRequestBody(apiInterface.operation),
-      comment: config.comment,
-      requestMethodStyle: config.requestMethodStyle,
-      requestFunctionName: config.requestFunctionName || 'request',
-      requestMethodsObjectName: config.requestMethodsObjectName || 'requestMethods',
-    };
+      // 准备模板数据
+      const templateData = {
+        interfaceName,
+        functionName: generateFunctionName(apiInterface.path, apiInterface.method),
+        path: apiInterface.path,
+        method: apiInterface.method.toUpperCase(),
+        description: apiInterface.operation.summary || apiInterface.operation.description || '',
+        hasParameters: !!(apiInterface.operation.parameters || apiInterface.operation.requestBody),
+        parameters: extractRequestProperties(apiInterface.operation, processedData),
+        hasResponse: !!apiInterface.operation.responses,
+        responseProperties: extractResponseProperties(
+          apiInterface.operation.responses,
+          processedData,
+        ),
+        hasBody: hasRequestBody(apiInterface.operation),
+        comment: config.comment,
+        requestMethodStyle: config.requestMethodStyle,
+        requestFunctionName: config.requestFunctionName || 'request',
+        requestMethodsObjectName: config.requestMethodsObjectName || 'requestMethods',
+      };
 
-    // 生成接口代码
-    const code = generateInterfaceFunction(templateData, config);
+      // 生成接口代码
+      const code = generateInterfaceFunction(templateData, config);
 
-    // 移除模板中的导入语句（已在顶部添加）
-    const codeWithoutImport = code.replace(
-      /import type \{ AxiosRequestConfig \} from 'axios';\nimport axios from 'axios';\nimport consola from 'consola';\n\n?/g,
-      '',
-    );
-    combinedCode += `${codeWithoutImport}\n\n`;
+      // 移除模板中的导入语句（已在顶部添加）
+      const codeWithoutImport = code.replace(
+        /import type \{ AxiosRequestConfig \} from 'axios';\nimport axios from 'axios';\nimport consola from 'consola';\n\n?/g,
+        '',
+      );
+      combinedCode += `${codeWithoutImport}\n\n`;
+    }
   }
 
   // 格式化代码
@@ -241,7 +254,9 @@ export async function generateTypeFiles(
   await ensureDir(typesDir);
 
   // 生成类型文件
+
   for (const type of processedData.types) {
+    // eslint-disable-next-line no-await-in-loop
     await generateTypeFile(type, processedData, config, typesDir);
   }
 

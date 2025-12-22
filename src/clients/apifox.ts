@@ -5,6 +5,7 @@
 import axios from 'axios';
 import consola from 'consola';
 import type { ApiConfig } from '@/types';
+import { makeRequestWithProgress } from '@/progress';
 
 export async function fetchApifoxData(config: ApiConfig): Promise<any> {
   try {
@@ -38,10 +39,26 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
       consola.debug('Apifox API 请求配置:', headers, requestBody, realUrl);
     }
 
-    const response = await axios.post(realUrl, requestBody, {
-      headers,
-      timeout: 30000, // 30秒超时
-    });
+    // 使用带进度显示的请求
+    const response = await makeRequestWithProgress(
+      async (onProgress) => {
+        return await axios.post(realUrl, requestBody, {
+          headers,
+          timeout: 30000, // 30秒超时
+          onDownloadProgress: (progressEvent) => {
+            if (onProgress && progressEvent.total) {
+              onProgress(progressEvent.loaded, progressEvent.total);
+            }
+          },
+        });
+      },
+      {
+        url: realUrl,
+        method: 'POST',
+        timeout: 30000,
+        retries: 0,
+      },
+    );
 
     if (response.status !== 200) {
       throw new Error(`Apifox API 请求失败: ${response.status} ${response.statusText}`);

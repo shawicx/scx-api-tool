@@ -5,6 +5,7 @@
 import axios from 'axios';
 import consola from 'consola';
 import type { ApiConfig } from '@/types';
+import { makeRequestWithProgress } from '@/progress';
 
 export async function fetchSwaggerData(config: ApiConfig): Promise<any> {
   try {
@@ -15,8 +16,22 @@ export async function fetchSwaggerData(config: ApiConfig): Promise<any> {
       consola.debug(`正在从以下位置获取 Swagger 数据: ${apiUrl}`);
     }
 
-    // 发起 API 请求
-    const response = await axios.get(apiUrl);
+    // 使用带进度显示的请求
+    const response = await makeRequestWithProgress(
+      async (onProgress) => {
+        return await axios.get(apiUrl, {
+          onDownloadProgress: (progressEvent) => {
+            if (onProgress && progressEvent.total) {
+              onProgress(progressEvent.loaded, progressEvent.total);
+            }
+          },
+        });
+      },
+      {
+        url: apiUrl,
+        method: 'GET',
+      },
+    );
 
     return response.data;
   } catch (error: any) {
