@@ -94,6 +94,26 @@ export enum QueryStringArrayFormat {
   'json' = 'json',
 }
 
+/** 服务类型枚举 */
+export enum ServerType {
+  /** Apifox */
+  Apifox = 'apifox',
+  /** Swagger/OpenAPI */
+  Swagger = 'swagger',
+}
+
+/**
+ * 请求方法调用风格
+ */
+export enum RequestMethodStyle {
+  /** 标准配置方式 - request(config) */
+  CONFIG = 'config',
+  /** 方法特定方式 - request.get/post/delete 等 */
+  METHOD_SPECIFIC = 'method-specific',
+  /** 两者都提供 - 用户可以选择使用方式 */
+  BOTH = 'both',
+}
+
 /**
  * @description 判断是否为 GET 类请求。
  * @param method 请求方式
