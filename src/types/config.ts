@@ -74,6 +74,8 @@ export interface UserConfig {
   requestFunctionName?: string;
   /** 自定义方法对象名 */
   requestMethodsObjectName?: string;
+  /** 并发写入数量（用于文件生成的并发控制） */
+  concurrency?: number;
   /** 分类配置 */
   categories?: Array<{
     /** 分类 ID */
@@ -123,6 +125,8 @@ export interface ApiConfig {
   requestFunctionName: string;
   /** 自定义方法对象名 */
   requestMethodsObjectName: string;
+  /** 并发写入数量（用于文件生成的并发控制） */
+  concurrency: number;
   /** 分类配置 */
   categories: Array<{
     /** 分类 ID */

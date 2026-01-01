@@ -88,19 +88,25 @@ export async function generateInterfaceFiles(
   }
 
   // 为每个标签目录生成一个索引.ts文件，其中包含该标签的所有接口
+  const tagEntries = Object.entries(interfacesByTag);
+  const concurrency = config.concurrency || 50;
 
-  for (const [tag, interfaces] of Object.entries(interfacesByTag)) {
-    const tagDir = chineseToPinyinCamelCase(tag);
-    const dirPath = join(outputDir, tagDir);
+  // 并发生成接口文件
+  await executeWithConcurrency(
+    tagEntries,
+    async ([tag, interfaces]) => {
+      const tagDir = chineseToPinyinCamelCase(tag);
+      const dirPath = join(outputDir, tagDir);
 
-    // 如果目录不存在则创建
-    // eslint-disable-next-line no-await-in-loop
-    await ensureDir(dirPath);
+      // 如果目录不存在则创建
+      await ensureDir(dirPath);
 
-    // 在单个 index.ts 文件中生成此目录中的所有接口
-    // eslint-disable-next-line no-await-in-loop
-    await generateInterfaceFileForTag(tag, interfaces, processedData, config, dirPath);
-  }
+      // 在单个 index.ts 文件中生成此目录中的所有接口
+      await generateInterfaceFileForTag(tag, interfaces, processedData, config, dirPath);
+    },
+    concurrency,
+    `生成接口文件`,
+  );
 
   // 生成根目录 index.ts 文件
   await generateRootIndexFile(processedData, config);
@@ -259,12 +265,14 @@ export async function generateTypeFiles(
   const typesDir = join(config.outputDir, 'types');
   await ensureDir(typesDir);
 
-  // 生成类型文件
-
-  for (const type of processedData.types) {
-    // eslint-disable-next-line no-await-in-loop
-    await generateTypeFile(type, processedData, config, typesDir);
-  }
+  // 并发生成类型文件
+  const concurrency = config.concurrency || 50;
+  await executeWithConcurrency(
+    processedData.types,
+    (type) => generateTypeFile(type, processedData, config, typesDir),
+    concurrency,
+    `生成类型文件`,
+  );
 
   // 生成类型索引文件
   await generateTypesIndexFile(processedData, config);
@@ -385,4 +393,61 @@ function generateFunctionName(path: string, method: string): string {
 
   // 转换为驼峰命名并添加方法名
   return pathName + method.toUpperCase();
+}
+
+/**
+ * 并发执行器，带并发控制和错误处理
+ * @param items 需要处理的项目数组
+ * @param handler 处理函数
+ * @param concurrency 并发数量
+ * @param taskName 任务名称（用于日志）
+ */
+async function executeWithConcurrency<T>(
+  items: T[],
+  handler: (item: T) => Promise<void>,
+  concurrency: number,
+  taskName: string,
+): Promise<void> {
+  if (items.length === 0) {
+    return;
+  }
+
+  if (process.env.DEBUG) {
+    consola.debug(`${taskName}：开始并发处理 ${items.length} 个项目，并发数：${concurrency}`);
+  }
+
+  // 分批处理
+  const errors: Array<{ item: T; error: Error }> = [];
+  let completed = 0;
+
+  for (let i = 0; i < items.length; i += concurrency) {
+    const batch = items.slice(i, i + concurrency);
+    // eslint-disable-next-line no-await-in-loop
+    const batchResults = await Promise.allSettled(batch.map(async (item) => handler(item)));
+
+    // 统计结果
+    batchResults.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        errors.push({ item: batch[index], error: result.reason });
+      }
+    });
+
+    completed += batch.length;
+
+    if (process.env.DEBUG) {
+      consola.debug(`${taskName}：进度 ${completed}/${items.length}`);
+    }
+  }
+
+  // 如果有错误，汇总报告
+  if (errors.length > 0) {
+    consola.warn(`${taskName}：${errors.length}/${items.length} 个项目处理失败`);
+    if (process.env.DEBUG) {
+      errors.forEach(({ error }) => {
+        consola.error(`  - ${error.message}`);
+      });
+    }
+  } else if (process.env.DEBUG) {
+    consola.success(`${taskName}：成功完成 ${items.length} 个项目`);
+  }
 }

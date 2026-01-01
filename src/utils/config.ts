@@ -31,6 +31,7 @@ const DEFAULT_CONFIG_VALUES: Omit<
   requestMethodStyle: RequestMethodStyle.CONFIG, // 默认为标准配置方式
   requestFunctionName: 'request',
   requestMethodsObjectName: 'requestMethods',
+  concurrency: 50, // 默认并发数
   categories: [],
 };
 
