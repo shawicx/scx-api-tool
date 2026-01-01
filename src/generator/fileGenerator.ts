@@ -18,7 +18,7 @@ import {
 import { getRelativeImportPath } from './pathUtils';
 import {
   compileTemplate,
-  getTypeTemplate,
+  getTypeTemplateByConfig,
   generateRequestFile as generateRequestFileContent,
   generateInterfaceFunction,
   registerTemplateHelpers,
@@ -62,14 +62,6 @@ export async function generateInterfaceFiles(
 ): Promise<void> {
   if (process.env.DEBUG) {
     consola.debug(`正在生成 ${processedData.interfaces.length} 个接口文件...`);
-  }
-
-  // typesOnly 模式下不生成接口文件
-  if (config.typesOnly) {
-    if (process.env.DEBUG) {
-      consola.debug('Types Only 模式：跳过接口文件生成');
-    }
-    return;
   }
 
   // 创建输出目录
@@ -167,7 +159,16 @@ export async function generateInterfaceFileForTag(
   const requestFunctionName = config.requestFunctionName || 'request';
   const requestMethodsObjectName = config.requestMethodsObjectName || 'requestMethods';
 
-  if (config.apiOnly) {
+  if (config.typesOnly) {
+    // TypesOnly 模式：只导入类型（不导入 request 函数）
+    if (usedTypes.size > 0) {
+      // 计算类型目录路径
+      const typesDirPath = join(config.outputDir, 'types');
+      const typesRelativePath = getRelativeImportPath(dirPath, typesDirPath);
+      const cleanTypesRelativePath = typesRelativePath.replace(/\/$/, ''); // 移除尾部斜杠
+      combinedCode += `import type { ${Array.from(usedTypes).join(', ')} } from '${cleanTypesRelativePath}';\n`;
+    }
+  } else if (config.apiOnly) {
     // API Only 模式：只导入 request 函数
     combinedCode += `import { ${requestFunctionName} } from '${cleanRelativePath}';\n`;
   } else {
@@ -190,43 +191,40 @@ export async function generateInterfaceFileForTag(
 
   combinedCode += '\n';
 
-  // 处理接口（跳过 typesOnly 模式）
-  if (!config.typesOnly) {
-    for (const apiInterface of interfaces) {
-      // 生成接口名称
-      const interfaceName = generateInterfaceName(apiInterface.path, apiInterface.method);
+  // 处理接口（typesOnly 和完整模式都会生成，但内容不同）
+  for (const apiInterface of interfaces) {
+    // 生成接口名称
+    const interfaceName = generateInterfaceName(apiInterface.path, apiInterface.method);
 
-      // 准备模板数据
-      const templateData = {
-        interfaceName,
-        functionName: generateFunctionName(apiInterface.path, apiInterface.method),
-        path: apiInterface.path,
-        method: apiInterface.method.toUpperCase(),
-        description: apiInterface.operation.summary || apiInterface.operation.description || '',
-        hasParameters: !!(apiInterface.operation.parameters || apiInterface.operation.requestBody),
-        parameters: extractRequestProperties(apiInterface.operation, processedData),
-        hasResponse: !!apiInterface.operation.responses,
-        responseProperties: extractResponseProperties(
-          apiInterface.operation.responses,
-          processedData,
-        ),
-        hasBody: hasRequestBody(apiInterface.operation),
-        comment: config.comment,
-        requestMethodStyle: config.requestMethodStyle,
-        requestFunctionName: config.requestFunctionName || 'request',
-        requestMethodsObjectName: config.requestMethodsObjectName || 'requestMethods',
-      };
+    // 准备模板数据
+    const templateData = {
+      interfaceName,
+      functionName: generateFunctionName(apiInterface.path, apiInterface.method),
+      path: apiInterface.path,
+      method: apiInterface.method.toUpperCase(),
+      description: apiInterface.operation.summary || apiInterface.operation.description || '',
+      hasParameters: !!(apiInterface.operation.parameters || apiInterface.operation.requestBody),
+      parameters: extractRequestProperties(apiInterface.operation, processedData),
+      hasResponse: !!apiInterface.operation.responses,
+      responseProperties: extractResponseProperties(
+        apiInterface.operation.responses,
+        processedData,
+      ),
+      hasBody: hasRequestBody(apiInterface.operation),
+      requestMethodStyle: config.requestMethodStyle,
+      requestFunctionName: config.requestFunctionName || 'request',
+      requestMethodsObjectName: config.requestMethodsObjectName || 'requestMethods',
+    };
 
-      // 生成接口代码
-      const code = generateInterfaceFunction(templateData, config);
+    // 生成接口代码
+    const code = generateInterfaceFunction(templateData, config);
 
-      // 移除模板中的导入语句（已在顶部添加）
-      const codeWithoutImport = code.replace(
-        /import type \{ AxiosRequestConfig \} from 'axios';\nimport axios from 'axios';\nimport consola from 'consola';\n\n?/g,
-        '',
-      );
-      combinedCode += `${codeWithoutImport}\n\n`;
-    }
+    // 移除模板中的导入语句（已在顶部添加）
+    const codeWithoutImport = code.replace(
+      /import type \{ AxiosRequestConfig \} from 'axios';\nimport axios from 'axios';\nimport consola from 'consola';\n\n?/g,
+      '',
+    );
+    combinedCode += `${codeWithoutImport}\n\n`;
   }
 
   // 格式化代码
@@ -245,6 +243,14 @@ export async function generateTypeFiles(
   processedData: ProcessedApiData,
   config: ApiConfig,
 ): Promise<void> {
+  // apiOnly 模式下不生成类型文件
+  if (config.apiOnly) {
+    if (process.env.DEBUG) {
+      consola.debug('API Only 模式：跳过类型文件生成');
+    }
+    return;
+  }
+
   if (process.env.DEBUG) {
     consola.debug(`正在生成 ${processedData.types.length} 个类型文件...`);
   }
@@ -271,14 +277,13 @@ async function generateTypeFile(
   typesDir: string,
 ): Promise<void> {
   // 编译模板
-  const template = compileTemplate(getTypeTemplate());
+  const template = compileTemplate(getTypeTemplateByConfig(config.comment !== false));
 
   // 准备模板数据
   const templateData = {
     typeName: type.name,
     description: type.schema.description || type.name,
     properties: extractTypeProperties(type.schema),
-    comment: config.comment,
   };
 
   // 生成代码

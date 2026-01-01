@@ -24,12 +24,13 @@ export async function generateFiles(
   try {
     // 根据 typesOnly 和 apiOnly 配置决定生成哪些文件
     if (config.apiOnly) {
-      // apiOnly 模式：只生成接口文件
+      // apiOnly 模式：只生成接口文件（无类型定义，无 types 文件夹）
       consola.info('API Only 模式：只生成接口文件');
       await generateInterfaceFiles(processedData, config);
     } else if (config.typesOnly) {
-      // typesOnly 模式：只生成类型文件
-      consola.info('Types Only 模式：只生成类型文件');
+      // typesOnly 模式：生成类型文件和接口类型定义（无请求方法）
+      consola.info('Types Only 模式：只生成类型定义');
+      await generateInterfaceFiles(processedData, config);
       await generateTypeFiles(processedData, config);
     } else {
       // 默认模式：生成所有文件

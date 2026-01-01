@@ -112,19 +112,278 @@ export function generatePrecompiledMethodMap(requestMethodsObjectName = 'request
   return template;
 }
 
-// 完整的接口模板 - 保持向后兼容
+// ==================== 接口模版 ====================
+
+/**
+ * 完整的接口模板 - 带注释
+ * 包含 Request/Response 类型定义和请求方法
+ */
+export function getInterfaceTemplateWithComment(): string {
+  return `/**
+ * @description {{description}}
+{{#if hasParameters}}
+ * @param params {{interfaceName}}Request
+{{/if}}
+ * @returns Promise<{{interfaceName}}Response>
+ */
+export interface {{interfaceName}}Request {
+{{#if hasParameters}}
+{{#each parameters}}
+  /** @description {{description}} */
+  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+{{/each}}
+{{/if}}
+}
+
+/**
+ * @description {{description}} 的返回数据类型
+ */
+export interface {{interfaceName}}Response {
+{{#if hasResponse}}
+{{#each responseProperties}}
+  /** @description {{description}} */
+  {{name}}: {{{type}}};
+{{/each}}
+{{/if}}
+}
+
+/**
+ * @description {{description}}
+ * @param params {{interfaceName}}Request
+ * @returns Promise<{{interfaceName}}Response>
+ */
+export async function {{functionName}}(params: {{interfaceName}}Request): Promise<{{interfaceName}}Response> {
+  {{> functionBody}}
+}
+`;
+}
+
+/**
+ * 完整的接口模板 - 不带注释
+ * 包含 Request/Response 类型定义和请求方法
+ */
+export function getInterfaceTemplateWithoutComment(): string {
+  return `export interface {{interfaceName}}Request {
+{{#if hasParameters}}
+{{#each parameters}}
+  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+{{/each}}
+{{/if}}
+}
+
+export interface {{interfaceName}}Response {
+{{#if hasResponse}}
+{{#each responseProperties}}
+  {{name}}: {{{type}}};
+{{/each}}
+{{/if}}
+}
+
+export async function {{functionName}}(params: {{interfaceName}}Request): Promise<{{interfaceName}}Response> {
+  {{> functionBody}}
+}
+`;
+}
+
+// ==================== API Only 模版 ====================
+
+/**
+ * API Only 模式的接口模板 - 带注释
+ * 只生成请求方法，不包含类型定义
+ */
+export function getApiOnlyTemplateWithComment(): string {
+  return `/**
+ * @description {{description}}
+ * @param params {{interfaceName}}Request
+ * @returns Promise<{{interfaceName}}Response>
+ */
+export async function {{functionName}}(
+  params
+) {
+  const config = {
+    url: '{{path}}',
+    method: '{{method}}',
+{{#if hasParameters}}
+{{#if hasBody}}
+    data: params,
+{{else}}
+    params,
+{{/if}}
+{{/if}}
+  };
+  return request(config);
+}
+`;
+}
+
+/**
+ * API Only 模式的接口模板 - 不带注释
+ * 只生成请求方法，不包含类型定义
+ */
+export function getApiOnlyTemplateWithoutComment(): string {
+  return `export async function {{functionName}}(
+  params
+) {
+  const config = {
+    url: '{{path}}',
+    method: '{{method}}',
+{{#if hasParameters}}
+{{#if hasBody}}
+    data: params,
+{{else}}
+    params,
+{{/if}}
+{{/if}}
+  };
+  return request(config);
+}
+`;
+}
+
+// ==================== 类型模版 ====================
+
+/**
+ * 类型模板 - 带注释
+ */
+export function getTypeTemplateWithComment(): string {
+  return `/**
+ * @description {{description}}
+ */
+export interface {{typeName}} {
+{{#each properties}}
+  /** @description {{description}} */
+  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+{{/each}}
+}
+`;
+}
+
+/**
+ * 类型模板 - 不带注释
+ */
+export function getTypeTemplateWithoutComment(): string {
+  return `export interface {{typeName}} {
+{{#each properties}}
+  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+{{/each}}
+}
+`;
+}
+
+// ==================== TypesOnly 模版 ====================
+
+/**
+ * TypesOnly 模式的接口模板 - 带注释
+ * 只生成 Request/Response 类型定义，不生成请求方法
+ */
+export function getTypesOnlyTemplateWithComment(): string {
+  return `/**
+ * @description {{description}}
+{{#if hasParameters}}
+ * @param params {{interfaceName}}Request
+{{/if}}
+ * @returns Promise<{{interfaceName}}Response>
+ */
+export interface {{interfaceName}}Request {
+{{#if hasParameters}}
+{{#each parameters}}
+  /** @description {{description}} */
+  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+{{/each}}
+{{/if}}
+}
+
+/**
+ * @description {{description}} 的返回数据类型
+ */
+export interface {{interfaceName}}Response {
+{{#if hasResponse}}
+{{#each responseProperties}}
+  /** @description {{description}} */
+  {{name}}: {{{type}}};
+{{/each}}
+{{/if}}
+}
+`;
+}
+
+/**
+ * TypesOnly 模式的接口模板 - 不带注释
+ * 只生成 Request/Response 类型定义，不生成请求方法
+ */
+export function getTypesOnlyTemplateWithoutComment(): string {
+  return `export interface {{interfaceName}}Request {
+{{#if hasParameters}}
+{{#each parameters}}
+  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+{{/each}}
+{{/if}}
+}
+
+export interface {{interfaceName}}Response {
+{{#if hasResponse}}
+{{#each responseProperties}}
+  {{name}}: {{{type}}};
+{{/each}}
+{{/if}}
+}
+`;
+}
+
+/**
+ * 根据配置获取 TypesOnly 模板
+ */
+export function getTypesOnlyTemplateByConfig(comment: boolean): string {
+  return comment ? getTypesOnlyTemplateWithComment() : getTypesOnlyTemplateWithoutComment();
+}
+
+// ==================== 向后兼容的接口 ====================
+
+/**
+ * @deprecated 使用 getInterfaceTemplateWithComment 或 getInterfaceTemplateWithoutComment
+ * 获取完整的接口模板（根据 comment 配置）
+ */
 export function getInterfaceTemplate(): string {
-  return '{{#if comment}}/**\n * @description {{description}}\n{{#if hasParameters}}\n * @param params {{interfaceName}}Request\n{{/if}}\n * @returns Promise<{{interfaceName}}Response>\n */{{/if}}\nexport interface {{interfaceName}}Request {\n{{#if hasParameters}}\n{{#each parameters}}{{#if ../comment}}  /** @description {{description}} */{{/if}}\n  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};\n{{/each}}{{/if}}\n}\n\n{{#if comment}}/**\n * @description {{description}} 的返回数据类型\n */{{/if}}\nexport interface {{interfaceName}}Response {\n{{#if hasResponse}}\n{{#each responseProperties}}{{#if ../comment}}  /** @description {{description}} */{{/if}}\n  {{name}}: {{{type}}};\n{{/each}}{{/if}}\n}\n\n{{#if comment}}/**\n * @description {{description}}\n * @param params {{interfaceName}}Request\n * @returns Promise<{{interfaceName}}Response>\n */{{/if}}\nexport async function {{functionName}}(params: {{interfaceName}}Request): Promise<{{interfaceName}}Response> {\n  {{> functionBody}}\n}\n';
+  return getInterfaceTemplateWithComment();
 }
 
-// API Only 模式的接口模板 - 只生成请求方法，不包含类型定义
+/**
+ * @deprecated 使用 getApiOnlyTemplateWithComment 或 getApiOnlyTemplateWithoutComment
+ * 获取 API Only 模式的接口模板（根据 comment 配置）
+ */
 export function getApiOnlyTemplate(): string {
-  return "{{#if comment}}/**\n * @description {{description}}\n * @param params {{interfaceName}}Request\n * @returns Promise<{{interfaceName}}Response>\n */{{/if}}\nexport async function {{functionName}}(\n  params\n) {\n  const config = {\n    url: '{{path}}',\n    method: '{{method}}',\n{{#if hasParameters}}\n{{#if hasBody}}\n    data: params,\n{{else}}\n    params,\n{{/if}}\n{{/if}}\n  };\n  return request(config);\n}";
+  return getApiOnlyTemplateWithComment();
 }
 
-// 类型模板 - 保持向后兼容
+/**
+ * @deprecated 使用 getTypeTemplateWithComment 或 getTypeTemplateWithoutComment
+ * 获取类型模板（根据 comment 配置）
+ */
 export function getTypeTemplate(): string {
-  return '{{#if comment}}/**\n * @description {{description}}\n */\n{{/if}}export interface {{typeName}} {\n{{#each properties}}{{#if ../comment}}  /** @description {{description}} */\n{{/if}}  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};\n{{/each}}\n}\n';
+  return getTypeTemplateWithComment();
+}
+
+// ==================== 新的获取模板方法 ====================
+
+/**
+ * 根据配置获取接口模板
+ */
+export function getInterfaceTemplateByConfig(comment: boolean): string {
+  return comment ? getInterfaceTemplateWithComment() : getInterfaceTemplateWithoutComment();
+}
+
+/**
+ * 根据配置获取 API Only 模板
+ */
+export function getApiOnlyTemplateByConfig(comment: boolean): string {
+  return comment ? getApiOnlyTemplateWithComment() : getApiOnlyTemplateWithoutComment();
+}
+
+/**
+ * 根据配置获取类型模板
+ */
+export function getTypeTemplateByConfig(comment: boolean): string {
+  return comment ? getTypeTemplateWithComment() : getTypeTemplateWithoutComment();
 }
 
 // 简单的模板函数，用于处理基本的 Handlebars 语法（向后兼容）
@@ -247,13 +506,29 @@ export function generateRequestFile(config: any): string {
   return template;
 }
 
-// 生成接口函数内容
+/**
+ * 生成接口函数内容
+ * 根据 typesOnly、apiOnly、comment 配置选择合适的模板
+ */
 export function generateInterfaceFunction(interfaceInfo: any, config: any): string {
   registerTemplateHelpers();
   registerTemplatePartials();
 
-  // 根据 apiOnly 配置选择模板
-  const template = config.apiOnly ? getApiOnlyTemplate() : getInterfaceTemplate();
+  // 根据 typesOnly、apiOnly 和 comment 配置选择模板
+  let template: string;
+  const comment = config.comment !== false;
+
+  if (config.typesOnly) {
+    // TypesOnly 模式：只生成类型定义，不生成请求方法
+    template = getTypesOnlyTemplateByConfig(comment);
+  } else if (config.apiOnly) {
+    // API Only 模式：只生成请求方法，不包含类型定义
+    template = getApiOnlyTemplateByConfig(comment);
+  } else {
+    // 完整模式：生成类型定义和请求方法
+    template = getInterfaceTemplateByConfig(comment);
+  }
+
   const compiledTemplate = Handlebars.compile(template);
 
   const result = compiledTemplate({
