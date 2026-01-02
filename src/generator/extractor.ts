@@ -1,4 +1,5 @@
 import { ProcessedApiData } from '../processors/openapi';
+import { sanitizePropertyName, sanitizeTypeName } from './naming';
 
 export function extractRequestProperties(operation: any, processedData: ProcessedApiData): any[] {
   const properties: any[] = [];
@@ -16,7 +17,7 @@ export function extractRequestProperties(operation: any, processedData: Processe
         if (refSchema && refSchema.properties) {
           for (const [name, property] of Object.entries(refSchema.properties)) {
             properties.push({
-              name,
+              name: sanitizePropertyName(name),
               type: getPropertyType(property),
               description: (property as any).description || '',
               required: refSchema.required?.includes(name) || false,
@@ -27,7 +28,7 @@ export function extractRequestProperties(operation: any, processedData: Processe
         // 处理内联模式
         for (const [name, property] of Object.entries(schema.properties)) {
           properties.push({
-            name,
+            name: sanitizePropertyName(name),
             type: getPropertyType(property),
             description: (property as any).description || '',
             required: schema.required?.includes(name) || false,
@@ -41,7 +42,7 @@ export function extractRequestProperties(operation: any, processedData: Processe
   if (operation.parameters && Array.isArray(operation.parameters)) {
     for (const param of operation.parameters) {
       properties.push({
-        name: param.name,
+        name: sanitizePropertyName(param.name),
         type: getPropertyType({ type: param.type || 'string' }),
         description: param.description || '',
         required: !!param.required,
@@ -71,7 +72,7 @@ export function extractResponseProperties(responses: any, processedData: Process
         if (refSchema && refSchema.properties) {
           for (const [name, property] of Object.entries(refSchema.properties)) {
             properties.push({
-              name,
+              name: sanitizePropertyName(name),
               type: getPropertyType(property),
               description: (property as any).description || '',
               required: refSchema.required?.includes(name) || false,
@@ -82,7 +83,7 @@ export function extractResponseProperties(responses: any, processedData: Process
           // 它可能是一个直接类型引用
           properties.push({
             name: 'data',
-            type: refName,
+            type: sanitizeTypeName(refName),
             description: '响应数据',
             required: true,
           });
@@ -90,7 +91,7 @@ export function extractResponseProperties(responses: any, processedData: Process
           // 如果我们找不到引用，添加一个通用响应
           properties.push({
             name: 'data',
-            type: refName,
+            type: sanitizeTypeName(refName),
             description: '响应数据',
             required: true,
           });
@@ -99,7 +100,7 @@ export function extractResponseProperties(responses: any, processedData: Process
         // 处理内联模式
         for (const [name, property] of Object.entries(schema.properties)) {
           properties.push({
-            name,
+            name: sanitizePropertyName(name),
             type: getPropertyType(property),
             description: (property as any).description || '',
             required: schema.required?.includes(name) || false,
@@ -157,7 +158,7 @@ export function extractTypeProperties(schema: any): any[] {
 
   for (const [name, property] of Object.entries(schema.properties)) {
     properties.push({
-      name,
+      name: sanitizePropertyName(name),
       type: getPropertyType(property),
       description: (property as any).description || '',
       required: schema.required?.includes(name) || false,
@@ -173,7 +174,7 @@ export function getPropertyType(property: any): string {
   // 处理引用类型
   if (property.$ref) {
     const refName = property.$ref.split('/').pop();
-    return refName;
+    return sanitizeTypeName(refName);
   }
 
   // 处理数组类型
@@ -186,7 +187,7 @@ export function getPropertyType(property: any): string {
     // 检查是否为引用对象
     if (property.additionalProperties && property.additionalProperties.$ref) {
       const refName = property.additionalProperties.$ref.split('/').pop();
-      return `Record<string, ${refName}>`;
+      return `Record<string, ${sanitizeTypeName(refName)}>`;
     }
     return 'Record<string, any>';
   }

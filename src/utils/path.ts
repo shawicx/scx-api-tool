@@ -1,4 +1,4 @@
-/*
+/**
  * @description shawicx d35f3153@proton.me
  */
 import { pinyin } from 'pinyin-pro';
@@ -23,7 +23,7 @@ export function chineseToPinyinCamelCase(chinese: string): string {
 }
 
 /**
- * 根据API标签生成目录路径
+ * @description 根据API标签生成目录路径
  * @param tags API标签数组
  * @returns 目录路径数组
  */

@@ -16,6 +16,7 @@ import {
   hasRequestBody,
 } from './extractor';
 import { getRelativeImportPath } from './pathUtils';
+import { sanitizeTypeName, sanitizeInterfaceName, sanitizeParamName } from './naming';
 import {
   compileTemplate,
   getTypeTemplateByConfig,
@@ -284,12 +285,16 @@ async function generateTypeFile(
   config: ApiConfig,
   typesDir: string,
 ): Promise<void> {
+  // 清理类型名
+  const cleanTypeName = sanitizeTypeName(type.name);
+  const cleanFileName = cleanTypeName.replace(/[^a-zA-Z0-9$_]/g, '_');
+
   // 编译模板
   const template = compileTemplate(getTypeTemplateByConfig(config.comment !== false));
 
   // 准备模板数据
   const templateData = {
-    typeName: type.name,
+    typeName: cleanTypeName,
     description: type.schema.description || type.name,
     properties: extractTypeProperties(type.schema),
   };
@@ -298,10 +303,10 @@ async function generateTypeFile(
   const code = template(templateData);
 
   // 格式化代码
-  const formattedCode = await formatCode(code, join(typesDir, `${type.name}.ts`));
+  const formattedCode = await formatCode(code, join(typesDir, `${cleanFileName}.ts`));
 
   // 写入文件
-  const filePath = join(typesDir, `${type.name}.ts`);
+  const filePath = join(typesDir, `${cleanFileName}.ts`);
   await writeFormattedFile(filePath, formattedCode);
 
   if (process.env.DEBUG) {
@@ -319,7 +324,9 @@ async function generateTypesIndexFile(
   let indexContent = '';
 
   for (const type of processedData.types) {
-    indexContent += `export type { ${type.name} } from './${type.name}';\n`;
+    const cleanTypeName = sanitizeTypeName(type.name);
+    const cleanFileName = cleanTypeName.replace(/[^a-zA-Z0-9$_]/g, '_');
+    indexContent += `export type { ${cleanTypeName} } from './${cleanFileName}';\n`;
   }
 
   // 写入 index.ts 文件
@@ -372,27 +379,83 @@ export async function generateRootIndexFile(
 }
 
 function generateInterfaceName(path: string, method: string): string {
-  // 转换路径为驼峰命名
-  const pathName = path
-    .replace(/\{([^}]+)\}/g, 'By$1') // 替换路径参数
-    .replace(/[^a-zA-Z0-9]/g, '-') // 替换非字母数字字符
-    .replace(/^-+|-+$/g, '') // 修剪前导/尾随破折号
-    .replace(/-([a-z])/g, (g) => g[1].toUpperCase()); // 转换为驼峰命名
+  // 1. 提取路径参数
+  const paramMatches = path.match(/\{([^}]+)\}/g) || [];
 
-  // 首字母大写并添加方法名
-  return pathName.charAt(0).toUpperCase() + pathName.slice(1) + method.toUpperCase();
+  // 2. 移除路径参数，清理路径
+  let pathName = path.replace(/\{[^}]+\}/g, '');
+  pathName = pathName
+    .replace(/^\//, '') // 移除开头的 /
+    .replace(/\//g, '-') // / → -
+    .replace(/^-+|-+$/g, ''); // 移除前导/尾随 -
+
+  // 3. 分割并处理每个单词
+  const words = pathName.split('-');
+  const camelCaseWords = words.map((word) => {
+    // 如果单词已经是驼峰命名（包含大写字母或数字），保持不变
+    if (/[A-Z0-9]/.test(word.charAt(0))) {
+      return word;
+    }
+    // 否则首字母大写
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  });
+
+  pathName = camelCaseWords.join('');
+
+  // 4. 为每个路径参数添加 By 前缀（驼峰化）
+  const paramsPart = paramMatches
+    .map((param) => {
+      const paramName = param.replace(/\{([^}]+)\}/, '$1');
+      const capitalized = paramName.charAt(0).toUpperCase() + paramName.slice(1);
+      return `By${capitalized}`;
+    })
+    .join('');
+
+  // 5. 组合：路径名 + 参数 + 方法
+  const interfaceName = pathName + paramsPart + method.toUpperCase();
+
+  // 6. 清理非法字符（如点等）
+  return sanitizeInterfaceName(interfaceName);
 }
 
 function generateFunctionName(path: string, method: string): string {
-  // 转换路径为驼峰命名
-  const pathName = path
-    .replace(/\{([^}]+)\}/g, 'By$1') // 替换路径参数
-    .replace(/[^a-zA-Z0-9]/g, '-') // 替换非字母数字字符
-    .replace(/^-+|-+$/g, '') // 修剪前导/尾随破折号
-    .replace(/-([a-z])/g, (g) => g[1].toUpperCase()); // 转换为驼峰命名
+  // 1. 提取路径参数
+  const paramMatches = path.match(/\{([^}]+)\}/g) || [];
 
-  // 转换为驼峰命名并添加方法名
-  return pathName + method.toUpperCase();
+  // 2. 移除路径参数，清理路径
+  let pathName = path.replace(/\{[^}]+\}/g, '');
+  pathName = pathName
+    .replace(/^\//, '') // 移除开头的 /
+    .replace(/\//g, '-') // / → -
+    .replace(/^-+|-+$/g, ''); // 移除前导/尾随 -
+
+  // 3. 分割并处理每个单词
+  const words = pathName.split('-');
+  const camelCaseWords = words.map((word) => {
+    // 如果单词已经是驼峰命名（包含大写字母或数字），保持不变
+    if (/[A-Z0-9]/.test(word.charAt(0))) {
+      return word;
+    }
+    // 否则首字母大写
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  });
+
+  pathName = camelCaseWords.join('');
+
+  // 4. 为每个路径参数添加 By 前缀（驼峰化）
+  const paramsPart = paramMatches
+    .map((param) => {
+      const paramName = param.replace(/\{([^}]+)\}/, '$1');
+      const capitalized = paramName.charAt(0).toUpperCase() + paramName.slice(1);
+      return `By${capitalized}`;
+    })
+    .join('');
+
+  // 5. 组合：路径名 + 参数 + 方法
+  const functionName = pathName + paramsPart + method.toUpperCase();
+
+  // 6. 清理非法字符（如点等）
+  return sanitizeParamName(functionName);
 }
 
 /**

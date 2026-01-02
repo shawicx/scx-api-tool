@@ -8,7 +8,7 @@ export interface {{interfaceName}}Request {
   {{#if hasParameters}}
   {{#each parameters}}
   /** {{description}} */
-  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+  {{{name}}}{{#unless required}}?{{/unless}}: {{{type}}};
   {{/each}}
   {{/if}}
 }
@@ -17,7 +17,7 @@ export interface {{interfaceName}}Response {
   {{#if hasResponse}}
   {{#each responseProperties}}
   /** {{description}} */
-  {{name}}: {{{type}}};
+  {{{name}}}: {{{type}}};
   {{/each}}
   {{/if}}
 }

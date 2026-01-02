@@ -155,7 +155,7 @@ export interface {{interfaceName}}Request {
 {{#if hasParameters}}
 {{#each parameters}}
   /** @description {{description}} */
-  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+  {{{name}}}{{#unless required}}?{{/unless}}: {{{type}}};
 {{/each}}
 {{/if}}
 }
@@ -167,7 +167,7 @@ export interface {{interfaceName}}Response {
 {{#if hasResponse}}
 {{#each responseProperties}}
   /** @description {{description}} */
-  {{name}}: {{{type}}};
+  {{{name}}}: {{{type}}};
 {{/each}}
 {{/if}}
 }
@@ -191,7 +191,7 @@ export function getInterfaceTemplateWithoutComment(): string {
   return `export interface {{interfaceName}}Request {
 {{#if hasParameters}}
 {{#each parameters}}
-  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+  {{{name}}}{{#unless required}}?{{/unless}}: {{{type}}};
 {{/each}}
 {{/if}}
 }
@@ -199,7 +199,7 @@ export function getInterfaceTemplateWithoutComment(): string {
 export interface {{interfaceName}}Response {
 {{#if hasResponse}}
 {{#each responseProperties}}
-  {{name}}: {{{type}}};
+  {{{name}}}: {{{type}}};
 {{/each}}
 {{/if}}
 }
@@ -277,7 +277,7 @@ export function getTypeTemplateWithComment(): string {
 export interface {{typeName}} {
 {{#each properties}}
   /** @description {{description}} */
-  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+  {{{name}}}{{#unless required}}?{{/unless}}: {{{type}}};
 {{/each}}
 }
 `;
@@ -289,7 +289,7 @@ export interface {{typeName}} {
 export function getTypeTemplateWithoutComment(): string {
   return `export interface {{typeName}} {
 {{#each properties}}
-  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+  {{{name}}}{{#unless required}}?{{/unless}}: {{{type}}};
 {{/each}}
 }
 `;
@@ -313,7 +313,7 @@ export interface {{interfaceName}}Request {
 {{#if hasParameters}}
 {{#each parameters}}
   /** @description {{description}} */
-  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+  {{{name}}}{{#unless required}}?{{/unless}}: {{{type}}};
 {{/each}}
 {{/if}}
 }
@@ -325,7 +325,7 @@ export interface {{interfaceName}}Response {
 {{#if hasResponse}}
 {{#each responseProperties}}
   /** @description {{description}} */
-  {{name}}: {{{type}}};
+  {{{name}}}: {{{type}}};
 {{/each}}
 {{/if}}
 }
@@ -340,7 +340,7 @@ export function getTypesOnlyTemplateWithoutComment(): string {
   return `export interface {{interfaceName}}Request {
 {{#if hasParameters}}
 {{#each parameters}}
-  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+  {{{name}}}{{#unless required}}?{{/unless}}: {{{type}}};
 {{/each}}
 {{/if}}
 }
@@ -348,7 +348,7 @@ export function getTypesOnlyTemplateWithoutComment(): string {
 export interface {{interfaceName}}Response {
 {{#if hasResponse}}
 {{#each responseProperties}}
-  {{name}}: {{{type}}};
+  {{{name}}}: {{{type}}};
 {{/each}}
 {{/if}}
 }

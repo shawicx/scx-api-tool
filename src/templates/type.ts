@@ -4,7 +4,7 @@ export const typeTemplate = `/**
 export interface {{typeName}} {
   {{#each properties}}
   /** {{description}} */
-  {{name}}{{#unless required}}?{{/unless}}: {{{type}}};
+  {{{name}}}{{#unless required}}?{{/unless}}: {{{type}}};
   {{/each}}
 }
 `;
