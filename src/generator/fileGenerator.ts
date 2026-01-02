@@ -135,6 +135,13 @@ export async function generateInterfaceFileForTag(
       if (processedData.types.some((t: any) => t.name === prop.type)) {
         usedTypes.add(prop.type);
       }
+      // 检查类型是否为引用数组
+      if (prop.type.endsWith('[]')) {
+        const baseType = prop.type.slice(0, -2);
+        if (processedData.types.some((t: any) => t.name === baseType)) {
+          usedTypes.add(baseType);
+        }
+      }
     }
 
     // 从响应属性收集类型

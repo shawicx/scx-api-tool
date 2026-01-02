@@ -1,6 +1,7 @@
 import consola from 'consola';
 import { ServerType } from '@/types';
 import type { ApiConfig } from '@/types';
+import { sanitizeTypeName } from '../generator/naming';
 
 export interface ProcessedApiData {
   interfaces: any[];
@@ -64,7 +65,8 @@ export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiDa
   if (data.components?.schemas) {
     for (const [name, schema] of Object.entries(data.components.schemas)) {
       types.push({
-        name,
+        name: sanitizeTypeName(name),
+        originalName: name, // 保留原始名称用于调试
         schema,
       });
     }
