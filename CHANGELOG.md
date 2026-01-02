@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.3](https://github.com/shawicx/scx-api-tool/compare/v0.4.2...v0.4.3) (2026-01-02)
+
+### Features
+
+- claude添加配置文件 ([f9285aa](https://github.com/shawicx/scx-api-tool/commit/f9285aa9d6f3cf1f1c20b842c3322c520bd69224))
+- implement comprehensive progress management system ([fbb6a3c](https://github.com/shawicx/scx-api-tool/commit/fbb6a3c3d73ecee3140f23d588f763db30eeca7e))
+- update file generator and template modules ([53757ae](https://github.com/shawicx/scx-api-tool/commit/53757ae8def7986c3632a7bb0ba9261612a4e46c))
+- 国际化 CLI 命令和工具函数，添加中文支持 ([1c8f30b](https://github.com/shawicx/scx-api-tool/commit/1c8f30b8f8bcce504a4481e4805cbd7ec5da1e50))
+- 完成预设配置开发 ([1edf52c](https://github.com/shawicx/scx-api-tool/commit/1edf52cb36963ee07aa903dc46cc68f62b3a074c))
+- 实现并发文件写入优化 ([229d195](https://github.com/shawicx/scx-api-tool/commit/229d19501004d2cad76a202d53a657915a56958e))
+- 添加 apiOnly 模式 ([7f27a84](https://github.com/shawicx/scx-api-tool/commit/7f27a848d9550eeff5ec1103a5de31d4cd22df14))
+- 添加 comment 配置项以控制是否生成注释 ([b5800f0](https://github.com/shawicx/scx-api-tool/commit/b5800f0287c2fa8c6cbbadcbd41ffac1b008a0f4))
+- 添加请求方法风格配置选项并优化模板系统 ([108ed65](https://github.com/shawicx/scx-api-tool/commit/108ed65d3f08899f2e15d6003e99d8f3a55a9377))
+- 移除reactHook配置及相关代码 ([cd97cb0](https://github.com/shawicx/scx-api-tool/commit/cd97cb0d80ca98aaea88187d7b4fe8e4376def7c))
+- 调整 Apifox 项目配置结构并优化调试日志 ([773cce8](https://github.com/shawicx/scx-api-tool/commit/773cce8c8086cb4c48bef485ae5b8475c4005641))
+- 配置验证功能 ([ee366d1](https://github.com/shawicx/scx-api-tool/commit/ee366d1bf002a437c182f0ec72fa6b32ce828468))
+- 重构配置文件，简化为仅需2个必需配置项 ([ed3a864](https://github.com/shawicx/scx-api-tool/commit/ed3a864b9cb1960e3202e67e224325131ca5cc1c))
+
+### Bug Fixes
+
+- 修复typesOnly以及apiOnly配置生成的问题（重构模版系统） ([00f04f5](https://github.com/shawicx/scx-api-tool/commit/00f04f575282809cc15e9ec5f6a4aacd7f6d88fe))
+- 移除临时调试代码，避免重复执行日志输出 ([d824444](https://github.com/shawicx/scx-api-tool/commit/d8244449c52f78e85a534d3a1ffbc19a8b00aabd))
+
+### Documentation
+
+- add QWEN.md documentation ([224704a](https://github.com/shawicx/scx-api-tool/commit/224704a66f8b3451d59a5e721972f4eb7702c82a))
+
+### Refactors
+
+- 优化依赖配置和构建设置 ([a80a2a3](https://github.com/shawicx/scx-api-tool/commit/a80a2a381e03ccedadd9d5850284729adddfe716))
+- 拆分重构类型定义 ([f509274](https://github.com/shawicx/scx-api-tool/commit/f5092742fde9d5803548914a76f2bf99bae48204))
+- 调整 ServerType 枚举为常量对象并更新配置 ([62a57d6](https://github.com/shawicx/scx-api-tool/commit/62a57d6e82846b9f34408fff98a4be8bfdfffe14))
+- 重构代码注释和清理项目依赖 ([bfef9ef](https://github.com/shawicx/scx-api-tool/commit/bfef9efa356fafb07576262654559a46576f49c5))
+- 重构文档结构 ([81ae4a9](https://github.com/shawicx/scx-api-tool/commit/81ae4a9ca3ce66f4ab291ff083ce4bc9a488e686))
+- 重组项目结构和代码架构 ([4388e7d](https://github.com/shawicx/scx-api-tool/commit/4388e7de243dbeee3bd3311e316c53d096caf882))
+
 ### [0.4.2](https://github.com/shawicx/scx-api-tool/compare/v0.4.1...v0.4.2) (2025-09-06)
 
 ### Features
