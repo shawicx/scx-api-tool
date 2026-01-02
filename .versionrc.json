@@ -9,6 +9,7 @@
     { "type": "perf", "section": "Performance Improvements" },
     { "type": "test", "hidden": true }
   ],
+  "commitAll": true,
   "commitUrlFormat": "https://github.com/shawicx/scx-api-tool/commit/{{hash}}",
   "compareUrlFormat": "https://github.com/shawicx/scx-api-tool/compare/{{previousTag}}...{{currentTag}}"
 }
