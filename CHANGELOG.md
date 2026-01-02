@@ -2,12 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-### [0.4.6](https://github.com/shawicx/scx-api-tool/compare/v0.4.5...v0.4.6) (2026-01-02)
+### [0.4.7](https://github.com/shawicx/scx-api-tool/compare/v0.4.6...v0.4.7) (2026-01-02)
 
+### Bug Fixes
+
+- standard-version配置 ([eb22be8](https://github.com/shawicx/scx-api-tool/commit/eb22be8aa2477b8db319119e2729bf73f5a8ecc0))
+- 修复 release 流程中的 git 工作区问题 ([1d4f3b6](https://github.com/shawicx/scx-api-tool/commit/1d4f3b60e38a47f65cf2301015920e70e8f642ff))
+
+### [0.4.6](https://github.com/shawicx/scx-api-tool/compare/v0.4.5...v0.4.6) (2026-01-02)
 
 ### Features
 
-* 实现模板编译缓存 ([42266d6](https://github.com/shawicx/scx-api-tool/commit/42266d692be120fc53a0adf110f1837860b74aae))
+- 实现模板编译缓存 ([42266d6](https://github.com/shawicx/scx-api-tool/commit/42266d692be120fc53a0adf110f1837860b74aae))
 
 ### [0.4.5](https://github.com/shawicx/scx-api-tool/compare/v0.4.4...v0.4.5) (2026-01-02)
 
