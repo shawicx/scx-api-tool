@@ -1,6 +1,31 @@
 import { RequestMethodStyle } from '../types';
 import { HTTP_METHODS } from '../utils/config';
 import Handlebars from 'handlebars';
+import consola from 'consola';
+
+// 模板编译缓存
+const templateCache = new Map<string, HandlebarsTemplateDelegate>();
+
+/**
+ * 获取缓存统计
+ */
+export function getTemplateCacheStats(): { size: number; keys: string[] } {
+  return {
+    size: templateCache.size,
+    keys: Array.from(templateCache.keys()),
+  };
+}
+
+/**
+ * 清空模板缓存
+ */
+export function clearTemplateCache(): void {
+  const { size } = templateCache;
+  templateCache.clear();
+  if (process.env.DEBUG && size > 0) {
+    consola.debug(`模板缓存已清空：清理了 ${size} 个模板`);
+  }
+}
 
 // 注册辅助函数
 export function registerTemplateHelpers() {
@@ -388,11 +413,27 @@ export function getTypeTemplateByConfig(comment: boolean): string {
 
 // 简单的模板函数，用于处理基本的 Handlebars 语法（向后兼容）
 export function compileTemplate(template: string): (data: any) => string {
+  // 检查缓存
+  if (templateCache.has(template)) {
+    if (process.env.DEBUG) {
+      consola.debug('模板缓存命中');
+    }
+    return templateCache.get(template)!;
+  }
+
   // 确保注册了所有的辅助函数和 partials
   registerTemplateHelpers();
   registerTemplatePartials();
 
-  return Handlebars.compile(template);
+  // 编译模板并存入缓存
+  const compiledTemplate = Handlebars.compile(template);
+  templateCache.set(template, compiledTemplate);
+
+  if (process.env.DEBUG) {
+    consola.debug(`模板已编译并缓存，当前缓存数量：${templateCache.size}`);
+  }
+
+  return compiledTemplate;
 }
 
 // 生成请求文件内容
@@ -511,9 +552,6 @@ export function generateRequestFile(config: any): string {
  * 根据 typesOnly、apiOnly、comment 配置选择合适的模板
  */
 export function generateInterfaceFunction(interfaceInfo: any, config: any): string {
-  registerTemplateHelpers();
-  registerTemplatePartials();
-
   // 根据 typesOnly、apiOnly 和 comment 配置选择模板
   let template: string;
   const comment = config.comment !== false;
@@ -529,7 +567,8 @@ export function generateInterfaceFunction(interfaceInfo: any, config: any): stri
     template = getInterfaceTemplateByConfig(comment);
   }
 
-  const compiledTemplate = Handlebars.compile(template);
+  // 使用缓存的 compileTemplate 函数
+  const compiledTemplate = compileTemplate(template);
 
   const result = compiledTemplate({
     ...interfaceInfo,

@@ -47,11 +47,8 @@ async function processConfig(config: ApiConfig): Promise<void> {
     // 步骤 1: 配置验证
     progress.startStep(0);
     if (process.env.DEBUG) {
-      progressManager.debug(
-        '处理配置: serverUrl =',
-        config.serverUrl,
-        ', serverType =',
-        config.serverType,
+      progressManager.info(
+        `处理配置: serverUrl = ${config.serverUrl}, serverType = ${config.serverType}`,
       );
     }
     progress.completeCurrentStep('配置验证完成');
@@ -60,7 +57,7 @@ async function processConfig(config: ApiConfig): Promise<void> {
     progress.startStep(1);
     const rawData = await fetchData(config);
     if (process.env.DEBUG) {
-      progressManager.debug('从 API 源获取原始数据成功');
+      progressManager.info('从 API 源获取原始数据成功');
     }
     progress.completeCurrentStep('API 数据获取完成');
 
@@ -76,7 +73,7 @@ async function processConfig(config: ApiConfig): Promise<void> {
     };
 
     if (process.env.DEBUG) {
-      progressManager.debug('处理后的数据计数:', stats);
+      progressManager.info(`处理后的数据计数: ${JSON.stringify(stats)}`);
     }
 
     progressManager.info(
