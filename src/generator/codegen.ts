@@ -6,6 +6,7 @@ import consola from 'consola';
 import { ProcessedApiData } from '../processors/openapi';
 import { ApiConfig } from '../types';
 import { generateInterfaceFiles, generateRequestFile, generateTypeFiles } from './fileGenerator';
+import { cleanOutputDir } from '../utils/file';
 
 export async function generateFiles(
   processedData: ProcessedApiData,
@@ -22,6 +23,18 @@ export async function generateFiles(
   }
 
   try {
+    // 清理输出目录，排除 requestFunctionFilePath
+    const excludeFiles = [];
+    // 只在 requestFunctionFilePath 在输出目录下时才排除
+    if (
+      config.requestFunctionFilePath &&
+      config.requestFunctionFilePath.startsWith(config.outputDir)
+    ) {
+      excludeFiles.push(config.requestFunctionFilePath);
+    }
+
+    await cleanOutputDir(config.outputDir, excludeFiles);
+
     // 根据 typesOnly 和 apiOnly 配置决定生成哪些文件
     if (config.apiOnly) {
       // apiOnly 模式：只生成接口文件（无类型定义，无 types 文件夹）
