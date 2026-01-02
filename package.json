@@ -55,7 +55,7 @@
     "docs:dev": "vitepress dev",
     "lint": "eslint .",
     "lint:fix": "prettier --write . && eslint --fix .",
-    "postaction": "git push origin main --tags",
+    "postaction": "git add -A && git commit -m 'chore: format files after release [skip ci]' --no-verify && git push origin main --tags",
     "prepare": "husky",
     "prepublish": "pnpm run build",
     "versioning": "standard-version",

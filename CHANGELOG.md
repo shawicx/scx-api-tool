@@ -4,9 +4,10 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [0.4.6](https://github.com/shawicx/scx-api-tool/compare/v0.4.5...v0.4.6) (2026-01-02)
 
+
 ### Features
 
-- 实现模板编译缓存 ([42266d6](https://github.com/shawicx/scx-api-tool/commit/42266d692be120fc53a0adf110f1837860b74aae))
+* 实现模板编译缓存 ([42266d6](https://github.com/shawicx/scx-api-tool/commit/42266d692be120fc53a0adf110f1837860b74aae))
 
 ### [0.4.5](https://github.com/shawicx/scx-api-tool/compare/v0.4.4...v0.4.5) (2026-01-02)
 
