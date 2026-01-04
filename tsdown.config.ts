@@ -13,7 +13,7 @@ export default defineConfig([
     target: 'ESNext',
     outDir: 'dist',
     dts: true,
-    copy: ['src/templates/'],
+    copy: ['src/templates/', 'src/visualize/'],
     minify: isProd,
     sourcemap: !isProd,
     treeshake: true,

@@ -7,6 +7,7 @@ import { version } from '../../package.json';
 import { debugCommand } from './commands/debug';
 import { generateCommand } from './commands/generate';
 import { initCommand } from './commands/init';
+import { visualizeCommand } from './commands/visualize';
 
 export const program = new Command();
 
@@ -19,6 +20,7 @@ program
 program.addCommand(initCommand);
 program.addCommand(generateCommand);
 program.addCommand(debugCommand);
+program.addCommand(visualizeCommand);
 
 // 默认帮助命令
 program.helpOption('-h, --help', '显示命令帮助');
