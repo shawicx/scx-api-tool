@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.8](https://github.com/shawicx/scx-api-tool/compare/v0.4.7...v0.4.8) (2026-01-07)
+
+### Features
+
+- 添加配置可视化服务器和 Web 界面 ([90e9e69](https://github.com/shawicx/scx-api-tool/commit/90e9e69cd07203129f8c2761a4d9b542f5a48952))
+- 生成代码前自动清理输出目录 ([e7be749](https://github.com/shawicx/scx-api-tool/commit/e7be7496811e044c758d2ef3cdb2ba7b40a4763b))
+- 统一错误处理 ([6f6dea1](https://github.com/shawicx/scx-api-tool/commit/6f6dea17128aebcaa605420300c3153d36a26c46))
+
+### Bug Fixes
+
+- 修复代码生成中的HTML转义和接口名称清理问题 ([fe57093](https://github.com/shawicx/scx-api-tool/commit/fe57093d6511dcfbd708969070c679d5ffc06feb))
+- 修复类型名称不一致导致类型导入缺失的问题 ([a80a7d8](https://github.com/shawicx/scx-api-tool/commit/a80a7d8bdbe8ccd7b2c42460b8794f7bf02d40b7))
+
 ### [0.4.7](https://github.com/shawicx/scx-api-tool/compare/v0.4.6...v0.4.7) (2026-01-02)
 
 ### Bug Fixes
