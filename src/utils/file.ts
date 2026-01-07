@@ -2,18 +2,12 @@
  * @description 文件操作工具函数
  */
 
-import {
-  ensureDir as fseEnsureDir,
-  outputFile as fseOutputFile,
-  pathExists as fsePathExists,
-  remove as fseRemove,
-} from 'fs-extra';
-import { readdir } from 'fs/promises';
+import { promises as fs } from 'fs';
 import { dirname, relative, join } from 'path';
 import consola from 'consola';
 
 export async function ensureDir(dirPath: string): Promise<void> {
-  await fseEnsureDir(dirPath);
+  await fs.mkdir(dirPath, { recursive: true });
 }
 
 export async function writeFormattedFile(filePath: string, content: string): Promise<void> {
@@ -21,11 +15,16 @@ export async function writeFormattedFile(filePath: string, content: string): Pro
   await ensureDir(dirname(filePath));
 
   // 写入文件
-  await fseOutputFile(filePath, content);
+  await fs.writeFile(filePath, content, 'utf-8');
 }
 
 export async function fileExists(filePath: string): Promise<boolean> {
-  return await fsePathExists(filePath);
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -50,7 +49,7 @@ export async function cleanOutputDir(dirPath: string, excludeFiles: string[] = [
 
   try {
     // 读取目录内容
-    const entries = await readdir(dirPath);
+    const entries = await fs.readdir(dirPath);
 
     // 顺序删除文件以避免并发问题
 
@@ -71,9 +70,9 @@ export async function cleanOutputDir(dirPath: string, excludeFiles: string[] = [
         continue;
       }
 
-      // 删除文件或目录（fseRemove 会递归删除目录）
+      // 删除文件或目录
       try {
-        await fseRemove(fullPath);
+        await fs.rm(fullPath, { recursive: true, force: true });
 
         if (process.env.DEBUG) {
           consola.debug(`已删除: ${entry}`);

@@ -89,7 +89,7 @@ async function processConfig(config: ApiConfig): Promise<void> {
     progress.complete('所有处理步骤完成');
     progressManager.info(`输出目录: ${config.outputDir}`);
   } catch (error: any) {
-    progress.fail(error instanceof Error ? error : new Error(error.message));
+    progress.failCurrentStep(error instanceof Error ? error : new Error(error.message));
     progressManager.error('处理配置失败:', error.message);
     throw error;
   }

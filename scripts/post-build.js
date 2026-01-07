@@ -8,8 +8,7 @@
  */
 
 import { execSync } from 'child_process';
-import { pathExists, writeJson } from 'fs-extra';
-import { readFile, writeFile, chmod } from 'fs/promises';
+import { readFile, writeFile, chmod, access } from 'fs/promises';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -25,21 +24,23 @@ async function postBuild() {
   try {
     // 1. 为 ESM 目录创建 package.json 标识文件
     console.log('🔧 创建 ESM 模块类型标识文件...');
-    if (await pathExists(distDir)) {
-      await writeJson(
+    try {
+      await access(distDir);
+      await writeFile(
         path.join(distDir, 'package.json'),
-        {
-          type: 'module',
-        },
-        { spaces: 2 },
+        JSON.stringify({ type: 'module' }, null, 2),
+        'utf-8',
       );
       console.log('✅ 已创建 dist/package.json (module)');
+    } catch {
+      // 目录不存在
     }
 
     // 2. 设置 CLI 文件权限和 shebang
     console.log('🔧 设置 CLI 文件权限和 shebang...');
     const cliFile = path.join(distDir, 'index.js');
-    if (await pathExists(cliFile)) {
+    try {
+      await access(cliFile);
       // 读取 CLI 文件内容
       let cliContent = await readFile(cliFile, 'utf8');
 
@@ -54,6 +55,8 @@ async function postBuild() {
       // 设置文件为可执行
       await chmod(cliFile, 0o755);
       console.log('✅ 已设置 dist/index.js 为可执行');
+    } catch {
+      // 文件不存在
     }
 
     // 3. 清理不必要的文件（可选）
@@ -66,9 +69,12 @@ async function postBuild() {
 
     // 4. 统计构建产物大小
     console.log('📊 构建产物体积统计:');
-    if (await pathExists(distDir)) {
+    try {
+      await access(distDir);
       const distSize = execSync(`du -sh ${distDir}`, { encoding: 'utf8' }).trim();
       console.log(`   dist (纯 ESM): ${distSize.split('\t')[0]}`);
+    } catch {
+      // 目录不存在
     }
 
     console.log('✨ 构建后优化完成! (纯 ESM 模式)');

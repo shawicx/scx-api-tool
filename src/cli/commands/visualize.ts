@@ -4,7 +4,7 @@
 
 import { Command } from 'commander';
 import { createServer } from 'http';
-import { readFile } from 'fs/promises';
+import { promises as fs } from 'fs';
 import { join, dirname } from 'path';
 import { loadConfig } from '@/config/loader';
 import { fetchData } from '@/clients';
@@ -66,13 +66,13 @@ export const visualizeCommand = new Command('visualize')
 
             for (const path of possiblePaths) {
               try {
-                const content = await readFile(path, 'utf-8');
-                html = content;
+                const content = await fs.readFile(path, 'utf-8');
+                html = content as string;
                 htmlPath = path;
                 consola.success(`找到 HTML 文件: ${htmlPath}`);
                 break;
               } catch {
-                // 继续尝试下一个路径
+                // consola.error(`未找到 HTML 文件`);
               }
             }
 

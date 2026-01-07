@@ -28,7 +28,7 @@ export function validateConfiguration(config: UserConfig): void {
     ...validateStringFields(config),
     ...validateBooleanFields(config),
     ...validateNumberFields(config),
-    ...validateArrayFields(config),
+    ...validateArrayFields(),
     ...validateSourceUrl(config),
     ...validateConfigLogic(config),
   ];

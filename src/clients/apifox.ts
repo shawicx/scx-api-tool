@@ -9,11 +9,11 @@ import { makeRequestWithProgress } from '@/utils/progress';
 import { ErrorFactory } from '@/errors';
 
 export async function fetchApifoxData(config: ApiConfig): Promise<any> {
+  // 添加查询参数（需要在 try 块外定义以便 catch 块访问）
+  const realUrl = `${config.source}?locale=zh-CN`;
+
   try {
     const { token } = config;
-
-    // 添加查询参数
-    const realUrl = `${config.source}?locale=zh-CN`;
 
     const headers = {
       'X-Apifox-Api-Version': '2024-03-28',
@@ -57,7 +57,6 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
         url: realUrl,
         method: 'POST',
         timeout: 30000,
-        retries: 0,
       },
     );
 
@@ -66,7 +65,7 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
     }
 
     // 检查响应内容类型
-    const contentType = response.headers['content-type'] || '';
+    const contentType = (response.headers?.['content-type'] as string) || '';
     if (!contentType.includes('application/json')) {
       throw ErrorFactory.invalidResponse(realUrl, 'application/json');
     }

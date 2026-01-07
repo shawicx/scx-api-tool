@@ -65,7 +65,7 @@ export const generateCommand = new Command('generate')
           progressManager.info(`   监控文件: ${configPath}`);
           progressManager.info('   按 Ctrl+C 退出监视模式');
         } catch (error) {
-          progress.fail(error instanceof Error ? error : new Error(String(error)));
+          progress.failCurrentStep(error instanceof Error ? error : new Error(String(error)));
           throw error;
         }
       } else {
@@ -73,10 +73,6 @@ export const generateCommand = new Command('generate')
         await generateCode(options.config);
       }
     } catch (error: any) {
-      // 确保清理所有进度显示
-      progressManager.stopAll();
-
-      // 使用统一的错误处理
       handleError(error, verbose);
     }
   });
