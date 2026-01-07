@@ -6,6 +6,7 @@ import type { ApiConfig } from '@/types';
 import { fetchApifoxData } from './apifox';
 import { fetchSwaggerData } from './swagger';
 import consola from 'consola';
+import { ErrorFactory } from '@/errors';
 
 export async function fetchData(config: ApiConfig): Promise<any> {
   if (process.env.DEBUG) {
@@ -18,6 +19,15 @@ export async function fetchData(config: ApiConfig): Promise<any> {
     case ServerType.Swagger:
       return fetchSwaggerData(config);
     default:
-      throw new Error(`不支持的服务器类型: ${config.serverType}`);
+      throw ErrorFactory.configInvalid(`不支持的服务器类型: ${config.serverType}`, [
+        {
+          title: '检查服务器类型配置',
+          steps: [
+            '确认 serverType 为 "apifox" 或 "swagger"',
+            'source URL 应该自动识别服务器类型',
+            '尝试使用 `npx api-power init` 重新生成配置',
+          ],
+        },
+      ]);
   }
 }

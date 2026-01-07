@@ -8,6 +8,7 @@ import { pathToFileURL } from 'url';
 import type { ApiConfig } from '@/types';
 import { defineConfig } from '@/utils/config';
 import { validateConfiguration } from '@/validation';
+import { ErrorFactory } from '@/errors';
 
 /**
  * 合并默认配置和用户配置
@@ -21,7 +22,7 @@ export async function loadConfig(configPath: string): Promise<ApiConfig> {
   const absolutePath = resolve(configPath);
 
   if (!existsSync(absolutePath)) {
-    throw new Error(`Configuration file not found: ${absolutePath}`);
+    throw ErrorFactory.configNotFound(absolutePath);
   }
 
   try {
@@ -42,6 +43,11 @@ export async function loadConfig(configPath: string): Promise<ApiConfig> {
 
     return finalConfig;
   } catch (error: any) {
-    throw new Error(`从 ${absolutePath} 加载配置失败: ${error.message}`);
+    // 如果是我们自定义的错误，直接抛出
+    if (error.code && error.code.startsWith('E1')) {
+      throw error;
+    }
+    // 否则包装为配置解析错误
+    throw ErrorFactory.configParseError(absolutePath, error);
   }
 }

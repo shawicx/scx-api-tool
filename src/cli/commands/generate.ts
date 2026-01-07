@@ -7,13 +7,16 @@ import { watch } from 'fs';
 import { join } from 'path';
 import { generateCode } from '@/generator';
 import { getProgressManager, createMultiStepProgress } from '@/progress';
+import { handleError } from '@/errors';
 
 export const generateCommand = new Command('generate')
   .alias('gen')
   .description('从 OpenAPI/Swagger 定义生成 API 请求函数和类型')
   .option('-c, --config <path>', '配置文件路径', 'api-power.config.ts')
   .option('-w, --watch', '监视更改并自动重新生成', false)
+  .option('-v, --verbose', '显示详细的错误信息和堆栈跟踪', false)
   .action(async (options) => {
+    const { verbose = false } = options;
     const progressManager = getProgressManager();
 
     try {
@@ -99,11 +102,10 @@ export const generateCommand = new Command('generate')
         }
       }
     } catch (error: any) {
-      progressManager.error(`代码生成失败: ${error.message}`);
-
       // 确保清理所有进度显示
       progressManager.stopAll();
 
-      process.exit(1);
+      // 使用统一的错误处理
+      handleError(error, verbose);
     }
   });

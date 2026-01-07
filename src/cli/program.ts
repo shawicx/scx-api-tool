@@ -14,7 +14,8 @@ export const program = new Command();
 program
   .name('api-power')
   .description('用于从 OpenAPI/Swagger 定义生成 API 请求函数和类型的 CLI 工具')
-  .version(version);
+  .version(version)
+  .option('-v, --verbose', '显示详细的错误信息和堆栈跟踪', false);
 
 // 注册命令
 program.addCommand(initCommand);

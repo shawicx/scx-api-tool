@@ -10,6 +10,7 @@ import { loadConfig } from '@/config/loader';
 import { fetchData } from '@/clients';
 import consola from 'consola';
 import { fileURLToPath } from 'url';
+import { handleError } from '@/errors';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,8 +21,9 @@ export const visualizeCommand = new Command('visualize')
   .option('-c, --config <path>', '配置文件路径', 'api-power.config.ts')
   .option('-p, --port <number>', '服务器端口', '3000')
   .option('--host <address>', '服务器地址', 'localhost')
+  .option('-v, --verbose', '显示详细的错误信息和堆栈跟踪', false)
   .action(async (options) => {
-    const { port, host, config: configPath } = options;
+    const { verbose = false, port, host, config: configPath } = options;
     const serverPort = parseInt(port, 10);
 
     try {
@@ -64,7 +66,8 @@ export const visualizeCommand = new Command('visualize')
 
             for (const path of possiblePaths) {
               try {
-                html = await readFile(path, 'utf-8');
+                const content = await readFile(path, 'utf-8');
+                html = content;
                 htmlPath = path;
                 consola.success(`找到 HTML 文件: ${htmlPath}`);
                 break;
@@ -133,7 +136,6 @@ export const visualizeCommand = new Command('visualize')
         });
       });
     } catch (error: any) {
-      consola.error(`启动可视化服务器失败: ${error.message}`);
-      process.exit(1);
+      handleError(error, verbose);
     }
   });

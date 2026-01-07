@@ -6,6 +6,7 @@ import axios from 'axios';
 import consola from 'consola';
 import type { ApiConfig } from '@/types';
 import { makeRequestWithProgress } from '@/progress';
+import { ErrorFactory } from '@/errors';
 
 export async function fetchApifoxData(config: ApiConfig): Promise<any> {
   try {
@@ -61,13 +62,13 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
     );
 
     if (response.status !== 200) {
-      throw new Error(`Apifox API 请求失败: ${response.status} ${response.statusText}`);
+      throw ErrorFactory.fetchFailed(realUrl, response.status);
     }
 
     // 检查响应内容类型
     const contentType = response.headers['content-type'] || '';
     if (!contentType.includes('application/json')) {
-      throw new Error(`Apifox API 返回的不是JSON格式: ${contentType}`);
+      throw ErrorFactory.invalidResponse(realUrl, 'application/json');
     }
 
     if (process.env.DEBUG) {
@@ -77,12 +78,35 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
 
     return response.data;
   } catch (error: any) {
-    if (axios.isAxiosError(error)) {
-      const message = error.response?.data?.message || error.message;
-      consola.error('Apifox API 请求失败 - axios错误:', error);
-      throw new Error(`Apifox API 请求失败: ${message}`);
+    // 如果是我们自定义的错误，直接抛出
+    if (error.code && error.code.startsWith('E2')) {
+      throw error;
     }
-    consola.error('从 Apifox 获取数据失败:', error.message);
+
+    // 处理 Axios 错误
+    if (axios.isAxiosError(error)) {
+      const statusCode = error.response?.status;
+
+      // 401 未授权
+      if (statusCode === 401) {
+        throw ErrorFactory.unauthorized(realUrl);
+      }
+
+      // 超时
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw ErrorFactory.timeout(realUrl, 30000);
+      }
+
+      // 网络错误
+      if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+        throw ErrorFactory.fetchFailed(realUrl, statusCode, error);
+      }
+
+      // 其他 Axios 错误
+      throw ErrorFactory.fetchFailed(realUrl, statusCode, error);
+    }
+
+    // 重新抛出其他错误
     throw error;
   }
 }

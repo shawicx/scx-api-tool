@@ -8,11 +8,14 @@ import { fileExists, writeFormattedFile } from '@/utils/file';
 import { join } from 'path';
 import { cwd } from 'process';
 import { DEFAULT_CONFIG } from '../constants';
+import { handleError } from '@/errors';
 
 export const initCommand = new Command('init')
   .description('初始化一个新的 api-power.config.ts 配置文件')
   .option('-f, --force', '覆盖现有配置文件', false)
+  .option('-v, --verbose', '显示详细的错误信息和堆栈跟踪', false)
   .action(async (options) => {
+    const { verbose = false } = options;
     const configPath = join(cwd(), 'api-power.config.ts');
 
     try {
@@ -27,7 +30,6 @@ export const initCommand = new Command('init')
       await writeFormattedFile(configPath, DEFAULT_CONFIG);
       consola.success(`配置文件创建成功: ${configPath}`);
     } catch (error: any) {
-      consola.error('创建配置文件失败:', error.message);
-      process.exit(1);
+      handleError(error, verbose);
     }
   });
