@@ -15,18 +15,9 @@ export default defineConfig([
     indentSize: {{indentSize}},
     prodEnvName: '{{prodEnvName}}',
     requestFunctionFilePath: '{{requestFunctionFilePath}}',
-    projects: [
-      {
-        {{#if token}}
-        token: '{{token}}',
-        {{/if}}
-        categories: [
-          {
-            id: {{categoryId}},
-          },
-        ],
-      },
-    ],
+    {{#if token}}
+    token: '{{token}}',
+    {{/if}}
   },
 ]);
 `;

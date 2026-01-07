@@ -7,7 +7,7 @@ import { loadConfig } from '../config/loader';
 import { processOpenApiData } from '../processors/openapi';
 import { ApiConfig } from '../types';
 import { generateFiles } from './codegen';
-import { getProgressManager, createMultiStepProgress } from '../progress';
+import { getProgressManager, createMultiStepProgress } from '../utils/progress';
 
 export async function generateCode(configPath: string): Promise<void> {
   // 添加调试信息

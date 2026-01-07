@@ -1,5 +1,5 @@
 /**
- * 配置工具函数
+ * !@description 配置工具函数
  * 处理配置验证、解析和应用逻辑
  */
 
@@ -11,6 +11,7 @@ import {
   RequestMethodStyle,
   RequestMethod,
 } from '@/types';
+import consola from 'consola';
 
 /**
  * 默认配置值
@@ -32,7 +33,6 @@ const DEFAULT_CONFIG_VALUES: Omit<
   requestFunctionName: 'request',
   requestMethodsObjectName: 'requestMethods',
   concurrency: 50, // 默认并发数
-  categories: [],
 };
 
 /**
@@ -110,7 +110,7 @@ export function parseSourceUrl(source: string): {
       apifoxProjectId,
     };
   } catch (error) {
-    console.error('parseSourceUrl error:', error);
+    consola.error('parseSourceUrl error:', error);
     throw new Error(`Invalid source URL format: ${source}`);
   }
 }
@@ -131,7 +131,6 @@ function applyPreset(
     ...DEFAULT_CONFIG_VALUES,
     ...presetConfig,
     ...config,
-    categories: config.categories || [],
   };
 }
 

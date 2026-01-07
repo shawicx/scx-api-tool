@@ -274,76 +274,10 @@ export function validateNumberFields(config: UserConfig): ValidationError[] {
 /**
  * 验证数组字段
  */
-export function validateArrayFields(config: UserConfig): ValidationError[] {
+export function validateArrayFields(): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  // 验证 categories
-  if (config.categories !== undefined) {
-    if (!Array.isArray(config.categories)) {
-      errors.push(
-        createValidationError(
-          'categories',
-          'INVALID_ARRAY',
-          'categories 必须是数组',
-          ValidationSeverity.ERROR,
-          'categories 应该是分类对象数组',
-          config.categories,
-        ),
-      );
-    } else {
-      // 验证每个 category 对象
-      config.categories.forEach((category, index) => {
-        if (!category || typeof category !== 'object') {
-          errors.push(
-            createValidationError(
-              `categories[${index}]`,
-              'INVALID_OBJECT',
-              `categories[${index}] 必须是对象`,
-              ValidationSeverity.ERROR,
-              '每个分类应该包含 id 和可选的 getRequestFunctionName',
-              category,
-            ),
-          );
-        } else {
-          // 验证 category.id
-          if (
-            category.id === undefined ||
-            typeof category.id !== 'number' ||
-            !Number.isInteger(category.id) ||
-            category.id < 0
-          ) {
-            errors.push(
-              createValidationError(
-                `categories[${index}].id`,
-                'INVALID_NUMBER',
-                `categories[${index}].id 必须是非负整数`,
-                ValidationSeverity.ERROR,
-                '分类 ID 应该是正整数',
-                category.id,
-              ),
-            );
-          }
-
-          // 验证 getRequestFunctionName（如果存在）
-          if (
-            category.getRequestFunctionName !== undefined &&
-            typeof category.getRequestFunctionName !== 'function'
-          ) {
-            errors.push(
-              createValidationError(
-                `categories[${index}].getRequestFunctionName`,
-                'INVALID_FUNCTION',
-                `categories[${index}].getRequestFunctionName 必须是函数`,
-                ValidationSeverity.ERROR,
-                'getRequestFunctionName 应该是一个接受 interfaceInfo 和 changeCase 参数的函数',
-                typeof category.getRequestFunctionName,
-              ),
-            );
-          }
-        }
-      });
-    }
-  }
+  // 目前没有需要验证的数组字段
 
   return errors;
 }

@@ -24,7 +24,7 @@ export async function generateFiles(
 
   try {
     // 清理输出目录，排除 requestFunctionFilePath
-    const excludeFiles = [];
+    const excludeFiles: string[] = [];
     // 只在 requestFunctionFilePath 在输出目录下时才排除
     if (
       config.requestFunctionFilePath &&

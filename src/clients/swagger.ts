@@ -5,7 +5,7 @@
 import axios from 'axios';
 import consola from 'consola';
 import type { ApiConfig } from '@/types';
-import { makeRequestWithProgress } from '@/progress';
+import { makeRequestWithProgress } from '@/utils/progress';
 
 export async function fetchSwaggerData(config: ApiConfig): Promise<any> {
   try {

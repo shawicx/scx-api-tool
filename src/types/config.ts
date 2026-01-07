@@ -76,13 +76,6 @@ export interface UserConfig {
   requestMethodsObjectName?: string;
   /** 并发写入数量（用于文件生成的并发控制） */
   concurrency?: number;
-  /** 分类配置 */
-  categories?: Array<{
-    /** 分类 ID */
-    id: number;
-    /** 获取请求函数名称的钩子 */
-    getRequestFunctionName?: (interfaceInfo: any, changeCase: any) => string;
-  }>;
 }
 
 /**
@@ -127,11 +120,4 @@ export interface ApiConfig {
   requestMethodsObjectName: string;
   /** 并发写入数量（用于文件生成的并发控制） */
   concurrency: number;
-  /** 分类配置 */
-  categories: Array<{
-    /** 分类 ID */
-    id: number;
-    /** 获取请求函数名称的钩子 */
-    getRequestFunctionName?: (interfaceInfo: any, changeCase: any) => string;
-  }>;
 }

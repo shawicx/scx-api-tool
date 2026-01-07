@@ -6,7 +6,7 @@ import { Command } from 'commander';
 import { watch } from 'fs';
 import { join } from 'path';
 import { generateCode } from '@/generator';
-import { getProgressManager, createMultiStepProgress } from '@/progress';
+import { getProgressManager, createMultiStepProgress } from '@/utils/progress';
 import { handleError } from '@/errors';
 
 export const generateCommand = new Command('generate')
@@ -49,15 +49,10 @@ export const generateCommand = new Command('generate')
           watch(configPath, async () => {
             progressManager.info('检测到配置文件更改，开始重新生成...');
 
-            // Watch 模式下使用简化的进度提示
-            const watchSpinner = progressManager.createSpinner('正在重新生成代码...');
-
             try {
               await generateCode(options.config);
-              watchSpinner?.complete('代码重新生成完成');
               progressManager.success('配置更新已应用，继续监视文件更改...');
-            } catch (error) {
-              watchSpinner?.fail(error instanceof Error ? error.message : String(error));
+            } catch {
               progressManager.error('重新生成失败，请检查配置文件');
             }
           });
@@ -74,32 +69,8 @@ export const generateCommand = new Command('generate')
           throw error;
         }
       } else {
-        // 单次生成模式
-        const progress = createMultiStepProgress({
-          title: 'API Tool 代码生成',
-          steps: [
-            { title: '初始化生成环境', status: 'pending' },
-            { title: '执行代码生成', status: 'pending' },
-            { title: '完成生成任务', status: 'pending' },
-          ],
-        });
-
-        try {
-          progress.startStep(0);
-          progress.completeCurrentStep('环境初始化完成');
-
-          progress.startStep(1);
-          await generateCode(options.config);
-          progress.completeCurrentStep('代码生成完成');
-
-          progress.startStep(2);
-          progress.completeCurrentStep('生成任务完成');
-
-          progress.complete('所有任务已完成！');
-        } catch (error) {
-          progress.fail(error instanceof Error ? error : new Error(String(error)));
-          throw error;
-        }
+        // 单次生成模式 - 直接调用 generateCode，内部会显示详细进度
+        await generateCode(options.config);
       }
     } catch (error: any) {
       // 确保清理所有进度显示
