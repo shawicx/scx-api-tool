@@ -51,54 +51,54 @@ export function registerTemplatePartials() {
   {{#if (eq method 'GET')}}
     {{#if hasParameters}}
   // GET 请求 - 只有查询参数
-  return {{requestMethodsObjectName}}.get<{{interfaceName}}Response>('{{path}}', params);
+  return {{requestMethodsObjectName}}.get<{{interfaceName}}ResponseType>('{{path}}', params);
     {{else}}
   // GET 请求 - 没有参数
-  return {{requestMethodsObjectName}}.get<{{interfaceName}}Response>('{{path}}');
+  return {{requestMethodsObjectName}}.get<{{interfaceName}}ResponseType>('{{path}}');
     {{/if}}
   {{/if}}
   {{#if (eq method 'DELETE')}}
     {{#if hasParameters}}
   // DELETE 请求 - 只有查询参数
-  return {{requestMethodsObjectName}}.delete<{{interfaceName}}Response>('{{path}}', params);
+  return {{requestMethodsObjectName}}.delete<{{interfaceName}}ResponseType>('{{path}}', params);
     {{else}}
   // DELETE 请求 - 没有参数
-  return {{requestMethodsObjectName}}.delete<{{interfaceName}}Response>('{{path}}');
+  return {{requestMethodsObjectName}}.delete<{{interfaceName}}ResponseType>('{{path}}');
     {{/if}}
   {{/if}}
   {{#if (eq method 'HEAD')}}
   // HEAD 请求 - 没有请求体
-  return {{requestMethodsObjectName}}.head<{{interfaceName}}Response>('{{path}}'{{#if hasParameters}}, params{{/if}});
+  return {{requestMethodsObjectName}}.head<{{interfaceName}}ResponseType>('{{path}}'{{#if hasParameters}}, params{{/if}});
   {{/if}}
   {{#if (eq method 'OPTIONS')}}
   // OPTIONS 请求 - 没有请求体
-  return {{requestMethodsObjectName}}.options<{{interfaceName}}Response>('{{path}}'{{#if hasParameters}}, params{{/if}});
+  return {{requestMethodsObjectName}}.options<{{interfaceName}}ResponseType>('{{path}}'{{#if hasParameters}}, params{{/if}});
   {{/if}}
   {{#if (eq method 'POST')}}
     {{#if hasParameters}}
   // POST 请求 - 有请求体参数
-  return {{requestMethodsObjectName}}.post<{{interfaceName}}Response>('{{path}}', params);
+  return {{requestMethodsObjectName}}.post<{{interfaceName}}ResponseType>('{{path}}', params);
     {{else}}
   // POST 请求 - 没有参数
-  return {{requestMethodsObjectName}}.post<{{interfaceName}}Response>('{{path}}');
+  return {{requestMethodsObjectName}}.post<{{interfaceName}}ResponseType>('{{path}}');
     {{/if}}
   {{/if}}
   {{#if (eq method 'PUT')}}
     {{#if hasParameters}}
   // PUT 请求 - 有请求体参数
-  return {{requestMethodsObjectName}}.put<{{interfaceName}}Response>('{{path}}', params);
+  return {{requestMethodsObjectName}}.put<{{interfaceName}}ResponseType>('{{path}}', params);
     {{else}}
   // PUT 请求 - 没有参数
-  return {{requestMethodsObjectName}}.put<{{interfaceName}}Response>('{{path}}');
+  return {{requestMethodsObjectName}}.put<{{interfaceName}}ResponseType>('{{path}}');
     {{/if}}
   {{/if}}
   {{#if (eq method 'PATCH')}}
     {{#if hasParameters}}
   // PATCH 请求 - 有请求体参数
-  return {{requestMethodsObjectName}}.patch<{{interfaceName}}Response>('{{path}}', params);
+  return {{requestMethodsObjectName}}.patch<{{interfaceName}}ResponseType>('{{path}}', params);
     {{else}}
   // PATCH 请求 - 没有参数
-  return {{requestMethodsObjectName}}.patch<{{interfaceName}}Response>('{{path}}');
+  return {{requestMethodsObjectName}}.patch<{{interfaceName}}ResponseType>('{{path}}');
     {{/if}}
   {{/if}}
 {{else}}
@@ -107,7 +107,7 @@ export function registerTemplatePartials() {
     method: '{{method}}',
     {{#if hasBody}}data: params,{{/if}}{{#unless hasBody}}{{#if hasParameters}}params,{{/if}}{{/unless}}
   };
-  return {{requestFunctionName}}<{{interfaceName}}Response>(config);
+  return {{requestFunctionName}}<{{interfaceName}}ResponseType>(config);
 {{/if}}
 `,
   );
@@ -147,11 +147,11 @@ export function getInterfaceTemplateWithComment(): string {
   return `/**
  * @description {{description}}
 {{#if hasParameters}}
- * @param params {{interfaceName}}Request
+ * @param params {{interfaceName}}RequestType
 {{/if}}
- * @returns Promise<{{interfaceName}}Response>
+ * @returns Promise<{{interfaceName}}ResponseType>
  */
-export interface {{interfaceName}}Request {
+export interface {{interfaceName}}RequestType {
 {{#if hasParameters}}
 {{#each parameters}}
   /** @description {{description}} */
@@ -163,7 +163,7 @@ export interface {{interfaceName}}Request {
 /**
  * @description {{description}} 的返回数据类型
  */
-export interface {{interfaceName}}Response {
+export interface {{interfaceName}}ResponseType {
 {{#if hasResponse}}
 {{#each responseProperties}}
   /** @description {{description}} */
@@ -174,10 +174,10 @@ export interface {{interfaceName}}Response {
 
 /**
  * @description {{description}}
- * @param params {{interfaceName}}Request
- * @returns Promise<{{interfaceName}}Response>
+ * @param params {{interfaceName}}RequestType
+ * @returns Promise<{{interfaceName}}ResponseType>
  */
-export async function {{functionName}}(params: {{interfaceName}}Request): Promise<{{interfaceName}}Response> {
+export async function {{functionName}}(params: {{interfaceName}}RequestType): Promise<{{interfaceName}}ResponseType> {
   {{> functionBody}}
 }
 `;
@@ -188,7 +188,7 @@ export async function {{functionName}}(params: {{interfaceName}}Request): Promis
  * 包含 Request/Response 类型定义和请求方法
  */
 export function getInterfaceTemplateWithoutComment(): string {
-  return `export interface {{interfaceName}}Request {
+  return `export interface {{interfaceName}}RequestType {
 {{#if hasParameters}}
 {{#each parameters}}
   {{{name}}}{{#unless required}}?{{/unless}}: {{{type}}};
@@ -196,7 +196,7 @@ export function getInterfaceTemplateWithoutComment(): string {
 {{/if}}
 }
 
-export interface {{interfaceName}}Response {
+export interface {{interfaceName}}ResponseType {
 {{#if hasResponse}}
 {{#each responseProperties}}
   {{{name}}}: {{{type}}};
@@ -204,7 +204,7 @@ export interface {{interfaceName}}Response {
 {{/if}}
 }
 
-export async function {{functionName}}(params: {{interfaceName}}Request): Promise<{{interfaceName}}Response> {
+export async function {{functionName}}(params: {{interfaceName}}RequestType): Promise<{{interfaceName}}ResponseType> {
   {{> functionBody}}
 }
 `;
@@ -219,8 +219,8 @@ export async function {{functionName}}(params: {{interfaceName}}Request): Promis
 export function getApiOnlyTemplateWithComment(): string {
   return `/**
  * @description {{description}}
- * @param params {{interfaceName}}Request
- * @returns Promise<{{interfaceName}}Response>
+ * @param params {{interfaceName}}RequestType
+ * @returns Promise<{{interfaceName}}ResponseType>
  */
 export async function {{functionName}}(
   params
@@ -305,11 +305,11 @@ export function getTypesOnlyTemplateWithComment(): string {
   return `/**
  * @description {{description}}
 {{#if hasParameters}}
- * @param params {{interfaceName}}Request
+ * @param params {{interfaceName}}RequestType
 {{/if}}
- * @returns Promise<{{interfaceName}}Response>
+ * @returns Promise<{{interfaceName}}ResponseType>
  */
-export interface {{interfaceName}}Request {
+export interface {{interfaceName}}RequestType {
 {{#if hasParameters}}
 {{#each parameters}}
   /** @description {{description}} */
@@ -321,7 +321,7 @@ export interface {{interfaceName}}Request {
 /**
  * @description {{description}} 的返回数据类型
  */
-export interface {{interfaceName}}Response {
+export interface {{interfaceName}}ResponseType {
 {{#if hasResponse}}
 {{#each responseProperties}}
   /** @description {{description}} */
@@ -337,7 +337,7 @@ export interface {{interfaceName}}Response {
  * 只生成 Request/Response 类型定义，不生成请求方法
  */
 export function getTypesOnlyTemplateWithoutComment(): string {
-  return `export interface {{interfaceName}}Request {
+  return `export interface {{interfaceName}}RequestType {
 {{#if hasParameters}}
 {{#each parameters}}
   {{{name}}}{{#unless required}}?{{/unless}}: {{{type}}};
@@ -345,7 +345,7 @@ export function getTypesOnlyTemplateWithoutComment(): string {
 {{/if}}
 }
 
-export interface {{interfaceName}}Response {
+export interface {{interfaceName}}ResponseType {
 {{#if hasResponse}}
 {{#each responseProperties}}
   {{{name}}}: {{{type}}};

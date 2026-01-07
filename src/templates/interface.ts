@@ -4,7 +4,7 @@
 export const interfaceTemplate = `import { RequestConfig, request } from './request';
 
 // {{interfaceName}} 的接口定义
-export interface {{interfaceName}}Request {
+export interface {{interfaceName}}RequestType {
   {{#if hasParameters}}
   {{#each parameters}}
   /** {{description}} */
@@ -13,7 +13,7 @@ export interface {{interfaceName}}Request {
   {{/if}}
 }
 
-export interface {{interfaceName}}Response {
+export interface {{interfaceName}}ResponseType {
   {{#if hasResponse}}
   {{#each responseProperties}}
   /** {{description}} */
@@ -25,9 +25,9 @@ export interface {{interfaceName}}Response {
 /**
  * @description {{description}}
  * @param params 请求参数
- * @returns Promise<{{interfaceName}}Response>
+ * @returns Promise<{{interfaceName}}ResponseType>
  */
-export async function {{functionName}}(params: {{interfaceName}}Request): Promise<{{interfaceName}}Response> {
+export async function {{functionName}}(params: {{interfaceName}}RequestType): Promise<{{interfaceName}}ResponseType> {
   const config: RequestConfig = {
     url: '{{path}}',
     method: '{{method}}',
@@ -51,8 +51,8 @@ export const apiOnlyTemplate = `import { request } from './request';
 
 /**
  * @description {{description}}
- * @param params {{interfaceName}}Request
- * @returns Promise<{{interfaceName}}Response>
+ * @param params {{interfaceName}}RequestType
+ * @returns Promise<{{interfaceName}}ResponseType>
  */
 export async function {{functionName}}(
   params

@@ -96,6 +96,7 @@ export async function generateInterfaceFiles(
   await executeWithConcurrency(
     tagEntries,
     async ([tag, interfaces]) => {
+      // 使用 chineseToPinyinCamelCase 转换 tag 名称作为文件夹名称
       const tagDir = chineseToPinyinCamelCase(tag);
       const dirPath = join(outputDir, tagDir);
 
@@ -103,7 +104,7 @@ export async function generateInterfaceFiles(
       await ensureDir(dirPath);
 
       // 在单个 index.ts 文件中生成此目录中的所有接口
-      await generateInterfaceFileForTag(tag, interfaces, processedData, config, dirPath);
+      await generateInterfaceFileForTag(tagDir, interfaces, processedData, config, dirPath);
     },
     concurrency,
     `生成接口文件`,
@@ -393,6 +394,7 @@ function generateInterfaceName(path: string, method: string): string {
   let pathName = path.replace(/\{[^}]+\}/g, '');
   pathName = pathName
     .replace(/^\//, '') // 移除开头的 /
+    .replace(/^api-?/i, '') // 移除开头的 api- 或 api/
     .replace(/\//g, '-') // / → -
     .replace(/^-+|-+$/g, ''); // 移除前导/尾随 -
 
@@ -418,8 +420,9 @@ function generateInterfaceName(path: string, method: string): string {
     })
     .join('');
 
-  // 5. 组合：路径名 + 参数 + 方法
-  const interfaceName = pathName + paramsPart + method.toUpperCase();
+  // 5. 组合：方法（首字母大写）+ 路径名 + 参数
+  const methodCapitalized = method.charAt(0).toUpperCase() + method.slice(1).toLowerCase();
+  const interfaceName = methodCapitalized + pathName + paramsPart;
 
   // 6. 清理非法字符（如点等）
   return sanitizeInterfaceName(interfaceName);
@@ -433,12 +436,13 @@ function generateFunctionName(path: string, method: string): string {
   let pathName = path.replace(/\{[^}]+\}/g, '');
   pathName = pathName
     .replace(/^\//, '') // 移除开头的 /
+    .replace(/^api-?/i, '') // 移除开头的 api- 或 api/
     .replace(/\//g, '-') // / → -
     .replace(/^-+|-+$/g, ''); // 移除前导/尾随 -
 
-  // 3. 分割并处理每个单词
+  // 3. 分割并处理每个单词（全部转为 PascalCase）
   const words = pathName.split('-');
-  const camelCaseWords = words.map((word) => {
+  const pascalCaseWords = words.map((word) => {
     // 如果单词已经是驼峰命名（包含大写字母或数字），保持不变
     if (/[A-Z0-9]/.test(word.charAt(0))) {
       return word;
@@ -447,19 +451,21 @@ function generateFunctionName(path: string, method: string): string {
     return word.charAt(0).toUpperCase() + word.slice(1);
   });
 
-  pathName = camelCaseWords.join('');
+  const pascalCasePathName = pascalCaseWords.join('');
 
   // 4. 为每个路径参数添加 By 前缀（驼峰化）
   const paramsPart = paramMatches
     .map((param) => {
-      const paramName = param.replace(/\{([^}]+)\}/, '$1');
+      const paramName = param.replace(/\{[^}]+\}/, '$1');
       const capitalized = paramName.charAt(0).toUpperCase() + paramName.slice(1);
       return `By${capitalized}`;
     })
     .join('');
 
-  // 5. 组合：路径名 + 参数 + 方法
-  const functionName = pathName + paramsPart + method.toUpperCase();
+  // 5. 组合：方法（小写开头）+ 路径名（PascalCase） + 参数 + Api 后缀
+  // 方法小写 + 路径名第一个字母保持大写，形成正确的 camelCase
+  const methodLower = method.toLowerCase();
+  const functionName = `${methodLower + pascalCasePathName + paramsPart}Api`;
 
   // 6. 清理非法字符（如点等）
   return sanitizeParamName(functionName);

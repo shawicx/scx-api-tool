@@ -5,16 +5,20 @@ import { pinyin } from 'pinyin-pro';
 
 /**
  * @description 将中文转换为拼音-大驼峰格式
- * @example 例如: "角色管理" -> "JiaoSeGuanli"
+ * @example 例如: "角色管理" -> "JiaoSeGuanli", "AI 服务" -> "AIFuwu"
  * @param chinese 中文字符串
  * @returns 拼音-大驼峰格式字符串
  */
 export function chineseToPinyinCamelCase(chinese: string): string {
+  // 先去除特殊字符（空格、括号等），只保留字母、数字、中文
+  const cleaned = chinese.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
+
   // 使用pinyin-pro库将中文转换为拼音
-  const pinyinArray = pinyin(chinese, { toneType: 'none', type: 'array' });
+  const pinyinArray = pinyin(cleaned, { toneType: 'none', type: 'array' });
 
   // 将拼音数组转换为大驼峰格式
   return pinyinArray
+    .filter((p: string) => p.length > 0) // 过滤空字符串
     .map((p: string) => {
       // 首字母大写，其余字母小写
       return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
