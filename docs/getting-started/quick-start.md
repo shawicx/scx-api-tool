@@ -9,7 +9,7 @@
 确保你有一个 Apifox 项目，并且：
 
 - 项目已配置好 API 接口
-- 知道项目 ID（在 Apifox 项目设置中找到）
+- 知道项目的 OpenAPI 导出地址
 
 ### 2. 初始化项目
 
@@ -20,7 +20,7 @@ npm init -y
 npm install @scxfe/api-tool --save-dev
 ```
 
-## 步骤 1: 初始化配置
+## 步骤 1: 创建配置文件
 
 创建配置文件：
 
@@ -35,40 +35,34 @@ npx api-power init
 编辑 `api-power.config.ts`：
 
 ```typescript
-import { defineConfig } from '@scx/api-tool';
+import { defineConfig } from '@scxfe/api-tool';
 
-export default defineConfig([
-  {
-    // 基础配置
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: '123456789', // 替换为你的项目 ID
+export default defineConfig({
+  // API 数据源 (必需)
+  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+  token: 'APS-YourAccessTokenHere',
 
-    // 输出配置
-    outputDir: 'src/service',
-    typesOnly: false,
-    target: 'typescript',
-
-    // 请求配置
-    requestConfig: {
-      baseURL: 'https://api.example.com',
-      timeout: 10000,
-    },
-
-    // 类型配置
-    typeConfig: {
-      enumType: 'union',
-      optionalType: 'optional',
-    },
-
-    // 过滤配置
-    filter: {
-      includeTags: ['用户管理', '订单管理'],
-      excludePaths: ['/internal/.*'],
-    },
-  },
-]);
+  // 输出配置 (可选)
+  outputDir: 'src/service',
+  typesOnly: false,
+  target: 'typescript',
+});
 ```
+
+**获取 Apifox Token:**
+
+1. 登录 Apifox 平台
+2. 进入项目设置
+3. 找到"访问令牌"或"Access Token"
+4. 创建新的访问令牌
+5. 复制令牌（格式类似：`APS-xxxxxxxxxxxx`）
+
+**获取项目 ID:**
+
+1. 打开你的 Apifox 项目
+2. 在项目页面找导出功能
+3. 选择"导出 OpenAPI"
+4. 复制完整的 URL（包含项目 ID）
 
 ## 步骤 3: 生成代码
 
@@ -81,15 +75,15 @@ npx api-power
 你会看到类似输出：
 
 ```
-✓ 连接到 Apifox 平台
-✓ 获取项目信息 (项目 ID: 123456789)
-✓ 获取接口列表 (共 15 个接口)
-✓ 生成类型定义 (45 个类型)
-✓ 生成请求函数 (15 个函数)
-✓ 生成分组文件 (3 个分组)
-
+✅ 连接到 Apifox 平台
+✅ 获取项目信息 (项目 ID: 6997172)
+✅ 获取接口列表 (共 23 个接口)
+✅ 生成类型定义 (45 个类型)
+✅ 生成请求函数 (23 个函数)
+✅ 生成分组文件 (4 个分组)
 🎉 代码生成完成！
 📁 输出目录: src/service
+⏱️ 耗时: 3.2s
 ```
 
 ## 步骤 4: 查看生成的代码
@@ -178,7 +172,7 @@ export * from './product';
 
 ```tsx
 import React, { useState, useEffect } from 'react';
-import { getUser, createUser, updateUser } from '@/src/service';
+import { getUser, createUser, updateUser } from '@/service/user';
 
 function UserProfile({ userId }: { userId: number }) {
   const [user, setUser] = useState<User | null>(null);
@@ -225,7 +219,7 @@ function UserProfile({ userId }: { userId: number }) {
 ### Node.js 示例
 
 ```typescript
-import { createUser, getUser } from '../src/service';
+import { createUser, getUser } from '../service/user';
 import express from 'express';
 
 const app = express();
@@ -254,74 +248,116 @@ app.listen(3000, () => {
 });
 ```
 
+### Vue 3 示例
+
+```vue
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { getUser, updateUser } from '@/service/user';
+
+const props = defineProps<{ userId: number }>();
+const user = ref<User | null>(null);
+const loading = ref(false);
+
+const fetchUser = async () => {
+  loading.value = true;
+  try {
+    user.value = await getUser(props.userId);
+  } catch (error) {
+    console.error('获取用户失败:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleUpdate = async (data: UpdateUserRequest) => {
+  try {
+    user.value = await updateUser(props.userId, data);
+  } catch (error) {
+    console.error('更新用户失败:', error);
+  }
+};
+
+onMounted(() => {
+  fetchUser();
+});
+</script>
+
+<template>
+  <div v-if="loading">加载中...</div>
+  <div v-else-if="user">
+    <h1>{{ user.username }}</h1>
+    <p>{{ user.email }}</p>
+    <button @click="handleUpdate({ username: '新用户名' })">更新用户名</button>
+  </div>
+  <div v-else>用户不存在</div>
+</template>
+```
+
 ## 高级配置
 
-### 自定义模板
-
-如果默认生成的代码不符合需求，可以创建自定义模板：
-
-```bash
-mkdir -p templates
-# 创建自定义模板文件
-```
-
-然后在配置中指定模板目录：
+### 只生成类型定义
 
 ```typescript
-export default defineConfig([
-  {
-    // ... 其他配置
-    templateDir: './templates',
-  },
-]);
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+  token: 'APS-YourAccessTokenHere',
+
+  typesOnly: true,
+  apiOnly: false,
+});
 ```
 
-### 多项目配置
-
-同时配置多个 API 项目：
+### 自定义路径前缀
 
 ```typescript
-export default defineConfig([
-  {
-    name: 'user-service',
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: '123456789',
-    outputDir: 'src/services/user',
-  },
-  {
-    name: 'order-service',
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: '987654321',
-    outputDir: 'src/services/order',
-  },
-]);
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+  token: 'APS-YourAccessTokenHere',
+
+  pathPrefix: '/api/v1',
+});
+```
+
+### 使用预设配置
+
+```typescript
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+  token: 'APS-YourAccessTokenHere',
+
+  // 使用 verbose 预设
+  preset: 'verbose',
+
+  // 覆盖预设中的某些选项
+  outputDir: 'src/api',
+});
 ```
 
 ## 常见问题
 
 ### 1. 接口被过滤掉
 
-检查 `filter` 配置，确保接口标签和路径匹配你的过滤条件。
+确保 API 源 URL 正确，token 有足够的权限。
 
 ### 2. 类型生成不完整
 
-确保 API 定义中的数据结构完整，检查 Apifox 中的响应数据定义。
+确保 Apifox 项目中的接口定义完整，包括响应数据结构。
 
 ### 3. 请求函数生成失败
 
-检查 `requestConfig.baseURL` 配置是否正确。
+检查网络连接，确保可以访问 Apifox 平台。
 
 ## 下一步
 
 - [配置指南](../guides/configuration) - 了解所有配置选项
 - [CLI 命令参考](../guides/cli) - 查看所有可用命令
-- [模板自定义](../guides/templates) - 创建自定义代码模板
 
 ## 实用技巧
 
-1. **使用脚本**: 在 `package.json` 中添加快捷脚本：
+### 1. 使用脚本
+
+在 `package.json` 中添加脚本：
 
 ```json
 {
@@ -333,10 +369,31 @@ export default defineConfig([
 }
 ```
 
-2. **版本控制**: 将 `api-power.config.ts` 加入版本控制，但忽略生成的代码文件：
+### 2. 版本控制
+
+将 `api-power.config.ts` 加入版本控制，但忽略生成的代码文件：
 
 ```gitignore
 src/service/*
 ```
 
-3. **自动化**: 使用 Git hooks 在 API 更新时自动生成代码。
+### 3. 自动化
+
+使用 Git hooks 在 API 更新时自动生成代码。
+
+### 4. 环境变量
+
+使用环境变量管理敏感信息：
+
+```typescript
+export default defineConfig({
+  source: process.env.API_SOURCE!,
+  token: process.env.API_TOKEN!,
+});
+```
+
+```bash
+# .env
+API_SOURCE=https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi
+API_TOKEN=APS-YourAccessTokenHere
+```

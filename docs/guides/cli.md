@@ -6,59 +6,41 @@
 
 ### 主要命令
 
-| 命令              | 说明                 | 简写 |
-| ----------------- | -------------------- | ---- |
-| `api-power init`  | 初始化配置文件       | -    |
-| `api-power`       | 生成代码（默认命令） | -    |
-| `api-power debug` | 调试配置和数据       | -    |
-| `api-power help`  | 显示帮助信息         | `-h` |
+| 命令              | 说明                 | 直写      |
+| ----------------- | -------------------- | --------- |
+| `api-power init`  | 初始化配置文件       | -         |
+| `api-power`       | 生成代码（默认命令） | gen       |
+| `api-power debug` | 调试配置和数据       | -         |
+| `api-power viz`   | 启动可视化服务器     | visualize |
 
-### 全局参数
+## 全局参数
 
-| 参数        | 简写 | 说明             | 示例             |
-| ----------- | ---- | ---------------- | ---------------- |
-| `--config`  | `-c` | 指定配置文件路径 | `-c ./config.ts` |
-| `--help`    | `-h` | 显示帮助信息     | `-h`             |
-| `--version` | `-v` | 显示版本信息     | `-v`             |
+| 参数        | 直写 | 说明             | 示例 |
+| ----------- | ---- | ---------------- | ---- |
+| `--version` | `-V` | 显示版本信息     | `-V` |
+| `--help`    | `-h` | 显示帮助信息     | `-h` |
+| `--verbose` | `-v` | 显示详细执行信息 | `-v` |
 
 ## 命令详解
 
 ### 1. 初始化配置 - `api-power init`
 
-创建项目配置文件，支持交互式配置。
+创建项目配置文件。
 
 ```bash
 # 基本用法
 api-power init
 
-# 指定配置文件名
-api-power init --config custom-config.ts
-
 # 覆盖现有配置
 api-power init --force
-
-# 使用 JavaScript 格式
-api-power init --js
 ```
 
 **选项参数：**
 
-- `--config, -c`: 指定配置文件路径
 - `--force, -f`: 强制覆盖现有配置文件
-- `--js`: 生成 JavaScript 格式配置文件
-- `--typescript, -ts`: 生成 TypeScript 格式配置文件（默认）
+- `--verbose, -v`: 显示详细的错误信息和堆栈跟踪
 
-**交互式配置：**
-
-执行命令后会询问以下信息：
-
-1. **配置文件类型**: TypeScript 或 JavaScript
-2. **API 平台选择**: apifox 或 swagger
-3. **项目 URL**: API 平台地址
-4. **项目 ID/名称**: 项目标识符
-5. **输出目录**: 生成代码的目标路径
-
-### 2. 生成代码 - `api-power`
+### 2. 生成代码 - `api-power` (默认命令)
 
 根据配置文件生成 TypeScript 类型和请求函数。
 
@@ -69,23 +51,14 @@ api-power
 # 指定配置文件
 api-power --config ./my-config.ts
 
-# 只生成类型定义
-api-power --types-only
-
-# 调试模式
-api-power --debug
-
-# 详细输出
+# 显示详细执行信息
 api-power --verbose
 ```
 
 **选项参数：**
 
 - `--config, -c`: 指定配置文件路径
-- `--types-only, -t`: 只生成类型定义，不生成请求函数
-- `--debug, -d`: 启用调试模式，显示详细日志
-- `--verbose, -V`: 显示详细执行信息
-- `--dry-run`: 预览模式，不实际生成文件
+- `--verbose, -v`: 显示详细执行信息
 
 **执行流程：**
 
@@ -107,9 +80,6 @@ api-power debug
 
 # 调试特定配置
 api-power debug --config ./config.ts
-
-# 只测试连接
-api-power debug --connection-only
 ```
 
 **调试内容：**
@@ -123,10 +93,24 @@ api-power debug --connection-only
 **选项参数：**
 
 - `--config, -c`: 指定配置文件路径
-- `--connection-only`: 只测试网络连接
-- `--no-auth`: 跳过身份验证测试
 
-### 4. 帮助信息 - `api-power help`
+### 4. 可视化 - `api-power viz`
+
+启动可视化配置服务器，提供 Web 界面查看和编辑 API 配置。
+
+```bash
+# 启动可视化服务器
+api-power viz
+
+# 指定端口
+api-power viz --port 3000
+```
+
+**选项参数：**
+
+- `--port, -p`: 指定服务器端口（默认 3000）
+
+### 5. 帮助信息 - `api-power help`
 
 显示命令帮助和使用说明。
 
@@ -137,6 +121,7 @@ api-power help
 # 显示特定命令帮助
 api-power help init
 api-power help generate
+api-power help debug
 ```
 
 ## 输出示例
@@ -144,14 +129,14 @@ api-power help generate
 ### 成功执行
 
 ```
-✓ 检测配置文件: api-power.config.ts
-✓ 连接到 Apifox 平台
-✓ 获取项目信息: 用户管理系统 (ID: 123456789)
-✓ 获取接口列表: 共 23 个接口
-✓ 获取数据结构: 共 45 个类型
-✓ 生成类型定义: 45 个类型
-✓ 生成请求函数: 23 个函数
-✓ 生成分组文件: 4 个分组
+✅ 检测配置文件: api-power.config.ts
+✅ 连接到 Apifox 平台
+✅ 获取项目信息: 用户管理系统 (ID: 123456789)
+✅ 获取接口列表: 共 23 个接口
+✅ 获取数据结构: 共 45 个类型
+✅ 生成类型定义: 45 个类型
+✅ 生成请求函数: 23 个函数
+✅ 生成分组文件: 4 个分组
 
 🎉 代码生成完成！
 📁 输出目录: src/service
@@ -200,10 +185,23 @@ api-power debug --config config/prod.ts
     "api:generate": "api-power",
     "api:debug": "api-power debug",
     "api:init": "api-power init",
-    "api:types": "api-power --types-only",
+    "api:types": "api-power",
     "precommit": "api-power && git add src/service/"
   }
 }
+```
+
+使用示例：
+
+```bash
+# 生成 API 代码
+npm run api:generate
+
+# 调试配置
+npm run api:debug
+
+# 提交前自动生成
+npm run precommit
 ```
 
 ### 3. CI/CD 集成
@@ -215,6 +213,15 @@ api-power debug --config config/prod.ts
     npx api-power --config .github/api-config.ts
     git add src/service/
     git diff --staged --quiet || git commit -m "chore: update API types"
+```
+
+```yaml
+# GitLab CI 示例
+api:generate:
+  script:
+    - npx api-power --config .gitlab/api-config.ts
+    - git add src/service/
+    - git commit -m "chore: update API types" || echo "No changes"
 ```
 
 ## 错误处理
@@ -238,7 +245,7 @@ api-power init
 Error: 连接 Apifox 平台失败
 
 # 解决方案
-api-power debug --connection-only
+api-power debug
 # 检查网络、代理、防火墙设置
 ```
 
@@ -249,7 +256,7 @@ api-power debug --connection-only
 Error: API 认证失败，请检查 token
 
 # 解决方案
-# 检查 apifoxToken 配置
+# 检查 Apifox Token 配置
 # 验证项目访问权限
 ```
 
@@ -300,7 +307,7 @@ api-power
 
 ```bash
 api-power --version
-# 输出: @scx/api-tool version 1.2.3
+# 输出: @scx/api-tool version 0.4.8
 ```
 
 ### 检查更新

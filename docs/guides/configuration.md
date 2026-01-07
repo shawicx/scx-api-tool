@@ -1,391 +1,265 @@
 # 配置指南
 
-`@scx/api-tool` 使用灵活的配置系统来支持不同的 API 平台和生成需求。
+`@scx/api-tool` 使用简单的配置文件来生成 API 代码。
 
 ## 配置文件
 
 ### 文件类型
 
-支持两种配置文件格式：
+推荐使用 TypeScript 配置文件以获得完整的类型提示：
 
-- **TypeScript** (`api-power.config.ts`) - 推荐，提供完整的类型提示
-- **JavaScript** (`api-power.config.js`) - 简单配置场景
+- **TypeScript** (`api-power.config.ts`) - ✅ 推荐
+- **JavaScript** (`api-power.config.js`) - 支持
 
 ### 配置文件位置
 
 工具按以下顺序查找配置文件：
 
-1. 命令行指定的配置文件 (`-c` 参数)
+1. 命令行指定的配置文件 (`--config` 参数)
 2. 当前目录的 `api-power.config.ts`
 3. 当前目录的 `api-power.config.js`
 
-## 配置结构
+## 快速开始
 
-配置文件导出一个配置数组，每个配置项对应一个 API 项目：
+### 创建配置文件
 
-```typescript
-import { defineConfig } from '@scx/api-tool';
-
-export default defineConfig([
-  {
-    // 基础配置
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: '123456789',
-
-    // 输出配置
-    outputDir: 'src/service',
-
-    // ... 其他配置
-  },
-]);
+```bash
+npx api-power init
 ```
 
-## 基础配置
+这将在当前目录创建一个默认的 `api-power.config.ts` 文件。
 
-### 服务器配置
+### 配置文件模板
 
-| 配置项            | 类型                    | 必填 | 说明           | 示例                       |
-| ----------------- | ----------------------- | ---- | -------------- | -------------------------- |
-| `serverUrl`       | `string`                | ✅   | API 服务器地址 | `'https://api.apifox.com'` |
-| `serverType`      | `'apifox' \| 'swagger'` | ✅   | API 平台类型   | `'apifox'`                 |
-| `apifoxProjectId` | `string`                | ❌   | Apifox 项目 ID | `'123456789'`              |
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
+
+export default defineConfig({
+  // API 数据源 (必需)
+  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+  token: 'YOUR_ACCESS_TOKEN',
+
+  // 输出配置 (可选)
+  outputDir: 'src/service',
+  typesOnly: false,
+  apiOnly: false,
+
+  // 代码生成选项 (可选)
+  target: 'typescript',
+  indentSize: 2,
+  comment: true,
+});
+```
+
+## 完整配置选项
+
+### 必需配置
+
+| 配置项   | 类型     | 说明                 | 示例                                                      |
+| -------- | -------- | -------------------- | --------------------------------------------------------- |
+| `source` | `string` | API 数据源的完整 URL | `'https://api.apifox.com/v1/projects/123/export-openapi'` |
+| `token`  | `string` | API 访问令牌         | `'APS-YourAccessTokenHere'`                               |
 
 ### 输出配置
 
-| 配置项       | 类型                           | 默认值          | 说明               |
-| ------------ | ------------------------------ | --------------- | ------------------ |
-| `outputDir`  | `string`                       | `'src/service'` | 输出目录路径       |
-| `typesOnly`  | `boolean`                      | `false`         | 是否只生成类型定义 |
-| `target`     | `'typescript' \| 'javascript'` | `'typescript'`  | 输出代码类型       |
-| `indentSize` | `number`                       | `2`             | 代码缩进大小       |
+| 配置项      | 类型                           | 默认值          | 说明                              |
+| ----------- | ------------------------------ | --------------- | --------------------------------- |
+| `outputDir` | `string`                       | `'src/service'` | 生成的代码输出目录                |
+| `typesOnly` | `boolean`                      | `false`         | 是否只生成类型定义                |
+| `apiOnly`   | `boolean`                      | `false`         | 是否只生成 API 函数（不生成类型） |
+| `target`    | `'typescript' \| 'javascript'` | `'typescript'`  | 目标语言                          |
 
-### 请求配置
+### 代码生成选项
 
-```typescript
-requestConfig: {
-  baseURL: 'https://api.example.com',  // API 基础地址
-  timeout: 10000,                      // 请求超时时间
-  headers: {                          // 默认请求头
-    'Content-Type': 'application/json'
-  }
-}
-```
+| 配置项        | 类型      | 默认值         | 说明         |
+| ------------- | --------- | -------------- | ------------ |
+| `indentSize`  | `number`  | `2`            | 代码缩进大小 |
+| `comment`     | `boolean` | `true`         | 是否生成注释 |
+| `pathPrefix`  | `string`  | `''`           | API 路径前缀 |
+| `prodEnvName` | `string`  | `'production'` | 生产环境名称 |
 
-### 类型配置
+### 请求函数配置
 
-```typescript
-typeConfig: {
-  enumType: 'union' | 'enum',         // 枚举类型生成方式
-  optionalType: 'optional' | 'undefined',  // 可选类型生成方式
-  arrayType: 'Array' | '[]'           // 数组类型生成方式
-}
-```
+| 配置项                     | 类型                               | 默认值                     | 说明             |
+| -------------------------- | ---------------------------------- | -------------------------- | ---------------- |
+| `requestFunctionFilePath`  | `string`                           | `'src/service/request.ts'` | 请求函数文件路径 |
+| `requestFunctionName`      | `string`                           | `'request'`                | 请求函数名称     |
+| `requestMethodsObjectName` | `string`                           | `'requestMethods'`         | 请求方法对象名称 |
+| `requestMethodStyle`       | `'config' \| 'separate' \| 'both'` | `'config'`                 | 请求方法调用风格 |
 
-## 过滤配置
+### 性能配置
 
-### 标签过滤
+| 配置项        | 类型     | 默认值 | 说明                               |
+| ------------- | -------- | ------ | ---------------------------------- |
+| `concurrency` | `number` | `5`    | 并发写入数量（文件生成的并发控制） |
 
-```typescript
-filter: {
-  includeTags: ['用户管理', '订单管理'],  // 包含的标签
-  excludeTags: ['内部接口', '测试接口'],   // 排除的标签
-}
-```
+### 预设配置
 
-### 路径过滤
+工具提供三种预设配置，可以快速设置常用选项：
 
-```typescript
-filter: {
-  includePaths: ['/api/v1/users.*'],     // 包含的路径（正则）
-  excludePaths: ['/admin/.*', '/test/.*'], // 排除的路径（正则）
-}
-```
-
-### 方法过滤
+| 预设       | 说明                                             |
+| ---------- | ------------------------------------------------ |
+| `minimal`  | 只生成类型，不生成注释，使用 config 风格         |
+| `standard` | 生成类型和 API，生成注释，使用 config 风格       |
+| `verbose`  | 生成类型和 API，生成注释，4 空进，使用 both 风格 |
 
 ```typescript
-filter: {
-  includeMethods: ['GET', 'POST'],      // 包含的 HTTP 方法
-  excludeMethods: ['DELETE', 'PATCH'],   // 排除的 HTTP 方法
-}
-```
+import { defineConfig } from '@scxfe/api-tool';
 
-## 模板配置
+export default defineConfig({
+  source: 'YOUR_API_SOURCE',
+  token: 'YOUR_TOKEN',
 
-### 自定义模板
+  // 使用预设
+  preset: 'minimal', // 或 'standard', 'verbose'
 
-```typescript
-templateConfig: {
-  templateDir: './custom-templates',    // 自定义模板目录
-  typeTemplate: 'custom-type.hbs',      // 自定义类型模板
-  requestTemplate: 'custom-request.hbs' // 自定义请求模板
-}
-```
-
-### 输出文件配置
-
-```typescript
-outputFiles: {
-  types: 'types.ts',                    // 类型定义文件名
-  request: 'request.ts',                // 请求函数文件名
-  index: 'index.ts',                    // 主入口文件名
-  categoryIndex: '{category}/index.ts', // 分组索引文件名
-  categoryTypes: '{category}/types.ts'  // 分组类型文件名
-}
-```
-
-## 高级配置
-
-### 项目配置
-
-```typescript
-projects: [
-  {
-    token: 'your-access-token', // 项目访问令牌
-    categories: [
-      // 分类配置
-      {
-        id: 12345, // 分类 ID
-        getRequestFunctionName: (interfaceInfo, changeCase) => {
-          // 自定义请求函数名生成规则
-          return changeCase.camelCase(interfaceInfo.path);
-        },
-      },
-    ],
-  },
-];
-```
-
-### 钩子函数
-
-```typescript
-hooks: {
-  // 生成前钩子
-  beforeGenerate: async (config) => {
-    console.log('开始生成代码...');
-  },
-
-  // 生成成功钩子
-  success: async (outputFiles) => {
-    console.log(`生成了 ${outputFiles.length} 个文件`);
-
-    // 运行代码格式化
-    exec('npm run format');
-  },
-
-  // 生成失败钩子
-  error: async (error) => {
-    console.error('生成失败:', error);
-    // 发送错误通知
-    notify.sendError(error);
-  },
-
-  // 完成钩子（无论成功失败都会执行）
-  complete: async () => {
-    console.log('操作完成');
-  }
-}
+  // 预设后仍可覆盖单个选项
+  outputDir: 'src/api',
+});
 ```
 
 ## 配置示例
 
-### 1. 基础配置
+### 基础配置
 
 ```typescript
-import { defineConfig } from '@scx/api-tool';
+import { defineConfig } from '@scxfe/api-tool';
 
-export default defineConfig([
-  {
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: '123456789',
-    outputDir: 'src/service',
-    typesOnly: false,
-    target: 'typescript',
-  },
-]);
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/6997172/export-openapi',
+  token: 'APS-YourAccessTokenHere',
+});
 ```
 
-### 2. 完整配置
+### 完整配置
 
 ```typescript
-import { defineConfig } from '@scx/api-tool';
+import { defineConfig } from '@scxfe/api-tool';
 
-export default defineConfig([
-  {
-    // 服务器配置
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: '123456789',
+export default defineConfig({
+  // API 数据源
+  source: 'https://api.apifox.com/v1/projects/6997172/export-openapi',
+  token: 'APS-YourAccessTokenHere',
 
-    // 输出配置
-    outputDir: 'src/service',
-    typesOnly: false,
-    target: 'typescript',
-    indentSize: 2,
+  // 输出配置
+  outputDir: 'src/service',
+  typesOnly: false,
+  apiOnly: false,
+  target: 'typescript',
 
-    // 请求配置
-    requestConfig: {
-      baseURL: 'https://api.example.com',
-      timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    },
+  // 代码生成选项
+  indentSize: 2,
+  comment: true,
+  pathPrefix: '/api/v1',
+  prodEnvName: 'production',
 
-    // 类型配置
-    typeConfig: {
-      enumType: 'union',
-      optionalType: 'optional',
-      arrayType: 'Array',
-    },
+  // 请求函数配置
+  requestFunctionFilePath: 'src/service/request.ts',
+  requestFunctionName: 'request',
+  requestMethodsObjectName: 'requestMethods',
+  requestMethodStyle: 'config',
 
-    // 过滤配置
-    filter: {
-      includeTags: ['用户管理', '订单管理'],
-      excludePaths: ['/admin/.*', '/test/.*'],
-    },
-
-    // 项目配置
-    projects: [
-      {
-        token: process.env.API_TOKEN,
-        categories: [
-          {
-            id: 0,
-            getRequestFunctionName: (interfaceInfo, changeCase) => {
-              const path = interfaceInfo.path.replace(/^\//, '');
-              return changeCase.camelCase(path);
-            },
-          },
-        ],
-      },
-    ],
-
-    // 钩子函数
-    hooks: {
-      success: async () => {
-        console.log('代码生成成功！');
-      },
-      error: async (error) => {
-        console.error('生成失败:', error);
-      },
-    },
-  },
-]);
+  // 性能配置
+  concurrency: 5,
+});
 ```
 
-### 3. 多项目配置
+### 使用预设
 
 ```typescript
-export default defineConfig([
-  // 用户服务
-  {
-    name: 'user-service',
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: 'user-project-id',
-    outputDir: 'src/services/user',
+import { defineConfig } from '@scxfe/api-tool';
 
-    filter: {
-      includeTags: ['用户管理'],
-    },
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/6997172/export-openapi',
+  token: 'APS-YourAccessTokenHere',
 
-    requestConfig: {
-      baseURL: 'https://api.example.com/user',
-    },
-  },
+  // 使用 verbose 预设
+  preset: 'verbose',
 
-  // 订单服务
-  {
-    name: 'order-service',
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: 'order-project-id',
-    outputDir: 'src/services/order',
-
-    filter: {
-      includeTags: ['订单管理'],
-    },
-
-    requestConfig: {
-      baseURL: 'https://api.example.com/order',
-    },
-  },
-]);
+  // 覆盖预设中的某些选项
+  outputDir: 'src/api',
+});
 ```
 
-### 4. 环境变量配置
+### 只生成类型定义
 
 ```typescript
-import { defineConfig } from '@scx/api-tool';
+import { defineConfig } from '@scxfe/api-tool';
 
-export default defineConfig([
-  {
-    serverUrl: process.env.API_SERVER_URL || 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: process.env.APIFOX_PROJECT_ID || '123456789',
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/6997172/export-openapi',
+  token: 'APS-YourAccessTokenHere',
 
-    outputDir: process.env.OUTPUT_DIR || 'src/service',
-
-    projects: [
-      {
-        token: process.env.API_TOKEN,
-        categories: [{ id: 0 }],
-      },
-    ],
-
-    // 开发环境特殊配置
-    ...(process.env.NODE_ENV === 'development' && {
-      requestConfig: {
-        baseURL: 'http://localhost:3000/api',
-      },
-    }),
-  },
-]);
+  // 只生成类型，不生成请求函数
+  typesOnly: true,
+  apiOnly: false,
+});
 ```
 
-## 环境变量
+### 只生成 API 函数
 
-### 常用环境变量
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
 
-```bash
-# API 配置
-API_SERVER_URL=https://api.apifox.com
-API_TOKEN=your-access-token
-APIFOX_PROJECT_ID=123456789
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/6997172/export-openapi',
+  token: 'APS-YourAccessTokenHere',
 
-# 输出配置
-OUTPUT_DIR=src/service
-TARGET=typescript
-
-# 调试配置
-DEBUG=true
-VERBOSE=true
+  // 只生成 API 函数，不生成类型
+  typesOnly: false,
+  apiOnly: true,
+});
 ```
 
-### .env 文件
+### JavaScript 输出
+
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
+
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/6997172/export-openapi',
+  token: 'APS-YourAccessTokenHere',
+
+  // 生成 JavaScript 代码
+  target: 'javascript',
+});
+```
+
+### 自定义路径前缀
+
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
+
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/6997172/export-openapi',
+  token: 'APS-YourAccessTokenHere',
+
+  // 所有 API 路径会添加此前缀
+  pathPrefix: '/api/v1',
+});
+```
+
+### 环境变量配置
+
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
+
+export default defineConfig({
+  source: process.env.API_SOURCE || 'https://api.apifox.com/v1/projects/6997172/export-openapi',
+  token: process.env.API_TOKEN || 'default-token',
+  outputDir: process.env.OUTPUT_DIR || 'src/service',
+  typesOnly: process.env.TYPES_ONLY === 'true',
+});
+```
+
+对应的 `.env` 文件：
 
 ```bash
 # .env
-API_SERVER_URL=https://api.apifox.com
-API_TOKEN=your-secret-token
+API_SOURCE=https://api.apifox.com/v1/projects/6997172/export-openapi
+API_TOKEN=APS-YourAccessTokenHere
 OUTPUT_DIR=src/service
-```
-
-```typescript
-// 配置中使用
-export default defineConfig([
-  {
-    serverUrl: process.env.API_SERVER_URL,
-    projects: [
-      {
-        token: process.env.API_TOKEN,
-      },
-    ],
-  },
-]);
+TYPES_ONLY=false
 ```
 
 ## 配置验证
@@ -395,69 +269,138 @@ export default defineConfig([
 使用 `defineConfig` 函数确保类型安全：
 
 ```typescript
-import { defineConfig, ApiConfig } from '@scx/api-tool';
+import { defineConfig } from '@scxfe/api-tool';
 
-// 自动类型推断
-export default defineConfig([
-  {
-    // IDE 会提供完整的类型提示和验证
-    serverUrl: 'https://api.apifox.com',
-    // ...
-  },
-]);
+// 自动类型推断和验证
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/6997172/export-openapi',
+  token: 'APS-YourAccessTokenHere',
 
-// 或者显式类型注解
-const config: ApiConfig[] = [
-  {
-    serverUrl: 'https://api.apifox.com',
-    // ...
-  },
-];
-
-export default defineConfig(config);
+  // IDE 会提供完整的类型提示和验证
+  // 如果配置项名称错误或类型不匹配，会立即报错
+  outputDir: 'src/service',
+});
 ```
 
 ### 运行时验证
 
 工具会自动验证配置：
 
-- ✅ 必填字段检查
-- ✅ URL 格式验证
+- ✅ 必填字段检查（`source`, `token`）
+- ✅ 字段类型验证
 - ✅ 枚举值验证
-- ✅ 文件路径检查
-- ❌ 网络连接测试（可选）
+- ✅ URL 格式验证
+
+如果配置有误，工具会显示详细的错误信息并退出。
 
 ## 最佳实践
 
-### 1. 项目结构
+### 1. 配置文件管理
 
-```
+```bash
 project/
 ├── api-power.config.ts     # 主配置文件
 ├── .env.example           # 环境变量示例
 ├── .env.local             # 本地环境变量（不提交）
-├── src/
-│   └── service/           # 生成的代码目录
-└── package.json
+└── src/
+    └── service/            # 生成的代码目录
 ```
 
-### 2. 配置管理
+### 2. 安全建议
 
-- ✅ 使用 TypeScript 配置文件
-- ✅ 敏感信息使用环境变量
-- ✅ 提供 .env.example 文件
-- ✅ 配置文件加入版本控制
+- ✅ **不要**将包含真实 `token` 的配置文件提交到版本控制
+- ✅ 使用 `.env.example` 提供配置模板
+- ✅ 使用 `.gitignore` 排除 `.env.local` 和敏感配置
+- ✅ 在团队文档中说明如何获取 API token
 
-### 3. 团队协作
+### 3. 环境变量
 
-- 在 README 中说明配置要求
-- 提供配置模板
-- 统一命名规范
-- 建立配置审查流程
+推荐使用环境变量管理敏感信息：
 
-### 4. 性能优化
+```typescript
+// api-power.config.ts
+import { defineConfig } from '@scxfe/api-tool';
 
-- 使用过滤器减少生成内容
-- 合理设置 `typesOnly` 选项
-- 避免生成不必要的接口
-- 使用缓存机制（如果支持）
+export default defineConfig({
+  source: process.env.API_SOURCE!,
+  token: process.env.API_TOKEN!,
+
+  // 其他非敏感配置
+  outputDir: 'src/service',
+  target: 'typescript',
+});
+```
+
+```bash
+# .env.example
+API_SOURCE=https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi
+API_TOKEN=your-access-token-here
+```
+
+### 4. 多环境配置
+
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
+
+const isDev = process.env.NODE_ENV === 'development';
+
+export default defineConfig({
+  source: process.env.API_SOURCE!,
+  token: process.env.API_TOKEN!,
+
+  // 开发环境使用不同配置
+  ...(isDev && {
+    comment: true,
+    indentSize: 4,
+  }),
+});
+```
+
+## 故障排除
+
+### 常见问题
+
+#### 1. 配置文件找不到
+
+```bash
+Error: Cannot find config file
+```
+
+**解决方案：**
+
+- 确认配置文件名为 `api-power.config.ts` 或 `api-power.config.js`
+- 确保配置文件在项目根目录
+- 或使用 `--config` 参数指定配置文件路径
+
+#### 2. 类型错误
+
+```bash
+error TS2345: Argument of type 'string' is not assignable to parameter of type 'ServerType'
+```
+
+**解决方案：**
+
+- 使用 TypeScript 配置文件获得类型提示
+- 确保所有配置项类型正确
+- 使用 `defineConfig` 函数包装配置
+
+#### 3. API 连接失败
+
+```bash
+Error: Failed to fetch API data
+```
+
+**解决方案：**
+
+- 检查 `source` URL 是否正确
+- 验证 `token` 是否有效
+- 检查网络连接和代理设置
+- 使用 `debug` 命令查看详细信息：
+  ```bash
+  npx api-power debug
+  ```
+
+## 下一步
+
+- [CLI 命令参考](./cli) - 了解所有可用命令
+- [高级用法](./advanced) - 学习自定义模板和钩子
