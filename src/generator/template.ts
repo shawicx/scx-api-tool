@@ -34,12 +34,7 @@ export function registerTemplateHelpers() {
   Handlebars.registerHelper('httpMethod', (method: string) => {
     return HTTP_METHODS[method as keyof typeof HTTP_METHODS] || method.toLowerCase();
   });
-  Handlebars.registerHelper('requestFunctionName', (config: any) => {
-    return config.requestFunctionName || 'request';
-  });
-  Handlebars.registerHelper('requestMethodsObjectName', (config: any) => {
-    return config.requestMethodsObjectName || 'requestMethods';
-  });
+  // 移除了 requestFunctionName 和 requestMethodsObjectName helpers，直接使用数据字段
 }
 
 // 注册 partials
@@ -236,7 +231,7 @@ export async function {{functionName}}(
 {{/if}}
 {{/if}}
   };
-  return request(config);
+  return {{requestFunctionName}}(config);
 }
 `;
 }
@@ -260,7 +255,7 @@ export function getApiOnlyTemplateWithoutComment(): string {
 {{/if}}
 {{/if}}
   };
-  return request(config);
+  return {{requestFunctionName}}(config);
 }
 `;
 }
@@ -456,9 +451,7 @@ export function generateRequestFile(config: any): string {
   template += "const BASE_LINE_PROXY_PATH = '/api';\n\n";
   template += '// 超时时间\n';
   template += 'const TIMEOUT = 5 * 1000;\n\n';
-  template += `export async function ${
-    requestFunctionName
-  }<T = any>(config: RequestConfig): Promise<T> {\n`;
+  template += `export async function ${requestFunctionName}<T = any>(config: RequestConfig): Promise<T> {\n`;
   template += '  try {\n';
   template += '    const response = await axios({\n';
   template += '      ...config,\n';

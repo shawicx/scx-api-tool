@@ -12,7 +12,7 @@ const BASE_LINE_PROXY_PATH = '/api';
 // 超时时间
 const TIMEOUT = 5 * 1000;
 
-export default async function request<T = any>(config: RequestConfig): Promise<T> {
+export default async function {{requestFunctionName}}<T = any>(config: RequestConfig): Promise<T> {
   try {
     const response = await axios({
       ...config,
