@@ -15,7 +15,7 @@ import {
   extractTypeProperties,
   hasRequestBody,
 } from './extractor';
-import { getRelativeImportPath } from './pathUtils';
+import { aliasToRealPath, getNormalizedPathWithAlias } from './pathUtils';
 import { sanitizeTypeName, sanitizeInterfaceName, sanitizeParamName } from './naming';
 import {
   compileTemplate,
@@ -27,7 +27,8 @@ import {
 } from './template';
 
 export async function generateRequestFile(config: ApiConfig): Promise<void> {
-  const requestFilePath = config.requestFunctionFilePath;
+  // 将 alias 路径转换为实际文件路径（用于文件写入）
+  const requestFilePath = aliasToRealPath(config.requestFunctionFilePath);
 
   if (await fileExists(requestFilePath)) {
     if (process.env.DEBUG) {
@@ -166,7 +167,7 @@ export async function generateInterfaceFileForTag(
   }
 
   // 添加导入语句
-  const relativePath = getRelativeImportPath(dirPath, config.requestFunctionFilePath);
+  const relativePath = getNormalizedPathWithAlias(dirPath, config.requestFunctionFilePath);
   // 移除.ts扩展名
   const cleanRelativePath = relativePath.replace(/\.ts$/, '');
 
@@ -179,7 +180,7 @@ export async function generateInterfaceFileForTag(
     if (usedTypes.size > 0) {
       // 计算类型目录路径
       const typesDirPath = join(config.outputDir, 'types');
-      const typesRelativePath = getRelativeImportPath(dirPath, typesDirPath);
+      const typesRelativePath = getNormalizedPathWithAlias(dirPath, typesDirPath);
       const cleanTypesRelativePath = typesRelativePath.replace(/\/$/, ''); // 移除尾部斜杠
       combinedCode += `import type { ${Array.from(usedTypes).join(', ')} } from '${cleanTypesRelativePath}';\n`;
     }
@@ -198,7 +199,7 @@ export async function generateInterfaceFileForTag(
     if (usedTypes.size > 0) {
       // 计算类型目录路径
       const typesDirPath = join(config.outputDir, 'types');
-      const typesRelativePath = getRelativeImportPath(dirPath, typesDirPath);
+      const typesRelativePath = getNormalizedPathWithAlias(dirPath, typesDirPath);
       const cleanTypesRelativePath = typesRelativePath.replace(/\/$/, ''); // 移除尾部斜杠
       combinedCode += `import type { ${Array.from(usedTypes).join(', ')} } from '${cleanTypesRelativePath}';\n`;
     }
@@ -308,7 +309,37 @@ async function generateTypeFile(
   };
 
   // 生成代码
-  const code = template(templateData);
+  let code = template(templateData);
+
+  // 收集类型依赖并生成导入语句
+  const dependencies = new Set<string>();
+  for (const prop of templateData.properties) {
+    // 检查属性类型是否为引用类型（非原始类型）
+    const propType = prop.type;
+    // 排除原始类型和数组类型中的原始类型
+    const baseType = propType.endsWith('[]') ? propType.slice(0, -2) : propType;
+    // 如果是引用类型（首字母大写且在已处理的类型中）
+    if (
+      /^[A-Z]/.test(baseType) &&
+      !['any', 'string', 'number', 'boolean', 'object', 'unknown', 'never'].includes(
+        baseType.toLowerCase(),
+      ) &&
+      processedData.types.some((t: any) => t.name === baseType)
+    ) {
+      dependencies.add(baseType);
+    }
+  }
+
+  // 如果有依赖的类型，添加导入语句
+  if (dependencies.size > 0) {
+    const importPath = getNormalizedPathWithAlias(
+      typesDir,
+      join(config.outputDir, 'types/index.ts'),
+    );
+    const cleanImportPath = importPath.replace(/\.ts$/, '').replace(/\/$/, '');
+    const importStatement = `import type { ${Array.from(dependencies).join(', ')} } from '${cleanImportPath}';\n\n`;
+    code = importStatement + code;
+  }
 
   // 格式化代码
   const formattedCode = await formatCode(code, join(typesDir, `${cleanFileName}.ts`));
@@ -356,7 +387,7 @@ export async function generateRootIndexFile(
   let rootIndexContent = '';
 
   // 添加请求函数导出
-  const relativePath = getRelativeImportPath(outputDir, config.requestFunctionFilePath);
+  const relativePath = getNormalizedPathWithAlias(outputDir, config.requestFunctionFilePath);
   // 移除.ts扩展名
   const cleanRelativePath = relativePath.replace(/\.ts$/, '');
   rootIndexContent += `export * from '${cleanRelativePath}';\n\n`;

@@ -3,6 +3,8 @@
  * 用于清理和规范化生成的代码中的标识符名称
  */
 
+import { consola } from 'consola';
+
 /**
  * 清理并语义化类型名称
  * 移除非法字符，解码 URL 编码，添加语义化后缀
@@ -227,7 +229,7 @@ export function testSanitizeTypeName(): void {
     { input: 'ValidType', expected: 'ValidType' },
   ];
 
-  console.log('=== 测试类型名清理函数 ===\n');
+  consola.info('=== 测试类型名清理函数 ===\n');
 
   let passed = 0;
   let failed = 0;
@@ -238,14 +240,18 @@ export function testSanitizeTypeName(): void {
 
     if (success) {
       passed++;
-      console.log(`✅ PASS: "${testCase.input}" → "${result}"`);
+
+      consola.info(`✅ PASS: "${testCase.input}" → "${result}"`);
     } else {
       failed++;
-      console.log(`❌ FAIL: "${testCase.input}"`);
-      console.log(`   Expected: "${testCase.expected}"`);
-      console.log(`   Got:      "${result}"`);
+
+      consola.info(`❌ FAIL: "${testCase.input}"`);
+
+      consola.info(`   Expected: "${testCase.expected}"`);
+
+      consola.info(`   Got:      "${result}"`);
     }
   }
 
-  console.log(`\n总计: ${passed} 通过, ${failed} 失败`);
+  consola.info(`\n总计: ${passed} 通过, ${failed} 失败`);
 }

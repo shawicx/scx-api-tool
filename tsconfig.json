@@ -17,7 +17,7 @@
     "jsx": "preserve",
     "lib": ["ESNext", "DOM"],
     "paths": {
-      "cis-api-tool": ["./src/index.ts"],
+      "@scxfe/api-tool": ["./src/index.ts"],
       "@/*": ["./src/*"]
     },
     "outDir": "./dist"
