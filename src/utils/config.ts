@@ -32,6 +32,8 @@ const DEFAULT_CONFIG_VALUES: Omit<
   requestMethodStyle: RequestMethodStyle.CONFIG, // 默认为标准配置方式
   requestFunctionName: 'request',
   requestMethodsObjectName: 'requestMethods',
+  requestParamName: 'params',
+  responseTypeName: 'Response',
   concurrency: 50, // 默认并发数
 };
 
@@ -154,6 +156,8 @@ export function defineConfig(config: UserConfig): ApiConfig {
     apifoxProjectId,
     source: config.source,
     token: config.token,
+    // 确保 namingStrategy 被正确传递
+    ...(config.namingStrategy && { namingStrategy: config.namingStrategy }),
   };
 
   return finalConfig;

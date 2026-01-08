@@ -11,6 +11,58 @@ import { RequestMethodStyle } from './enums';
 export type PresetType = 'minimal' | 'standard' | 'verbose';
 
 /**
+ * 接口命名信息，用于自定义命名策略
+ */
+export interface InterfaceNamingInfo {
+  /** API 路径 */
+  path: string;
+  /** HTTP 方法 */
+  method: string;
+  /** 操作描述 */
+  summary?: string;
+  /** 操作详细描述 */
+  description?: string;
+  /** 操作 ID */
+  operationId?: string;
+  /** 标签 */
+  tags?: string[];
+}
+
+/**
+ * 自定义命名策略
+ * 允许用户完全覆盖默认的命名生成逻辑
+ */
+export interface NamingStrategy {
+  /**
+   * 自定义接口名称生成函数
+   * @param info 接口命名信息
+   * @returns 接口名称，例如：GetAiCompletionStream
+   */
+  interfaceName?: (info: InterfaceNamingInfo) => string;
+
+  /**
+   * 自定义函数名称生成函数
+   * @param info 接口命名信息
+   * @returns 函数名称，例如：getAiCompletionStreamApi
+   */
+  functionName?: (info: InterfaceNamingInfo) => string;
+
+  /**
+   * 自定义请求类型名称生成函数
+   * @param info 接口命名信息
+   * @returns 请求类型名称，例如：GetAiCompletionStreamRequestType
+   */
+  requestTypeName?: (info: InterfaceNamingInfo) => string;
+
+  /**
+   * 自定义响应类型名称生成函数
+   * @param info 接口命名信息
+   * @returns 响应类型名称，例如：GetAiCompletionStreamResponseType
+   */
+  responseTypeName?: (info: InterfaceNamingInfo) => string;
+}
+
+/**
  * 预设配置
  */
 export const PRESETS: Record<
@@ -74,6 +126,12 @@ export interface UserConfig {
   requestFunctionName?: string;
   /** 自定义方法对象名 */
   requestMethodsObjectName?: string;
+  /** 自定义请求参数名 */
+  requestParamName?: string;
+  /** 自定义返回数据类型名 */
+  responseTypeName?: string;
+  /** 自定义命名策略，完全覆盖默认的命名生成逻辑 */
+  namingStrategy?: NamingStrategy;
   /** 并发写入数量（用于文件生成的并发控制） */
   concurrency?: number;
 }
@@ -118,6 +176,12 @@ export interface ApiConfig {
   requestFunctionName: string;
   /** 自定义方法对象名 */
   requestMethodsObjectName: string;
+  /** 自定义请求参数名 */
+  requestParamName: string;
+  /** 自定义返回数据类型名 */
+  responseTypeName: string;
+  /** 自定义命名策略，完全覆盖默认的命名生成逻辑 */
+  namingStrategy?: NamingStrategy;
   /** 并发写入数量（用于文件生成的并发控制） */
   concurrency: number;
 }

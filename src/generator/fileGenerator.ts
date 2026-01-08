@@ -26,6 +26,25 @@ import {
   registerTemplatePartials,
 } from './template';
 
+/**
+ * 接口命名信息，用于自定义命名策略
+ * (本地定义以避免 d.ts 生成问题)
+ */
+interface InterfaceNamingInfo {
+  /** API 路径 */
+  path: string;
+  /** HTTP 方法 */
+  method: string;
+  /** 操作描述 */
+  summary?: string;
+  /** 操作详细描述 */
+  description?: string;
+  /** 操作 ID */
+  operationId?: string;
+  /** 标签 */
+  tags?: string[];
+}
+
 export async function generateRequestFile(config: ApiConfig): Promise<void> {
   // 将 alias 路径转换为实际文件路径（用于文件写入）
   const requestFilePath = aliasToRealPath(config.requestFunctionFilePath);
@@ -115,6 +134,96 @@ export async function generateInterfaceFiles(
   await generateRootIndexFile(processedData, config);
 }
 
+/**
+ * 使用自定义命名策略或默认逻辑生成接口名称
+ */
+function getInterfaceName(path: string, method: string, operation: any, config: ApiConfig): string {
+  if (config.namingStrategy?.interfaceName) {
+    const info: InterfaceNamingInfo = {
+      path,
+      method,
+      summary: operation.summary,
+      description: operation.description,
+      operationId: operation.operationId,
+      tags: operation.tags,
+    };
+    return config.namingStrategy.interfaceName(info);
+  }
+  return generateInterfaceName(path, method);
+}
+
+/**
+ * 使用自定义命名策略或默认逻辑生成函数名称
+ */
+function getFunctionName(path: string, method: string, operation: any, config: ApiConfig): string {
+  if (config.namingStrategy?.functionName) {
+    const info: InterfaceNamingInfo = {
+      path,
+      method,
+      summary: operation.summary,
+      description: operation.description,
+      operationId: operation.operationId,
+      tags: operation.tags,
+    };
+    return config.namingStrategy.functionName(info);
+  }
+  return generateFunctionName(path, method);
+}
+
+/**
+ * 使用自定义命名策略或默认逻辑生成请求类型名称
+ */
+function getRequestTypeName(
+  path: string,
+  method: string,
+  operation: any,
+  config: ApiConfig,
+): string {
+  if (config.namingStrategy?.requestTypeName) {
+    const info: InterfaceNamingInfo = {
+      path,
+      method,
+      summary: operation.summary,
+      description: operation.description,
+      operationId: operation.operationId,
+      tags: operation.tags,
+    };
+    return config.namingStrategy.requestTypeName(info);
+  }
+  // 默认逻辑：接口名称 + RequestType
+  const interfaceName = getInterfaceName(path, method, operation, config);
+  return `${interfaceName}RequestType`;
+}
+
+/**
+ * 使用自定义命名策略或默认逻辑生成响应类型名称
+ */
+function getResponseTypeName(
+  path: string,
+  method: string,
+  operation: any,
+  config: ApiConfig,
+): string {
+  if (config.namingStrategy?.responseTypeName) {
+    const info: InterfaceNamingInfo = {
+      path,
+      method,
+      summary: operation.summary,
+      description: operation.description,
+      operationId: operation.operationId,
+      tags: operation.tags,
+    };
+    const result = config.namingStrategy.responseTypeName(info);
+    if (process.env.DEBUG) {
+      consola.debug(`Custom responseTypeName for ${method} ${path}: ${result}`);
+    }
+    return result;
+  }
+  // 默认逻辑：接口名称 + ResponseType
+  const interfaceName = getInterfaceName(path, method, operation, config);
+  return `${interfaceName}ResponseType`;
+}
+
 export async function generateInterfaceFileForTag(
   tag: string,
   interfaces: any[],
@@ -122,6 +231,14 @@ export async function generateInterfaceFileForTag(
   config: ApiConfig,
   dirPath: string,
 ): Promise<void> {
+  // 调试：检查 namingStrategy 是否存在
+  if (process.env.DEBUG) {
+    consola.debug(`namingStrategy exists: ${!!config.namingStrategy}`);
+    consola.debug(
+      `namingStrategy.responseTypeName: ${typeof config.namingStrategy?.responseTypeName}`,
+    );
+  }
+
   // 为该标签生成接口代码
   let combinedCode = '';
 
@@ -209,13 +326,37 @@ export async function generateInterfaceFileForTag(
 
   // 处理接口（typesOnly 和完整模式都会生成，但内容不同）
   for (const apiInterface of interfaces) {
-    // 生成接口名称
-    const interfaceName = generateInterfaceName(apiInterface.path, apiInterface.method);
+    // 生成接口名称（使用自定义策略或默认逻辑）
+    const interfaceName = getInterfaceName(
+      apiInterface.path,
+      apiInterface.method,
+      apiInterface.operation,
+      config,
+    );
+    const requestTypeName = getRequestTypeName(
+      apiInterface.path,
+      apiInterface.method,
+      apiInterface.operation,
+      config,
+    );
+    const responseTypeName = getResponseTypeName(
+      apiInterface.path,
+      apiInterface.method,
+      apiInterface.operation,
+      config,
+    );
 
     // 准备模板数据
     const templateData = {
       interfaceName,
-      functionName: generateFunctionName(apiInterface.path, apiInterface.method),
+      requestTypeName,
+      responseTypeName,
+      functionName: getFunctionName(
+        apiInterface.path,
+        apiInterface.method,
+        apiInterface.operation,
+        config,
+      ),
       path: apiInterface.path,
       method: apiInterface.method.toUpperCase(),
       description: apiInterface.operation.summary || apiInterface.operation.description || '',
@@ -230,6 +371,7 @@ export async function generateInterfaceFileForTag(
       requestMethodStyle: config.requestMethodStyle,
       requestFunctionName: config.requestFunctionName || 'request',
       requestMethodsObjectName: config.requestMethodsObjectName || 'requestMethods',
+      requestParamName: config.requestParamName || 'params',
     };
 
     // 生成接口代码
