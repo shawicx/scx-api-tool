@@ -542,22 +542,28 @@ export function generateRequestFile(config: any): string {
 
 /**
  * 生成接口函数内容
- * 根据 typesOnly、apiOnly、comment 配置选择合适的模板
+ * 根据 generateApi、generateTypes、typesFormat 和 comment 配置选择合适的模板
  */
 export function generateInterfaceFunction(interfaceInfo: any, config: any): string {
-  // 根据 typesOnly、apiOnly 和 comment 配置选择模板
+  // 根据 generateApi、generateTypes、typesFormat 和 comment 配置选择模板
   let template: string;
   const comment = config.comment !== false;
 
-  if (config.typesOnly) {
-    // TypesOnly 模式：只生成类型定义，不生成请求方法
+  const shouldGenerateTypes = config.generateTypes && config.typesFormat === 'typescript';
+  const shouldGenerateApi = config.generateApi;
+
+  if (shouldGenerateTypes && !shouldGenerateApi) {
+    // 只生成类型模式：只生成类型定义，不生成请求方法
     template = getTypesOnlyTemplateByConfig(comment);
-  } else if (config.apiOnly) {
-    // API Only 模式：只生成请求方法，不包含类型定义
+  } else if (shouldGenerateApi && !shouldGenerateTypes) {
+    // 只生成 API 模式：只生成请求方法，不包含类型定义
     template = getApiOnlyTemplateByConfig(comment);
-  } else {
+  } else if (shouldGenerateApi && shouldGenerateTypes) {
     // 完整模式：生成类型定义和请求方法
     template = getInterfaceTemplateByConfig(comment);
+  } else {
+    // 都不生成或使用 Zod 模式：只生成请求方法（不生成 TypeScript 类型）
+    template = getApiOnlyTemplateByConfig(comment);
   }
 
   // 使用缓存的 compileTemplate 函数

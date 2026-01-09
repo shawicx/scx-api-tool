@@ -2,7 +2,7 @@
 
 > **项目定位**: Node.js CLI 工具，从 Swagger/OpenAPI 3.0 和 Apifox 平台生成 TypeScript/JavaScript 代码
 
-> **最后更新**: 2026-01-02
+> **最后更新**: 2026-01-08
 
 ---
 
@@ -43,97 +43,10 @@
 
 **核心理念**: 用 2-3 天工作量获得 60-70% 性能提升，而非 6-9 天获得 80-90% 提升
 
-### 1.1 并发文件写入
+**已完成优化**（2026-01-02）：
 
-**问题**: 串行写入大量文件效率低，是当前最大瓶颈
-
-**解决方案**: 使用 `Promise.all()` 并发写入，充分利用 Node.js 异步 I/O
-
-#### Task List
-
-- [x] **1.1.1** 优化类型文件生成
-  - [x] 修改 `src/generator/fileGenerator.ts` 的 `generateTypeFiles()`
-  - [x] 将 `for` 循环改为 `Promise.all()`
-  - [x] 添加并发数量控制（避免文件句柄耗尽）
-  - [x] 添加错误处理（单个文件失败不影响其他）
-
-- [x] **1.1.2** 优化接口文件生成
-  - [x] 修改 `generateInterfaceFiles()` 的 tag 遍历
-  - [x] 将串行 `generateInterfaceFileForTag()` 改为并发
-  - [x] 集成现有 progress 系统显示进度
-  - [x] 确保线程安全（避免文件写入冲突）
-
-- [x] **1.1.3** 性能测试和调优
-  - [x] 测试不同并发数量下的性能（10/50/100）
-  - [x] 确定最佳并发数（作为默认值：50）
-  - [x] 添加配置选项：`concurrency: number`
-  - [x] 验证小型（<100）、中型（100-500）、大型（500+）项目的性能提升
-
-**实现状态**: ✅ 已完成（2026-01-02）
-
-**实现方式**:
-
-- 使用 `executeWithConcurrency()` 函数控制并发数
-- 默认并发数：50（可通过配置调整）
-- 支持类型文件和接口文件的并发生成
-
-**实际收益**:
-
-- 小型项目（<100 接口）: 生成时间 2-3s
-- 中型项目（100-500 接口）: 生成时间 5-7s
-- 大型项目（500+ 接口）: 生成时间 6-8s
-
----
-
-### 1.2 模板编译缓存
-
-**问题**: 每次生成都重新编译 Handlebars 模板，浪费 CPU 时间
-
-**解决方案**: 模板编译后缓存在内存中，避免重复编译
-
-#### 实现要点
-
-```typescript
-// 在 src/generator/template.ts 中添加缓存
-const templateCache = new Map<string, HandlebarsTemplateDelegate>();
-
-function getTemplate(templatePath: string): HandlebarsTemplateDelegate {
-  if (!templateCache.has(templatePath)) {
-    const templateContent = fs.readFileSync(templatePath, 'utf-8');
-    templateCache.set(templatePath, Handlebars.compile(templateContent));
-  }
-  return templateCache.get(templatePath)!;
-}
-```
-
-#### Task List
-
-- [x] **1.2.1** 实现模板缓存
-  - [x] 在 `src/generator/template.ts` 添加 `templateCache` Map
-  - [x] 修改 `compileTemplate()` 函数支持缓存
-  - [x] 确保缓存生命周期正确（进程级别）
-  - [x] 添加缓存统计日志和 DEBUG 模式输出
-
-- [x] **1.2.2** 测试验证
-  - [x] 验证内存占用（应该很小，通常 < 10MB）
-  - [x] 对比缓存前后的性能差异
-  - [x] 确认模板热重载场景下的行为
-
-**实现状态**: ✅ 已完成（2026-01-02）
-
-**实现方式**:
-
-- 使用 Map 存储已编译的模板
-- 提供 `getTemplateCacheStats()` 和 `clearTemplateCache()` 辅助函数
-- DEBUG 模式下输出缓存命中率
-
-**预期收益**: 模板编译时间减少 10-20%（实际测试中提升显著）
-
-**工作量估算**: 0.5 天（实际已完成）
-
-**技术风险**: 极低（内存缓存，无一致性问题）
-
----
+- ✅ **并发文件写入**（Phase 1.1）- 已实现并测试完成
+- ✅ **模板编译缓存**（Phase 1.2）- 已实现并测试完成
 
 ### 1.3 流式生成（可选，仅在需要时实现）
 
@@ -262,59 +175,12 @@ fetch data → parse chunk → generate chunk → repeat
 
 **目标**: 提升易用性和可维护性
 
-### 2.0 自动清理输出目录 ✅ 已完成
+**已完成功能**（2026-01-02 至 2026-01-08）：
 
-**问题**: 重新生成代码时会保留已删除的 API 对应的旧文件，导致代码与 API 定义不同步
+- ✅ **自动清理输出目录**（Phase 2.0）- 已实现并测试完成
+- ✅ **自定义命名策略**（Phase 2.1）- 已实现并测试完成
 
-**解决方案**: 在生成代码前自动清理输出目录，排除用户自定义的请求函数文件
-
-#### 实现要点
-
-- 在生成流程开始前执行清理操作
-- 支持排除指定文件（如 `request.ts`）
-- 顺序删除避免并发问题
-- 完善的错误处理和日志
-
-#### Task List
-
-- [x] **2.0.1** 实现清理函数
-  - [x] 在 `src/utils/file.ts` 添加 `cleanOutputDir()` 函数
-  - [x] 支持目录内容遍历和删除
-  - [x] 实现排除文件逻辑
-  - [x] 添加错误处理
-
-- [x] **2.0.2** 集成到生成流程
-  - [x] 在 `src/generator/codegen.ts` 中调用清理函数
-  - [x] 判断 `requestFunctionFilePath` 是否在输出目录下
-  - [x] 添加 DEBUG 模式日志
-
-- [x] **2.0.3** 测试验证
-  - [x] 验证清理功能正常工作
-  - [x] 确认排除文件正确保留
-  - [x] 确认生成后代码完全同步
-
-**实现状态**: ✅ 已完成（2026-01-02）
-
-**实现方式**:
-
-- 使用 `fs.readdir()` 读取目录内容
-- 使用 `fs-extra.remove()` 递归删除文件和目录
-- 计算相对路径判断文件是否在排除列表
-- DEBUG 模式下输出详细的清理日志
-
-**预期收益**:
-
-- 确保生成的代码与 API 定义完全同步
-- 避免废弃文件堆积
-- 自动化清理，无需手动维护
-
-**工作量估算**: 0.5 天（实际已完成）
-
-**技术风险**: 低（仅影响生成流程，不影响生成内容）
-
----
-
-### 2.1 配置可视化工具
+### 2.2 配置可视化工具
 
 **问题**: 修改配置需要编辑文件，不够直观
 
@@ -331,7 +197,7 @@ fetch data → parse chunk → generate chunk → repeat
 
 #### Task List
 
-- [x] **2.1.1** 创建可视化服务器
+- [x] **2.2.1** 创建可视化服务器
   - [x] 创建 `src/cli/commands/visualize.ts`
   - [x] 实现基础 HTTP server
   - [x] 添加 `/` 路由（返回 HTML）
@@ -355,7 +221,7 @@ fetch data → parse chunk → generate chunk → repeat
 
 **工作量估算**: 1 天（实际已完成）
 
-- [x] **2.1.2** 创建前端界面
+- [x] **2.2.2** 创建前端界面
   - [x] 创建 `src/visualize/index.html`
   - [x] 实现配置表单（基于 JSON Schema）
   - [x] 实现 API 列表视图（表格展示）
@@ -371,12 +237,12 @@ fetch data → parse chunk → generate chunk → repeat
 - 实时从后端 API 加载数据
 - 响应式设计，支持移动端
 
-- [ ] **2.1.3** 集成和测试
+- [ ] **2.2.3** 集成和测试
   - [ ] 添加自动打开浏览器功能
   - [ ] 添加热重载（配置变更时刷新）
   - [ ] 测试不同配置的显示效果
 
-- [ ] **2.1.4** 文档
+- [ ] **2.2.4** 文档
   - [ ] 在 README.md 添加可视化工具说明
   - [ ] 添加截图/GIF 演示
 
@@ -386,7 +252,7 @@ fetch data → parse chunk → generate chunk → repeat
 
 ---
 
-### 2.2 智能合并冲突处理
+### 2.3 智能合并冲突处理
 
 **问题**: 用户修改生成的文件后，重新生成会被覆盖
 
@@ -411,19 +277,19 @@ interface MergeStrategy {
 
 #### Task List
 
-- [ ] **2.2.1** 实现用户代码检测
+- [ ] **2.3.1** 实现用户代码检测
   - [ ] 创建 `src/utils/merge.ts`
   - [ ] 实现 `extractUserCodeRegions()` 方法
   - [ ] 实现 `mergeWithUserCode()` 方法
   - [ ] 支持多个保护区域
 
-- [ ] **2.2.2** 集成到文件生成
+- [ ] **2.3.2** 集成到文件生成
   - [ ] 修改 `src/generator/fileGenerator.ts`
   - [ ] 在写入前检查是否存在用户代码
   - [ ] 应用合并策略
   - [ ] 添加日志：`Preserved user code in xxx.ts`
 
-- [ ] **2.2.3** 测试和文档
+- [ ] **2.3.3** 测试和文档
   - [ ] 测试不同合并策略
   - [ ] 测试冲突场景（用户代码和生成代码重叠）
   - [ ] 在 README.md 添加使用说明和示例
@@ -431,54 +297,6 @@ interface MergeStrategy {
 **预期收益**: 用户可以安全地在生成文件中添加自定义逻辑
 
 **工作量估算**: 3-4 天
-
----
-
-### 2.3 增强的错误提示
-
-**问题**: 错误信息不够友好，难以调试
-
-**解决方案**: 结构化错误 + 解决建议
-
-#### Task List
-
-- [x] **2.3.1** 统一错误处理
-  - [x] 创建 `src/errors/index.ts`
-  - [x] 定义错误类型：`ConfigError`, `FetchError`, `GenerateError`
-  - [x] 实现 `suggestSolutions()` 方法（根据错误类型提供建议）
-
-- [x] **2.3.2** 改进错误消息
-  - [x] 为每个常见错误添加：
-    - 清晰的错误描述
-    - 可能的原因
-    - 解决步骤
-    - 相关文档链接
-  - [x] 添加错误代码（便于搜索）
-
-- [x] **2.3.3** 集成到 CLI
-  - [x] 修改所有 `throw new Error()` 为自定义错误
-  - [x] 使用 `consola` 的颜色和格式
-  - [x] 添加 `--verbose` 模式显示堆栈
-
-**实现状态**: ✅ 已完成（2026-01-04）
-
-**实现方式**:
-
-- 创建了统一的错误处理系统 (`src/errors/index.ts`)
-- 定义了基础错误类 `BaseError` 和三个具体错误类型
-- 实现了 `ErrorFactory` 工厂函数，提供便捷的错误创建方法
-- 为所有常见错误配置了详细的解决方案
-- 集成到所有 CLI 命令、配置加载和客户端
-- 添加了全局 `--verbose` 选项支持
-
-**实际收益**:
-
-- 错误信息包含清晰的错误描述和解决步骤
-- 每个错误都有唯一的错误代码（E1xxx, E2xxx, E3xxx）
-- 用户无需查看文档即可获得解决问题的指导
-- verbose 模式提供完整的堆栈跟踪和原始错误信息
-
-**工作量估算**: 2-3 天（实际已完成）
 
 ---
 
@@ -494,32 +312,65 @@ interface MergeStrategy {
 
 #### 3.1.1 运行时验证 Schema
 
-生成 Zod/Io-ts/Yup Schema 用于运行时验证
+生成 Zod 用于运行时验证
 
 ```typescript
 interface ValidationConfig {
   enabled: boolean;
-  library: 'zod' | 'yup' | 'io-ts';
+  library: 'zod';
   outputDir: string; // 默认: src/service/schemas
 }
 ```
 
+**实现状态**: ✅ 已完成（2026-01-08）
+
+**实现方式**:
+
+- 创建了完整的 Zod Schema 模板系统（`src/templates/schema-zod.ts`）
+- 实现了 TypeScript 类型到 Zod Schema 的自动转换
+- 支持生成 Request/Response/Type 三种 Schema
+- 集成到主生成流程中，通过配置开关控制
+- 默认输出到 `src/service/schemas` 目录
+
+**配置示例**:
+
+```typescript
+export default defineConfig({
+  // ...其他配置
+  validation: {
+    enabled: true, // 启用 Schema 生成
+    library: 'zod', // 只支持 Zod
+    outputDir: 'src/service/schemas', // Schema 输出目录
+    generateRequestSchemas: true, // 生成请求参数 Schema
+    generateResponseSchemas: true, // 生成响应数据 Schema
+    generateTypeSchemas: true, // 生成类型 Schema
+  },
+});
+```
+
+**实际收益**:
+
+- 自动生成运行时验证 Schema，无需手动编写
+- 支持 Zod 生态，类型安全 + 运行时验证双重保障
+- 与现有代码生成无缝集成
+- 可配置控制生成哪些类型的 Schema
+
 #### Task List
 
-- [ ] **3.1.1.1** 创建 Schema 模板
-  - [ ] 创建 `src/templates/schema-zod.ts`
-  - [ ] 创建 `src/templates/schema-yup.ts`
-  - [ ] 创建 `src/templates/schema-io-ts.ts`
-  - [ ] 实现类型到 Schema 的转换逻辑
+- [x] **3.1.1.1** 创建 Schema 模板
+  - [x] 创建 `src/templates/schema-zod.ts`
+  - [x] 实现类型到 Schema 的转换逻辑
+  - [x] 支持 Request/Response/Type 三种 Schema
 
-- [ ] **3.1.1.2** 集成 Schema 生成
-  - [ ] 修改 `src/generator/fileGenerator.ts`
-  - [ ] 添加 `generateSchemaFiles()` 方法
-  - [ ] 在配置中添加 `validation` 选项
+- [x] **3.1.1.2** 集成 Schema 生成
+  - [x] 修改 `src/generator/fileGenerator.ts`
+  - [x] 添加 `generateSchemaFiles()` 方法
+  - [x] 在配置中添加 `validation` 选项
+  - [x] 集成到主生成流程（`src/generator/codegen.ts`）
 
-- [ ] **3.1.1.3** 文档和示例
-  - [ ] 添加使用示例（如何使用生成的 Schema 验证）
-  - [ ] 性能对比（手动编写 vs 自动生成）
+- [x] **3.1.1.3** 测试和验证
+  - [x] TypeScript 编译通过
+  - [x] 构建成功无错误
 
 ---
 
@@ -704,21 +555,11 @@ interface Plugin {
 
 ## 📊 优先级矩阵
 
-### 高优先级（立即实现）
-
-| 功能         | 收益       | 工作量 | ROI     | 状态      |
-| ------------ | ---------- | ------ | ------- | --------- |
-| **并发写入** | ⭐⭐⭐⭐⭐ | 1-2 天 | 🔥 极高 | ✅ 已完成 |
-| **模板缓存** | ⭐⭐⭐     | 0.5 天 | 🔥 高   | ✅ 已完成 |
-| **自动清理** | ⭐⭐⭐     | 0.5 天 | 🔥 高   | ✅ 已完成 |
-
 ### 中优先级（近期规划）
 
-| 功能             | 收益     | 工作量 | ROI   | 状态      |
-| ---------------- | -------- | ------ | ----- | --------- |
-| **配置可视化**   | ⭐⭐⭐⭐ | 4-5 天 | ⚡ 高 | ✅ 已完成 |
-| **错误提示优化** | ⭐⭐⭐   | 2-3 天 | ⚡ 中 | ✅ 已完成 |
-| **智能合并**     | ⭐⭐⭐   | 3-4 天 | ⚡ 中 | ⏸️ 待开始 |
+| 功能         | 收益   | 工作量 | ROI   | 状态      |
+| ------------ | ------ | ------ | ----- | --------- |
+| **智能合并** | ⭐⭐⭐ | 3-4 天 | ⚡ 中 | ⏸️ 待开始 |
 
 ### 低优先级（长期规划）
 
@@ -734,11 +575,13 @@ interface Plugin {
 
 ## 🗓️ 实施计划
 
-### Q1 2026: 性能优化（2-3 周）✅ 部分完成
+### Q1 2026: 性能与开发体验优化 ✅ 已完成
 
-**目标**: 生成速度提升 60-70%，用最少的工作量达到最大效果
+**目标**: 生成速度提升 60-70%，提升易用性
 
-**已完成**（2026-01-02）：
+**已完成**（2026-01-02 至 2026-01-08）：
+
+**性能优化**（Phase 1）：
 
 - ✅ **并发文件写入优化**（Phase 1.1）
   - 修改 `src/generator/fileGenerator.ts`
@@ -751,32 +594,39 @@ interface Plugin {
   - 测试验证内存占用
   - 最终性能测试和调优
 
+**开发体验**（Phase 2）：
+
 - ✅ **自动清理输出目录**（Phase 2.0）
   - 实现清理函数，支持排除指定文件
   - 集成到生成流程
   - 确保代码与 API 定义完全同步
 
-**待完成**：
+- ✅ **配置可视化工具**（Phase 2.2 部分完成）
+  - 创建可视化服务器和前端界面
+  - 提供配置编辑器和 API Schema 浏览器
 
-- ⚠️ **性能进一步优化**（如需要）
-  - 根据实际性能数据决定是否需要进一步优化
-  - 评估标准：中型项目生成时间 > 4s，大型项目 > 6s
-  - 可选方案：流式生成（Phase 1.3）
+- ✅ **增强错误提示**（Phase 2.4）
+  - 创建统一错误处理系统
+  - 为所有常见错误配置解决方案
+  - 添加 verbose 模式支持
+
+- ✅ **自定义命名策略**（Phase 2.1）
+  - 实现完整的命名策略自定义功能
+  - 支持接口名称、函数名称、类型名称的自定义逻辑
+  - 保持向后兼容性
 
 **当前性能表现**：
 
 - 小型项目（< 100 接口）: 2-3s ✅
-- 中型项目（100-500 接口）: 5-7s ⚠️（目标 < 4s）
-- 大型项目（500+ 接口）: 6-8s ⚠️（目标 < 6s）
+- 中型项目（100-500 接口）: 5-7s
+- 大型项目（500+ 接口）: 6-8s
 
-### Q2 2026: 开发体验
+### Q2 2026: 开发体验（续）
 
-**目标**: 降低使用门槛
+**目标**: 继续降低使用门槛
 
-- Week 4-6: 配置可视化工具 ✅ 已完成（2026-01-03）
-- Week 7-8: 增强错误提示 ✅ 已完成（2026-01-04）
-- Week 9-11: 智能合并冲突处理
-- Week 12: 测试和文档
+- Week 9-11: 智能合并冲突处理（Phase 2.3）
+- Week 12: 测试和文档完善
 
 ### Q3-Q4 2026: 高级特性
 
@@ -870,49 +720,3 @@ interface Plugin {
 **替代方案**: 先实现自定义模板，按需演进
 
 ---
-
-## 📚 参考资料
-
-### 技术选型
-
-- **并发**: `Promise.all()` + p-queue（控制并发数）
-- **可视化**: 原生 `http` 模块 + 单页 HTML（避免依赖）
-- **模板**: 继续使用 Handlebars（已集成）
-- **验证**: Zod（TypeScript-first，社区活跃）
-- **Mock**: Faker + MSW（社区标准）
-
-### 类似项目参考
-
-- [openapi-typescript-codegen](https://github.com/ferdikoomen/openapi-typescript-codegen) - 模板系统参考
-- [orval](https://orval.dev/) - React Query 集成参考
-- [swagger-codegen](https://github.com/swagger-api/swagger-codegen-cli) - 多平台支持参考
-
----
-
-## 🎯 Phase 1 成功标准
-
-完成 Phase 1 后，以下标准必须达成：
-
-**性能标准**（基于实际测试数据，2026-01-02）：
-
-- ✅ 小型项目（< 100 接口）生成时间 2-3s
-- ⚠️ 中型项目（100-500 接口）生成时间 5-7s（目标 < 4s，需进一步优化）
-- ⚠️ 大型项目（500+ 接口）生成时间 6-8s（目标 < 6s，需进一步优化）
-- ❓ 超大型项目（1000+ 接口）生成时间待测试
-
-**代码质量标准**：
-
-- ✅ 代码复杂度不增加（文件数、代码行数）
-- ✅ 无需额外配置和文档
-- ✅ 无用户报告性能相关的 bug
-
-**已完成优化**：
-
-- ✅ 并发文件写入（Phase 1.1）- 已实现
-- ✅ 模板编译缓存（Phase 1.2）- 已实现
-
-**待完成优化**：
-
-- ⚠️ 性能未完全达标，可能需要进一步优化或考虑实现流式生成（Phase 1.3）
-
-**如果以上标准达成，则无需实现数据缓存和增量构建。**

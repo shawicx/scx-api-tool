@@ -11,50 +11,47 @@ import type { UserConfig } from '@/types';
 export function validateConfigLogic(config: UserConfig): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  // 验证 typesOnly 和 apiOnly 的互斥关系
-  if (config.typesOnly && config.apiOnly) {
+  // 验证至少有一种生成模式被启用
+  if (!config.generateApi && !config.generateTypes) {
     errors.push(
       createValidationError(
-        'typesOnly & apiOnly',
-        'CONFLICTING_OPTIONS',
-        'typesOnly 和 apiOnly 不能同时为 true',
+        'generateApi & generateTypes',
+        'NO_GENERATION_MODE',
+        '至少需要启用一种生成模式',
         ValidationSeverity.ERROR,
-        '请选择其中一种模式：\n' +
-          '  - typesOnly: 只生成类型定义\n' +
-          '  - apiOnly: 只生成 API 接口定义\n' +
-          '  - 两者都为 false: 生成完整的类型和请求函数',
-        { typesOnly: config.typesOnly, apiOnly: config.apiOnly },
+        '请至少选择一种生成模式：\n' +
+          '  - generateApi: true 生成 API 请求方法\n' +
+          '  - generateTypes: true 生成类型定义\n' +
+          '  - 两者都为 true: 同时生成 API 请求方法和类型定义',
+        { generateApi: config.generateApi, generateTypes: config.generateTypes },
       ),
     );
   }
 
-  // 验证 requestFunctionFilePath 在 apiOnly 模式下的合理性
+  // 验证只生成 API 模式下 requestFunctionFilePath 的合理性
   if (
-    config.apiOnly &&
+    config.generateApi &&
+    !config.generateTypes &&
     config.requestFunctionFilePath &&
     config.requestFunctionFilePath.trim() !== ''
   ) {
-    errors.push(
-      createValidationError(
-        'requestFunctionFilePath',
-        'UNUSED_OPTION',
-        '在 apiOnly 模式下 requestFunctionFilePath 配置不会生效',
-        ValidationSeverity.WARNING,
-        'apiOnly 模式只生成接口定义，不生成请求函数，可以删除 requestFunctionFilePath 配置',
-        config.requestFunctionFilePath,
-      ),
-    );
+    // 这个配置是合理的，不报错
   }
 
-  // 验证 requestMethodStyle 在 typesOnly 模式下的合理性
-  if (config.typesOnly && config.requestMethodStyle && config.requestMethodStyle !== 'config') {
+  // 验证只生成类型模式下 requestMethodStyle 的合理性
+  if (
+    !config.generateApi &&
+    config.generateTypes &&
+    config.requestMethodStyle &&
+    config.requestMethodStyle !== 'config'
+  ) {
     errors.push(
       createValidationError(
         'requestMethodStyle',
         'UNUSED_OPTION',
-        '在 typesOnly 模式下 requestMethodStyle 配置不会生效',
+        '在只生成类型模式下 requestMethodStyle 配置不会生效',
         ValidationSeverity.WARNING,
-        'typesOnly 模式只生成类型定义，不涉及请求函数风格，建议使用默认值或删除此配置',
+        '只生成类型模式不生成请求函数，requestMethodStyle 配置不会生效，建议使用默认值或删除此配置',
         config.requestMethodStyle,
       ),
     );

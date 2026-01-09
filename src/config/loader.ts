@@ -11,10 +11,33 @@ import { validateConfiguration } from '@/validation';
 import { ErrorFactory } from '@/errors';
 
 /**
+ * 检查配置是否已经被 defineConfig 处理过
+ */
+function isProcessedConfig(config: any): config is ApiConfig {
+  // 检查是否有所有必需的 ApiConfig 属性
+  return (
+    config &&
+    typeof config === 'object' &&
+    'serverUrl' in config &&
+    'serverType' in config &&
+    'source' in config &&
+    'token' in config &&
+    'generateApi' in config &&
+    'generateTypes' in config &&
+    'typesFormat' in config
+  );
+}
+
+/**
  * 合并默认配置和用户配置
  */
 function mergeWithDefaults(userConfig: Partial<ApiConfig>): ApiConfig {
-  // 使用 defineConfig 函数来合并默认配置
+  // 如果配置已经被 defineConfig 处理过，直接返回
+  if (isProcessedConfig(userConfig)) {
+    return userConfig as ApiConfig;
+  }
+
+  // 否则使用 defineConfig 函数来合并默认配置
   return defineConfig(userConfig as ApiConfig);
 }
 

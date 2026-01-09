@@ -25,6 +25,13 @@ import {
   registerTemplateHelpers,
   registerTemplatePartials,
 } from './template';
+import {
+  generateZodTypeSchema,
+  generateZodRequestSchema,
+  generateZodResponseSchema,
+  generateZodSchemaIndex,
+  getZodImportStatement,
+} from '../templates/schema-zod';
 
 /**
  * 接口命名信息，用于自定义命名策略
@@ -292,8 +299,12 @@ export async function generateInterfaceFileForTag(
   const requestFunctionName = config.requestFunctionName || 'request';
   const requestMethodsObjectName = config.requestMethodsObjectName || 'requestMethods';
 
-  if (config.typesOnly) {
-    // TypesOnly 模式：只导入类型（不导入 request 函数）
+  // 判断生成模式
+  const typesOnly = config.generateTypes && !config.generateApi;
+  const apiOnly = config.generateApi && !config.generateTypes;
+
+  if (typesOnly) {
+    // 只生成类型模式：只导入类型（不导入 request 函数）
     if (usedTypes.size > 0) {
       // 计算类型目录路径
       const typesDirPath = join(config.outputDir, 'types');
@@ -301,19 +312,19 @@ export async function generateInterfaceFileForTag(
       const cleanTypesRelativePath = typesRelativePath.replace(/\/$/, ''); // 移除尾部斜杠
       combinedCode += `import type { ${Array.from(usedTypes).join(', ')} } from '${cleanTypesRelativePath}';\n`;
     }
-  } else if (config.apiOnly) {
-    // API Only 模式：只导入 request 函数
+  } else if (apiOnly) {
+    // 只生成 API 模式：只导入 request 函数
     combinedCode += `import { ${requestFunctionName} } from '${cleanRelativePath}';\n`;
   } else {
-    // 完整模式：导入 RequestConfig 和函数
+    // 完整模式（API + 类型）：导入 RequestConfig 和函数
     if (config.requestMethodStyle === 'method-specific' || config.requestMethodStyle === 'both') {
       combinedCode += `import { RequestConfig, ${requestFunctionName}, ${requestMethodsObjectName} } from '${cleanRelativePath}';\n`;
     } else {
       combinedCode += `import { RequestConfig, ${requestFunctionName} } from '${cleanRelativePath}';\n`;
     }
 
-    // 添加类型导入
-    if (usedTypes.size > 0) {
+    // 添加类型导入（只在 typesFormat 为 typescript 时导入）
+    if (config.typesFormat === 'typescript' && usedTypes.size > 0) {
       // 计算类型目录路径
       const typesDirPath = join(config.outputDir, 'types');
       const typesRelativePath = getNormalizedPathWithAlias(dirPath, typesDirPath);
@@ -324,7 +335,7 @@ export async function generateInterfaceFileForTag(
 
   combinedCode += '\n';
 
-  // 处理接口（typesOnly 和完整模式都会生成，但内容不同）
+  // 处理接口（只生成类型模式和完整模式都会生成接口定义）
   for (const apiInterface of interfaces) {
     // 生成接口名称（使用自定义策略或默认逻辑）
     const interfaceName = getInterfaceName(
@@ -401,8 +412,8 @@ export async function generateTypeFiles(
   processedData: ProcessedApiData,
   config: ApiConfig,
 ): Promise<void> {
-  // apiOnly 模式下不生成类型文件
-  if (config.apiOnly) {
+  // 只生成 API 模式下不生成类型文件
+  if (config.generateApi && !config.generateTypes) {
     if (process.env.DEBUG) {
       consola.debug('API Only 模式：跳过类型文件生成');
     }
@@ -698,5 +709,261 @@ async function executeWithConcurrency<T>(
     }
   } else if (process.env.DEBUG) {
     consola.success(`${taskName}：成功完成 ${items.length} 个项目`);
+  }
+}
+
+/**
+ * 生成 Zod Schema 文件
+ * @param processedData 处理后的 API 数据
+ * @param config 配置
+ */
+export async function generateSchemaFiles(
+  processedData: ProcessedApiData,
+  config: ApiConfig,
+): Promise<void> {
+  // 如果未启用 validation，则跳过
+  if (!config.validation?.enabled) {
+    if (process.env.DEBUG) {
+      consola.debug('Schema 生成未启用，跳过');
+    }
+    return;
+  }
+
+  // 只支持 Zod
+  const { validation } = config;
+  if (validation.library !== 'zod') {
+    consola.warn(`目前只支持 Zod，配置的 library: ${validation.library}`);
+    return;
+  }
+
+  consola.info('开始生成 Zod Schema...');
+
+  // 确定 schema 输出目录
+  const schemasDir = validation.outputDir || join(config.outputDir, 'schemas');
+  await ensureDir(schemasDir);
+
+  const generatedSchemas: string[] = [];
+
+  // 1. 生成类型 Schemas
+  if (validation.generateTypeSchemas !== false) {
+    await generateTypeSchemasFiles(processedData, config, schemasDir, generatedSchemas);
+  }
+
+  // 2. 生成接口 Request/Response Schemas
+  await generateInterfaceSchemasFiles(processedData, config, schemasDir);
+
+  // 3. 生成索引文件
+  await generateSchemaIndexFile(schemasDir, generatedSchemas);
+
+  consola.success(`成功生成 ${generatedSchemas.length} 个 Zod Schema 文件`);
+}
+
+/**
+ * 生成类型 Schema 文件
+ */
+async function generateTypeSchemasFiles(
+  processedData: ProcessedApiData,
+  config: ApiConfig,
+  schemasDir: string,
+  generatedSchemas: string[],
+): Promise<void> {
+  if (process.env.DEBUG) {
+    consola.debug(`正在生成 ${processedData.types.length} 个类型 Schema...`);
+  }
+
+  // 并发生成类型 Schema
+  const concurrency = config.concurrency || 50;
+  await executeWithConcurrency(
+    processedData.types,
+    async (type) => {
+      const schemaName = `${sanitizeTypeName(type.name)}Schema`;
+      // 文件名也添加 Schema 后缀，与主要内容区分
+      const fileName = `${sanitizeTypeName(type.name)}Schema`.replace(/[^a-zA-Z0-9$_]/g, '_');
+
+      // 生成 schema 代码
+      const schemaCode = generateZodTypeSchema(
+        {
+          name: sanitizeTypeName(type.name),
+          description: type.schema.description || type.name,
+          properties: extractTypeProperties(type.schema),
+        },
+        config,
+      );
+
+      // 格式化代码
+      const formattedCode = await formatCode(schemaCode, join(schemasDir, `${fileName}.ts`));
+
+      // 写入文件
+      const filePath = join(schemasDir, `${fileName}.ts`);
+      await writeFormattedFile(filePath, formattedCode);
+
+      generatedSchemas.push(schemaName);
+
+      if (process.env.DEBUG) {
+        consola.debug(`创建类型 Schema 文件: ${filePath}`);
+      }
+    },
+    concurrency,
+    `生成类型 Schema`,
+  );
+}
+
+/**
+ * 生成接口 Request/Response Schema 文件
+ */
+async function generateInterfaceSchemasFiles(
+  processedData: ProcessedApiData,
+  config: ApiConfig,
+  schemasDir: string,
+): Promise<void> {
+  if (process.env.DEBUG) {
+    consola.debug(`正在生成 ${processedData.interfaces.length} 个接口 Schema...`);
+  }
+
+  // 获取 validation 配置（已在外层函数检查过 enabled）
+  const validation = config.validation!;
+
+  // 按标签分组接口
+  const interfacesByTag: Record<string, any[]> = {};
+  for (const apiInterface of processedData.interfaces) {
+    const tags = apiInterface.operation.tags || [];
+    const tag = tags.length > 0 ? tags[0] : 'default';
+    if (!interfacesByTag[tag]) {
+      interfacesByTag[tag] = [];
+    }
+    interfacesByTag[tag].push(apiInterface);
+  }
+
+  // 为每个标签生成 Schema 文件
+  const concurrency = config.concurrency || 50;
+  const tagEntries = Object.entries(interfacesByTag);
+
+  await executeWithConcurrency(
+    tagEntries,
+    async ([tag, interfaces]) => {
+      // 使用 chineseToPinyinCamelCase 转换 tag 名称作为文件夹名称
+      const tagDir = chineseToPinyinCamelCase(tag);
+      const dirPath = join(schemasDir, tagDir);
+      await ensureDir(dirPath);
+
+      // 为该标签下的每个接口生成 Schema
+      for (const apiInterface of interfaces) {
+        const requestTypeName = getRequestTypeName(
+          apiInterface.path,
+          apiInterface.method,
+          apiInterface.operation,
+          config,
+        );
+        const responseTypeName = getResponseTypeName(
+          apiInterface.path,
+          apiInterface.method,
+          apiInterface.operation,
+          config,
+        );
+
+        // 生成接口信息
+        const interfaceInfo = {
+          requestTypeName,
+          responseTypeName,
+          description: apiInterface.operation.summary || apiInterface.operation.description || '',
+        };
+
+        let schemaCode = '';
+
+        // 添加 import 语句（只添加一次）
+        schemaCode += getZodImportStatement();
+        schemaCode += '\n';
+
+        // 收集所有引用的类型 schema
+        const typeSchemaImports = new Set<string>();
+
+        // 生成 Request Schema
+        if (validation.generateRequestSchemas !== false) {
+          const hasRequest = !!(
+            apiInterface.operation.parameters || apiInterface.operation.requestBody
+          );
+          if (hasRequest) {
+            const result = generateZodRequestSchema(
+              { ...interfaceInfo, operation: apiInterface.operation },
+              processedData,
+              config,
+            );
+            schemaCode += result.code;
+            schemaCode += '\n\n';
+
+            // 收集引用的类型 schema
+            result.imports.forEach((imp) => typeSchemaImports.add(imp));
+          }
+        }
+
+        // 生成 Response Schema
+        if (validation.generateResponseSchemas !== false) {
+          const hasResponse = !!apiInterface.operation.responses;
+          if (hasResponse) {
+            const result = generateZodResponseSchema(
+              { ...interfaceInfo, operation: apiInterface.operation },
+              processedData,
+              config,
+            );
+            schemaCode += result.code;
+
+            // 收集引用的类型 schema
+            result.imports.forEach((imp) => typeSchemaImports.add(imp));
+          }
+        }
+
+        // 在顶部添加类型 schema 的导入语句
+        if (typeSchemaImports.size > 0) {
+          const importStatements = Array.from(typeSchemaImports)
+            .map((schemaName) => `import { ${schemaName} } from '../${schemaName}';`)
+            .join('\n');
+          schemaCode = `${importStatements}\n\n${schemaCode}`;
+        }
+
+        // 如果有生成的内容，写入文件
+        if (schemaCode.trim()) {
+          // 使用接口名称作为文件名
+          const interfaceName = getInterfaceName(
+            apiInterface.path,
+            apiInterface.method,
+            apiInterface.operation,
+            config,
+          );
+          const fileName = interfaceName.replace(/[^a-zA-Z0-9$_]/g, '_');
+
+          // 格式化代码
+          const formattedCode = await formatCode(schemaCode, join(dirPath, `${fileName}.ts`));
+
+          // 写入文件
+          const filePath = join(dirPath, `${fileName}.ts`);
+          await writeFormattedFile(filePath, formattedCode);
+
+          if (process.env.DEBUG) {
+            consola.debug(`创建接口 Schema 文件: ${filePath}`);
+          }
+        }
+      }
+    },
+    concurrency,
+    `生成接口 Schema`,
+  );
+}
+
+/**
+ * 生成 Schema 索引文件
+ */
+async function generateSchemaIndexFile(
+  schemasDir: string,
+  generatedSchemas: string[],
+): Promise<void> {
+  // 生成根索引文件
+  const indexContent = generateZodSchemaIndex(generatedSchemas);
+
+  // 写入索引文件
+  const indexPath = join(schemasDir, 'index.ts');
+  await writeFormattedFile(indexPath, indexContent);
+
+  if (process.env.DEBUG) {
+    consola.debug(`创建 Schema 索引文件: ${indexPath}`);
   }
 }

@@ -11,6 +11,13 @@ import { RequestMethodStyle } from './enums';
 export type PresetType = 'minimal' | 'standard' | 'verbose';
 
 /**
+ * 类型生成格式
+ * - typescript: 生成 TypeScript 类型定义
+ * - zod: 生成 Zod Schema（运行时验证）
+ */
+export type TypesFormat = 'typescript' | 'zod';
+
+/**
  * 接口命名信息，用于自定义命名策略
  */
 export interface InterfaceNamingInfo {
@@ -63,6 +70,48 @@ export interface NamingStrategy {
 }
 
 /**
+ * Schema 验证配置
+ * 用于生成运行时验证 Schema（如 Zod）
+ */
+export interface ValidationConfig {
+  /**
+   * 是否启用 Schema 生成
+   * @default false
+   */
+  enabled?: boolean;
+
+  /**
+   * 验证库类型
+   * @default 'zod'
+   */
+  library?: 'zod';
+
+  /**
+   * Schema 输出目录
+   * @default 'src/service/schemas'
+   */
+  outputDir?: string;
+
+  /**
+   * 是否生成 Request Schema
+   * @default true
+   */
+  generateRequestSchemas?: boolean;
+
+  /**
+   * 是否生成 Response Schema
+   * @default true
+   */
+  generateResponseSchemas?: boolean;
+
+  /**
+   * 是否生成类型 Schema
+   * @default true
+   */
+  generateTypeSchemas?: boolean;
+}
+
+/**
  * 预设配置
  */
 export const PRESETS: Record<
@@ -70,20 +119,23 @@ export const PRESETS: Record<
   Partial<Omit<ApiConfig, 'source' | 'token' | 'serverUrl' | 'serverType' | 'apifoxProjectId'>>
 > = {
   minimal: {
-    typesOnly: true,
-    apiOnly: false,
+    generateApi: false,
+    generateTypes: true,
+    typesFormat: 'typescript' as TypesFormat,
     comment: false,
     requestMethodStyle: RequestMethodStyle.CONFIG,
   },
   standard: {
-    typesOnly: false,
-    apiOnly: false,
+    generateApi: true,
+    generateTypes: true,
+    typesFormat: 'typescript' as TypesFormat,
     comment: true,
     requestMethodStyle: RequestMethodStyle.CONFIG,
   },
   verbose: {
-    typesOnly: false,
-    apiOnly: false,
+    generateApi: true,
+    generateTypes: true,
+    typesFormat: 'typescript' as TypesFormat,
     comment: true,
     indentSize: 4,
     requestMethodStyle: RequestMethodStyle.BOTH,
@@ -102,10 +154,13 @@ export interface UserConfig {
   /** 认证令牌 */
   token: string;
 
-  /** 是否只生成类型 */
-  typesOnly?: boolean;
-  /** 是否只生成API接口（不包括请求函数） */
-  apiOnly?: boolean;
+  /** 是否生成 API 请求方法 */
+  generateApi?: boolean;
+  /** 是否生成类型定义 */
+  generateTypes?: boolean;
+  /** 类型生成格式 */
+  typesFormat?: TypesFormat;
+
   /** 目标语言 */
   target?: 'javascript' | 'typescript';
   /** 路径前缀 */
@@ -134,6 +189,8 @@ export interface UserConfig {
   namingStrategy?: NamingStrategy;
   /** 并发写入数量（用于文件生成的并发控制） */
   concurrency?: number;
+  /** Schema 验证配置 */
+  validation?: ValidationConfig;
 }
 
 /**
@@ -152,10 +209,13 @@ export interface ApiConfig {
   /** 认证令牌 */
   token: string;
 
-  /** 是否只生成类型 */
-  typesOnly: boolean;
-  /** 是否只生成API接口（不包括请求函数） */
-  apiOnly: boolean;
+  /** 是否生成 API 请求方法 */
+  generateApi: boolean;
+  /** 是否生成类型定义 */
+  generateTypes: boolean;
+  /** 类型生成格式 */
+  typesFormat: TypesFormat;
+
   /** 目标语言 */
   target: 'javascript' | 'typescript';
   /** 路径前缀 */
@@ -184,4 +244,6 @@ export interface ApiConfig {
   namingStrategy?: NamingStrategy;
   /** 并发写入数量（用于文件生成的并发控制） */
   concurrency: number;
+  /** Schema 验证配置 */
+  validation?: ValidationConfig;
 }
