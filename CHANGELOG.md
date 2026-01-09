@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.9](https://github.com/shawicx/scx-api-tool/compare/v0.4.8...v0.4.9) (2026-01-09)
+
+### Features
+
+- 优化API代码生成器的命名规范和文件夹处理 ([1af765e](https://github.com/shawicx/scx-api-tool/commit/1af765ed3cdfbb50a68f563f414c5bb6e7f3bc6a))
+- 优化构建配置，只生成入口文件的类型声明 ([797e649](https://github.com/shawicx/scx-api-tool/commit/797e649ba850fa893c2e91f37fe6246cf5796665))
+- 实现 Zod Schema 支持 ([00e48c5](https://github.com/shawicx/scx-api-tool/commit/00e48c55babb2041b7ca0970df5f77947c516080))
+- 支持多种 alias 路径配置 ([5b4739a](https://github.com/shawicx/scx-api-tool/commit/5b4739a54feafe2dcce9991f30db799d5f83a17e))
+- 添加自定义命名配置 ([91c46a3](https://github.com/shawicx/scx-api-tool/commit/91c46a3e720a2debd8da669e1a10bc893e9f2c00))
+- 配置模版更新 ([c314dd4](https://github.com/shawicx/scx-api-tool/commit/c314dd4ff6242c177ede888adbbccb3fd4fcaa42))
+- 重构配置系统，生成zod schema ([63d202d](https://github.com/shawicx/scx-api-tool/commit/63d202d9cd3a84bccadf722bec4c6e091adedb14))
+
+### Bug Fixes
+
+- 修复requestFunctionName配置 ([16cf43a](https://github.com/shawicx/scx-api-tool/commit/16cf43ade4baf0bd1ea922ddef36b666f4472f40))
+- 修复TypeScript编译错误并更新所有依赖到最新版本 ([8590dea](https://github.com/shawicx/scx-api-tool/commit/8590dea9c546d443d0bc49982c2993140f2a47bf))
+
+### Refactors
+
+- 重构进度显示模块并删除未使用的配置项 ([2dc7d3e](https://github.com/shawicx/scx-api-tool/commit/2dc7d3e4691325e734254e1b57b99f8eb7a4e3f6))
+
+### Documentation
+
+- 更新文档 ([4822ca3](https://github.com/shawicx/scx-api-tool/commit/4822ca3dd4f19412c8236d5d4f1ff7a7aa3a9b20))
+
 ### [0.4.8](https://github.com/shawicx/scx-api-tool/compare/v0.4.7...v0.4.8) (2026-01-07)
 
 ### Features

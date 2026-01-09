@@ -1,6 +1,6 @@
 {
   "name": "@scxfe/api-tool",
-  "version": "0.4.8",
+  "version": "0.4.9",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
