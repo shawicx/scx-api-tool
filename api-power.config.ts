@@ -16,8 +16,7 @@ export default defineConfig({
   // - 'typescript': 生成 TypeScript 类型定义（编译时类型检查）
   // - 'zod': 生成 Zod Schema（运行时验证）
   // 注意：此选项仅控制接口文件中的类型格式，不影响独立的 Schema 文件生成
-  typesFormat: 'zod',
-
+  typesFormat: 'typescript',
   // 自定义命名策略示例（完全覆盖默认的命名生成逻辑）
   // namingStrategy: {
   //   // 自定义接口名称生成
@@ -110,7 +109,7 @@ export default defineConfig({
   // Schema 验证配置：控制是否生成独立的 Schema 文件
   // 注意：此配置与 typesFormat 独立，可以单独控制
   validation: {
-    enabled: false, // 是否启用独立的 Schema 文件生成
+    enabled: false, // 测试场景2：生成独立的 Schema 文件
     library: 'zod', // 验证库类型（目前仅支持 zod）
     outputDir: 'src/service/schemas', // Schema 文件输出目录
     generateRequestSchemas: true, // 是否生成请求参数 Schema

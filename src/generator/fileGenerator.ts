@@ -385,6 +385,36 @@ export async function generateInterfaceFileForTag(
       requestParamName: config.requestParamName || 'params',
     };
 
+    // 如果是 Zod 模式，添加 Schema 相关信息
+    if (config.typesFormat === 'zod') {
+      // 获取标签（分类）
+      const tags = apiInterface.operation.tags || [];
+      const interfaceTag = tags.length > 0 ? tags[0] : 'default';
+      const tagDir = chineseToPinyinCamelCase(interfaceTag);
+
+      // Schema 文件名（使用接口名称）
+      const schemaFileName = interfaceName.replace(/[^a-zA-Z0-9$_]/g, '_');
+
+      // Schema 导入路径
+      // - validation.enabled: true → 独立目录：'../schemas/AIFuWu/PostAiCompletion'
+      // - validation.enabled: false → 同级目录：'./PostAiCompletion'
+      let schemaImportPath: string;
+      if (config.validation?.enabled) {
+        schemaImportPath = `../schemas/${tagDir}/${schemaFileName}`;
+      } else {
+        // Schema 文件生成在分类目录内（与接口文件同目录）
+        schemaImportPath = `./${schemaFileName}`;
+      }
+
+      // 添加 Zod 相关字段到模板数据
+      Object.assign(templateData, {
+        requestSchemaName: `${requestTypeName}Schema`,
+        responseSchemaName: `${responseTypeName}Schema`,
+        schemaImportPath,
+        hasSchemas: true,
+      });
+    }
+
     // 生成接口代码
     const code = generateInterfaceFunction(templateData, config);
 
@@ -721,8 +751,12 @@ export async function generateSchemaFiles(
   processedData: ProcessedApiData,
   config: ApiConfig,
 ): Promise<void> {
-  // 如果未启用 validation，则跳过
-  if (!config.validation?.enabled) {
+  // 判断是否需要生成 Schema 文件
+  // 1. 当 validation.enabled 为 true 时总是生成
+  // 2. 当 typesFormat 为 'zod' 时总是生成（因为接口文件需要导入）
+  const shouldGenerateSchemas = config.validation?.enabled || config.typesFormat === 'zod';
+
+  if (!shouldGenerateSchemas) {
     if (process.env.DEBUG) {
       consola.debug('Schema 生成未启用，跳过');
     }
@@ -730,7 +764,15 @@ export async function generateSchemaFiles(
   }
 
   // 只支持 Zod
-  const { validation } = config;
+  const validation = config.validation || {
+    enabled: false,
+    library: 'zod' as const,
+    outputDir: join(config.outputDir, 'schemas'),
+    generateRequestSchemas: true,
+    generateResponseSchemas: true,
+    generateTypeSchemas: true,
+  };
+
   if (validation.library !== 'zod') {
     consola.warn(`目前只支持 Zod，配置的 library: ${validation.library}`);
     return;
@@ -739,7 +781,17 @@ export async function generateSchemaFiles(
   consola.info('开始生成 Zod Schema...');
 
   // 确定 schema 输出目录
-  const schemasDir = validation.outputDir || join(config.outputDir, 'schemas');
+  // - validation.enabled: true → 独立目录（默认：src/service/schemas）
+  // - validation.enabled: false → 接口文件同级目录（默认：src/service）
+  let schemasDir: string;
+  if (validation.enabled) {
+    schemasDir = validation.outputDir || join(config.outputDir, 'schemas');
+  } else {
+    // typesFormat 为 'zod' 但 validation.enabled 为 false
+    // Schema 文件生成在接口文件的同级目录（每个分类一个 schema 子目录）
+    schemasDir = config.outputDir;
+  }
+
   await ensureDir(schemasDir);
 
   const generatedSchemas: string[] = [];

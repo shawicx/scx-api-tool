@@ -260,6 +260,84 @@ export function getApiOnlyTemplateWithoutComment(): string {
 `;
 }
 
+// ==================== Zod 模板 ====================
+
+/**
+ * Zod 接口模板 - 带注释
+ * 导入并使用 Zod Schema 作为类型
+ */
+export function getZodInterfaceTemplateWithComment(): string {
+  return `import { z } from 'zod';
+{{#if hasSchemas}}
+import { {{requestSchemaName}}, {{responseSchemaName}} } from '{{schemaImportPath}}';
+{{/if}}
+/**
+ * @description {{description}}
+ * @param {{requestParamName}} z.infer<typeof {{requestSchemaName}}>
+ * @returns Promise<z.infer<typeof {{responseSchemaName}}>>
+ */
+export async function {{functionName}}(
+{{#if hasParameters}}
+  {{requestParamName}}: z.infer<typeof {{requestSchemaName}}>
+{{else}}
+  {{requestParamName}}?: z.infer<typeof {{requestSchemaName}}>
+{{/if}}
+): Promise<z.infer<typeof {{responseSchemaName}}>> {
+  const config = {
+    url: '{{path}}',
+    method: '{{method}}',
+{{#if hasParameters}}
+{{#if hasBody}}
+    data: {{requestParamName}},
+{{else}}
+    params: {{requestParamName}},
+{{/if}}
+{{/if}}
+  };
+  return {{requestFunctionName}}(config);
+}
+`;
+}
+
+/**
+ * Zod 接口模板 - 不带注释
+ * 导入并使用 Zod Schema 作为类型
+ */
+export function getZodInterfaceTemplateWithoutComment(): string {
+  return `import { z } from 'zod';
+{{#if hasSchemas}}
+import { {{requestSchemaName}}, {{responseSchemaName}} } from '{{schemaImportPath}}';
+{{/if}}
+export async function {{functionName}}(
+{{#if hasParameters}}
+  {{requestParamName}}: z.infer<typeof {{requestSchemaName}}>
+{{else}}
+  {{requestParamName}}?: z.infer<typeof {{requestSchemaName}}>
+{{/if}}
+): Promise<z.infer<typeof {{responseSchemaName}}>> {
+  const config = {
+    url: '{{path}}',
+    method: '{{method}}',
+{{#if hasParameters}}
+{{#if hasBody}}
+    data: {{requestParamName}},
+{{else}}
+    params: {{requestParamName}},
+{{/if}}
+{{/if}}
+  };
+  return {{requestFunctionName}}(config);
+}
+`;
+}
+
+/**
+ * 根据配置获取 Zod 接口模板
+ */
+export function getZodInterfaceTemplateByConfig(comment: boolean): string {
+  return comment ? getZodInterfaceTemplateWithComment() : getZodInterfaceTemplateWithoutComment();
+}
+
 // ==================== 类型模版 ====================
 
 /**
@@ -551,8 +629,12 @@ export function generateInterfaceFunction(interfaceInfo: any, config: any): stri
 
   const shouldGenerateTypes = config.generateTypes && config.typesFormat === 'typescript';
   const shouldGenerateApi = config.generateApi;
+  const isZodMode = config.typesFormat === 'zod';
 
-  if (shouldGenerateTypes && !shouldGenerateApi) {
+  if (isZodMode && shouldGenerateApi) {
+    // Zod 模式：使用 Zod Schema 作为类型
+    template = getZodInterfaceTemplateByConfig(comment);
+  } else if (shouldGenerateTypes && !shouldGenerateApi) {
     // 只生成类型模式：只生成类型定义，不生成请求方法
     template = getTypesOnlyTemplateByConfig(comment);
   } else if (shouldGenerateApi && !shouldGenerateTypes) {
@@ -562,7 +644,7 @@ export function generateInterfaceFunction(interfaceInfo: any, config: any): stri
     // 完整模式：生成类型定义和请求方法
     template = getInterfaceTemplateByConfig(comment);
   } else {
-    // 都不生成或使用 Zod 模式：只生成请求方法（不生成 TypeScript 类型）
+    // 都不生成：只生成请求方法（不生成 TypeScript 类型）
     template = getApiOnlyTemplateByConfig(comment);
   }
 
