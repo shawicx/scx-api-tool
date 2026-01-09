@@ -158,16 +158,9 @@ export function defineConfig(config: UserConfig): ApiConfig {
   // 处理 validation 配置
   const validation: ValidationConfig = config.validation || DEFAULT_CONFIG_VALUES.validation!;
 
-  // 根据 typesFormat 自动控制 validation.enabled
-  const typesFormat = mergedConfig.typesFormat || DEFAULT_CONFIG_VALUES.typesFormat;
-  if (typesFormat === 'zod') {
-    validation.enabled = true;
-  }
-
   // 创建最终配置，确保解析的服务器信息不被覆盖
   const finalConfig: ApiConfig = {
     ...mergedConfig,
-    typesFormat,
     serverUrl,
     serverType,
     apifoxProjectId,

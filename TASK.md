@@ -2,7 +2,7 @@
 
 > **项目定位**: Node.js CLI 工具，从 Swagger/OpenAPI 3.0 和 Apifox 平台生成 TypeScript/JavaScript 代码
 
-> **最后更新**: 2026-01-08
+> **最后更新**: 2026-01-09
 
 ---
 
@@ -331,6 +331,29 @@ interface ValidationConfig {
 - 支持生成 Request/Response/Type 三种 Schema
 - 集成到主生成流程中，通过配置开关控制
 - 默认输出到 `src/service/schemas` 目录
+
+**后续优化**（2026-01-09）:
+
+- ✅ **配置系统重构**
+  - 移除 `generationType` 枚举，改用细粒度配置：`generateApi`、`generateTypes`、`typesFormat`
+  - 支持灵活的组合模式：
+    - 仅生成 API：`generateApi: true, generateTypes: false`
+    - 仅生成类型：`generateApi: false, generateTypes: true, typesFormat: 'typescript' | 'zod'`
+    - API + TypeScript 类型：`generateApi: true, generateTypes: true, typesFormat: 'typescript'`
+    - API + Zod Schema：`generateApi: true, generateTypes: true, typesFormat: 'zod'`
+  - Schema 生成被定义为类型的另一种格式（不是独立功能）
+
+- ✅ **移除所有兼容代码**
+  - 从 `ApiConfig` 和 `UserConfig` 接口中移除 `typesOnly` 和 `apiOnly`
+  - 从 `defineConfig()` 中移除兼容逻辑
+  - 更新所有代码引用，使用新的配置字段
+  - 修复所有 TypeScript 编译错误
+
+- ✅ **修复接口文件生成逻辑**
+  - 修改 `generateInterfaceFunction()` 模板选择逻辑
+  - 当 `typesFormat: 'zod'` 时，接口文件只生成 API 函数，不生成 TypeScript 接口
+  - 当 `typesFormat: 'typescript'` 时，接口文件同时生成 API 函数和 TypeScript 接口
+  - 修复类型导入逻辑，只在 `typesFormat: 'typescript'` 时导入 TypeScript 类型
 
 **配置示例**:
 
