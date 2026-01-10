@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.10](https://github.com/shawicx/scx-api-tool/compare/v0.4.9...v0.4.10) (2026-01-10)
+
+### Refactors
+
+- 优化生成代码的导出语法 ([a15b85a](https://github.com/shawicx/scx-api-tool/commit/a15b85a924169f40e7e472146e836d6dc047de43))
+
 ### [0.4.9](https://github.com/shawicx/scx-api-tool/compare/v0.4.8...v0.4.9) (2026-01-09)
 
 ### Features
