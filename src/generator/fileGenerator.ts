@@ -588,7 +588,7 @@ export async function generateRootIndexFile(
   // tagDirs.push('default');
 
   for (const tagDir of tagDirs) {
-    rootIndexContent += `export * as ${tagDir} from './${tagDir}';\n`;
+    rootIndexContent += `export * from './${tagDir}';\n`;
   }
 
   // 写入根目录 index.ts 文件
