@@ -316,11 +316,13 @@ export async function generateInterfaceFileForTag(
     // 只生成 API 模式：只导入 request 函数
     combinedCode += `import { ${requestFunctionName} } from '${cleanRelativePath}';\n`;
   } else {
-    // 完整模式（API + 类型）：导入 RequestConfig 和函数
+    // 完整模式（API + 类型）：导入 RequestConfig（类型）和函数
     if (config.requestMethodStyle === 'method-specific' || config.requestMethodStyle === 'both') {
-      combinedCode += `import { RequestConfig, ${requestFunctionName}, ${requestMethodsObjectName} } from '${cleanRelativePath}';\n`;
+      combinedCode += `import type { RequestConfig } from '${cleanRelativePath}';\n`;
+      combinedCode += `import { ${requestFunctionName}, ${requestMethodsObjectName} } from '${cleanRelativePath}';\n`;
     } else {
-      combinedCode += `import { RequestConfig, ${requestFunctionName} } from '${cleanRelativePath}';\n`;
+      combinedCode += `import type { RequestConfig } from '${cleanRelativePath}';\n`;
+      combinedCode += `import { ${requestFunctionName} } from '${cleanRelativePath}';\n`;
     }
 
     // 添加类型导入（只在 typesFormat 为 typescript 时导入）
