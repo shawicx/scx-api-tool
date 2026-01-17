@@ -45,44 +45,115 @@ npx api-power
 
 ## 📖 文档
 
-- [CLI 工具介绍](./docs/cli/introduction.md) - 工具介绍和安装说明
-- [CLI 使用说明](./docs/cli/usage.md) - 详细的使用方法和命令说明
-- [配置说明](./docs/cli/configuration.md) - 完整的配置项说明和示例
+- [CLI 工具介绍](./docs/getting-started/index.md) - 工具介绍和安装说明
+- [CLI 使用说明](./docs/guides/cli.md) - 详细的使用方法和命令说明
+- [配置指南](./docs/guides/configuration.md) - 完整的配置项说明和示例
+- [使用示例](./docs/guides/examples.md) - 完整的使用示例和代码生成展示
+- [迁移指南](./docs/guides/migration.md) - 从旧版本迁移到新版本
 
 ## 🔧 配置示例
+
+### Zod 模式（运行时验证）
 
 ```typescript
 import { defineConfig } from '@scxfe/api-tool';
 
-export default defineConfig([
-  {
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: 'your-project-id',
-    typesOnly: false,
-    target: 'typescript',
-    outputDir: 'src/service',
-    projects: [
-      {
-        token: 'your-project-token',
-        categories: [{ id: 0 }],
-      },
-    ],
-  },
-]);
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+  token: 'YOUR_ACCESS_TOKEN',
+
+  // 使用 Zod Schema 进行类型定义和运行时验证
+  typesFormat: 'zod',
+
+  // 输出配置
+  outputDir: 'src/service',
+  generateApi: true,
+  generateTypes: true,
+});
+```
+
+### TypeScript 模式（编译时类型检查）
+
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
+
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+  token: 'YOUR_ACCESS_TOKEN',
+
+  // 使用 TypeScript 接口进行类型定义
+  typesFormat: 'typescript',
+
+  // 输出配置
+  outputDir: 'src/service',
+  generateApi: true,
+  generateTypes: true,
+});
+```
+
+### 完整配置
+
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
+
+export default defineConfig({
+  // API 数据源
+  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+  token: 'YOUR_ACCESS_TOKEN',
+
+  // 输出配置
+  outputDir: 'src/service',
+  typesOnly: false,
+  apiOnly: false,
+
+  // 类型生成格式
+  typesFormat: 'zod', // 或 'typescript'
+
+  // 代码生成选项
+  indentSize: 2,
+  comment: true,
+  pathPrefix: '/api/v1',
+
+  // 请求函数配置
+  requestFunctionName: 'request',
+  requestParamName: 'params',
+});
 ```
 
 ## 📁 项目结构
 
+### Zod 模式输出结构
+
 ```
-project/
-├── api-power.config.ts          # 配置文件
-├── src/
-│   └── service/               # 生成的代码目录
-│       ├── types.ts           # 类型定义
-│       ├── request.ts         # 请求函数
-│       └── index.ts           # 导出文件
-└── package.json
+src/service/
+├── request.ts                      # 请求函数
+├── index.ts                        # 根导出文件
+├── AIFuWu/                        # 分类目录
+│   ├── index.ts                    # API 函数（从 schema 导入类型）
+│   └── schema.ts                   # 合并的 Schema 文件（包含所有接口的 Schema + 推导类型）
+├── YongHuGuanLi/                  # 分类目录
+│   ├── index.ts
+│   └── schema.ts
+└── schemas/                       # 类型 Schema 目录
+    ├── UserSchema.ts               # 类型 Schema（包含 Schema + 推导类型）
+    ├── RoleSchema.ts
+    └── index.ts                   # Schema 索引文件
+```
+
+### TypeScript 模式输出结构
+
+```
+src/service/
+├── request.ts                      # 请求函数
+├── index.ts                        # 根导出文件
+├── AIFuWu/                        # 分类目录
+│   ├── index.ts                    # API 函数
+│   ├── User.ts                     # 类型定义
+│   └── PostAiCompletion.ts         # 类型定义
+└── YongHuGuanLi/                  # 分类目录
+    ├── index.ts
+    ├── User.ts
+    └── Role.ts
 ```
 
 ## 🛠️ 开发

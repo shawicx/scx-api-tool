@@ -53,13 +53,6 @@ export async function generateFiles(
       }
     }
 
-    // 生成独立的 Zod Schema 文件（如果 validation 启用）
-    // 注意：当 typesFormat 为 'zod' 时，Schema 文件已经在上面的步骤中生成
-    if (config.validation?.enabled && config.typesFormat !== 'zod') {
-      consola.info('生成 Zod Schema');
-      await generateSchemaFiles(processedData, config);
-    }
-
     // 文件生成成功后，由上层 generateCode 输出成功消息
   } catch (error: any) {
     consola.error('生成文件失败:', error.message);

@@ -13,9 +13,6 @@ export type PresetType = 'minimal' | 'standard' | 'verbose';
  * @description 控制接口文件中的类型定义格式：
  * @argument - typescript: 生成 TypeScript 类型定义（编译时类型检查）
  * @argument - zod: 生成 Zod Schema（运行时验证）
- *
- * 注意：此选项仅影响接口文件中的类型格式，不控制独立的 Schema 文件生成。
- * 独立的 Schema 文件生成由 `validation.enabled` 控制。
  */
 export type TypesFormat = 'typescript' | 'zod';
 
@@ -69,58 +66,6 @@ export interface NamingStrategy {
    * @returns 响应类型名称，例如：GetAiCompletionStreamResponseType
    */
   responseTypeName?: (info: InterfaceNamingInfo) => string;
-}
-
-/**
- * @description 控制是否生成独立的运行时验证 Schema 文件（如 Zod）。
- * 这些 Schema 文件会被输出到单独的目录（默认：src/service/schemas）。
- *
- * 注意：此配置与 `typesFormat` 独立。
- * - `typesFormat` 控制接口文件中的类型格式
- * - `validation.enabled` 控制是否生成独立的 Schema 文件
- *
- * 常见使用场景：
- * 1. 仅使用 TypeScript 类型：typesFormat: 'typescript', validation.enabled: false
- * 2. TypeScript + 独立 Zod Schema：typesFormat: 'typescript', validation.enabled: true
- * 3. 接口文件使用 Zod（不生成独立文件）：typesFormat: 'zod', validation.enabled: false
- * 4. 接口文件使用 Zod + 独立 Schema 文件：typesFormat: 'zod', validation.enabled: true
- */
-export interface ValidationConfig {
-  /**
-   * 是否启用 Schema 生成
-   * @default false
-   */
-  enabled?: boolean;
-
-  /**
-   * 验证库类型
-   * @default 'zod'
-   */
-  library?: 'zod';
-
-  /**
-   * Schema 输出目录
-   * @default 'src/service/schemas'
-   */
-  outputDir?: string;
-
-  /**
-   * 是否生成 Request Schema
-   * @default true
-   */
-  generateRequestSchemas?: boolean;
-
-  /**
-   * 是否生成 Response Schema
-   * @default true
-   */
-  generateResponseSchemas?: boolean;
-
-  /**
-   * 是否生成类型 Schema
-   * @default true
-   */
-  generateTypeSchemas?: boolean;
 }
 
 /**
@@ -201,8 +146,6 @@ export interface UserConfig {
   namingStrategy?: NamingStrategy;
   /** 并发写入数量（用于文件生成的并发控制） */
   concurrency?: number;
-  /** Schema 验证配置 */
-  validation?: ValidationConfig;
 }
 
 /**
@@ -256,6 +199,4 @@ export interface ApiConfig {
   namingStrategy?: NamingStrategy;
   /** 并发写入数量（用于文件生成的并发控制） */
   concurrency: number;
-  /** Schema 验证配置 */
-  validation?: ValidationConfig;
 }

@@ -5,7 +5,6 @@ import {
   ServerType,
   RequestMethodStyle,
   RequestMethod,
-  ValidationConfig,
   TypesFormat,
 } from '@/types';
 import consola from 'consola';
@@ -16,8 +15,8 @@ import consola from 'consola';
 
 const DEFAULT_CONFIG_VALUES: Omit<
   ApiConfig,
-  'source' | 'token' | 'serverUrl' | 'serverType' | 'apifoxProjectId' | 'validation'
-> & { validation?: ValidationConfig } = {
+  'source' | 'token' | 'serverUrl' | 'serverType' | 'apifoxProjectId'
+> = {
   generateApi: true, // 默认生成 API 请求方法
   generateTypes: true, // 默认生成类型定义
   typesFormat: 'typescript' as TypesFormat, // 默认使用 TypeScript 格式
@@ -34,14 +33,6 @@ const DEFAULT_CONFIG_VALUES: Omit<
   requestParamName: 'params',
   responseTypeName: 'Response',
   concurrency: 50, // 默认并发数
-  validation: {
-    enabled: false, // 默认不启用 Schema 生成
-    library: 'zod',
-    outputDir: 'src/service/schemas',
-    generateRequestSchemas: true,
-    generateResponseSchemas: true,
-    generateTypeSchemas: true,
-  },
 };
 
 /**
@@ -155,9 +146,6 @@ export function defineConfig(config: UserConfig): ApiConfig {
   // 应用预设和用户配置
   const mergedConfig = applyPreset(config);
 
-  // 处理 validation 配置
-  const validation: ValidationConfig = config.validation || DEFAULT_CONFIG_VALUES.validation!;
-
   // 创建最终配置，确保解析的服务器信息不被覆盖
   const finalConfig: ApiConfig = {
     ...mergedConfig,
@@ -168,8 +156,6 @@ export function defineConfig(config: UserConfig): ApiConfig {
     token: config.token,
     // 确保 namingStrategy 被正确传递
     ...(config.namingStrategy && { namingStrategy: config.namingStrategy }),
-    // 确保 validation 被正确传递
-    validation,
   };
 
   return finalConfig;

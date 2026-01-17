@@ -7,6 +7,7 @@ import Handlebars from 'handlebars';
 import consola from 'consola';
 import { compileTemplate } from '../generator/template';
 import { sanitizeTypeName, sanitizePropertyName } from '../generator/naming';
+import { ProcessedApiData } from '../processors/openapi';
 
 /**
  * Zod 类型模板 - 带注释
@@ -20,7 +21,10 @@ function getZodTypeTemplateWithComment(): string {
 {{/if}}
  */
 export const {{schemaName}} = {{{schemaContent}}};
-`;
+
+// 推导类型
+export type {{typeName}} = z.infer<typeof {{schemaName}}>;
+ `;
 }
 
 /**
@@ -30,7 +34,10 @@ function getZodTypeTemplateWithoutComment(): string {
   return `import { z } from 'zod';
 
 export const {{schemaName}} = {{{schemaContent}}};
-`;
+
+// 推导类型
+export type {{typeName}} = z.infer<typeof {{schemaName}}>;
+ `;
 }
 
 /**
@@ -75,6 +82,63 @@ export function getZodRequestSchemaContentByConfig(comment: boolean): string {
  */
 export function getZodImportStatement(): string {
   return `import { z } from 'zod';\n`;
+}
+
+/**
+ * 接口级 Schema 模板（包含 Request/Response Schema 和推导类型）
+ */
+function getZodInterfaceSchemaTemplateWithComment(): string {
+  return `import { z } from 'zod';
+{{#each typeImports}}
+import { {{.}} } from '../schemas/{{.}}';
+{{/each}}
+
+/**
+{{#if requestDescription}}
+ * @description {{requestDescription}}
+{{/if}}
+ */
+export const {{requestSchemaName}} = {{{requestSchemaContent}}};
+
+/**
+{{#if responseDescription}}
+ * @description {{responseDescription}}
+{{/if}}
+ */
+export const {{responseSchemaName}} = {{{responseSchemaContent}}};
+
+// 推导类型
+export type {{requestTypeName}} = z.infer<typeof {{requestSchemaName}}>;
+export type {{responseTypeName}} = z.infer<typeof {{responseSchemaName}}>;
+`;
+}
+
+/**
+ * 接口级 Schema 模板（不包含注释，包含 Request/Response Schema 和推导类型）
+ */
+function getZodInterfaceSchemaTemplateWithoutComment(): string {
+  return `import { z } from 'zod';
+{{#each typeImports}}
+import { {{.}} } from '../schemas/{{.}}';
+{{/each}}
+
+export const {{requestSchemaName}} = {{{requestSchemaContent}}};
+
+export const {{responseSchemaName}} = {{{responseSchemaContent}}};
+
+// 推导类型
+export type {{requestTypeName}} = z.infer<typeof {{requestSchemaName}}>;
+export type {{responseTypeName}} = z.infer<typeof {{responseSchemaName}}>;
+`;
+}
+
+/**
+ * 获取接口级 Schema 模板（包含推导类型）
+ */
+export function getZodInterfaceSchemaTemplateByConfig(comment: boolean): string {
+  return comment
+    ? getZodInterfaceSchemaTemplateWithComment()
+    : getZodInterfaceSchemaTemplateWithoutComment();
 }
 
 /**
@@ -123,15 +187,26 @@ export function generateZodSchemaIndex(schemas: string[]): string {
 /**
  * 编译 Zod 类型模板并生成代码
  */
-export function generateZodTypeSchema(typeInfo: any, config: any): string {
+export function generateZodTypeSchema(
+  typeInfo: any,
+  config: any,
+  processedData?: ProcessedApiData,
+): string {
   const template = compileTemplate(getZodTypeTemplateByConfig(config.comment !== false));
 
   // 生成 Zod schema 内容 - 直接从 schema 生成
   const result = generateZodSchemaFromOpenApiSchema(typeInfo.schema);
 
+  if (process.env.DEBUG) {
+    consola.debug(
+      `Generating Zod type schema: ${typeInfo.name}, properties count: ${result.imports.length}`,
+    );
+  }
+
   const templateData = {
     schemaName: `${typeInfo.name}Schema`,
-    description: typeInfo.description || typeInfo.name,
+    typeName: typeInfo.name,
+    description: typeInfo.schema.description || typeInfo.name,
     schemaContent: result.code,
   };
 
@@ -360,4 +435,192 @@ function openApiPropertyToZodType(property: any): {
 
   // 默认返回 any
   return { type: 'z.any()', imports: [] };
+}
+
+/**
+ * 生成接口级 Schema 文件（包含 Request/Response Schema 和推导类型）
+ * @param interfaceInfo 接口信息
+ * @param processedData 处理后的 API 数据
+ * @param config 配置
+ * @returns 包含完整文件内容和引用的 schema 名称列表
+ */
+export function generateZodInterfaceSchemaFile(
+  interfaceInfo: any,
+  processedData: ProcessedApiData,
+  config: any,
+): { code: string; imports: string[] } {
+  const template = compileTemplate(getZodInterfaceSchemaTemplateByConfig(config.comment !== false));
+
+  // 生成 Request Schema 内容
+  const requestResult = generateZodSchemaFromOperation(
+    interfaceInfo.operation,
+    processedData,
+    'request',
+  );
+
+  // 生成 Response Schema 内容
+  const responseResult = generateZodSchemaFromOperation(
+    interfaceInfo.operation,
+    processedData,
+    'response',
+  );
+
+  // 合并引用的 schema
+  const imports = new Set<string>();
+  requestResult.imports.forEach((imp) => imports.add(imp));
+  responseResult.imports.forEach((imp) => imports.add(imp));
+
+  // 准备模板数据
+  const templateData = {
+    requestSchemaName: `${interfaceInfo.requestTypeName}Schema`,
+    responseSchemaName: `${interfaceInfo.responseTypeName}Schema`,
+    requestTypeName: interfaceInfo.requestTypeName,
+    responseTypeName: interfaceInfo.responseTypeName,
+    requestDescription: interfaceInfo.description,
+    responseDescription: interfaceInfo.description,
+    requestSchemaContent: requestResult.code,
+    responseSchemaContent: responseResult.code,
+    typeImports: Array.from(imports),
+  };
+
+  return {
+    code: template(templateData),
+    imports: Array.from(imports),
+  };
+}
+
+/**
+ * 合并的 Schema 文件模板（包含多个接口的 Request/Response Schema）
+ */
+function getMergedSchemaTemplateWithComment(): string {
+  return `import { z } from 'zod';
+{{#each typeImports}}
+import { {{.}} } from '../schemas/{{.}}';
+{{/each}}
+
+{{#each schemas}}
+/**
+{{#if this.requestDescription}}
+ * @description {{this.requestDescription}}
+{{/if}}
+ */
+export const {{this.requestSchemaName}} = {{{this.requestSchemaContent}}};
+
+/**
+{{#if this.responseDescription}}
+ * @description {{this.responseDescription}}
+{{/if}}
+ */
+export const {{this.responseSchemaName}} = {{{this.responseSchemaContent}}};
+
+// 推导类型
+export type {{this.requestTypeName}} = z.infer<typeof {{this.requestSchemaName}}>;
+export type {{this.responseTypeName}} = z.infer<typeof {{this.responseSchemaName}}>;
+
+{{/each}}
+`;
+}
+
+/**
+ * 合并的 Schema 文件模板（不包含注释，包含多个接口的 Request/Response Schema）
+ */
+function getMergedSchemaTemplateWithoutComment(): string {
+  return `import { z } from 'zod';
+{{#each typeImports}}
+import { {{.}} } from '../schemas/{{.}}';
+{{/each}}
+
+{{#each schemas}}
+export const {{this.requestSchemaName}} = {{{this.requestSchemaContent}}};
+
+export const {{this.responseSchemaName}} = {{{this.responseSchemaContent}}};
+
+// 推导类型
+export type {{this.requestTypeName}} = z.infer<typeof {{this.requestSchemaName}}>;
+export type {{this.responseTypeName}} = z.infer<typeof {{this.responseSchemaName}}>;
+
+{{/each}}
+`;
+}
+
+/**
+ * 获取合并的 Schema 模板
+ */
+export function getMergedSchemaTemplateByConfig(comment: boolean): string {
+  return comment ? getMergedSchemaTemplateWithComment() : getMergedSchemaTemplateWithoutComment();
+}
+
+/**
+ * 生成合并的 Schema 文件内容（包含多个接口的 Request/Response Schema）
+ */
+export function generateMergedSchemaFile(
+  interfaces: any[],
+  processedData: ProcessedApiData,
+  config: any,
+  getRequestTypeName: (path: string, method: string, operation: any, config: any) => string,
+  getResponseTypeName: (path: string, method: string, operation: any, config: any) => string,
+): { code: string; schemaNames: string[] } {
+  const template = compileTemplate(getMergedSchemaTemplateByConfig(config.comment !== false));
+
+  const schemas: any[] = [];
+  const typeImports = new Set<string>();
+  const schemaNames: string[] = [];
+
+  for (const apiInterface of interfaces) {
+    const requestTypeName = getRequestTypeName(
+      apiInterface.path,
+      apiInterface.method,
+      apiInterface.operation,
+      config,
+    );
+    const responseTypeName = getResponseTypeName(
+      apiInterface.path,
+      apiInterface.method,
+      apiInterface.operation,
+      config,
+    );
+
+    // 生成 Request Schema 内容
+    const requestResult = generateZodSchemaFromOperation(
+      apiInterface.operation,
+      processedData,
+      'request',
+    );
+
+    // 生成 Response Schema 内容
+    const responseResult = generateZodSchemaFromOperation(
+      apiInterface.operation,
+      processedData,
+      'response',
+    );
+
+    // 收集引用的类型 schema
+    requestResult.imports.forEach((imp) => typeImports.add(imp));
+    responseResult.imports.forEach((imp) => typeImports.add(imp));
+
+    schemas.push({
+      requestSchemaName: `${requestTypeName}Schema`,
+      responseSchemaName: `${responseTypeName}Schema`,
+      requestTypeName,
+      responseTypeName,
+      requestDescription:
+        apiInterface.operation.summary || apiInterface.operation.description || '',
+      responseDescription:
+        apiInterface.operation.summary || apiInterface.operation.description || '',
+      requestSchemaContent: requestResult.code,
+      responseSchemaContent: responseResult.code,
+    });
+
+    schemaNames.push(`${requestTypeName}Schema`, `${responseTypeName}Schema`);
+  }
+
+  const templateData = {
+    typeImports: Array.from(typeImports),
+    schemas,
+  };
+
+  return {
+    code: template(templateData),
+    schemaNames,
+  };
 }

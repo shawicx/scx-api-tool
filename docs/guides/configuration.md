@@ -71,12 +71,13 @@ export default defineConfig({
 
 ### 代码生成选项
 
-| 配置项        | 类型      | 默认值         | 说明         |
-| ------------- | --------- | -------------- | ------------ |
-| `indentSize`  | `number`  | `2`            | 代码缩进大小 |
-| `comment`     | `boolean` | `true`         | 是否生成注释 |
-| `pathPrefix`  | `string`  | `''`           | API 路径前缀 |
-| `prodEnvName` | `string`  | `'production'` | 生产环境名称 |
+| 配置项        | 类型                    | 默认值         | 说明         |
+| ------------- | ----------------------- | -------------- | ------------ |
+| `indentSize`  | `number`                | `2`            | 代码缩进大小 |
+| `comment`     | `boolean`               | `true`         | 是否生成注释 |
+| `pathPrefix`  | `string`                | `''`           | API 路径前缀 |
+| `prodEnvName` | `string`                | `'production'` | 生产环境名称 |
+| `typesFormat` | `'typescript' \| 'zod'` | `'typescript'` | 类型生成格式 |
 
 ### 请求函数配置
 
@@ -400,7 +401,82 @@ Error: Failed to fetch API data
   npx api-power debug
   ```
 
-## 下一步
+## 类型生成格式
+
+`typesFormat` 配置项控制生成代码的类型定义格式：
+
+### TypeScript 模式
+
+使用 TypeScript 接口定义类型：
+
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
+
+export default defineConfig({
+  source: 'YOUR_API_SOURCE',
+  token: 'YOUR_TOKEN',
+
+  // 使用 TypeScript 类型定义
+  typesFormat: 'typescript',
+});
+```
+
+**输出结构（TypeScript 模式）：**
+
+```
+src/service/
+├── request.ts
+├── index.ts
+├── AIFuWu/
+│   ├── index.ts              # API 函数
+│   ├── User.ts               # 类型定义
+│   └── PostAiCompletion.ts   # 类型定义
+└── YongHuGuanLi/
+    ├── index.ts
+    ├── User.ts
+    └── Role.ts
+```
+
+### Zod 模式
+
+使用 Zod Schema 定义类型，包含运行时验证：
+
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
+
+export default defineConfig({
+  source: 'YOUR_API_SOURCE',
+  token: 'YOUR_TOKEN',
+
+  // 使用 Zod Schema
+  typesFormat: 'zod',
+});
+```
+
+**输出结构（Zod 模式）：**
+
+```
+src/service/
+├── request.ts
+├── index.ts
+├── AIFuWu/
+│   ├── index.ts              # API 函数（从 schema 导入类型）
+│   └── schema.ts            # 合并的 Schema 文件（包含所有接口的 Schema + 推导类型）
+└── schemas/                 # 类型 Schema 文件
+    ├── UserSchema.ts        # 类型 Schema（包含 Schema + 推导类型）
+    ├── RoleSchema.ts
+    └── index.ts
+```
+
+### 模式对比
+
+| 特性           | TypeScript 模式 | Zod 模式                 |
+| -------------- | --------------- | ------------------------ |
+| 编译时类型检查 | ✅              | ✅                       |
+| 运行时验证     | ❌              | ✅                       |
+| 文件数量       | 较多            | 较少                     |
+| Schema 定义    | ❌              | ✅                       |
+| 推导类型       | 直接使用接口    | `z.infer<typeof Schema>` |
 
 - [CLI 命令参考](./cli) - 了解所有可用命令
 - [高级用法](./advanced) - 学习自定义模板和钩子

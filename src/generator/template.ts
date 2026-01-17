@@ -267,22 +267,14 @@ export function getApiOnlyTemplateWithoutComment(): string {
  * 导入并使用 Zod Schema 作为类型
  */
 export function getZodInterfaceTemplateWithComment(): string {
-  return `import { z } from 'zod';
-{{#if hasSchemas}}
-import { {{requestSchemaName}}, {{responseSchemaName}} } from '{{schemaImportPath}}';
-{{/if}}
-/**
+  return `/**
  * @description {{description}}
- * @param {{requestParamName}} z.infer<typeof {{requestSchemaName}}>
- * @returns Promise<z.infer<typeof {{responseSchemaName}}>>
+ * @param {{requestParamName}} {{requestTypeName}}
+ * @returns Promise<{{responseTypeName}}>
  */
 export async function {{functionName}}(
-{{#if hasParameters}}
-  {{requestParamName}}: z.infer<typeof {{requestSchemaName}}>
-{{else}}
-  {{requestParamName}}?: z.infer<typeof {{requestSchemaName}}>
-{{/if}}
-): Promise<z.infer<typeof {{responseSchemaName}}>> {
+  {{requestParamName}}: {{requestTypeName}}
+): Promise<{{responseTypeName}}> {
   const config = {
     url: '{{path}}',
     method: '{{method}}',
@@ -296,7 +288,7 @@ export async function {{functionName}}(
   };
   return {{requestFunctionName}}(config);
 }
-`;
+ `;
 }
 
 /**
@@ -304,17 +296,9 @@ export async function {{functionName}}(
  * 导入并使用 Zod Schema 作为类型
  */
 export function getZodInterfaceTemplateWithoutComment(): string {
-  return `import { z } from 'zod';
-{{#if hasSchemas}}
-import { {{requestSchemaName}}, {{responseSchemaName}} } from '{{schemaImportPath}}';
-{{/if}}
-export async function {{functionName}}(
-{{#if hasParameters}}
-  {{requestParamName}}: z.infer<typeof {{requestSchemaName}}>
-{{else}}
-  {{requestParamName}}?: z.infer<typeof {{requestSchemaName}}>
-{{/if}}
-): Promise<z.infer<typeof {{responseSchemaName}}>> {
+  return `export async function {{functionName}}(
+  {{requestParamName}}: {{requestTypeName}}
+): Promise<{{responseTypeName}}> {
   const config = {
     url: '{{path}}',
     method: '{{method}}',
@@ -328,7 +312,7 @@ export async function {{functionName}}(
   };
   return {{requestFunctionName}}(config);
 }
-`;
+ `;
 }
 
 /**
