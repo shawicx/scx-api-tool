@@ -1,3 +1,8 @@
+/**
+ * @description OpenAPI 数据处理模块
+ * 处理 OpenAPI 格式的数据，提取接口、类型和类别信息
+ */
+
 import consola from 'consola';
 import { ServerType } from '@/types';
 import type { ApiConfig } from '@/types';
@@ -8,6 +13,8 @@ export interface ProcessedApiData {
   types: any[];
   categories: any[];
 }
+
+export { groupInterfacesByTag, extractUsedTypeNames } from './common';
 
 export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiData {
   // 如果启用，则记录调试信息

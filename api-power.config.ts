@@ -16,6 +16,8 @@ export default defineConfig({
   // - 'typescript': 生成 TypeScript 类型定义（编译时类型检查）
   // - 'zod': 生成 Zod Schema（运行时验证）
   typesFormat: 'zod',
+  comment: false,
+  target: 'javascript',
   // 自定义命名策略示例（完全覆盖默认的命名生成逻辑）
   // namingStrategy: {
   //   // 自定义接口名称生成

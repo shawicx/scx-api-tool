@@ -5,7 +5,7 @@
 
 import consola from 'consola';
 import { join } from 'path';
-import { ProcessedApiData } from '../../processors/openapi';
+import { ProcessedApiData, groupInterfacesByTag } from '../../processors/openapi';
 import { ApiConfig } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
 import { formatCode } from '../../utils/formatter';
@@ -43,23 +43,7 @@ export async function generateInterfaceFiles(
   const { outputDir } = config;
 
   // 按标签分组接口
-  const interfacesByTag: Record<string, any[]> = {};
-
-  for (const apiInterface of processedData.interfaces) {
-    const tags = apiInterface.operation.tags || [];
-    if (tags.length > 0) {
-      const tag = tags[0];
-      if (!interfacesByTag[tag]) {
-        interfacesByTag[tag] = [];
-      }
-      interfacesByTag[tag].push(apiInterface);
-    } else {
-      if (!interfacesByTag.default) {
-        interfacesByTag.default = [];
-      }
-      interfacesByTag.default.push(apiInterface);
-    }
-  }
+  const interfacesByTag = groupInterfacesByTag(processedData.interfaces);
 
   // 为每个标签目录生成一个索引.ts文件
   const tagEntries = Object.entries(interfacesByTag);

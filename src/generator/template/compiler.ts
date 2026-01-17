@@ -1,3 +1,9 @@
+/**
+ * @description 模板编译器模块
+ * 提供模板字符串定义和编译功能
+ * 注意：此文件包含大量模板字符串，行数超过 360 行是预期的
+ */
+
 import Handlebars from 'handlebars';
 import { RequestMethodStyle } from '../../types';
 import consola from 'consola';

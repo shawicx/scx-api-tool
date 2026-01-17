@@ -1,0 +1,168 @@
+/**
+ * @description 公共处理模块
+ * 提供数据处理相关的公共函数
+ */
+
+import { ProcessedApiData } from './openapi';
+
+/**
+ * @description 按标签分组接口
+ * 将接口列表按标签分组，没有标签的接口归入 default 组
+ * @param interfaces 接口数组
+ * @returns 按标签分组的接口对象
+ *
+ * @example
+ * ```typescript
+ * const interfaces = [
+ *   { operation: { tags: ['user'] }, path: '/user/get' },
+ *   { operation: { tags: ['user'] }, path: '/user/list' },
+ *   { operation: {}, path: '/info' }
+ * ];
+ * const grouped = groupInterfacesByTag(interfaces);
+ * // grouped = {
+ * //   user: [接口1, 接口2],
+ * //   default: [接口3]
+ * // }
+ * ```
+ */
+export function groupInterfacesByTag(interfaces: any[]): Record<string, any[]> {
+  const interfacesByTag: Record<string, any[]> = {};
+
+  for (const apiInterface of interfaces) {
+    const tags = apiInterface.operation.tags || [];
+    if (tags.length > 0) {
+      const tag = tags[0];
+      if (!interfacesByTag[tag]) {
+        interfacesByTag[tag] = [];
+      }
+      interfacesByTag[tag].push(apiInterface);
+    } else {
+      if (!interfacesByTag.default) {
+        interfacesByTag.default = [];
+      }
+      interfacesByTag.default.push(apiInterface);
+    }
+  }
+
+  return interfacesByTag;
+}
+
+/**
+ * @description 提取所有使用的类型名称
+ * 从接口数据中提取所有引用的类型名称
+ * @param interfaces 接口数组
+ * @param processedData 处理后的 API 数据
+ * @returns 类型名称集合
+ *
+ * @example
+ * ```typescript
+ * const usedTypes = extractUsedTypeNames(interfaces, processedData);
+ * // usedTypes = Set(['User', 'Product', 'Order'])
+ * ```
+ */
+export function extractUsedTypeNames(
+  interfaces: any[],
+  processedData: ProcessedApiData,
+): Set<string> {
+  const usedTypes = new Set<string>();
+
+  for (const apiInterface of interfaces) {
+    const { operation } = apiInterface;
+
+    // 从请求参数中提取类型
+    if (operation.parameters && Array.isArray(operation.parameters)) {
+      for (const param of operation.parameters) {
+        if (param.type) {
+          const baseType = param.type.endsWith('[]') ? param.type.slice(0, -2) : param.type;
+          if (isCustomType(baseType, processedData)) {
+            usedTypes.add(baseType);
+          }
+        }
+      }
+    }
+
+    // 从请求体中提取类型
+    if (operation.requestBody?.content?.['application/json']?.schema) {
+      const { schema } = operation.requestBody.content['application/json'];
+      const extracted = extractTypesFromSchema(schema, processedData);
+      extracted.forEach((type) => usedTypes.add(type));
+    }
+
+    // 从响应中提取类型
+    if (operation.responses) {
+      const successResponse = operation.responses['200'] || operation.responses['201'];
+      if (successResponse?.content?.['application/json']?.schema) {
+        const { schema } = successResponse.content['application/json'];
+        const extracted = extractTypesFromSchema(schema, processedData);
+        extracted.forEach((type) => usedTypes.add(type));
+      }
+    }
+  }
+
+  return usedTypes;
+}
+
+/**
+ * @description 从 Schema 中提取类型名称
+ * 递归解析 Schema 提取所有引用的自定义类型
+ * @param schema OpenAPI Schema 对象
+ * @param processedData 处理后的 API 数据
+ * @returns 类型名称数组
+ */
+function extractTypesFromSchema(schema: any, processedData: ProcessedApiData): string[] {
+  const types: string[] = [];
+
+  if (!schema) {
+    return types;
+  }
+
+  // 处理引用类型
+  if (schema.$ref) {
+    const refName = schema.$ref.split('/').pop();
+    if (isCustomType(refName, processedData)) {
+      types.push(refName);
+    }
+    return types;
+  }
+
+  // 处理对象属性
+  if (schema.properties) {
+    for (const property of Object.values(schema.properties) as any[]) {
+      const extracted = extractTypesFromSchema(property, processedData);
+      extracted.forEach((type) => types.push(type));
+    }
+  }
+
+  // 处理数组
+  if (schema.type === 'array' && schema.items) {
+    const extracted = extractTypesFromSchema(schema.items, processedData);
+    extracted.forEach((type) => types.push(type));
+  }
+
+  // 处理 additionalProperties
+  if (schema.additionalProperties) {
+    const extracted = extractTypesFromSchema(schema.additionalProperties, processedData);
+    extracted.forEach((type) => types.push(type));
+  }
+
+  return types;
+}
+
+/**
+ * @description 检查是否为自定义类型
+ * @param typeName 类型名称
+ * @param processedData 处理后的 API 数据
+ * @returns 是否为自定义类型
+ */
+function isCustomType(typeName: string, processedData: ProcessedApiData): boolean {
+  if (!typeName) return false;
+
+  // 排除基本类型
+  const basicTypes = ['any', 'string', 'number', 'boolean', 'object', 'unknown', 'never', 'null'];
+  if (basicTypes.includes(typeName.toLowerCase())) {
+    return false;
+  }
+
+  // 检查是否在类型定义中
+  return processedData.types.some((t: any) => t.name === typeName);
+}

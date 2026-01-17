@@ -5,7 +5,7 @@
 
 import consola from 'consola';
 import { join } from 'path';
-import { ProcessedApiData } from '../../processors/openapi';
+import { ProcessedApiData, groupInterfacesByTag } from '../../processors/openapi';
 import { ApiConfig } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
 import { formatCode } from '../../utils/formatter';
@@ -128,15 +128,7 @@ async function generateInterfaceSchemasFiles(
     consola.debug(`正在生成 ${processedData.interfaces.length} 个接口 Schema...`);
   }
 
-  const interfacesByTag: Record<string, any[]> = {};
-  for (const apiInterface of processedData.interfaces) {
-    const tags = apiInterface.operation.tags || [];
-    const tag = tags.length > 0 ? tags[0] : 'default';
-    if (!interfacesByTag[tag]) {
-      interfacesByTag[tag] = [];
-    }
-    interfacesByTag[tag].push(apiInterface);
-  }
+  const interfacesByTag = groupInterfacesByTag(processedData.interfaces);
 
   const concurrency = config.concurrency || 50;
   const tagEntries = Object.entries(interfacesByTag);
