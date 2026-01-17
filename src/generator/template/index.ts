@@ -1,13 +1,30 @@
 /**
- * @description 模板系统模块（向后兼容）
- * 此文件保留用于向后兼容，实际实现已迁移至 template/ 目录
- * @deprecated 请直接从 './template' 导入
+ * @description 模板系统模块
+ * 提供 Handlebars 模板编译、缓存、辅助函数和 partials 管理
  */
+
 export {
   getTemplateCacheStats,
+  getTemplateFromCache,
+  setTemplateCache,
+  isTemplateCached,
   clearTemplateCache,
+  templateCache,
+} from './templateCache';
+
+export {
   registerTemplateHelpers,
+  getRegisteredHelpers,
+  isHelperRegistered,
+} from './templateHelpers';
+
+export {
   registerTemplatePartials,
+  getRegisteredPartials,
+  isPartialRegistered,
+} from './templatePartials';
+
+export {
   generatePrecompiledMethodMap,
   getInterfaceTemplateWithComment,
   getInterfaceTemplateWithoutComment,
@@ -30,4 +47,4 @@ export {
   compileTemplate,
   generateRequestFile,
   generateInterfaceFunction,
-} from './template/index';
+} from './compiler';

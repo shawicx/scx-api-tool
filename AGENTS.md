@@ -22,30 +22,27 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 
 # AGENTS.md
 
-本文件为代理编码助手（如你自己）在该仓库中工作时提供指导。
+本文件为代理编码助手在该仓库中工作时提供指导。
 
 ## 构建命令
 
 ```bash
 pnpm install && pnpm run build       # 构建项目
 pnpm run lint:fix                    # 格式化并修复代码
-npx ts-node src/index.ts             # 验证代码生成（无单元测试）
+pnpm run dev                         # 开发模式（使用配置文件生成代码）
+npx ts-node src/index.ts             # 验证代码生成
 npx api-power generate --config xxx  # 使用配置生成代码
 ```
 
-**重要**: 本项目**没有单元测试**，通过运行 `npx ts-node src/index.ts` 并检查生成的文件来验证更改。
+**重要**: 本项目没有单元测试，通过运行生成代码并检查 `src/service/` 输出来验证更改。
 
 ## 代码风格指南
 
-### 导入顺序和规范
-
-**标准导入顺序**:
+### 导入顺序
 
 1. 外部库/包导入
 2. 内部模块导入（使用 @ 别名）
 3. 类型导入（使用 `import type`）
-
-**示例**:
 
 ```typescript
 import consola from 'consola';
@@ -55,18 +52,16 @@ import type { ApiConfig } from '@/types';
 
 ### 格式化
 
-- 使用 **Prettier** 配置：`prettier-config-ali`（Ali 配置标准）
-- 使用 **ESLint** 配置：`eslint-config-ali` 基础配置
+- 使用 **prettier-config-ali** 和 **eslint-config-ali**（Ali 配置标准）
 - 换行符：LF
-- 自动运行 `pnpm run lint:fix` 应用格式化规则
+- 运行 `pnpm run lint:fix` 自动格式化
 
 ### 类型定义
 
-- **TypeScript 严格模式**：启用（但 `noImplicitAny: false`）
-- **模块系统**：ES Modules (`"type": "module"`)
-- **类型定义**：使用 `interface` 定义对象类型
-- **枚举**：使用 `enum` 定义常量集合
-- **类型导出**：优先使用 `export type` 导出纯类型
+- TypeScript 严格模式启用（`noImplicitAny: false`）
+- 使用 `interface` 定义对象类型，`enum` 定义常量集合
+- 优先使用 `export type` 导出纯类型
+- 类型路径别名：`@/*` 映射到 `./src/*`
 
 ### 命名约定
 
@@ -77,47 +72,26 @@ import type { ApiConfig } from '@/types';
 | 类        | PascalCase              | `SimpleProgress`, `BaseError`     |
 | 常量/工厂 | PascalCase              | `ErrorFactory`, `PRESETS`         |
 | 接口/类型 | PascalCase              | `ApiConfig`, `ProcessedApiData`   |
-| 私有成员  | `private` 关键字        | `private currentStep`             |
 
 ### 错误处理
 
-1. **使用自定义错误系统**（src/errors/index.ts）:
-   - 错误代码枚举：`E1xxx`（配置）、`E2xxx`（网络）、`E3xxx`（生成）
-   - 错误类：`ConfigError`、`FetchError`、`GenerateError`
-   - 错误工厂：使用 `ErrorFactory` 方法创建结构化错误
+使用自定义错误系统（src/errors/index.ts）：
 
-2. **错误处理模式**:
+- 错误代码枚举：`E1xxx`（配置）、`E2xxx`（网络）、`E3xxx`（生成）
+- 使用 `ErrorFactory` 方法创建结构化错误
 
 ```typescript
 try {
   // 业务逻辑
 } catch (error: any) {
-  // 自定义错误直接抛出
-  if (error.code && error.code.startsWith('E2')) {
-    throw error;
-  }
-  // 包装其他错误
+  if (error.code && error.code.startsWith('E2')) throw error;
   throw ErrorFactory.fetchFailed(url, statusCode, error);
-}
-```
-
-3. **异步包装器**：
-
-```typescript
-export function withErrorHandling<T extends (...args: any[]) => Promise<any>>(
-  fn: T,
-  verbose = false,
-): T {
-  // ...
 }
 ```
 
 ### 注释规范
 
-- 使用 **JSDoc 风格**注释
-- 文件头注释包含描述（中文）
-- 使用 `@description` 标记函数/类用途
-- 可选使用 `@author` 标记作者
+使用 JSDoc 风格注释，文件头使用中文描述：
 
 ```typescript
 /**
@@ -128,11 +102,9 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
 }
 ```
 
-### 调试和日志
+### 日志输出
 
-- 使用 **consola** 进行日志输出
-- 使用 `process.env.DEBUG` 条件判断启用调试输出
-- 调试信息示例：
+使用 **consola** 库进行日志输出：
 
 ```typescript
 if (process.env.DEBUG) {
@@ -140,25 +112,35 @@ if (process.env.DEBUG) {
 }
 ```
 
-### 代码生成约束
+## 核心配置
+
+### typesFormat 配置
+
+控制类型生成格式，影响文件结构和导入路径：
+
+- **TypeScript 模式**：生成 TypeScript 类型定义（编译时类型检查）
+- **Zod 模式**：生成 Zod Schema（运行时验证 + 类型推导）
+
+```typescript
+export default defineConfig({
+  typesFormat: 'zod', // 或 'typescript'
+});
+```
+
+## 代码生成约束
 
 **禁止使用**：
 
 - `delete` 关键字
 - `eval` 语法
-- 过度使用闭包（除非必要）
+- 过度使用闭包
 
-**强制要求**：
-
-- 所有代理必须使用 MCP（Model Context Protocol）
-
-### 生成文件
+**生成文件**：
 
 - `src/service/` 目录包含生成的文件
 - 不要在未获得许可的情况下修改生成的文件
-- 验证更改后检查 `src/service/` 输出
 
-### 项目架构约定
+## 项目架构
 
 - **CLI 层**（src/cli/）：Commander.js 命令行界面
 - **Client 层**（src/clients/）：API 数据获取器（Apifox/Swagger）
@@ -166,28 +148,21 @@ if (process.env.DEBUG) {
 - **Processors**（src/processors/）：数据转换
 - **Templates**（src/templates/）：Handlebars 模板
 
-### 提交规范
+## 提交规范
 
 使用 **Commitlint** 约定式提交：
 
 - 类型：`feat`、`fix`、`docs`、`style`、`test`、`refactor`、`chore`、`revert`
 - 格式：`type(scope): description`
-- 支持 `RELEASING`、大写类型和小写类型
 
 ```bash
 pnpm run versioning    # 生成版本和 CHANGELOG
 pnpm run release       # 完整发布流程
 ```
 
-### 环境要求
+## 环境要求
 
 - Node.js >= 20.0.0
 - 使用 pnpm 作为包管理器
-
-### 附加说明
-
-- 文件使用 ES 模块
-- 类型路径别名：`@/*` 映射到 `./src/*`
 - 输出目录：`dist/`（由 tsdown 构建）
 - Husky + lint-staged 用于提交前钩子
-- 运行 `pnpm run lint` 和 `pnpm run build` 确保代码正确性

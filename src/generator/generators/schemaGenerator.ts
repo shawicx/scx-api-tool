@@ -1,0 +1,244 @@
+/**
+ * @description Schema 文件生成器
+ * 负责生成 Zod Schema 验证文件
+ */
+
+import consola from 'consola';
+import { join } from 'path';
+import { ProcessedApiData } from '../../processors/openapi';
+import { ApiConfig } from '../../types';
+import { ensureDir, writeFormattedFile } from '../../utils/file';
+import { formatCode } from '../../utils/formatter';
+import { chineseToPinyinCamelCase } from '../../utils/path';
+import { sanitizeTypeName } from '../naming';
+import { applyNamingStrategy, type NamingContext } from '../naming/strategy';
+import {
+  generateZodTypeSchema,
+  generateZodSchemaIndex,
+  generateMergedSchemaFile,
+} from '../../templates/schema-zod';
+import { executeWithConcurrency } from '../../utils/concurrency';
+
+/**
+ * @description 生成所有 Zod Schema 文件
+ * 包括类型 Schema 和接口 Request/Response Schema
+ * @param processedData 处理后的 API 数据
+ * @param config API 配置
+ *
+ * @example
+ * ```typescript
+ * await generateSchemaFiles(processedData, config);
+ * // 生成结构：
+ * // output/schemas/
+ * //   index.ts
+ * //   UserSchema.ts
+ * //   ProductSchema.ts
+ * //   tag1/schema.ts
+ * //   tag2/schema.ts
+ * ```
+ */
+export async function generateSchemaFiles(
+  processedData: ProcessedApiData,
+  config: ApiConfig,
+): Promise<void> {
+  if (config.typesFormat !== 'zod') {
+    if (process.env.DEBUG) {
+      consola.debug('typesFormat 不是 zod，跳过 Schema 生成');
+    }
+    return;
+  }
+
+  consola.info('开始生成 Zod Schema...');
+
+  const generatedSchemas: string[] = [];
+
+  const typesSchemasDir = join(config.outputDir, 'schemas');
+  await ensureDir(typesSchemasDir);
+  await generateTypeSchemasFiles(processedData, config, typesSchemasDir, generatedSchemas);
+
+  await generateInterfaceSchemasFiles(processedData, config, config.outputDir);
+
+  await generateSchemaIndexFile(typesSchemasDir, generatedSchemas);
+
+  consola.success(`成功生成 ${generatedSchemas.length} 个 Zod Schema 文件`);
+}
+
+/**
+ * @description 生成类型 Schema 文件
+ * 为每个 OpenAPI 类型定义生成对应的 Zod Schema
+ * @param processedData 处理后的 API 数据
+ * @param config API 配置
+ * @param schemasDir Schema 目录路径
+ * @param generatedSchemas 已生成的 Schema 名称数组（会追加）
+ */
+async function generateTypeSchemasFiles(
+  processedData: ProcessedApiData,
+  config: ApiConfig,
+  schemasDir: string,
+  generatedSchemas: string[],
+): Promise<void> {
+  if (process.env.DEBUG) {
+    consola.debug(`正在生成 ${processedData.types.length} 个类型 Schema...`);
+  }
+
+  const concurrency = config.concurrency || 50;
+  await executeWithConcurrency(
+    processedData.types,
+    async (type) => {
+      const schemaName = `${sanitizeTypeName(type.name)}Schema`;
+      const fileName = `${sanitizeTypeName(type.name)}Schema`.replace(/[^a-zA-Z0-9$_]/g, '_');
+
+      const schemaCode = generateZodTypeSchema(
+        {
+          name: sanitizeTypeName(type.name),
+          schema: type.schema,
+        },
+        config,
+      );
+
+      const formattedCode = await formatCode(schemaCode, join(schemasDir, `${fileName}.ts`));
+
+      const filePath = join(schemasDir, `${fileName}.ts`);
+      await writeFormattedFile(filePath, formattedCode);
+
+      generatedSchemas.push(schemaName);
+
+      if (process.env.DEBUG) {
+        consola.debug(`创建类型 Schema 文件: ${filePath}`);
+      }
+    },
+    concurrency,
+    `生成类型 Schema`,
+  );
+}
+
+/**
+ * @description 生成接口 Request/Response Schema 文件
+ * 为每个接口生成请求和响应的 Zod Schema
+ * @param processedData 处理后的 API 数据
+ * @param config API 配置
+ * @param schemasDir Schema 目录路径
+ */
+async function generateInterfaceSchemasFiles(
+  processedData: ProcessedApiData,
+  config: ApiConfig,
+  schemasDir: string,
+): Promise<void> {
+  if (process.env.DEBUG) {
+    consola.debug(`正在生成 ${processedData.interfaces.length} 个接口 Schema...`);
+  }
+
+  const interfacesByTag: Record<string, any[]> = {};
+  for (const apiInterface of processedData.interfaces) {
+    const tags = apiInterface.operation.tags || [];
+    const tag = tags.length > 0 ? tags[0] : 'default';
+    if (!interfacesByTag[tag]) {
+      interfacesByTag[tag] = [];
+    }
+    interfacesByTag[tag].push(apiInterface);
+  }
+
+  const concurrency = config.concurrency || 50;
+  const tagEntries = Object.entries(interfacesByTag);
+
+  await executeWithConcurrency(
+    tagEntries,
+    async ([tag, interfaces]) => {
+      const tagDir = chineseToPinyinCamelCase(tag);
+      const dirPath = join(schemasDir, tagDir);
+      await ensureDir(dirPath);
+
+      const result = generateMergedSchemaFile(
+        interfaces,
+        processedData,
+        config,
+        getRequestTypeName,
+        getResponseTypeName,
+      );
+
+      const formattedCode = await formatCode(result.code, join(dirPath, 'schema.ts'));
+      const filePath = join(dirPath, 'schema.ts');
+      await writeFormattedFile(filePath, formattedCode);
+
+      if (process.env.DEBUG) {
+        consola.debug(`创建合并 Schema 文件: ${filePath}`);
+      }
+    },
+    concurrency,
+    `生成接口 Schema`,
+  );
+}
+
+/**
+ * @description 生成 Schema 索引文件
+ * 导出所有 Schema 定义
+ * @param schemasDir Schema 目录路径
+ * @param generatedSchemas 已生成的 Schema 名称数组
+ */
+async function generateSchemaIndexFile(
+  schemasDir: string,
+  generatedSchemas: string[],
+): Promise<void> {
+  const indexContent = generateZodSchemaIndex(generatedSchemas);
+
+  const indexPath = join(schemasDir, 'index.ts');
+  await writeFormattedFile(indexPath, indexContent);
+
+  if (process.env.DEBUG) {
+    consola.debug(`创建 Schema 索引文件: ${indexPath}`);
+  }
+}
+
+/**
+ * @description 获取请求类型名称
+ * 使用命名策略生成请求类型名称
+ * @param path API 路径
+ * @param method HTTP 方法
+ * @param operation 操作对象
+ * @param config API 配置
+ * @returns 请求类型名称
+ */
+function getRequestTypeName(
+  path: string,
+  method: string,
+  operation: any,
+  config: ApiConfig,
+): string {
+  const ctx: NamingContext = {
+    path,
+    method,
+    summary: operation.summary,
+    description: operation.description,
+    operationId: operation.operationId,
+    tags: operation.tags,
+    config,
+  };
+  return applyNamingStrategy(ctx, config.namingStrategy).requestTypeName;
+}
+
+/**
+ * @description 获取响应类型名称
+ * 使用命名策略生成响应类型名称
+ * @param path API 路径
+ * @param method HTTP 方法
+ * @param operation 操作对象
+ * @param config API 配置
+ * @returns 响应类型名称
+ */
+function getResponseTypeName(
+  path: string,
+  method: string,
+  operation: any,
+  config: ApiConfig,
+): string {
+  const ctx: NamingContext = {
+    path,
+    method,
+    summary: operation.summary,
+    description: operation.description,
+    operationId: operation.operationId,
+    tags: operation.tags,
+    config,
+  };
+  return applyNamingStrategy(ctx, config.namingStrategy).responseTypeName;
+}

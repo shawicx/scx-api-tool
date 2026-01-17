@@ -55,6 +55,7 @@
     "docs:dev": "vitepress dev",
     "lint": "eslint .",
     "lint:fix": "prettier --write . && eslint --fix .",
+    "check:linesize": "find src -name '*.ts' -exec wc -l {} + | awk '$1 > 360 { print $2 \" (\" $1 \" lines)\" }'",
     "postaction": "git push origin main --tags && git push origin main --tags",
     "prepare": "husky",
     "prepublish": "pnpm run build",
