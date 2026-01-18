@@ -65,20 +65,28 @@ import type { ApiConfig } from '@/types';
 
 ### 命名约定
 
-| 类型      | 约定                    | 示例                              |
-| --------- | ----------------------- | --------------------------------- |
-| 文件      | camelCase 或 kebab-case | `apifox.ts`, `openapi.ts`         |
-| 函数      | camelCase               | `fetchData`, `processOpenApiData` |
-| 类        | PascalCase              | `SimpleProgress`, `BaseError`     |
-| 常量/工厂 | PascalCase              | `ErrorFactory`, `PRESETS`         |
-| 接口/类型 | PascalCase              | `ApiConfig`, `ProcessedApiData`   |
+| 类型      | 约定                    | 示例                                               |
+| --------- | ----------------------- | -------------------------------------------------- |
+| 文件      | camelCase 或 kebab-case | `apifox.ts`, `openapi.ts`, `interfaceGenerator.ts` |
+| 函数      | camelCase               | `fetchData`, `processOpenApiData`                  |
+| 类        | PascalCase              | `SimpleProgress`, `BaseError`                      |
+| 常量/工厂 | PascalCase              | `ErrorFactory`, `PRESETS`                          |
+| 接口/类型 | PascalCase              | `ApiConfig`, `ProcessedApiData`                    |
+
+**目录组织原则**：
+
+- `generators/`：使用 `{type}Generator.ts` 命名（如 `interfaceGenerator.ts`）
+- `naming/`：按职责命名（如 `strategy.ts`, `sanitizer.ts`）
+- `template/`：按功能命名（如 `compiler.ts`, `templateCache.ts`）
 
 ### 错误处理
 
-使用自定义错误系统（src/errors/index.ts）：
+使用自定义错误系统（src/errors/）：
 
-- 错误代码枚举：`E1xxx`（配置）、`E2xxx`（网络）、`E3xxx`（生成）
-- 使用 `ErrorFactory` 方法创建结构化错误
+- `errorCodes.ts`：错误代码枚举（`E1xxx` 配置、`E2xxx` 网络、`E3xxx` 生成）
+- `errorClasses.ts`：错误类定义
+- `errorFactory.ts`：工厂方法创建结构化错误
+- `index.ts`：统一导出模块
 
 ```typescript
 try {
@@ -93,14 +101,30 @@ try {
 
 使用 JSDoc 风格注释，文件头使用中文描述：
 
-```typescript
+````typescript
 /**
  * @description 从 Apifox 平台获取 OpenAPI 数据
+ * @param config API 配置对象
+ * @returns Promise<ApiData> API 数据
+ *
+ * @example
+ * ```typescript
+ * const data = await fetchApifoxData({ source: '...', token: '...' });
+ * console.log(data);
+ * ```
  */
 export async function fetchApifoxData(config: ApiConfig): Promise<any> {
   // ...
 }
-```
+````
+
+**注释要求**：
+
+1. 每个文件必须有 `@description` 文件头注释（中文）
+2. 每个函数必须有 `@description` 注释
+3. 有参数的函数必须有 `@param` 注释
+4. 有返回值的函数必须有 `@returns` 注释
+5. 核心函数（命名策略、类型清理、生成器等）需要 `@example` 标签
 
 ### 日志输出
 
@@ -129,6 +153,11 @@ export default defineConfig({
 
 ## 代码生成约束
 
+**文件行数限制**：
+
+- 所有源代码文件应保持在 360 行以下
+- 例外：`src/generator/template/compiler.ts`（主要包含模板字符串）
+
 **禁止使用**：
 
 - `delete` 关键字
@@ -145,8 +174,13 @@ export default defineConfig({
 - **CLI 层**（src/cli/）：Commander.js 命令行界面
 - **Client 层**（src/clients/）：API 数据获取器（Apifox/Swagger）
 - **Generator 层**（src/generator/）：代码生成管道
+  - `generators/`：文件生成器（接口、类型、Schema）
+  - `naming/`：命名策略和名称清理
+  - `template/`：模板编译和缓存
 - **Processors**（src/processors/）：数据转换
+  - `common.ts`：公共逻辑抽离
 - **Templates**（src/templates/）：Handlebars 模板
+  - `schema-zod/`：Zod Schema 模板
 
 ## 提交规范
 
