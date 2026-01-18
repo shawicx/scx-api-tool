@@ -8,6 +8,19 @@ import type { ApiConfig } from '@/types';
 import { makeRequestWithProgress } from '@/utils/progress';
 import { ErrorFactory } from '@/errors';
 
+/**
+ * @description 从 Apifox 获取数据
+ * 使用 Apifox API 获取项目的 OpenAPI 定义
+ * @param config API 配置
+ * @returns OpenAPI 数据对象
+ * @throws {Error} 如果请求失败或响应无效
+ *
+ * @example
+ * ```typescript
+ * const data = await fetchApifoxData(config);
+ * // data = { openapi: '3.0.0', paths: {...}, components: {...} }
+ * ```
+ */
 export async function fetchApifoxData(config: ApiConfig): Promise<any> {
   // 添加查询参数（需要在 try 块外定义以便 catch 块访问）
   const realUrl = `${config.source}?locale=zh-CN`;

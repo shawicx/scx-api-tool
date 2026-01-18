@@ -16,6 +16,23 @@ export interface ProcessedApiData {
 
 export { groupInterfacesByTag, extractUsedTypeNames } from './common';
 
+/**
+ * @description 处理 OpenAPI 数据
+ * 从 OpenAPI 格式的数据中提取接口、类型和类别信息
+ * @param data OpenAPI 原始数据
+ * @param config API 配置
+ * @returns 处理后的 API 数据
+ *
+ * @example
+ * ```typescript
+ * const processedData = processOpenApiData(rawData, config);
+ * // processedData = {
+ * //   interfaces: [{ path: '/user', method: 'get', operation: {...} }],
+ * //   types: [{ name: 'User', schema: {...} }],
+ * //   categories: [{ name: '用户管理', description: '...' }]
+ * // }
+ * ```
+ */
 export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiData {
   // 如果启用，则记录调试信息
   if (process.env.DEBUG) {
@@ -101,6 +118,20 @@ export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiDa
   };
 }
 
+/**
+ * @description 处理操作数据
+ * 根据服务器类型处理操作中的参数、响应和请求体
+ * @param operation OpenAPI 操作对象
+ * @param config API 配置
+ * @returns 处理后的操作对象
+ *
+ * @example
+ * ```typescript
+ * const processed = processOperation(operation, config);
+ * // 对于 Apifox，会规范化参数和响应格式
+ * // 对于其他类型，原样返回
+ * ```
+ */
 function processOperation(operation: any, config: ApiConfig): any {
   // 对于 Apifox，我们需要以特定方式处理参数和响应
   if (config.serverType === ServerType.Apifox) {
@@ -116,6 +147,22 @@ function processOperation(operation: any, config: ApiConfig): any {
   return operation;
 }
 
+/**
+ * @description 处理 Apifox 参数
+ * 将 Apifox 特定格式的参数转换为标准格式
+ * @param parameters Apifox 参数数组
+ * @returns 标准格式的参数数组
+ *
+ * @example
+ * ```typescript
+ * const params = processApifoxParameters([
+ *   { name: 'userId', type: 'number', in: 'query', required: true }
+ * ]);
+ * // params = [
+ * //   { name: 'userId', type: 'number', in: 'query', description: '', required: true }
+ * // ]
+ * ```
+ */
 function processApifoxParameters(parameters: any): any[] {
   if (!parameters || !Array.isArray(parameters)) return [];
 
@@ -128,6 +175,23 @@ function processApifoxParameters(parameters: any): any[] {
   }));
 }
 
+/**
+ * @description 处理 Apifox 响应
+ * 将 Apifox 特定格式的响应转换为标准格式
+ * @param responses Apifox 响应对象
+ * @returns 标准格式的响应对象
+ *
+ * @example
+ * ```typescript
+ * const responses = processApifoxResponses({ 200: { ... } });
+ * // responses = {
+ * //   200: {
+ * //     description: '...',
+ * //     content: { 'application/json': { schema: {...} } }
+ * //   }
+ * // }
+ * ```
+ */
 function processApifoxResponses(responses: any): any {
   if (!responses) return {};
 
@@ -148,6 +212,18 @@ function processApifoxResponses(responses: any): any {
   return processed;
 }
 
+/**
+ * @description 处理 Apifox 请求体
+ * 将 Apifox 特定格式的请求体转换为标准格式
+ * @param requestBody Apifox 请求体对象
+ * @returns 标准格式的请求体对象，如果没有请求体则返回 undefined
+ *
+ * @example
+ * ```typescript
+ * const body = processApifoxRequestBody({ content: { ... } });
+ * // body = { content: { 'application/json': { schema: {...} } }
+ * ```
+ */
 function processApifoxRequestBody(requestBody: any): any {
   if (!requestBody) return undefined;
 

@@ -1,6 +1,8 @@
 /**
- * @description shawicx d35f3153@proton.me
+ * @description 路径转换工具
+ * 提供中文到拼音转换、路径生成等功能
  */
+
 import { pinyin } from 'pinyin-pro';
 
 /**

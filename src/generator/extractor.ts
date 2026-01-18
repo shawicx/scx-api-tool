@@ -1,6 +1,27 @@
+/**
+ * @description 数据提取模块
+ * 从 OpenAPI 操作中提取请求和响应属性
+ */
+
 import { ProcessedApiData } from '../processors/openapi';
 import { sanitizePropertyName, sanitizeTypeName } from './naming';
 
+/**
+ * @description 提取请求属性
+ * 从操作中提取请求参数和请求体属性
+ * @param operation OpenAPI 操作对象
+ * @param processedData 处理后的 API 数据
+ * @returns 请求属性数组
+ *
+ * @example
+ * ```typescript
+ * const properties = extractRequestProperties(operation, processedData);
+ * // properties = [
+ * //   { name: 'userId', type: 'number', description: '用户ID', required: true },
+ * //   { name: 'userName', type: 'string', description: '用户名', required: false }
+ * // ]
+ * ```
+ */
 export function extractRequestProperties(operation: any, processedData: ProcessedApiData): any[] {
   const properties: any[] = [];
 
@@ -53,6 +74,21 @@ export function extractRequestProperties(operation: any, processedData: Processe
   return properties;
 }
 
+/**
+ * @description 提取响应属性
+ * 从响应中提取响应属性
+ * @param responses OpenAPI 响应对象
+ * @param processedData 处理后的 API 数据
+ * @returns 响应属性数组
+ *
+ * @example
+ * ```typescript
+ * const properties = extractResponseProperties(responses, processedData);
+ * // properties = [
+ * //   { name: 'data', type: 'User', description: '用户数据', required: true }
+ * // ]
+ * ```
+ */
 export function extractResponseProperties(responses: any, processedData: ProcessedApiData): any[] {
   if (!responses) return [];
 
@@ -137,6 +173,21 @@ export function extractResponseProperties(responses: any, processedData: Process
   return properties;
 }
 
+/**
+ * @description 提取类型属性
+ * 从 Schema 中提取类型属性
+ * @param schema OpenAPI Schema 对象
+ * @returns 类型属性数组
+ *
+ * @example
+ * ```typescript
+ * const properties = extractTypeProperties(schema);
+ * // properties = [
+ * //   { name: 'id', type: 'number', description: 'ID', required: true },
+ * //   { name: 'name', type: 'string', description: '名称', required: false }
+ * // ]
+ * ```
+ */
 export function extractTypeProperties(schema: any): any[] {
   if (!schema) {
     return [];
@@ -168,6 +219,19 @@ export function extractTypeProperties(schema: any): any[] {
   return properties;
 }
 
+/**
+ * @description 获取属性类型
+ * 将 OpenAPI Schema 属性转换为 TypeScript 类型字符串
+ * @param property OpenAPI Schema 属性对象
+ * @returns TypeScript 类型字符串
+ *
+ * @example
+ * ```typescript
+ * const type = getPropertyType({ type: 'string' }); // 'string'
+ * const type = getPropertyType({ type: 'array', items: { type: 'number' } }); // 'number[]'
+ * const type = getPropertyType({ $ref: '#/components/schemas/User' }); // 'User'
+ * ```
+ */
 export function getPropertyType(property: any): string {
   if (!property) return 'any';
 
@@ -208,6 +272,17 @@ export function getPropertyType(property: any): string {
   }
 }
 
+/**
+ * @description 检查是否有请求体
+ * @param operation OpenAPI 操作对象
+ * @returns 是否有请求体
+ *
+ * @example
+ * ```typescript
+ * const hasBody = hasRequestBody(operation);
+ * // 如果操作有 requestBody，返回 true
+ * ```
+ */
 export function hasRequestBody(operation: any): boolean {
   return !!operation.requestBody;
 }

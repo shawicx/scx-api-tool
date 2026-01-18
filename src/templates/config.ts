@@ -1,3 +1,8 @@
+/**
+ * @description 配置文件模板
+ * 生成 api-power.config.ts 的代码模板
+ */
+
 export const configTemplate = `import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({

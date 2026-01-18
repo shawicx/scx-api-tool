@@ -1,6 +1,5 @@
-/*
- * @Author: shawicx d35f3153@proton.me
- * @Description: API 相关类型定义
+/**
+ * @description API 相关类型定义
  */
 
 import { RequestMethod } from './enums';

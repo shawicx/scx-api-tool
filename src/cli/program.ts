@@ -1,5 +1,4 @@
-/*
- * @author shawicx d35f3153@proton.me
+/**
  * @description CLI 程序入口，定义所有命令行命令
  */
 import { Command } from 'commander';

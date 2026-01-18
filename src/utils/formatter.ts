@@ -1,11 +1,24 @@
 /**
- * 代码格式化工具
+ * @description 代码格式化工具
  * 使用 Prettier 格式化生成的代码
  */
 
 import consola from 'consola';
 import { format } from 'prettier';
 
+/**
+ * @description 格式化代码
+ * 使用 Prettier 格式化代码字符串
+ * @param code 代码字符串
+ * @param filePath 文件路径
+ * @returns 格式化后的代码字符串
+ *
+ * @example
+ * ```typescript
+ * const formatted = await formatCode('const x=1;', './test.ts');
+ * // formatted = 'const x = 1;'
+ * ```
+ */
 export async function formatCode(code: string, filePath: string): Promise<string> {
   try {
     // 根据文件扩展名确定解析器

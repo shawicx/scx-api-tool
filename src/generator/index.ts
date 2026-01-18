@@ -9,6 +9,21 @@ import { ApiConfig } from '../types';
 import { generateFiles } from './codegen';
 import { getProgressManager, createMultiStepProgress } from '../utils/progress';
 
+/**
+ * @description 生成代码主入口
+ * 从配置文件加载配置并执行完整的代码生成流程
+ * @param configPath 配置文件路径
+ *
+ * @example
+ * ```typescript
+ * await generateCode('./api-power.config.ts');
+ * // 执行完整的代码生成流程：
+ * // 1. 加载配置
+ * // 2. 获取 API 数据
+ * // 3. 处理数据结构
+ * // 4. 生成代码文件
+ * ```
+ */
 export async function generateCode(configPath: string): Promise<void> {
   // 添加调试信息
   const startTime = Date.now();

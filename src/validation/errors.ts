@@ -1,5 +1,6 @@
 /**
- * 验证错误类型定义
+ * @description 验证错误类型定义
+ * 定义验证过程中使用的错误类型和接口
  */
 
 export enum ValidationSeverity {
@@ -40,7 +41,27 @@ export interface ValidationReport {
 }
 
 /**
- * 创建验证错误
+ * @description 创建验证错误
+ * 创建一个标准的验证错误对象
+ * @param field 字段路径
+ * @param code 错误代码
+ * @param message 错误描述信息
+ * @param severity 错误严重级别
+ * @param suggestion 修复建议（可选）
+ * @param value 当前错误值（可选）
+ * @returns 验证错误对象
+ *
+ * @example
+ * ```typescript
+ * const error = createValidationError(
+ *   'source',
+ *   'REQUIRED_FIELD',
+ *   'source 是必需的',
+ *   ValidationSeverity.ERROR,
+ *   '请提供有效的 URL',
+ *   'invalid-url'
+ * );
+ * ```
  */
 export function createValidationError(
   field: string,
@@ -61,7 +82,21 @@ export function createValidationError(
 }
 
 /**
- * 创建验证报告
+ * @description 创建验证报告
+ * 根据错误列表创建验证报告，包含统计信息
+ * @param errors 验证错误数组
+ * @returns 验证报告对象
+ *
+ * @example
+ * ```typescript
+ * const report = createValidationReport(errors);
+ * // report = {
+ * //   errors: [...],
+ * //   summary: { total: 10, errors: 3, warnings: 5, infos: 2 },
+ * //   hasBlockingErrors: true,
+ * //   hasErrors: true
+ * // }
+ * ```
  */
 export function createValidationReport(errors: ValidationError[]): ValidationReport {
   const summary = {

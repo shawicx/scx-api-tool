@@ -1,12 +1,26 @@
 /**
- * URL 相关验证器
+ * @description URL 相关验证器
+ * 验证配置中 URL 字段的有效性
  */
 
 import { ValidationError, ValidationSeverity, createValidationError } from '../errors';
 import type { UserConfig } from '@/types';
 
 /**
- * 验证 URL 格式
+ * @description 验证 URL 格式
+ * 检查 URL 是否为有效格式
+ * @param url URL 字符串
+ * @param field 字段名称
+ * @returns 验证错误对象，如果验证通过则返回 null
+ *
+ * @example
+ * ```typescript
+ * const error = validateUrlFormat('https://api.example.com', 'source');
+ * // error = null (验证通过)
+ *
+ * const error2 = validateUrlFormat('invalid-url', 'source');
+ * // error2 = { field: 'source', code: 'INVALID_URL', ... }
+ * ```
  */
 export function validateUrlFormat(url: string, field: string): ValidationError | null {
   if (!url || typeof url !== 'string' || url.trim() === '') {
@@ -61,7 +75,18 @@ export function validateUrlFormat(url: string, field: string): ValidationError |
 }
 
 /**
- * 验证 source URL 格式和平台特定要求
+ * @description 验证 source URL 格式和平台特定要求
+ * 根据 URL 平台（Apifox 或 Swagger）验证特定格式
+ * @param config 用户配置对象
+ * @returns 验证错误数组
+ *
+ * @example
+ * ```typescript
+ * const errors = validateSourceUrl(config);
+ * // errors = [
+ * //   { field: 'source', code: 'INVALID_APIFOX_URL_FORMAT', ... }
+ * // ]
+ * ```
  */
 export function validateSourceUrl(config: UserConfig): ValidationError[] {
   const errors: ValidationError[] = [];
@@ -103,7 +128,19 @@ export function validateSourceUrl(config: UserConfig): ValidationError[] {
 }
 
 /**
- * 验证 Apifox URL 格式
+ * @description 验证 Apifox URL 格式
+ * 检查 Apifox URL 是否符合正确的格式规范
+ * @param source Apifox URL 字符串
+ * @returns 验证错误对象，如果验证通过则返回 null
+ *
+ * @example
+ * ```typescript
+ * const error = validateApifoxUrl('https://api.apifox.com/v1/projects/123456/export-openapi');
+ * // error = null (验证通过)
+ *
+ * const error2 = validateApifoxUrl('https://api.apifox.com/invalid');
+ * // error2 = { field: 'source', code: 'INVALID_APIFOX_URL_FORMAT', ... }
+ * ```
  */
 function validateApifoxUrl(source: string): ValidationError | null {
   try {
@@ -152,7 +189,19 @@ function validateApifoxUrl(source: string): ValidationError | null {
 }
 
 /**
- * 验证 Swagger/OpenAPI URL
+ * @description 验证 Swagger/OpenAPI URL
+ * 检查 Swagger/OpenAPI URL 是否使用常见的路径格式
+ * @param source Swagger/OpenAPI URL 字符串
+ * @returns 验证错误对象，如果验证通过则返回 null
+ *
+ * @example
+ * ```typescript
+ * const error = validateSwaggerUrl('https://petstore.swagger.io/v2/swagger.json');
+ * // error = null (验证通过)
+ *
+ * const error2 = validateSwaggerUrl('https://example.com/invalid');
+ * // error2 = { field: 'source', code: 'INVALID_SWAGGER_URL_PATH', ... }
+ * ```
  */
 function validateSwaggerUrl(source: string): ValidationError | null {
   try {

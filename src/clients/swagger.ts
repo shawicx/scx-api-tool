@@ -7,6 +7,19 @@ import consola from 'consola';
 import type { ApiConfig } from '@/types';
 import { makeRequestWithProgress } from '@/utils/progress';
 
+/**
+ * @description 从 Swagger/OpenAPI 获取数据
+ * 直接从指定的 URL 获取 OpenAPI/Swagger 定义
+ * @param config API 配置
+ * @returns OpenAPI 数据对象
+ * @throws {Error} 如果请求失败
+ *
+ * @example
+ * ```typescript
+ * const data = await fetchSwaggerData(config);
+ * // data = { openapi: '3.0.0', paths: {...}, components: {...} }
+ * ```
+ */
 export async function fetchSwaggerData(config: ApiConfig): Promise<any> {
   try {
     const apiUrl = config.serverUrl;

@@ -1,3 +1,8 @@
+/**
+ * @description CLI 常量定义
+ * 包含默认配置模板等常量
+ */
+
 export const DEFAULT_CONFIG = `import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({

@@ -1,6 +1,5 @@
-/*
- * @Author: shawicx d35f3153@proton.me
- * @Description: 输出相关类型定义
+/**
+ * @description 输出相关类型定义
  */
 
 /**

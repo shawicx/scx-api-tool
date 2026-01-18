@@ -1,12 +1,24 @@
 /**
- * 逻辑关系验证器
+ * @description 逻辑关系验证器
+ * 验证配置项之间的逻辑关系和一致性
  */
 
 import { ValidationError, ValidationSeverity, createValidationError } from '../errors';
 import type { UserConfig } from '@/types';
 
 /**
- * 验证配置项之间的逻辑关系
+ * @description 验证配置项之间的逻辑关系
+ * 检查配置项之间是否存在逻辑冲突或不合理的使用
+ * @param config 用户配置对象
+ * @returns 验证错误数组
+ *
+ * @example
+ * ```typescript
+ * const errors = validateConfigLogic(config);
+ * // errors = [
+ * //   { field: 'generateApi & generateTypes', code: 'NO_GENERATION_MODE', ... }
+ * // ]
+ * ```
  */
 export function validateConfigLogic(config: UserConfig): ValidationError[] {
   const errors: ValidationError[] = [];

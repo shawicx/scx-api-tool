@@ -1,5 +1,6 @@
 /**
- * 基础类型验证器
+ * @description 基础类型验证器
+ * 验证配置中各个字段的基本类型和值
  */
 
 import { ValidationError, ValidationSeverity, createValidationError } from '../errors';
@@ -7,7 +8,18 @@ import type { UserConfig } from '@/types';
 import { RequestMethodStyle } from '@/types';
 
 /**
- * 验证必需字段
+ * @description 验证必需字段
+ * 检查配置中所有必需的字段是否存在且有效
+ * @param config 用户配置对象
+ * @returns 验证错误数组
+ *
+ * @example
+ * ```typescript
+ * const errors = validateRequiredFields(config);
+ * // errors = [
+ * //   { field: 'source', code: 'REQUIRED_FIELD', message: '...' }
+ * // ]
+ * ```
  */
 export function validateRequiredFields(config: UserConfig): ValidationError[] {
   const errors: ValidationError[] = [];
@@ -46,7 +58,18 @@ export function validateRequiredFields(config: UserConfig): ValidationError[] {
 }
 
 /**
- * 验证枚举值
+ * @description 验证枚举值
+ * 检查配置中枚举类型字段的值是否在允许的范围内
+ * @param config 用户配置对象
+ * @returns 验证错误数组
+ *
+ * @example
+ * ```typescript
+ * const errors = validateEnumValues(config);
+ * // errors = [
+ * //   { field: 'target', code: 'INVALID_ENUM_VALUE', message: '...' }
+ * // ]
+ * ```
  */
 export function validateEnumValues(config: UserConfig): ValidationError[] {
   const errors: ValidationError[] = [];
@@ -101,7 +124,18 @@ export function validateEnumValues(config: UserConfig): ValidationError[] {
 }
 
 /**
- * 验证字符串字段
+ * @description 验证字符串字段
+ * 检查配置中字符串类型字段的有效性
+ * @param config 用户配置对象
+ * @returns 验证错误数组
+ *
+ * @example
+ * ```typescript
+ * const errors = validateStringFields(config);
+ * // errors = [
+ * //   { field: 'outputDir', code: 'INVALID_STRING', message: '...' }
+ * // ]
+ * ```
  */
 export function validateStringFields(config: UserConfig): ValidationError[] {
   const errors: ValidationError[] = [];
@@ -215,7 +249,18 @@ export function validateStringFields(config: UserConfig): ValidationError[] {
 }
 
 /**
- * 验证布尔字段
+ * @description 验证布尔字段
+ * 检查配置中布尔类型字段的值是否为布尔值
+ * @param config 用户配置对象
+ * @returns 验证错误数组
+ *
+ * @example
+ * ```typescript
+ * const errors = validateBooleanFields(config);
+ * // errors = [
+ * //   { field: 'comment', code: 'INVALID_BOOLEAN', message: '...' }
+ * // ]
+ * ```
  */
 export function validateBooleanFields(config: UserConfig): ValidationError[] {
   const errors: ValidationError[] = [];
@@ -242,7 +287,18 @@ export function validateBooleanFields(config: UserConfig): ValidationError[] {
 }
 
 /**
- * 验证数值字段
+ * @description 验证数值字段
+ * 检查配置中数值类型字段的值是否在有效范围内
+ * @param config 用户配置对象
+ * @returns 验证错误数组
+ *
+ * @example
+ * ```typescript
+ * const errors = validateNumberFields(config);
+ * // errors = [
+ * //   { field: 'indentSize', code: 'INVALID_NUMBER', message: '...' }
+ * // ]
+ * ```
  */
 export function validateNumberFields(config: UserConfig): ValidationError[] {
   const errors: ValidationError[] = [];
@@ -272,7 +328,15 @@ export function validateNumberFields(config: UserConfig): ValidationError[] {
 }
 
 /**
- * 验证数组字段
+ * @description 验证数组字段
+ * 检查配置中数组类型字段的有效性
+ * @returns 验证错误数组
+ *
+ * @example
+ * ```typescript
+ * const errors = validateArrayFields();
+ * // 目前没有需要验证的数组字段，返回空数组
+ * ```
  */
 export function validateArrayFields(): ValidationError[] {
   const errors: ValidationError[] = [];

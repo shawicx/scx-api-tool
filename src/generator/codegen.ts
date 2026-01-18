@@ -13,6 +13,22 @@ import {
 } from './fileGenerator';
 import { cleanOutputDir } from '../utils/file';
 
+/**
+ * @description 生成所有代码文件
+ * 协调接口文件、API 请求方法、类型定义和 Schema 文件的生成
+ * @param processedData 处理后的 API 数据
+ * @param config API 配置
+ *
+ * @example
+ * ```typescript
+ * await generateFiles(processedData, config);
+ * // 根据配置生成：
+ * // - 接口文件（按标签分组）
+ * // - 请求函数文件
+ * // - 类型定义文件
+ * // - Schema 文件（如果 typesFormat: 'zod'）
+ * ```
+ */
 export async function generateFiles(
   processedData: ProcessedApiData,
   config: ApiConfig,

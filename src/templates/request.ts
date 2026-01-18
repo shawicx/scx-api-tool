@@ -1,3 +1,8 @@
+/**
+ * @description 请求函数模板
+ * 生成 Axios 请求函数的代码模板
+ */
+
 export const requestTemplate = `import type { AxiosRequestConfig } from 'axios';
 import axios from 'axios';
 

@@ -6,10 +6,32 @@ import { promises as fs } from 'fs';
 import { dirname, relative, join } from 'path';
 import consola from 'consola';
 
+/**
+ * @description 确保目录存在
+ * 如果目录不存在则创建
+ * @param dirPath 目录路径
+ *
+ * @example
+ * ```typescript
+ * await ensureDir('./dist/output');
+ * // 确保输出目录存在
+ * ```
+ */
 export async function ensureDir(dirPath: string): Promise<void> {
   await fs.mkdir(dirPath, { recursive: true });
 }
 
+/**
+ * @description 写入格式化文件
+ * 确保目录存在后写入文件内容
+ * @param filePath 文件路径
+ * @param content 文件内容
+ *
+ * @example
+ * ```typescript
+ * await writeFormattedFile('./src/api/user.ts', 'export const api = {};');
+ * ```
+ */
 export async function writeFormattedFile(filePath: string, content: string): Promise<void> {
   // 确保目录存在
   await ensureDir(dirname(filePath));
@@ -18,6 +40,17 @@ export async function writeFormattedFile(filePath: string, content: string): Pro
   await fs.writeFile(filePath, content, 'utf-8');
 }
 
+/**
+ * @description 检查文件是否存在
+ * @param filePath 文件路径
+ * @returns 文件是否存在
+ *
+ * @example
+ * ```typescript
+ * const exists = await fileExists('./src/api/user.ts');
+ * // true 或 false
+ * ```
+ */
 export async function fileExists(filePath: string): Promise<boolean> {
   try {
     await fs.access(filePath);

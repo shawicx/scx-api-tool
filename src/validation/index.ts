@@ -1,5 +1,6 @@
 /**
- * 配置验证系统入口
+ * @description 配置验证系统入口
+ * 统一管理和调用所有验证规则
  */
 
 import { createValidationReport, ConfigValidationError, createValidationError } from './errors';
@@ -18,7 +19,22 @@ import { validateConfigLogic } from './validators/logic';
 import type { UserConfig } from '@/types';
 
 /**
- * 验证用户配置
+ * @description 验证用户配置
+ * 执行所有配置验证规则，如果有错误则抛出异常
+ * @param config 用户配置对象
+ * @throws {ConfigValidationError} 如果有阻止执行的错误
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   validateConfiguration(config);
+ *   // 验证通过，继续执行
+ * } catch (error) {
+ *   if (error instanceof ConfigValidationError) {
+ *     // 显示验证错误
+ *   }
+ * }
+ * ```
  */
 export function validateConfiguration(config: UserConfig): void {
   // 执行所有验证

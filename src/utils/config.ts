@@ -1,3 +1,8 @@
+/**
+ * @description 配置工具模块
+ * 提供配置解析、验证和预设应用功能
+ */
+
 import {
   ApiConfig,
   UserConfig,

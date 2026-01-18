@@ -1,5 +1,6 @@
-/*
+/**
  * @description 接口模板
+ * 生成 API 接口函数的代码模板
  */
 export const interfaceTemplate = `import { RequestConfig, {{requestFunctionName}} } from './request';
 

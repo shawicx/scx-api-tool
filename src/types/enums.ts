@@ -1,6 +1,5 @@
-/*
- * @Author: shawicx d35f3153@proton.me
- * @Description: 枚举类型定义
+/**
+ * @description 枚举类型定义
  */
 
 /** 请求方式 */

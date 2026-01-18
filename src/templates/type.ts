@@ -1,3 +1,8 @@
+/**
+ * @description 类型模板
+ * TypeScript 类型的代码生成模板
+ */
+
 export const typeTemplate = `/**
  * {{description}}
  */

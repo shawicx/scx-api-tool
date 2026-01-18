@@ -1,6 +1,5 @@
-/*
- * @Author: shawicx d35f3153@proton.me
- * @Description: 类型定义统一导出
+/**
+ * @description 类型定义统一导出
  */
 
 // 枚举类型

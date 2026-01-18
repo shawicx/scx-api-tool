@@ -8,6 +8,21 @@ import { fetchSwaggerData } from './swagger';
 import consola from 'consola';
 import { ErrorFactory } from '@/errors';
 
+/**
+ * @description 根据服务器类型获取 API 数据
+ * 自动识别服务器类型并调用相应的数据获取函数
+ * @param config API 配置
+ * @returns OpenAPI 数据对象
+ * @throws {Error} 如果服务器类型不支持或请求失败
+ *
+ * @example
+ * ```typescript
+ * const data = await fetchData(config);
+ * // 根据配置自动选择：
+ * // - fetchApifoxData() 如果 serverType === 'apifox'
+ * // - fetchSwaggerData() 如果 serverType === 'swagger'
+ * ```
+ */
 export async function fetchData(config: ApiConfig): Promise<any> {
   if (process.env.DEBUG) {
     consola.debug('Fetching data with config:', config);

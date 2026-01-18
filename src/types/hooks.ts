@@ -1,6 +1,5 @@
-/*
- * @Author: shawicx d35f3153@proton.me
- * @Description: 钩子函数类型定义
+/**
+ * @description 钩子函数类型定义
  */
 
 /**
