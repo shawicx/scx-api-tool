@@ -245,12 +245,117 @@ export function getZodInterfaceTemplateWithoutComment(): string {
 }
 
 /**
+ * @description Zod ApiOnly 模式的接口模板 - 带注释
+ * 只生成请求方法，不生成类型注解
+ * @returns 模板字符串
+ */
+export function getZodApiOnlyTemplateWithComment(): string {
+  return `/**
+ * @description {{description}}
+ * @param {{requestParamName}} {{requestTypeName}}
+ * @returns Promise<{{responseTypeName}}>
+ */
+export async function {{functionName}}(
+   {{requestParamName}}
+) {
+   const config = {
+     url: '{{path}}',
+     method: '{{method}}',
+ {{#if hasParameters}}
+ {{#if hasBody}}
+     data: {{requestParamName}},
+ {{else}}
+     params: {{requestParamName}},
+ {{/if}}
+ {{/if}}
+   };
+   return {{requestFunctionName}}(config);
+}
+`;
+}
+
+/**
+ * @description Zod ApiOnly 模式的接口模板 - 不带注释
+ * 只生成请求方法，不生成类型注解
+ * @returns 模板字符串
+ */
+export function getZodApiOnlyTemplateWithoutComment(): string {
+  return `export async function {{functionName}}(
+   {{requestParamName}}
+) {
+   const config = {
+     url: '{{path}}',
+     method: '{{method}}',
+ {{#if hasParameters}}
+ {{#if hasBody}}
+     data: {{requestParamName}},
+ {{else}}
+     params: {{requestParamName}},
+ {{/if}}
+ {{/if}}
+   };
+   return {{requestFunctionName}}(config);
+}
+`;
+}
+
+/**
  * @description 根据配置获取 Zod 接口模板
  * @param comment 是否包含注释
  * @returns 模板字符串
  */
 export function getZodInterfaceTemplateByConfig(comment: boolean): string {
   return comment ? getZodInterfaceTemplateWithComment() : getZodInterfaceTemplateWithoutComment();
+}
+
+/**
+ * @description Zod TypesOnly 模式的接口模板 - 带注释
+ * 只生成 Schema 定义，不生成请求方法
+ * @returns 模板字符串
+ */
+export function getZodTypesOnlyTemplateWithComment(): string {
+  return `import { z } from 'zod';
+
+/**
+ * @description {{description}}
+ {{#if hasParameters}}
+ * @param params {{requestTypeName}}
+ {{/if}}
+ * @returns Promise<{{responseTypeName}}>
+ */
+export const {{requestTypeName}}Schema = {{{requestSchema}}};
+
+export const {{responseTypeName}}Schema = {{{responseSchema}}};
+
+export type {{requestTypeName}} = z.infer<typeof {{requestTypeName}}Schema>;
+export type {{responseTypeName}} = z.infer<typeof {{responseTypeName}}Schema>;
+`;
+}
+
+/**
+ * @description Zod TypesOnly 模式的接口模板 - 不带注释
+ * 只生成 Schema 定义，不生成请求方法
+ * @returns 模板字符串
+ */
+export function getZodTypesOnlyTemplateWithoutComment(): string {
+  return `import { z } from 'zod';
+
+export const {{requestTypeName}}Schema = {{{requestSchema}}};
+
+export const {{responseTypeName}}Schema = {{{responseSchema}}};
+
+export type {{requestTypeName}} = z.infer<typeof {{requestTypeName}}Schema>;
+export type {{responseTypeName}} = z.infer<typeof {{responseTypeName}}Schema>;
+`;
+}
+
+/**
+ * @description 根据配置获取 Zod TypesOnly 模板
+ * @param comment 是否包含注释
+ * @returns 模板字符串
+ */
+export function getZodTypesOnlyTemplateByConfig(comment: boolean): string {
+  return comment ? getZodTypesOnlyTemplateWithComment() : getZodTypesOnlyTemplateWithoutComment();
 }
 
 // ==================== 类型模版 ====================
@@ -573,14 +678,19 @@ export function generateInterfaceFunction(interfaceInfo: any, config: any): stri
   const shouldGenerateTypes = config.generateTypes && config.typesFormat === 'typescript';
   const shouldGenerateApi = config.generateApi;
   const isZodMode = config.typesFormat === 'zod';
+  const isZodGenerateTypes = config.generateTypes && isZodMode;
 
-  if (isZodMode && shouldGenerateApi) {
+  if (isZodMode && shouldGenerateApi && isZodGenerateTypes) {
     template = getZodInterfaceTemplateByConfig(comment);
+  } else if (isZodMode && isZodGenerateTypes && !shouldGenerateApi) {
+    template = getZodTypesOnlyTemplateByConfig(comment);
+  } else if (isZodMode && shouldGenerateApi && !isZodGenerateTypes) {
+    template = getZodApiOnlyTemplateByConfig(comment);
   } else if (shouldGenerateTypes && !shouldGenerateApi) {
     template = getTypesOnlyTemplateByConfig(comment);
-  } else if (shouldGenerateApi && !shouldGenerateTypes) {
+  } else if (shouldGenerateApi && !isZodMode && !shouldGenerateTypes) {
     template = getApiOnlyTemplateByConfig(comment);
-  } else if (shouldGenerateApi && shouldGenerateTypes) {
+  } else if (shouldGenerateApi && shouldGenerateTypes && !isZodMode) {
     template = getInterfaceTemplateByConfig(comment);
   } else {
     template = getApiOnlyTemplateByConfig(comment);
@@ -596,4 +706,13 @@ export function generateInterfaceFunction(interfaceInfo: any, config: any): stri
   });
 
   return result;
+}
+
+/**
+ * @description 根据配置获取 Zod ApiOnly 模板
+ * @param comment 是否包含注释
+ * @returns 模板字符串
+ */
+export function getZodApiOnlyTemplateByConfig(comment: boolean): string {
+  return comment ? getZodApiOnlyTemplateWithComment() : getZodApiOnlyTemplateWithoutComment();
 }

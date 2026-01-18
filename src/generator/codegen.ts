@@ -46,7 +46,7 @@ export async function generateFiles(
 
     await cleanOutputDir(config.outputDir, excludeFiles);
 
-    // 生成接口文件（如果生成 API 或 Types 都需要生成接口文件）
+    // 生成接口文件
     if (config.generateApi || config.generateTypes) {
       consola.info('生成接口文件');
       await generateInterfaceFiles(processedData, config);

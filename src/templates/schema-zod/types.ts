@@ -92,11 +92,11 @@ export function generateZodTypeSchema(
 }
 
 /**
- * @description 从 OpenAPI Schema 生成 Zod schema 内容
+ * @description 将 OpenAPI Schema 转换为 Zod Schema 字符串
  * @param schema OpenAPI Schema 对象
- * @returns 包含代码和引用的 schema 列表的对象
+ * @returns 包含代码和需要导入的 schema 列表的对象
  */
-function generateZodSchemaFromOpenApiSchema(schema: any): {
+export function generateZodSchemaFromOpenApiSchema(schema: any): {
   code: string;
   imports: string[];
 } {
@@ -128,7 +128,7 @@ function generateZodSchemaFromOpenApiSchema(schema: any): {
  * @param property OpenAPI property 对象
  * @returns 包含类型字符串和引用的 schema 列表的对象
  */
-function openApiPropertyToZodType(property: any): {
+export function openApiPropertyToZodType(property: any): {
   type: string;
   imports: string[];
 } {

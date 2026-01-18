@@ -7,6 +7,8 @@ import Handlebars from 'handlebars';
 import consola from 'consola';
 import { compileTemplate } from '../../generator/template';
 import { ProcessedApiData } from '../../processors/openapi';
+import { sanitizeTypeName } from '../../generator/naming';
+import { generateZodSchemaFromOpenApiSchema, openApiPropertyToZodType } from './types';
 
 /**
  * @description Zod 接口 Schema 模板 - 带注释
@@ -124,7 +126,7 @@ export function generateZodInterfaceSchemaFile(
  * @param type Schema 类型 ('request' 或 'response')
  * @returns 包含代码和引用的 schema 列表的对象
  */
-function generateZodSchemaFromOperation(
+export function generateZodSchemaFromOperation(
   operation: any,
   processedData: any,
   type: 'request' | 'response',
@@ -167,7 +169,6 @@ function generateZodSchemaFromOperation(
 
   if (schema.$ref) {
     const refName = schema.$ref.split('/').pop();
-    const { sanitizeTypeName } = require('../../generator/naming');
     const sanitizedRefName = sanitizeTypeName(refName);
     return {
       code: `${sanitizedRefName}Schema`,
@@ -175,16 +176,7 @@ function generateZodSchemaFromOperation(
     };
   }
 
-  const { generateZodSchemaFromOpenApiSchema } = require('./types');
   return generateZodSchemaFromOpenApiSchema(schema);
-}
-
-function openApiPropertyToZodType(property: any): {
-  type: string;
-  imports: string[];
-} {
-  const { openApiPropertyToZodType: originalFn } = require('./types');
-  return originalFn(property);
 }
 
 function sanitizePropertyName(name: string): string {

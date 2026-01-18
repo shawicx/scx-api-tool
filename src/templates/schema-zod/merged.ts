@@ -7,6 +7,7 @@ import Handlebars from 'handlebars';
 import consola from 'consola';
 import { compileTemplate } from '../../generator/template';
 import { ProcessedApiData } from '../../processors/openapi';
+import { generateZodSchemaFromOperation } from './interfaces';
 
 /**
  * @description 合并的 Schema 文件模板 - 带注释
@@ -94,8 +95,6 @@ export function generateMergedSchemaFile(
   const schemas: any[] = [];
   const typeImports = new Set<string>();
   const schemaNames: string[] = [];
-
-  const { generateZodSchemaFromOperation } = require('./interfaces');
 
   for (const apiInterface of interfaces) {
     const requestTypeName = getRequestTypeName(
