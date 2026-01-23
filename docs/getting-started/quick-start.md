@@ -44,7 +44,8 @@ export default defineConfig({
 
   // 输出配置 (可选)
   outputDir: 'src/service',
-  typesOnly: false,
+  generateApi: true,
+  generateTypes: true,
   target: 'typescript',
 });
 ```
@@ -93,17 +94,17 @@ npx api-power
 ```
 src/service/
 ├── index.ts           # 主入口，导出所有内容
-├── types.ts           # 基础类型定义
 ├── request.ts         # HTTP 请求配置
-├── user/
-│   ├── index.ts       # 用户相关 API
-│   └── types.ts       # 用户相关类型
-├── order/
-│   ├── index.ts       # 订单相关 API
-│   └── types.ts       # 订单相关类型
-└── product/
-    ├── index.ts       # 产品相关 API
-    └── types.ts       # 产品相关类型
+├── types/             # 类型定义目录
+│   ├── index.ts       # 类型索引文件
+│   ├── User.ts        # 用户类型
+│   └── Product.ts     # 产品类型
+├── user/              # 用户相关 API
+│   └── index.ts       # 用户 API 函数
+├── order/             # 订单相关 API
+│   └── index.ts       # 订单 API 函数
+└── product/           # 产品相关 API
+    └── index.ts       # 产品 API 函数
 ```
 
 ### 生成的代码示例
@@ -303,8 +304,8 @@ export default defineConfig({
   source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
   token: 'APS-YourAccessTokenHere',
 
-  typesOnly: true,
-  apiOnly: false,
+  generateApi: false,
+  generateTypes: true,
 });
 ```
 

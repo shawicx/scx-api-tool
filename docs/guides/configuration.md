@@ -41,8 +41,8 @@ export default defineConfig({
 
   // 输出配置 (可选)
   outputDir: 'src/service',
-  typesOnly: false,
-  apiOnly: false,
+  generateApi: true,
+  generateTypes: true,
 
   // 代码生成选项 (可选)
   target: 'typescript',
@@ -62,12 +62,12 @@ export default defineConfig({
 
 ### 输出配置
 
-| 配置项      | 类型                           | 默认值          | 说明                              |
-| ----------- | ------------------------------ | --------------- | --------------------------------- |
-| `outputDir` | `string`                       | `'src/service'` | 生成的代码输出目录                |
-| `typesOnly` | `boolean`                      | `false`         | 是否只生成类型定义                |
-| `apiOnly`   | `boolean`                      | `false`         | 是否只生成 API 函数（不生成类型） |
-| `target`    | `'typescript' \| 'javascript'` | `'typescript'`  | 目标语言                          |
+| 配置项          | 类型                           | 默认值          | 说明                  |
+| --------------- | ------------------------------ | --------------- | --------------------- |
+| `outputDir`     | `string`                       | `'src/service'` | 生成的代码输出目录    |
+| `generateApi`   | `boolean`                      | `true`          | 是否生成 API 请求方法 |
+| `generateTypes` | `boolean`                      | `true`          | 是否生成类型定义      |
+| `target`        | `'typescript' \| 'javascript'` | `'typescript'`  | 目标语言              |
 
 ### 代码生成选项
 
@@ -81,12 +81,12 @@ export default defineConfig({
 
 ### 请求函数配置
 
-| 配置项                     | 类型                               | 默认值                     | 说明             |
-| -------------------------- | ---------------------------------- | -------------------------- | ---------------- |
-| `requestFunctionFilePath`  | `string`                           | `'src/service/request.ts'` | 请求函数文件路径 |
-| `requestFunctionName`      | `string`                           | `'request'`                | 请求函数名称     |
-| `requestMethodsObjectName` | `string`                           | `'requestMethods'`         | 请求方法对象名称 |
-| `requestMethodStyle`       | `'config' \| 'separate' \| 'both'` | `'config'`                 | 请求方法调用风格 |
+| 配置项                     | 类型                                      | 默认值                     | 说明             |
+| -------------------------- | ----------------------------------------- | -------------------------- | ---------------- |
+| `requestFunctionFilePath`  | `string`                                  | `'src/service/request.ts'` | 请求函数文件路径 |
+| `requestFunctionName`      | `string`                                  | `'request'`                | 请求函数名称     |
+| `requestMethodsObjectName` | `string`                                  | `'requestMethods'`         | 请求方法对象名称 |
+| `requestMethodStyle`       | `'config' \| 'method-specific' \| 'both'` | `'config'`                 | 请求方法调用风格 |
 
 ### 性能配置
 
@@ -98,11 +98,11 @@ export default defineConfig({
 
 工具提供三种预设配置，可以快速设置常用选项：
 
-| 预设       | 说明                                             |
-| ---------- | ------------------------------------------------ |
-| `minimal`  | 只生成类型，不生成注释，使用 config 风格         |
-| `standard` | 生成类型和 API，生成注释，使用 config 风格       |
-| `verbose`  | 生成类型和 API，生成注释，4 空进，使用 both 风格 |
+| 预设       | 说明                                                 |
+| ---------- | ---------------------------------------------------- |
+| `minimal`  | 只生成类型，不生成 API，不生成注释，使用 config 风格 |
+| `standard` | 生成类型和 API，生成注释，使用 config 风格           |
+| `verbose`  | 生成类型和 API，生成注释，4 空进，使用 both 风格     |
 
 ```typescript
 import { defineConfig } from '@scxfe/api-tool';
@@ -144,8 +144,8 @@ export default defineConfig({
 
   // 输出配置
   outputDir: 'src/service',
-  typesOnly: false,
-  apiOnly: false,
+  generateApi: true,
+  generateTypes: true,
   target: 'typescript',
 
   // 代码生成选项
@@ -192,8 +192,8 @@ export default defineConfig({
   token: 'APS-YourAccessTokenHere',
 
   // 只生成类型，不生成请求函数
-  typesOnly: true,
-  apiOnly: false,
+  generateApi: false,
+  generateTypes: true,
 });
 ```
 
@@ -207,8 +207,8 @@ export default defineConfig({
   token: 'APS-YourAccessTokenHere',
 
   // 只生成 API 函数，不生成类型
-  typesOnly: false,
-  apiOnly: true,
+  generateApi: true,
+  generateTypes: false,
 });
 ```
 
@@ -249,7 +249,8 @@ export default defineConfig({
   source: process.env.API_SOURCE || 'https://api.apifox.com/v1/projects/6997172/export-openapi',
   token: process.env.API_TOKEN || 'default-token',
   outputDir: process.env.OUTPUT_DIR || 'src/service',
-  typesOnly: process.env.TYPES_ONLY === 'true',
+  generateApi: process.env.GENERATE_API !== 'false',
+  generateTypes: process.env.GENERATE_TYPES !== 'false',
 });
 ```
 
@@ -425,14 +426,14 @@ export default defineConfig({
 
 ```
 src/service/
-├── request.ts
-├── index.ts
-├── AIFuWu/
-│   ├── index.ts              # API 函数
-│   ├── User.ts               # 类型定义
-│   └── PostAiCompletion.ts   # 类型定义
-└── YongHuGuanLi/
-    ├── index.ts
+├── request.ts                # 请求函数
+├── index.ts                  # 根导出文件
+├── AIFuWu/                   # 分类目录
+│   └── index.ts              # API 函数
+├── YongHuGuanLi/             # 分类目录
+│   └── index.ts
+└── types/                    # 类型定义目录
+    ├── index.ts              # 类型索引文件
     ├── User.ts
     └── Role.ts
 ```

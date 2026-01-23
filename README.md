@@ -2,16 +2,16 @@
 
 一个强大的 Node.js CLI 工具，专门用于从各种 API 管理平台（如 Swagger/OpenAPI 3.0、Apifox）自动生成 TypeScript/JavaScript 代码。
 
-## ✨ 主要特性
+## 主要特性
 
-- 🚀 **多平台支持**: 支持 Swagger、Apifox 等主流 API 管理平台
-- 📝 **类型生成**: 自动生成完整的 TypeScript 类型定义
-- 🔧 **代码生成**: 自动生成 HTTP 请求函数和接口代码
-- 🎨 **模板定制**: 支持自定义代码生成模板
-- ⚙️ **配置灵活**: 丰富的配置选项和钩子函数
-- 📦 **多格式输出**: 支持 TypeScript 和 JavaScript
+- 多平台支持: 支持 Swagger、Apifox 等主流 API 管理平台
+- 类型生成: 自动生成完整的 TypeScript 类型定义，支持 TypeScript 和 Zod 两种模式
+- 代码生成: 自动生成 HTTP 请求函数和接口代码
+- 灵活配置: 支持自定义命名策略、输出目录、代码风格等
+- 钩子系统: 在代码生成过程的不同阶段执行自定义操作
+- Watch 模式: 监视配置文件变化，自动重新生成代码
 
-## 🚀 快速开始
+## 快速开始
 
 ### 安装
 
@@ -38,20 +38,15 @@ npx api-power init
 npx api-power
 ```
 
-## features
-
-[x] 请求方法与数据类型分离
-[x]
-
-## 📖 文档
+## 文档
 
 - [CLI 工具介绍](./docs/getting-started/index.md) - 工具介绍和安装说明
 - [CLI 使用说明](./docs/guides/cli.md) - 详细的使用方法和命令说明
 - [配置指南](./docs/guides/configuration.md) - 完整的配置项说明和示例
+- [高级用法](./docs/guides/advanced.md) - 自定义命名策略、钩子系统、Watch 模式等
 - [使用示例](./docs/guides/examples.md) - 完整的使用示例和代码生成展示
-- [迁移指南](./docs/guides/migration.md) - 从旧版本迁移到新版本
 
-## 🔧 配置示例
+## 配置示例
 
 ### Zod 模式（运行时验证）
 
@@ -103,13 +98,14 @@ export default defineConfig({
 
   // 输出配置
   outputDir: 'src/service',
-  typesOnly: false,
-  apiOnly: false,
+  generateApi: true,
+  generateTypes: true,
 
   // 类型生成格式
   typesFormat: 'zod', // 或 'typescript'
 
   // 代码生成选项
+  target: 'typescript',
   indentSize: 2,
   comment: true,
   pathPrefix: '/api/v1',
@@ -117,10 +113,34 @@ export default defineConfig({
   // 请求函数配置
   requestFunctionName: 'request',
   requestParamName: 'params',
+  requestMethodStyle: 'config',
+
+  // 自定义命名策略
+  namingStrategy: {
+    interfaceName: (info) => {
+      const method = info.method.charAt(0).toUpperCase() + info.method.slice(1).toLowerCase();
+      const pathName = info.path
+        .replace(/\{[^}]+\}/g, '')
+        .replace(/^\//, '')
+        .replace(/\//g, '-')
+        .replace(/^-+|-+$/g, '');
+      return `${method}${pathName}`;
+    },
+  },
+
+  // 钩子函数
+  hooks: {
+    beforeGenerate: () => {
+      console.log('开始生成代码...');
+    },
+    afterGenerate: () => {
+      console.log('代码生成完成');
+    },
+  },
 });
 ```
 
-## 📁 项目结构
+## 项目结构
 
 ### Zod 模式输出结构
 
@@ -147,23 +167,29 @@ src/service/
 ├── request.ts                      # 请求函数
 ├── index.ts                        # 根导出文件
 ├── AIFuWu/                        # 分类目录
-│   ├── index.ts                    # API 函数
-│   ├── User.ts                     # 类型定义
-│   └── PostAiCompletion.ts         # 类型定义
-└── YongHuGuanLi/                  # 分类目录
-    ├── index.ts
+│   └── index.ts                    # API 函数
+├── YongHuGuanLi/                  # 分类目录
+│   └── index.ts
+└── types/                         # 类型定义目录
+    ├── index.ts                   # 类型索引文件
     ├── User.ts
     └── Role.ts
 ```
 
-## 🛠️ 开发
+## 开发
 
 ```bash
 # 安装依赖
 pnpm install
 
-# 开发模式
-pnpm run docs:dev
+# 构建项目
+pnpm run build
+
+# 生成代码（开发模式）
+pnpm run dev
+
+# 格式化并修复代码
+pnpm run lint:fix
 
 # 构建文档
 pnpm run docs:build
@@ -172,15 +198,15 @@ pnpm run docs:build
 pnpm run docs:preview
 ```
 
-## 📄 许可证
+## 许可证
 
 MIT License - 详见 [LICENSE](LICENSE) 文件
 
-## 🤝 贡献
+## 贡献
 
 欢迎提交 Issue 和 Pull Request！
 
-## 📞 联系方式
+## 联系方式
 
 - 作者: shawicx
 - 邮箱: d35f3153@proton.me

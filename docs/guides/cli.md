@@ -53,11 +53,15 @@ api-power --config ./my-config.ts
 
 # 显示详细执行信息
 api-power --verbose
+
+# 监视模式（自动重新生成）
+api-power --watch
 ```
 
 **选项参数：**
 
 - `--config, -c`: 指定配置文件路径
+- `--watch, -w`: 监视配置文件更改并自动重新生成
 - `--verbose, -v`: 显示详细执行信息
 
 **执行流程：**
@@ -69,6 +73,16 @@ api-power --verbose
 5. 📝 生成 TypeScript 类型定义
 6. ⚡ 生成 HTTP 请求函数
 7. 📁 写入到输出目录
+
+**Watch 模式：**
+
+使用 `--watch` 选项可以监视配置文件变化，自动重新生成代码：
+
+```bash
+api-power --watch
+```
+
+Watch 模式会在配置文件更改时自动重新生成代码，适用于开发过程中频繁调整配置的场景。
 
 ### 3. 调试命令 - `api-power debug`
 

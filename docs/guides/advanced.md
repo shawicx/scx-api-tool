@@ -2,99 +2,239 @@
 
 本文档介绍 `@scx/api-tool` 的高级功能和使用技巧。
 
-## 多项目配置
+## 自定义命名策略
 
-### 微服务架构支持
+### 完全自定义命名
+
+`namingStrategy` 配置允许你完全覆盖默认的命名生成逻辑：
 
 ```typescript
-// api-power.config.ts
-export default defineConfig([
-  // 用户服务
-  {
-    name: 'user-service',
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: 'user-project-id',
-    outputDir: 'src/services/user',
+import { defineConfig, type InterfaceNamingInfo } from '@scxfe/api-tool';
 
-    requestConfig: {
-      baseURL: 'https://api.example.com/user',
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+  token: 'YOUR_TOKEN',
+
+  // 自定义命名策略
+  namingStrategy: {
+    // 自定义接口名称生成
+    interfaceName: (info: InterfaceNamingInfo) => {
+      const method = info.method.charAt(0).toUpperCase() + info.method.slice(1).toLowerCase();
+      const pathName = info.path
+        .replace(/\{[^}]+\}/g, '')
+        .replace(/^\//, '')
+        .replace(/^api-?/i, '')
+        .replace(/\//g, '-')
+        .replace(/^-+|-+$/g, '');
+      const words = pathName.split('-');
+      const pascalCase = words
+        .map((word) =>
+          /[A-Z0-9]/.test(word.charAt(0)) ? word : word.charAt(0).toUpperCase() + word.slice(1),
+        )
+        .join('');
+      return `${method}${pascalCase}`;
     },
 
-    filter: {
-      includeTags: ['用户管理', '认证'],
+    // 自定义函数名称生成
+    functionName: (info: InterfaceNamingInfo) => {
+      const camelCaseName = info.path
+        .replace(/\{[^}]+\}/g, '')
+        .replace(/^\//, '')
+        .replace(/\//g, '_')
+        .split('_')
+        .map((word, index) =>
+          index === 0
+            ? word.toLowerCase()
+            : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+        )
+        .join('');
+      return `${camelCaseName}Api`;
+    },
+
+    // 自定义请求类型名称生成
+    requestTypeName: (info: InterfaceNamingInfo) => {
+      return `${info.operationId || info.path.replace(/\//g, '_')}RequestType`;
+    },
+
+    // 自定义响应类型名称生成
+    responseTypeName: (info: InterfaceNamingInfo) => {
+      return `${info.operationId || info.path.replace(/\//g, '_')}ResponseType`;
     },
   },
-
-  // 订单服务
-  {
-    name: 'order-service',
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: 'order-project-id',
-    outputDir: 'src/services/order',
-
-    requestConfig: {
-      baseURL: 'https://api.example.com/order',
-    },
-
-    filter: {
-      includeTags: ['订单管理', '支付'],
-    },
-  },
-
-  // 通知服务
-  {
-    name: 'notification-service',
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: 'notification-project-id',
-    outputDir: 'src/services/notification',
-
-    requestConfig: {
-      baseURL: 'https://api.example.com/notification',
-    },
-
-    filter: {
-      includeTags: ['消息推送', '邮件'],
-    },
-  },
-]);
+});
 ```
 
-### 统一入口文件
+### 命名函数参数说明
 
-创建统一的 API 入口：
+每个命名函数接收 `InterfaceNamingInfo` 对象：
 
 ```typescript
-// src/services/index.ts
-export * from './user';
-export * from './order';
-export * from './notification';
-
-// 创建统一客户端
-class UnifiedApiClient {
-  constructor(
-    private userClient: UserClient,
-    private orderClient: OrderClient,
-    private notificationClient: NotificationClient,
-  ) {}
-
-  // 组合操作示例
-  async createUserWithNotification(userData: CreateUserRequest) {
-    const user = await this.userClient.createUser(userData);
-
-    // 发送欢迎通知
-    await this.notificationClient.sendWelcomeEmail({
-      userId: user.id,
-      email: user.email,
-    });
-
-    return user;
-  }
+interface InterfaceNamingInfo {
+  path: string; // API 路径，如 "/api/users/{id}"
+  method: string; // HTTP 方法，如 "GET", "POST"
+  summary?: string; // 操作描述
+  description?: string; // 操作详细描述
+  operationId?: string; // 操作 ID（如果存在）
+  tags?: string[]; // 标签数组
 }
+```
 
-export const apiClient = new UnifiedApiClient(userClient, orderClient, notificationClient);
+## 钩子系统
+
+### 钩子生命周期
+
+`hooks` 配置允许你在代码生成过程的不同阶段执行自定义操作：
+
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
+
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+  token: 'YOUR_TOKEN',
+
+  hooks: {
+    // 开始生成前的钩子
+    beforeGenerate: () => {
+      console.log('🚀 开始生成 API 代码...');
+    },
+
+    // 生成完成后的钩子
+    afterGenerate: () => {
+      console.log('✅ 代码生成完成');
+    },
+
+    // 生成单个文件前的钩子（可以修改内容）
+    beforeWriteFile: (filePath: string, content: string) => {
+      console.log(`📝 正在写入文件: ${filePath}`);
+      return content;
+    },
+
+    // 生成单个文件后的钩子
+    afterWriteFile: (filePath: string) => {
+      console.log(`✓ 文件已生成: ${filePath}`);
+    },
+  },
+});
+```
+
+### 实用钩子示例
+
+#### 自动格式化和类型检查
+
+```typescript
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+  token: 'YOUR_TOKEN',
+
+  hooks: {
+    afterGenerate: async () => {
+      const { exec } = await import('child_process');
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
+
+      // 格式化生成的代码
+      try {
+        await execAsync('npm run format');
+        console.log('🎨 代码格式化完成');
+      } catch (error) {
+        console.warn('⚠️  代码格式化失败:', error);
+      }
+
+      // 类型检查
+      try {
+        await execAsync('npm run type-check');
+        console.log('🔍 类型检查通过');
+      } catch (error) {
+        console.warn('⚠️  类型检查失败，请检查生成的代码');
+      }
+    },
+  },
+});
+```
+
+#### 统计生成信息
+
+```typescript
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+  token: 'YOUR_TOKEN',
+
+  hooks: {
+    afterGenerate: async () => {
+      const fs = await import('fs');
+      const path = await import('path');
+
+      const stats = {
+        files: 0,
+        lines: 0,
+        size: 0,
+      };
+
+      const countFiles = async (dir: string) => {
+        const files = fs.readdirSync(dir);
+        for (const file of files) {
+          const filePath = path.join(dir, file);
+          const stat = fs.statSync(filePath);
+          if (stat.isDirectory()) {
+            await countFiles(filePath);
+          } else {
+            const content = fs.readFileSync(filePath, 'utf-8');
+            stats.files++;
+            stats.lines += content.split('\n').length;
+            stats.size += stat.size;
+          }
+        }
+      };
+
+      await countFiles('src/service');
+
+      console.log('📊 生成统计:');
+      console.log(`   - 文件数: ${stats.files}`);
+      console.log(`   - 总行数: ${stats.lines}`);
+      console.log(`   - 大小: ${(stats.size / 1024).toFixed(2)} KB`);
+    },
+  },
+});
+```
+
+## Watch 模式
+
+### 开发时自动重新生成
+
+使用 `--watch` 选项可以监视配置文件变化，自动重新生成代码：
+
+```bash
+api-power --watch
+```
+
+Watch 模式适用于：
+
+- 开发过程中频繁调整配置
+- 测试不同的配置选项
+- CI/CD 流程中的持续集成
+
+### Watch 模式输出示例
+
+```
+✅ 检测配置文件: api-power.config.ts
+✅ 连接到 Apifox 平台
+✅ 获取项目信息: 用户管理系统 (ID: 6997172)
+✅ 获取接口列表: 共 23 个接口
+✅ 生成类型定义: 45 个类型
+✅ 生成请求函数: 23 个函数
+✅ 生成分组文件: 4 个分组
+
+🎉 代码生成完成！
+📁 输出目录: src/service
+⏱️  耗时: 3.2s
+
+🔍 监视模式运行中...
+   监控文件: /path/to/api-power.config.ts
+   按 Ctrl+C 退出监视模式
 ```
 
 ## 环境配置
@@ -106,382 +246,106 @@ export const apiClient = new UnifiedApiClient(userClient, orderClient, notificat
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isTest = process.env.NODE_ENV === 'test';
 
-export default defineConfig([
-  {
-    serverUrl: process.env.API_SERVER_URL || 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: process.env.APIFOX_PROJECT_ID || '123456789',
+export default defineConfig({
+  source:
+    process.env.API_SOURCE || 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+  token: process.env.API_TOKEN || 'YOUR_TOKEN',
 
-    outputDir: 'src/service',
-    typesOnly: false,
-    target: 'typescript',
+  outputDir: process.env.OUTPUT_DIR || 'src/service',
+  generateApi: true,
+  generateTypes: true,
+  target: 'typescript',
 
-    // 环境特定的请求配置
-    requestConfig: {
-      baseURL: isDevelopment
-        ? 'http://localhost:3000/api'
-        : isTest
-          ? 'https://test-api.example.com'
-          : 'https://api.example.com',
-      timeout: isDevelopment ? 30000 : 10000,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(isDevelopment && { 'X-Debug': 'true' }),
-      },
-    },
-
-    // 开发环境额外配置
-    ...(isDevelopment && {
-      hooks: {
-        success: async () => {
-          console.log('🎉 API 类型生成完成');
-          // 开发环境自动启动类型检查
-          exec('npm run type-check');
-        },
-      },
-    }),
-  },
-]);
+  // 开发环境额外配置
+  ...(isDevelopment && {
+    comment: true,
+    indentSize: 4,
+  }),
+});
 ```
 
 ### 环境变量配置
 
 ```bash
 # .env.development
-API_SERVER_URL=https://api.apifox.com
-APIFOX_PROJECT_ID=dev-project-id
+API_SOURCE=https://api.apifox.com/v1/projects/dev-project-id/export-openapi
+API_TOKEN=dev-access-token
 OUTPUT_DIR=src/service
 NODE_ENV=development
 
 # .env.production
-API_SERVER_URL=https://api.apifox.com
-APIFOX_PROJECT_ID=prod-project-id
+API_SOURCE=https://api.apifox.com/v1/projects/prod-project-id/export-openapi
+API_TOKEN=prod-access-token
 OUTPUT_DIR=src/service
 NODE_ENV=production
 ```
 
-## 高级过滤
-
-### 复杂过滤规则
+### 使用 dotenv 加载环境变量
 
 ```typescript
-export default defineConfig([
-  {
-    // ... 基础配置
+// api-power.config.ts
+import dotenv from 'dotenv';
 
-    filter: {
-      // 包含特定标签
-      includeTags: ['用户管理', '订单管理', '商品管理'],
+dotenv.config();
 
-      // 排除内部接口
-      excludePaths: [
-        '/admin/.*', // 管理后台接口
-        '/internal/.*', // 内部服务接口
-        '/test/.*', // 测试接口
-        '/health', // 健康检查
-        '/metrics', // 监控指标
-      ],
-
-      // 排除特定方法
-      excludeMethods: ['OPTIONS', 'HEAD'],
-
-      // 自定义过滤函数
-      customFilter: (interfaceInfo) => {
-        // 排除已废弃的接口
-        if (interfaceInfo.description?.includes('[废弃]')) {
-          return false;
-        }
-
-        // 只包含有文档的接口
-        if (!interfaceInfo.summary || interfaceInfo.summary.trim() === '') {
-          return false;
-        }
-
-        // 排除参数过多的接口（可选）
-        if (interfaceInfo.parameters.length > 10) {
-          console.warn(`接口参数过多，已排除: ${interfaceInfo.name}`);
-          return false;
-        }
-
-        return true;
-      },
-    },
-  },
-]);
-```
-
-### 分组生成
-
-```typescript
-export default defineConfig([
-  {
-    name: 'public-api',
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: '123456789',
-    outputDir: 'src/service/public',
-
-    filter: {
-      includeTags: ['公开接口'],
-      excludePaths: ['/admin/.*'],
-    },
-  },
-
-  {
-    name: 'admin-api',
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: '123456789',
-    outputDir: 'src/service/admin',
-
-    filter: {
-      includeTags: ['管理接口'],
-      includePaths: ['/admin/.*'],
-    },
-  },
-]);
-```
-
-## 自定义钩子
-
-### 完整的钩子配置
-
-```typescript
-export default defineConfig([
-  {
-    // ... 基础配置
-
-    hooks: {
-      // 生成前
-      beforeGenerate: async (config) => {
-        console.log('🚀 开始生成 API 代码...');
-        console.log(`配置: ${config.name || 'default'}`);
-
-        // 备份现有文件
-        if (fs.existsSync(config.outputDir)) {
-          const backupDir = `${config.outputDir}.backup.${Date.now()}`;
-          fs.cpSync(config.outputDir, backupDir, { recursive: true });
-          console.log(`📁 已备份到: ${backupDir}`);
-        }
-      },
-
-      // 数据获取后
-      afterFetch: async (data) => {
-        console.log(`📥 获取到 ${data.interfaces.length} 个接口`);
-        console.log(`📋 获取到 ${data.types.length} 个类型`);
-
-        // 数据验证
-        const invalidInterfaces = data.interfaces.filter(
-          (iface) => !iface.name || !iface.method || !iface.path,
-        );
-
-        if (invalidInterfaces.length > 0) {
-          console.warn(`⚠️  发现 ${invalidInterfaces.length} 个无效接口`);
-        }
-      },
-
-      // 生成成功
-      success: async (outputFiles) => {
-        console.log(`✅ 成功生成 ${outputFiles.length} 个文件`);
-
-        // 格式化生成的代码
-        try {
-          exec('npm run format', { cwd: process.cwd() });
-          console.log('🎨 代码格式化完成');
-        } catch (error) {
-          console.warn('⚠️  代码格式化失败:', error.message);
-        }
-
-        // 类型检查
-        try {
-          exec('npm run type-check', { cwd: process.cwd() });
-          console.log('🔍 类型检查通过');
-        } catch (error) {
-          console.warn('⚠️  类型检查失败，请检查生成的代码');
-        }
-
-        // 统计信息
-        const stats = await analyzeGeneratedFiles(outputFiles);
-        console.log('📊 生成统计:');
-        console.log(`   - 类型定义: ${stats.typeCount}`);
-        console.log(`   - 接口函数: ${stats.interfaceCount}`);
-        console.log(`   - 总行数: ${stats.totalLines}`);
-      },
-
-      // 生成失败
-      error: async (error) => {
-        console.error('❌ 代码生成失败:', error.message);
-
-        // 发送错误通知
-        if (process.env.NODE_ENV === 'production') {
-          await sendErrorNotification({
-            error: error.message,
-            stack: error.stack,
-            timestamp: new Date().toISOString(),
-          });
-        }
-
-        // 恢复备份（如果存在）
-        const backupDirs = fs
-          .readdirSync('.')
-          .filter((dir) => dir.startsWith('src.service.backup.'))
-          .sort()
-          .reverse();
-
-        if (backupDirs.length > 0) {
-          const latestBackup = backupDirs[0];
-          if (fs.existsSync(latestBackup)) {
-            fs.rmSync('src/service', { recursive: true, force: true });
-            fs.cpSync(latestBackup, 'src/service', { recursive: true });
-            console.log(`🔄 已恢复备份: ${latestBackup}`);
-          }
-        }
-      },
-
-      // 完成（无论成功失败）
-      complete: async () => {
-        console.log('🏁 API 代码生成操作完成');
-
-        // 清理旧备份（保留最近5个）
-        const backupDirs = fs
-          .readdirSync('.')
-          .filter((dir) => dir.startsWith('src.service.backup.'))
-          .sort()
-          .slice(0, -5);
-
-        for (const backupDir of backupDirs) {
-          fs.rmSync(backupDir, { recursive: true, force: true });
-        }
-      },
-    },
-  },
-]);
-
-// 辅助函数
-async function analyzeGeneratedFiles(files: string[]) {
-  let typeCount = 0;
-  let interfaceCount = 0;
-  let totalLines = 0;
-
-  for (const file of files) {
-    const content = fs.readFileSync(file, 'utf-8');
-    const lines = content.split('\n').length;
-    totalLines += lines;
-
-    if (file.includes('type')) {
-      typeCount += (content.match(/interface|type/g) || []).length;
-    }
-
-    if (file.includes('request') || file.includes('index')) {
-      interfaceCount += (content.match(/function|export/g) || []).length / 2;
-    }
-  }
-
-  return { typeCount, interfaceCount, totalLines };
-}
-
-async function sendErrorNotification(errorInfo: any) {
-  // 发送到 Slack、钉钉或其他通知服务
-  // 实现取决于你的通知系统
-}
-```
-
-## 性能优化
-
-### 大型项目优化
-
-```typescript
-export default defineConfig([
-  {
-    // ... 基础配置
-
-    // 性能配置
-    performance: {
-      // 并发请求数量
-      maxConcurrentRequests: 10,
-
-      // 缓存配置
-      cache: {
-        enabled: true,
-        ttl: 3600000, // 1小时
-        dir: '.api-cache',
-      },
-
-      // 批处理配置
-      batchSize: 50,
-
-      // 超时配置
-      timeout: {
-        connect: 10000,
-        socket: 30000,
-        request: 60000,
-      },
-    },
-
-    // 分批处理大型项目
-    pagination: {
-      enabled: true,
-      pageSize: 100,
-    },
-
-    // 增量更新
-    incremental: {
-      enabled: true,
-      hashFile: '.api-hash.json',
-    },
-  },
-]);
-```
-
-### 内存优化
-
-```typescript
-// 处理大型 API 项目时的内存优化
-export default defineConfig([
-  {
-    // ... 基础配置
-
-    // 流式处理
-    streaming: {
-      enabled: true,
-      chunkSize: 100,
-    },
-
-    // 内存监控
-    memoryLimit: '512MB',
-
-    // 垃圾回收策略
-    gc: {
-      aggressive: true,
-      interval: 1000,
-    },
-  },
-]);
+export default defineConfig({
+  source: process.env.API_SOURCE,
+  token: process.env.API_TOKEN,
+  outputDir: process.env.OUTPUT_DIR || 'src/service',
+  generateApi: true,
+  generateTypes: true,
+});
 ```
 
 ## 集成开发流程
 
 ### Git Hooks 集成
 
+#### 使用 Husky
+
 ```bash
-# package.json
+npm install --save-dev husky
+npx husky init
+```
+
+```bash
+# .husky/pre-commit
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+npm run api:generate
+git add src/service/
+```
+
+```json
 {
   "scripts": {
-    "pre-commit": "api-power && git add src/service/",
-    "post-merge": "api-power",
     "api:generate": "api-power",
-    "api:check": "api-power --dry-run"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run pre-commit",
-      "post-merge": "npm run post-merge"
-    }
+    "api:debug": "api-power debug",
+    "api:watch": "api-power --watch",
+    "api:init": "api-power init"
+  }
+}
+```
+
+#### 使用 lint-staged
+
+```bash
+npm install --save-dev lint-staged
+```
+
+```json
+{
+  "lint-staged": {
+    "src/service/**/*": ["npm run api:generate"],
+    "*.ts": ["eslint --fix", "prettier --write"]
   }
 }
 ```
 
 ### CI/CD 集成
+
+#### GitHub Actions
 
 ```yaml
 # .github/workflows/api-update.yml
@@ -491,8 +355,8 @@ on:
   push:
     paths:
       - 'api-power.config.ts'
-  schedule:
-    - cron: '0 */6 * * *' # 每6小时检查一次
+      - '.github/workflows/api-update.yml'
+  workflow_dispatch:
 
 jobs:
   update-api:
@@ -504,14 +368,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Install dependencies
         run: npm ci
 
       - name: Generate API types
-        run: |
-          npm run api:generate
+        run: npm run api:generate
+        env:
+          API_SOURCE: ${{ secrets.API_SOURCE }}
+          API_TOKEN: ${{ secrets.API_TOKEN }}
 
       - name: Check for changes
         id: verify-changed-files
@@ -530,10 +396,37 @@ jobs:
           git push
 ```
 
+#### GitLab CI
+
+```yaml
+# .gitlab-ci.yml
+stages:
+  - api-update
+
+api:generate:
+  stage: api-update
+  image: node:20
+  script:
+    - npm ci
+    - npm run api:generate
+    - |
+      if [ -n "$(git status --porcelain)" ]; then
+        git config --global user.email "gitlab-ci@gitlab.com"
+        git config --global user.name "GitLab CI"
+        git add src/service/
+        git commit -m "chore: update API types" || echo "No changes"
+        git push
+      fi
+  only:
+    - main
+    - schedules
+```
+
 ### IDE 集成
 
+#### VS Code 配置
+
 ```json
-// .vscode/settings.json
 {
   "typescript.preferences.includePackageJsonAutoImports": "on",
   "typescript.suggest.autoImports": true,
@@ -542,187 +435,96 @@ jobs:
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true,
     "source.organizeImports": true
+  },
+  "files.exclude": {
+    "**/.api-cache": true,
+    "**/.api-hash.json": true
   }
 }
 ```
 
-## 监控和调试
+#### 推荐的 VS Code 扩展
 
-### 详细的调试配置
+- TypeScript and JavaScript Language Features
+- ESLint
+- Prettier
+- Auto Import
 
-```typescript
-export default defineConfig([
-  {
-    // ... 基础配置
+## 调试和故障排除
 
-    // 调试配置
-    debug: {
-      enabled: true,
-      level: 'verbose', // 'error' | 'warn' | 'info' | 'debug' | 'verbose'
-      output: {
-        file: './debug.log',
-        console: true,
-        format: 'json', // 'text' | 'json'
-      },
-    },
+### 启用调试模式
 
-    // 监控配置
-    monitoring: {
-      enabled: true,
-      metrics: {
-        requestTime: true,
-        fileSize: true,
-        memoryUsage: true,
-      },
-      alerts: {
-        slowRequest: 5000, // 5秒
-        largeFile: 1024 * 1024, // 1MB
-        highMemory: 512 * 1024 * 1024, // 512MB
-      },
-    },
-  },
-]);
+```bash
+api-power debug
 ```
 
-### 自定义验证器
+或设置环境变量：
 
-```typescript
-export default defineConfig([
-  {
-    // ... 基础配置
-
-    // 自定义验证
-    validators: [
-      // 检查接口命名规范
-      {
-        name: 'naming-convention',
-        validate: (interfaceInfo) => {
-          const validNamePattern = /^[a-z][a-zA-Z0-9]*$/;
-          return validNamePattern.test(interfaceInfo.name);
-        },
-        message: '接口名称必须使用驼峰命名法',
-      },
-
-      // 检查必需参数
-      {
-        name: 'required-params',
-        validate: (interfaceInfo) => {
-          // GET 请求不应该有 body
-          if (interfaceInfo.method === 'GET' && interfaceInfo.requestBody) {
-            return false;
-          }
-          return true;
-        },
-        message: 'GET 请求不应该有请求体',
-      },
-
-      // 检查响应类型
-      {
-        name: 'response-type',
-        validate: (interfaceInfo) => {
-          // 检查是否定义了响应类型
-          return interfaceInfo.responses.length > 0 && interfaceInfo.responses[0].type !== 'any';
-        },
-        message: '接口必须定义明确的响应类型',
-      },
-    ],
-  },
-]);
+```bash
+DEBUG=true api-power
 ```
 
-## 故障排除
+### 常见问题
 
-### 常见问题和解决方案
+#### 1. 命名冲突
 
-#### 1. 大型项目生成失败
-
-```typescript
-// 解决方案：分批处理
-export default defineConfig([
-  {
-    // ... 基础配置
-
-    // 限制单次处理的接口数量
-    batchSize: 100,
-
-    // 启用分页
-    pagination: {
-      enabled: true,
-      pageSize: 50,
-    },
-  },
-]);
-```
-
-#### 2. 内存不足
+如果自定义命名导致重复名称，可以添加更复杂的逻辑：
 
 ```typescript
-// 解决方案：优化内存使用
-export default defineConfig([
-  {
-    // ... 基础配置
-
-    // 流式处理
-    streaming: {
-      enabled: true,
-      chunkSize: 50,
-    },
-
-    // 清理临时文件
-    cleanup: {
-      enabled: true,
-      interval: 1000,
-    },
+namingStrategy: {
+  interfaceName: (info) => {
+    const baseName = `${info.method}_${info.path.replace(/\//g, '_')}`;
+    return baseName.replace(/[^a-zA-Z0-9_]/g, '');
   },
-]);
+}
 ```
 
-#### 3. 网络超时
+#### 2. 钩子执行失败
+
+确保钩子函数是异步的：
 
 ```typescript
-// 解决方案：调整超时配置
-export default defineConfig([
-  {
-    // ... 基础配置
-
-    timeout: {
-      connect: 30000, // 连接超时 30 秒
-      socket: 60000, // Socket 超时 60 秒
-      request: 120000, // 请求超时 120 秒
-    },
-
-    // 重试配置
-    retry: {
-      enabled: true,
-      attempts: 3,
-      delay: 1000,
-    },
+hooks: {
+  afterGenerate: async () => {
+    // 异步操作
+    await someAsyncOperation();
   },
-]);
+}
 ```
 
-## 最佳实践总结
+#### 3. Watch 模式不触发
+
+检查配置文件路径是否正确，确保文件在监视范围内。
+
+## 最佳实践
 
 ### 1. 配置管理
 
-- 使用环境变量管理敏感信息
+- 使用环境变量管理敏感信息（token）
 - 为不同环境创建不同的配置文件
-- 定期备份配置文件
+- 将 `api-power.config.ts` 加入版本控制，但忽略生成的代码
 
-### 2. 性能优化
+### 2. 命名规范
 
-- 合理设置过滤器，减少生成内容
-- 使用缓存机制避免重复请求
-- 大型项目考虑分批处理
+- 保持命名风格一致
+- 使用清晰的描述性名称
+- 考虑使用 operationId 来确保唯一性
 
-### 3. 团队协作
+### 3. 钩子使用
+
+- 保持钩子函数简洁
+- 避免在钩子中执行耗时操作
+- 提供有意义的日志输出
+
+### 4. 性能优化
+
+- 合理设置 `concurrency` 参数控制并发
+- 避免在 `beforeWriteFile` 中执行复杂操作
+- 使用 Watch 模式减少手动生成次数
+
+### 5. 团队协作
 
 - 统一配置文件格式
 - 使用 Git Hooks 确保代码同步
 - 建立代码审查流程
-
-### 4. 监控维护
-
-- 启用详细日志记录
-- 设置性能监控和告警
-- 定期检查和更新配置
+- 在团队文档中说明命名规范
