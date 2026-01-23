@@ -38,7 +38,7 @@ export default defineConfig({
   source: 'YOUR_API_SOURCE',
   token: 'YOUR_TOKEN',
 
-  // ✅ 只需设置 typesFormat
+  // 只需设置 typesFormat
   typesFormat: 'zod',
 });
 ```

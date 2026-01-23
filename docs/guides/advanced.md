@@ -99,23 +99,23 @@ export default defineConfig({
   hooks: {
     // 开始生成前的钩子
     beforeGenerate: () => {
-      console.log('🚀 开始生成 API 代码...');
+      console.log('开始生成 API 代码...');
     },
 
     // 生成完成后的钩子
     afterGenerate: () => {
-      console.log('✅ 代码生成完成');
+      console.log('代码生成完成');
     },
 
     // 生成单个文件前的钩子（可以修改内容）
     beforeWriteFile: (filePath: string, content: string) => {
-      console.log(`📝 正在写入文件: ${filePath}`);
+      console.log(`正在写入文件: ${filePath}`);
       return content;
     },
 
     // 生成单个文件后的钩子
     afterWriteFile: (filePath: string) => {
-      console.log(`✓ 文件已生成: ${filePath}`);
+      console.log(`文件已生成: ${filePath}`);
     },
   },
 });
@@ -139,17 +139,17 @@ export default defineConfig({
       // 格式化生成的代码
       try {
         await execAsync('npm run format');
-        console.log('🎨 代码格式化完成');
+        console.log('代码格式化完成');
       } catch (error) {
-        console.warn('⚠️  代码格式化失败:', error);
+        console.warn('代码格式化失败:', error);
       }
 
       // 类型检查
       try {
         await execAsync('npm run type-check');
-        console.log('🔍 类型检查通过');
+        console.log('类型检查通过');
       } catch (error) {
-        console.warn('⚠️  类型检查失败，请检查生成的代码');
+        console.warn('类型检查失败，请检查生成的代码');
       }
     },
   },

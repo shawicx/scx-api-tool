@@ -8,7 +8,7 @@
 
 推荐使用 TypeScript 配置文件以获得完整的类型提示：
 
-- **TypeScript** (`api-power.config.ts`) - ✅ 推荐
+- **TypeScript** (`api-power.config.ts`) - 推荐
 - **JavaScript** (`api-power.config.js`) - 支持
 
 ### 配置文件位置

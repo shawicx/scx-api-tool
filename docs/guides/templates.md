@@ -18,11 +18,11 @@ src/templates/
 
 使用 [Handlebars](https://handlebarsjs.com/) 作为模板引擎，支持：
 
-- ✅ 变量替换：`{\{variable\}}`
-- ✅ 条件渲染：`{\{#if condition\}}...{\{/if\}}`
-- ✅ 循环遍历：`{\{#each items\}}...{\{/each\}}`
-- ✅ 自定义助手函数
-- ✅ 模板继承：`{\{> partial\}}`
+- 变量替换：`{\{variable\}}`
+- 条件渲染：`{\{#if condition\}}...{\{/if\}}`
+- 循环遍历：`{\{#each items\}}...{\{/each\}}`
+- 自定义助手函数
+- 模板继承：`{\{> partial\}}`
 
 ## 基础模板定制
 

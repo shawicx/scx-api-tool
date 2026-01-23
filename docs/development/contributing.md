@@ -387,7 +387,7 @@ TypeError: Cannot read property 'id' of undefined
 
 - [GitHub Discussions](https://github.com/shawicx/scx-api-tool/discussions)
 - [GitHub Issues](https://github.com/shawicx/scx-api-tool/issues)
-- [文档网站](https://shawicx.github.io/scx-api-tool/)
+- [文档网站](https://scx-api-tool.netlify.app/)
 
 ### 联系方式
 

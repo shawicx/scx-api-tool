@@ -15,7 +15,7 @@
 npx @scxfe/api-tool [command]
 ```
 
-**优点：**
+优点：
 
 - 始终使用最新版本
 - 无需全局安装，不污染系统
@@ -145,10 +145,10 @@ npm config set registry https://registry.npmmirror.com/
 
 ```bash
 # 检查 Node.js 版本
-node --version  # 需要 >= 16.0.0
+node --version  # 需要 >= 20.0.0
 
 # 检查 npm 版本
-npm --version   # 需要 >= 7.0.0
+npm --version   # 需要 >= 9.0.0
 
 # 升级到最新版本
 nvm install node
