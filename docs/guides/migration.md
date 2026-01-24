@@ -287,7 +287,7 @@ A: 位置取决于 `typesFormat` 配置：
   - 类型 Schema：在 `schemas/` 目录中
 
 - **TypeScript 模式**：
-  - 类型定义：在每个分类目录的独立 `.ts` 文件中
+  - 类型定义：在每个分类目录的独立 `.ts` 文件中以及 `types/` 目录中
 
 ### Q: 如何切换到 Zod 模式？
 
@@ -314,10 +314,6 @@ A: 检查以下几点：
    rm -rf node_modules/.cache
    npm run build
    ```
-
-### Q: 我能否保留旧的 `validation` 配置？
-
-A: 不可以。新版本已移除对 `validation` 配置的支持。请按照本指南进行迁移。
 
 ## 需要帮助？
 

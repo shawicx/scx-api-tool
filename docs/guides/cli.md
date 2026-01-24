@@ -66,13 +66,10 @@ api-power --watch
 
 **执行流程：**
 
-1. 检测和读取配置文件
-2. 连接到 API 管理平台
-3. 获取接口定义和数据结构
-4. 处理和转换数据格式
-5. 生成 TypeScript 类型定义
-6. 生成 HTTP 请求函数
-7. 写入到输出目录
+1. 配置验证
+2. 获取 API 数据
+3. 处理数据结构
+4. 生成代码文件
 
 **Watch 模式：**
 
@@ -80,6 +77,23 @@ api-power --watch
 
 ```bash
 api-power --watch
+```
+
+Watch 模式输出示例：
+
+```
+✅ 启动监视模式...
+✅ 步骤 1/3 完成: 配置文件加载完成
+✅ 步骤 2/3 完成: 初始代码生成完成
+✅ 步骤 3/3 完成: 文件监视已启动
+✅ 监视模式已启动，正在监控配置文件更改...
+🔍 监视模式运行中...
+   监控文件: /path/to/api-power.config.ts
+   按 Ctrl+C 退出监视模式
+
+✅ 检测到配置文件更改，开始重新生成...
+✅ 代码生成完成
+✅ 配置更新已应用，继续监视文件更改...
 ```
 
 Watch 模式会在配置文件更改时自动重新生成代码，适用于开发过程中频繁调整配置的场景。
@@ -122,7 +136,8 @@ api-power viz --port 3000
 
 **选项参数：**
 
-- `--port, -p`: 指定服务器端口（默认 3000）
+- `--port, -p`: 指定服务器端口（默认 "3000"）
+- `--host`: 指定服务器地址（默认 "localhost"）
 
 ### 5. 帮助信息 - `api-power help`
 
@@ -143,37 +158,29 @@ api-power help debug
 ### 成功执行
 
 ```
-检测配置文件: api-power.config.ts
-连接到 Apifox 平台
-获取项目信息: 用户管理系统 (ID: 123456789)
-获取接口列表: 共 23 个接口
-获取数据结构: 共 45 个类型
-生成类型定义: 45 个类型
-生成请求函数: 23 个函数
-生成分组文件: 4 个分组
-
-代码生成完成！
+步骤 1/4 完成: 配置验证完成
+步骤 2/4 完成: API 数据获取完成
+步骤 3/4 完成: 数据处理完成 (23 接口, 45 类型)
+步骤 4/4 完成: 代码文件生成完成
+所有处理步骤完成 (总耗时: 2s)
 输出目录: src/service
-耗时: 3.2s
+代码生成成功完成！(耗时: 2s)
 ```
 
 ### 调试模式输出
 
 ```
-[DEBUG] 正在加载配置文件: api-power.config.ts
-[DEBUG] 配置文件加载成功: 1 个配置项
-[DEBUG] 尝试连接到: https://api.apifox.com
-[DEBUG] 使用项目 ID: 123456789
-[DEBUG] 获取项目列表成功
-[DEBUG] 项目名称: 用户管理系统
-[DEBUG] 获取接口列表: 23 个接口
-[DEBUG] 过滤后的接口: 20 个（已排除 3 个）
-[DEBUG] 生成文件清单:
-[DEBUG]  - src/service/index.ts
-[DEBUG]  - src/service/types.ts
-[DEBUG]  - src/service/request.ts
-[DEBUG]  - src/service/user/index.ts
-[DEBUG]  - src/service/user/types.ts
+使用配置开始代码生成 api-power.config.ts
+步骤 1/4 完成: 配置验证完成
+[DEBUG] 处理配置: serverUrl = https://api.apifox.com, serverType = apifox
+步骤 2/4 完成: API 数据获取完成
+[DEBUG] 从 API 源获取原始数据成功
+[DEBUG] 处理后的数据计数: {"interfaces":23,"types":45,"categories":5}
+步骤 3/4 完成: 数据处理完成 (23 接口, 45 类型)
+步骤 4/4 完成: 代码文件生成完成
+所有处理步骤完成 (总耗时: 2s)
+输出目录: src/service
+代码生成成功完成！(耗时: 2s)
 ```
 
 ## 使用技巧
@@ -288,28 +295,31 @@ Error: 无法创建输出目录: Permission denied
 
 ### 退出码
 
-| 退出码 | 说明         |
-| ------ | ------------ |
-| 0      | 成功执行     |
-| 1      | 一般错误     |
-| 2      | 配置文件错误 |
-| 3      | 网络连接错误 |
-| 4      | 权限错误     |
-| 5      | API 平台错误 |
+| 退出码 | 说明             |
+| ------ | ---------------- |
+| 0      | 成功执行         |
+| E1001  | 配置文件未找到   |
+| E1002  | 配置无效         |
+| E1003  | 配置解析失败     |
+| E1004  | 配置缺少必需字段 |
+| E1005  | 无效的 URL 格式  |
+| E2001  | 网络请求失败     |
+| E2002  | 未授权访问       |
+| E2003  | 请求超时         |
+| E2004  | 无效的响应格式   |
+| E2005  | 网络错误         |
+| E3001  | 模板编译失败     |
+| E3002  | 文件写入失败     |
+| E3003  | 类型生成失败     |
+| E3004  | Schema 生成失败  |
 
 ## 环境变量
 
-可以使用环境变量覆盖配置：
+可以使用环境变量来控制调试输出：
 
 ```bash
-# API 平台 Token
-export API_POWER_TOKEN=your-token-here
-
-# 输出目录
-export API_POWER_OUTPUT_DIR=./src/services
-
 # 调试模式
-export API_POWER_DEBUG=true
+export DEBUG=true
 
 # 执行命令
 api-power
@@ -321,7 +331,7 @@ api-power
 
 ```bash
 api-power --version
-# 输出: @scx/api-tool version 0.4.8
+# 输出: @scxfe/api-tool version 0.4.10
 ```
 
 ### 检查更新

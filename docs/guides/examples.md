@@ -35,20 +35,22 @@ export default defineConfig({
 });
 ```
 
+**说明**：`generateApi` 控制是否生成 API 函数，`typesFormat` 控制类型生成格式。两者是独立配置。
+
 ### 生成的文件结构
 
 ```
 src/service/
 ├── request.ts                    # 请求函数（axios 封装）
-├── index.ts                      # 根导出文件
+├── index.ts                      # 根导出文件（从各分类的 schema 导出）
 ├── AIFuWu/                      # 分类目录
-│   ├── index.ts                  # API 函数（从 schema 导入类型）
-│   └── schema.ts                 # 合并的 Schema 文件
+│   ├── index.ts                  # API 函数（当 generateApi: true 时生成）
+│   └── schema.ts                 # Schema 文件（从 schemas/ 导入并导出类型）
 ├── YongHuGuanLi/                 # 分类目录
 │   ├── index.ts
 │   └── schema.ts
 └── schemas/                      # 类型 Schema 目录
-    ├── CompletionRequestDtoSchema.ts
+    ├── CompletionRequestDtoSchema.ts   # 单独的 Schema 文件
     ├── UserResponseDtoSchema.ts
     ├── RoleSchema.ts
     └── index.ts                  # Schema 索引
@@ -94,30 +96,6 @@ export type PostAiCompletionRequestType = z.infer<typeof PostAiCompletionRequest
 export type PostAiCompletionResponseType = z.infer<typeof PostAiCompletionResponseTypeSchema>;
 ```
 
-#### 接口文件 (`src/service/AIFuWu/index.ts`)
-
-```typescript
-import { RequestConfig, request } from '@/service/request';
-import { PostAiCompletionRequestTypeSchema, PostAiCompletionResponseTypeSchema } from './schema';
-import type { PostAiCompletionRequestType, PostAiCompletionResponseType } from './schema';
-
-/**
- * @description 生成 AI 回复
- * @param params PostAiCompletionRequestType
- * @returns Promise<PostAiCompletionResponseType>
- */
-export async function postAiCompletionApi(
-  params: PostAiCompletionRequestType,
-): Promise<PostAiCompletionResponseType> {
-  const config: RequestConfig = {
-    url: '/api/ai/completion',
-    method: 'POST',
-    data: params,
-  };
-  return request<PostAiCompletionResponseType>(config);
-}
-```
-
 #### 类型 Schema 文件 (`src/service/schemas/UserSchema.ts`)
 
 ```typescript
@@ -143,7 +121,7 @@ import { postAiCompletionApi } from '@/service/AIFuWu';
 import type { PostAiCompletionRequestType } from '@/service/AIFuWu';
 import { UserSchema } from '@/service/schemas';
 
-// 调用 API
+// 调用 API（当 generateApi: true 时，会生成 API 函数）
 const result = await postAiCompletionApi({
   messages: [{ role: 'user', content: 'Hello' }],
   options: {
@@ -151,15 +129,12 @@ const result = await postAiCompletionApi({
   },
 });
 
-// 使用 Zod Schema 进行验证
-import { z } from 'zod';
-
+// 使用 Zod Schema 进行运行时验证
 const userData = {
   name: 'John',
   email: 'john@example.com',
 };
 
-// 验证数据
 const validatedUser = UserSchema.parse(userData);
 ```
 
@@ -203,88 +178,34 @@ src/service/
 ├── request.ts                    # 请求函数
 ├── index.ts                      # 根导出文件
 ├── AIFuWu/                      # 分类目录
-│   ├── index.ts                  # API 函数
-│   ├── User.ts                   # 类型定义
-│   └── PostAiCompletion.ts       # 类型定义
+│   ├── index.ts                  # 类型定义文件（包含所有接口类型）
+│   ├── User.ts                   # 单独类型定义
+│   └── PostAiCompletion.ts       # 单独类型定义
 ├── YongHuGuanLi/                 # 分类目录
 │   ├── index.ts
 │   ├── User.ts
 │   └── Role.ts
 ```
 
-### 生成的代码示例
+### 注意：TypeScript 模式不生成 API 函数
 
-#### 类型定义文件 (`src/service/AIFuWu/PostAiCompletion.ts`)
+TypeScript 模式只生成类型定义文件，不生成 API 函数。用户需要：
 
-```typescript
-/**
- * @description AI 完成请求
- */
-export interface PostAiCompletionRequestType {
-  messages: Array<{
-    role: string;
-    content: string;
-  }>;
-  options?: {
-    provider?: 'copilot' | 'glm' | 'qwen';
-  };
-}
-
-/**
- * @description AI 完成响应
- */
-export interface PostAiCompletionResponseType {
-  success?: boolean;
-  data?: {
-    content?: string;
-    model?: string;
-    tokensUsed?: {
-      prompt?: number;
-      completion?: number;
-      total?: number;
-    };
-    finishReason?: string;
-    provider?: string;
-  };
-}
-```
-
-#### 接口文件 (`src/service/AIFuWu/index.ts`)
+1. 使用 `@/service/request` 中的 `request` 函数自行调用 API
+2. 使用生成的类型定义进行类型检查
 
 ```typescript
-import { RequestConfig, request } from '@/service/request';
-import type { PostAiCompletionRequestType } from './PostAiCompletion';
-import type { PostAiCompletionResponseType } from './PostAiCompletion';
-
-/**
- * @description 生成 AI 回复
- * @param params PostAiCompletionRequestType
- * @returns Promise<PostAiCompletionResponseType>
- */
-export async function postAiCompletionApi(
-  params: PostAiCompletionRequestType,
-): Promise<PostAiCompletionResponseType> {
-  const config: RequestConfig = {
-    url: '/api/ai/completion',
-    method: 'POST',
-    data: params,
-  };
-  return request<PostAiCompletionResponseType>(config);
-}
-```
-
-### 使用示例
-
-```typescript
-import { postAiCompletionApi } from '@/service/AIFuWu';
+// 示例：使用类型定义并手动调用 API
 import type { PostAiCompletionRequestType } from '@/service/AIFuWu';
+import { request } from '@/service/request';
 
-// 调用 API
-const result = await postAiCompletionApi({
-  messages: [{ role: 'user', content: 'Hello' }],
-  options: {
-    provider: 'copilot',
-  },
+const response = await request({
+  url: '/api/ai/completion',
+  method: 'POST',
+  data: {
+    messages: [{ role: 'user', content: 'Hello' }],
+    options: { provider: 'copilot' },
+  } as PostAiCompletionRequestType,
 });
 ```
 
@@ -327,7 +248,7 @@ const user: User = {
 
 ## 示例 4: 只生成 API（API Only）
 
-只生成 API 函数，不生成类型定义（使用 `any` 类型）。
+只生成 API 函数，不生成类型定义（不使用类型系统）。
 
 ### 配置文件
 
@@ -443,9 +364,9 @@ TYPES_FORMAT=zod
 
 | 特性           | TypeScript 模式 | Zod 模式 |
 | -------------- | --------------- | -------- |
-| 编译时类型检查 | 是              | 是       |
-| 运行时验证     | 否              | 是       |
-| Schema 定义    | 否              | 是       |
+| 编译时类型检查 | ✅              | ✅       |
+| 运行时验证     | ✅              | ✅       |
+| Schema 定义    | ✅              | ✅       |
 | 文件数量       | 较多            | 较少     |
 | 生成速度       | 较快            | 较慢     |
 | 运行时开销     | 无              | 较小     |
@@ -483,9 +404,7 @@ export default defineConfig({
 });
 ```
 
-### 推荐配置 3: 微服务（API Only）
-
-适合多个微服务项目，由中心仓库管理类型。
+### 推荐配置 3: 微服务
 
 ```typescript
 export default defineConfig({

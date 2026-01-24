@@ -76,15 +76,13 @@ npx api-power
 你会看到类似输出：
 
 ```
-连接到 Apifox 平台
-获取项目信息 (项目 ID: 6997172)
-获取接口列表 (共 23 个接口)
-生成类型定义 (45 个类型)
-生成请求函数 (23 个函数)
-生成分组文件 (4 个分组)
-代码生成完成！
+步骤 1/4 完成: 配置验证完成
+步骤 2/4 完成: API 数据获取完成
+步骤 3/4 完成: 数据处理完成 (23 接口, 45 类型)
+步骤 4/4 完成: 代码文件生成完成
+所有处理步骤完成 (总耗时: 2s)
 输出目录: src/service
-耗时: 3.2s
+代码生成成功完成！(耗时: 2s)
 ```
 
 ## 步骤 4: 查看生成的代码
@@ -93,78 +91,86 @@ npx api-power
 
 ```
 src/service/
-├── index.ts           # 主入口，导出所有内容
-├── request.ts         # HTTP 请求配置
-├── types/             # 类型定义目录
-│   ├── index.ts       # 类型索引文件
-│   ├── User.ts        # 用户类型
-│   └── Product.ts     # 产品类型
-├── user/              # 用户相关 API
-│   └── index.ts       # 用户 API 函数
-├── order/             # 订单相关 API
-│   └── index.ts       # 订单 API 函数
-└── product/           # 产品相关 API
-    └── index.ts       # 产品 API 函数
+├── index.ts                  # 主入口，导出所有内容
+├── request.ts                # HTTP 请求配置
+├── AIFuWu/                  # 分类目录
+│   └── schema.ts             # Schema 文件（从 schemas/ 导入）
+├── YongHuGuanLi/             # 分类目录
+│   └── schema.ts
+└── schemas/                  # 类型 Schema 目录
+    ├── CompletionRequestDtoSchema.ts  # 单独的 Schema 文件
+    ├── UserResponseDtoSchema.ts
+    └── index.ts                  # Schema 索引
 ```
 
 ### 生成的代码示例
 
-#### 类型定义 (src/service/user/types.ts)
+#### Schema 定义 (src/service/schemas/UserSchema.ts)
 
 ```typescript
-export interface User {
-  id: number;
-  username: string;
-  email: string;
-  avatar?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { z } from 'zod';
 
-export interface CreateUserRequest {
-  username: string;
-  email: string;
-  password: string;
-}
+export const UserSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  email: z.string(),
+  avatar: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
 
-export interface UpdateUserRequest {
-  username?: string;
-  email?: string;
-  avatar?: string;
-}
+export type User = z.infer<typeof UserSchema>;
 ```
 
-#### 请求函数 (src/service/user/index.ts)
+email?: string;
+avatar?: string;
+}
+
+````
+
+#### 注意：Zod 模式不生成 API 函数
+
+Zod 模式只生成 Schema 文件，不生成 API 函数。用户需要使用 `request` 函数手动调用 API：
 
 ```typescript
-import { request } from '../request';
-import type { User, CreateUserRequest, UpdateUserRequest } from './types';
+// 示例：使用 request 函数
+import { request } from '@/service/request';
 
-export function getUser(id: number): Promise<User> {
-  return request.get(`/users/${id}`);
-}
+const response = await request({
+  url: '/users',
+  method: 'POST',
+  data: {
+    username: 'john',
+    email: 'john@example.com',
+    password: 'password123',
+  },
+});
+```
 
-export function createUser(data: CreateUserRequest): Promise<User> {
-  return request.post('/users', data);
-}
+可以使用 Schema 定义进行数据验证：
+```typescript
+import { UserSchema } from '@/service/schemas';
 
-export function updateUser(id: number, data: UpdateUserRequest): Promise<User> {
-  return request.put(`/users/${id}`, data);
-}
+// 验证请求数据
+const userData = {
+  username: 'john',
+  email: 'john@example.com',
+  password: 'password123',
+};
 
-export function deleteUser(id: number): Promise<void> {
-  return request.delete(`/users/${id}`);
-}
+const validatedUser = UserSchema.parse(userData);
 ```
 
 #### 主入口 (src/service/index.ts)
 
 ```typescript
-export * from './types';
-export * from './request';
-export * from './user';
-export * from './order';
-export * from './product';
+export * from './YongHuGuanLi/schema';
+export * from './YouXiangFuWu/schema';
+export * from './JueSeGuanLi/schema';
+export * from './QuanXianGuanLi/schema';
+export * from './AIFuWu/schema';
+export * from './AIFuWuLiuShi/schema';
+export * from './schemas';
 ```
 
 ## 步骤 5: 在项目中使用
@@ -398,3 +404,4 @@ export default defineConfig({
 API_SOURCE=https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi
 API_TOKEN=APS-YourAccessTokenHere
 ```
+````

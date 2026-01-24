@@ -86,13 +86,15 @@ export default defineConfig({
 | `requestFunctionFilePath`  | `string`                                  | `'src/service/request.ts'` | 请求函数文件路径 |
 | `requestFunctionName`      | `string`                                  | `'request'`                | 请求函数名称     |
 | `requestMethodsObjectName` | `string`                                  | `'requestMethods'`         | 请求方法对象名称 |
+| `requestParamName`         | `string`                                  | `'params'`                 | 请求参数名       |
+| `responseTypeName`         | `string`                                  | `'Response'`               | 返回数据类型名   |
 | `requestMethodStyle`       | `'config' \| 'method-specific' \| 'both'` | `'config'`                 | 请求方法调用风格 |
 
 ### 性能配置
 
 | 配置项        | 类型     | 默认值 | 说明                               |
 | ------------- | -------- | ------ | ---------------------------------- |
-| `concurrency` | `number` | `5`    | 并发写入数量（文件生成的并发控制） |
+| `concurrency` | `number` | `50`   | 并发写入数量（文件生成的并发控制） |
 
 ### 预设配置
 
