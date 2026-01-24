@@ -113,6 +113,7 @@ package-lock.json
 .vitepress/cache/
 .vitepress/dist/
 docs/.vitepress/dist/
+openspec/
 
 # Local configuration files
 .gitconfig.local
