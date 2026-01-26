@@ -3,6 +3,7 @@
  */
 
 import { RequestMethodStyle } from './enums';
+import { CliHooks } from './hooks';
 
 /**
  * 预设类型
@@ -146,6 +147,8 @@ export interface UserConfig {
   namingStrategy?: NamingStrategy;
   /** 并发写入数量（用于文件生成的并发控制） */
   concurrency?: number;
+  /** 钩子函数，用于在代码生成过程中执行自定义操作 */
+  hooks?: CliHooks;
 }
 
 /**
@@ -199,4 +202,6 @@ export interface ApiConfig {
   namingStrategy?: NamingStrategy;
   /** 并发写入数量（用于文件生成的并发控制） */
   concurrency: number;
+  /** 钩子函数，用于在代码生成过程中执行自定义操作 */
+  hooks?: CliHooks;
 }

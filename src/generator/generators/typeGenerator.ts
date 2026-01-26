@@ -6,7 +6,7 @@
 import consola from 'consola';
 import { join } from 'path';
 import { ProcessedApiData } from '../../processors/openapi';
-import { ApiConfig } from '../../types';
+import { ApiConfig, CliHooks } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
 import { formatCode } from '../../utils/formatter';
 import { getNormalizedPathWithAlias } from '../pathUtils';
@@ -20,6 +20,7 @@ import { executeWithConcurrency } from '../../utils/concurrency';
  * 为每个 OpenAPI 类型定义生成独立的 TypeScript 类型文件
  * @param processedData 处理后的 API 数据
  * @param config API 配置
+ * @param hooks 钩子函数
  *
  * @example
  * ```typescript
@@ -34,6 +35,7 @@ import { executeWithConcurrency } from '../../utils/concurrency';
 export async function generateTypeFiles(
   processedData: ProcessedApiData,
   config: ApiConfig,
+  hooks?: CliHooks,
 ): Promise<void> {
   if (config.generateApi && !config.generateTypes) {
     if (process.env.DEBUG) {
@@ -50,14 +52,18 @@ export async function generateTypeFiles(
   await ensureDir(typesDir);
 
   const concurrency = config.concurrency || 50;
+
   await executeWithConcurrency(
     processedData.types,
-    (type) => generateTypeFile(type, processedData, config, typesDir),
+    async (type: any) => {
+      await generateTypeFile(type, processedData, config, typesDir, hooks);
+    },
     concurrency,
     `生成类型文件`,
   );
 
-  await generateTypesIndexFile(processedData, config);
+  // 生成类型索引文件
+  await generateTypesIndexFile(processedData, config, hooks);
 }
 
 /**
@@ -67,12 +73,14 @@ export async function generateTypeFiles(
  * @param processedData 处理后的 API 数据
  * @param config API 配置
  * @param typesDir 类型目录路径
+ * @param hooks 钩子函数
  */
 async function generateTypeFile(
   type: any,
   processedData: ProcessedApiData,
   config: ApiConfig,
   typesDir: string,
+  hooks?: CliHooks,
 ): Promise<void> {
   const cleanTypeName = sanitizeTypeName(type.name);
   const cleanFileName = cleanTypeName.replace(/[^a-zA-Z0-9$_]/g, '_');
@@ -115,7 +123,7 @@ async function generateTypeFile(
   const formattedCode = await formatCode(code, join(typesDir, `${cleanFileName}.ts`));
 
   const filePath = join(typesDir, `${cleanFileName}.ts`);
-  await writeFormattedFile(filePath, formattedCode);
+  await writeFormattedFile(filePath, formattedCode, hooks);
 
   if (process.env.DEBUG) {
     consola.debug(`创建类型文件: ${filePath}`);
@@ -127,10 +135,12 @@ async function generateTypeFile(
  * 导出所有类型定义
  * @param processedData 处理后的 API 数据
  * @param config API 配置
+ * @param hooks 钩子函数
  */
 async function generateTypesIndexFile(
   processedData: ProcessedApiData,
   config: ApiConfig,
+  hooks?: CliHooks,
 ): Promise<void> {
   const typesDir = join(config.outputDir, 'types');
 
@@ -143,7 +153,7 @@ async function generateTypesIndexFile(
   }
 
   const indexPath = join(typesDir, 'index.ts');
-  await writeFormattedFile(indexPath, indexContent);
+  await writeFormattedFile(indexPath, indexContent, hooks);
 
   if (process.env.DEBUG) {
     consola.debug(`创建类型索引文件: ${indexPath}`);

@@ -49,23 +49,23 @@ export async function generateFiles(
     // 生成接口文件
     if (config.generateApi || config.generateTypes) {
       consola.info('生成接口文件');
-      await generateInterfaceFiles(processedData, config);
+      await generateInterfaceFiles(processedData, config, config.hooks);
     }
 
     // 生成 API 请求方法（如果需要）
     if (config.generateApi) {
       consola.info('生成 API 请求方法');
-      await generateRequestFile(config);
+      await generateRequestFile(config, config.hooks);
     }
 
     // 生成类型定义（如果需要）
     if (config.generateTypes) {
       if (config.typesFormat === 'typescript') {
         consola.info('生成 TypeScript 类型定义');
-        await generateTypeFiles(processedData, config);
+        await generateTypeFiles(processedData, config, config.hooks);
       } else if (config.typesFormat === 'zod') {
         consola.info('生成 Zod Schema');
-        await generateSchemaFiles(processedData, config);
+        await generateSchemaFiles(processedData, config, config.hooks);
       }
     }
 

@@ -6,7 +6,7 @@
 import consola from 'consola';
 import { join } from 'path';
 import { ProcessedApiData, groupInterfacesByTag } from '../../processors/openapi';
-import { ApiConfig } from '../../types';
+import { ApiConfig, CliHooks } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
 import { formatCode } from '../../utils/formatter';
 import { chineseToPinyinCamelCase } from '../../utils/path';
@@ -24,6 +24,7 @@ import { executeWithConcurrency } from '../../utils/concurrency';
  * 包括类型 Schema 和接口 Request/Response Schema
  * @param processedData 处理后的 API 数据
  * @param config API 配置
+ * @param hooks 钩子函数
  *
  * @example
  * ```typescript
@@ -40,6 +41,7 @@ import { executeWithConcurrency } from '../../utils/concurrency';
 export async function generateSchemaFiles(
   processedData: ProcessedApiData,
   config: ApiConfig,
+  hooks?: CliHooks,
 ): Promise<void> {
   if (config.typesFormat !== 'zod') {
     if (process.env.DEBUG) {
@@ -48,17 +50,21 @@ export async function generateSchemaFiles(
     return;
   }
 
-  consola.info('开始生成 Zod Schema...');
-
   const generatedSchemas: string[] = [];
 
   const typesSchemasDir = join(config.outputDir, 'schemas');
   await ensureDir(typesSchemasDir);
-  await generateTypeSchemasFiles(processedData, config, typesSchemasDir, generatedSchemas);
+  await generateTypeSchemasFiles(processedData, config, typesSchemasDir, generatedSchemas, hooks);
 
-  await generateInterfaceSchemasFiles(processedData, config, config.outputDir);
+  await generateInterfaceSchemasFiles(
+    processedData,
+    config,
+    config.outputDir,
+    generatedSchemas,
+    hooks,
+  );
 
-  await generateSchemaIndexFile(typesSchemasDir, generatedSchemas);
+  await generateSchemaIndexFile(typesSchemasDir, generatedSchemas, hooks);
 
   consola.success(`成功生成 ${generatedSchemas.length} 个 Zod Schema 文件`);
 }
@@ -70,12 +76,14 @@ export async function generateSchemaFiles(
  * @param config API 配置
  * @param schemasDir Schema 目录路径
  * @param generatedSchemas 已生成的 Schema 名称数组（会追加）
+ * @param hooks 钩子函数
  */
 async function generateTypeSchemasFiles(
   processedData: ProcessedApiData,
   config: ApiConfig,
   schemasDir: string,
   generatedSchemas: string[],
+  hooks?: CliHooks,
 ): Promise<void> {
   if (process.env.DEBUG) {
     consola.debug(`正在生成 ${processedData.types.length} 个类型 Schema...`);
@@ -99,7 +107,7 @@ async function generateTypeSchemasFiles(
       const formattedCode = await formatCode(schemaCode, join(schemasDir, `${fileName}.ts`));
 
       const filePath = join(schemasDir, `${fileName}.ts`);
-      await writeFormattedFile(filePath, formattedCode);
+      await writeFormattedFile(filePath, formattedCode, hooks);
 
       generatedSchemas.push(schemaName);
 
@@ -118,11 +126,15 @@ async function generateTypeSchemasFiles(
  * @param processedData 处理后的 API 数据
  * @param config API 配置
  * @param schemasDir Schema 目录路径
+ * @param generatedSchemas 已生成的 Schema 名称数组
+ * @param hooks 钩子函数
  */
 async function generateInterfaceSchemasFiles(
   processedData: ProcessedApiData,
   config: ApiConfig,
   schemasDir: string,
+  generatedSchemas: string[],
+  hooks?: CliHooks,
 ): Promise<void> {
   if (process.env.DEBUG) {
     consola.debug(`正在生成 ${processedData.interfaces.length} 个接口 Schema...`);
@@ -146,11 +158,12 @@ async function generateInterfaceSchemasFiles(
         config,
         getRequestTypeName,
         getResponseTypeName,
+        generatedSchemas,
       );
 
       const formattedCode = await formatCode(result.code, join(dirPath, 'schema.ts'));
       const filePath = join(dirPath, 'schema.ts');
-      await writeFormattedFile(filePath, formattedCode);
+      await writeFormattedFile(filePath, formattedCode, hooks);
 
       if (process.env.DEBUG) {
         consola.debug(`创建合并 Schema 文件: ${filePath}`);
@@ -166,15 +179,17 @@ async function generateInterfaceSchemasFiles(
  * 导出所有 Schema 定义
  * @param schemasDir Schema 目录路径
  * @param generatedSchemas 已生成的 Schema 名称数组
+ * @param hooks 钩子函数
  */
 async function generateSchemaIndexFile(
   schemasDir: string,
   generatedSchemas: string[],
+  hooks?: CliHooks,
 ): Promise<void> {
   const indexContent = generateZodSchemaIndex(generatedSchemas);
 
   const indexPath = join(schemasDir, 'index.ts');
-  await writeFormattedFile(indexPath, indexContent);
+  await writeFormattedFile(indexPath, indexContent, hooks);
 
   if (process.env.DEBUG) {
     consola.debug(`创建 Schema 索引文件: ${indexPath}`);

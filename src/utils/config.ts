@@ -11,6 +11,7 @@ import {
   RequestMethodStyle,
   RequestMethod,
   TypesFormat,
+  CliHooks,
 } from '@/types';
 import consola from 'consola';
 
@@ -38,6 +39,7 @@ const DEFAULT_CONFIG_VALUES: Omit<
   requestParamName: 'params',
   responseTypeName: 'Response',
   concurrency: 50, // 默认并发数
+  hooks: undefined as CliHooks | undefined, // 钩子函数
 };
 
 /**
@@ -159,8 +161,9 @@ export function defineConfig(config: UserConfig): ApiConfig {
     apifoxProjectId,
     source: config.source,
     token: config.token,
-    // 确保 namingStrategy 被正确传递
+    // 确保 namingStrategy 和 hooks 被正确传递
     ...(config.namingStrategy && { namingStrategy: config.namingStrategy }),
+    ...(config.hooks && { hooks: config.hooks }),
   };
 
   return finalConfig;

@@ -6,7 +6,7 @@
 import consola from 'consola';
 import { join } from 'path';
 import { ProcessedApiData, groupInterfacesByTag } from '../../processors/openapi';
-import { ApiConfig } from '../../types';
+import { ApiConfig, CliHooks } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
 import { formatCode } from '../../utils/formatter';
 import { chineseToPinyinCamelCase } from '../../utils/path';
@@ -22,6 +22,7 @@ import { generateZodSchemaFromOperation } from '../../templates/schema-zod/inter
  * 按标签分组生成接口文件，每个标签生成一个 index.ts 文件
  * @param processedData 处理后的 API 数据
  * @param config API 配置
+ * @param hooks 钩子函数
  *
  * @example
  * ```typescript
@@ -36,6 +37,7 @@ import { generateZodSchemaFromOperation } from '../../templates/schema-zod/inter
 export async function generateInterfaceFiles(
   processedData: ProcessedApiData,
   config: ApiConfig,
+  hooks?: CliHooks,
 ): Promise<void> {
   if (process.env.DEBUG) {
     consola.debug(`正在生成 ${processedData.interfaces.length} 个接口文件...`);
@@ -59,14 +61,14 @@ export async function generateInterfaceFiles(
 
       await ensureDir(dirPath);
 
-      await generateInterfaceFileForTag(tagDir, interfaces, processedData, config, dirPath);
+      await generateInterfaceFileForTag(tagDir, interfaces, processedData, config, dirPath, hooks);
     },
     concurrency,
     `生成接口文件`,
   );
 
   // 生成根目录 index.ts 文件
-  await generateRootIndexFile(processedData, config);
+  await generateRootIndexFile(processedData, config, hooks);
 }
 
 /**
@@ -77,6 +79,7 @@ export async function generateInterfaceFiles(
  * @param processedData 处理后的 API 数据
  * @param config API 配置
  * @param dirPath 目录路径
+ * @param hooks 钩子函数
  *
  * @example
  * ```typescript
@@ -89,12 +92,13 @@ export async function generateInterfaceFileForTag(
   processedData: ProcessedApiData,
   config: ApiConfig,
   dirPath: string,
+  hooks?: CliHooks,
 ): Promise<void> {
   const typesOnly = config.generateTypes && !config.generateApi;
   const isZodTypesOnly = typesOnly && config.typesFormat === 'zod';
 
   if (isZodTypesOnly) {
-    await generateZodTypesOnlySchemaFile(interfaces, processedData, config, dirPath);
+    await generateZodTypesOnlySchemaFile(interfaces, processedData, config, dirPath, hooks);
     return;
   }
 
@@ -211,7 +215,7 @@ export async function generateInterfaceFileForTag(
   const formattedCode = await formatCode(combinedCode, join(dirPath, 'index.ts'));
 
   const filePath = join(dirPath, 'index.ts');
-  await writeFormattedFile(filePath, formattedCode);
+  await writeFormattedFile(filePath, formattedCode, hooks);
 
   if (process.env.DEBUG) {
     consola.debug(`创建合并接口文件: ${filePath}`);
@@ -225,12 +229,14 @@ export async function generateInterfaceFileForTag(
  * @param processedData 处理后的 API 数据
  * @param config API 配置
  * @param dirPath 目录路径
+ * @param hooks 钩子函数
  */
 async function generateZodTypesOnlySchemaFile(
   interfaces: any[],
   processedData: ProcessedApiData,
   config: ApiConfig,
   dirPath: string,
+  hooks?: CliHooks,
 ): Promise<void> {
   const schemas: any[] = [];
   const typeImports = new Set<string>();
@@ -281,7 +287,7 @@ async function generateZodTypesOnlySchemaFile(
   const code = template(templateData);
   const formattedCode = await formatCode(code, join(dirPath, 'schema.ts'));
   const filePath = join(dirPath, 'schema.ts');
-  await writeFormattedFile(filePath, formattedCode);
+  await writeFormattedFile(filePath, formattedCode, hooks);
 
   if (process.env.DEBUG) {
     consola.debug(`创建 Zod Schema 文件: ${filePath}`);
@@ -362,10 +368,12 @@ function getZodTypesOnlySchemaTemplateByConfig(comment: boolean): string {
  * 导出所有标签目录和请求函数
  * @param processedData 处理后的 API 数据
  * @param config API 配置
+ * @param hooks 钩子函数
  */
 export async function generateRootIndexFile(
   processedData: ProcessedApiData,
   config: ApiConfig,
+  hooks?: CliHooks,
 ): Promise<void> {
   const { outputDir } = config;
 
@@ -415,7 +423,7 @@ export async function generateRootIndexFile(
   }
 
   const rootIndexPath = join(outputDir, 'index.ts');
-  await writeFormattedFile(rootIndexPath, rootIndexContent);
+  await writeFormattedFile(rootIndexPath, rootIndexContent, hooks);
 
   if (process.env.DEBUG) {
     consola.debug(`创建根索引文件: ${rootIndexPath}`);

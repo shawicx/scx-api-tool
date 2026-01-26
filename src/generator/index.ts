@@ -8,6 +8,7 @@ import { processOpenApiData } from '../processors/openapi';
 import { ApiConfig } from '../types';
 import { generateFiles } from './codegen';
 import { getProgressManager, createMultiStepProgress } from '../utils/progress';
+import { getHookManager } from '../utils/hooks';
 
 /**
  * @description 生成代码主入口
@@ -68,6 +69,9 @@ async function processConfig(config: ApiConfig): Promise<void> {
     }
     progress.completeCurrentStep('配置验证完成');
 
+    // 调用 beforeGenerate 钩子
+    await getHookManager().executeHook(config.hooks?.beforeGenerate);
+
     // 步骤 2: 获取 API 数据
     progress.startStep(1);
     const rawData = await fetchData(config);
@@ -102,6 +106,9 @@ async function processConfig(config: ApiConfig): Promise<void> {
     progress.completeCurrentStep('代码文件生成完成');
 
     progress.complete('所有处理步骤完成');
+
+    // 调用 afterGenerate 钩子
+    await getHookManager().executeHook(config.hooks?.afterGenerate);
     progressManager.info(`输出目录: ${config.outputDir}`);
   } catch (error: any) {
     progress.failCurrentStep(error instanceof Error ? error : new Error(error.message));

@@ -5,6 +5,8 @@
 import { promises as fs } from 'fs';
 import { dirname, relative, join } from 'path';
 import consola from 'consola';
+import { getHookManager } from './hooks';
+import type { CliHooks } from '@/types';
 
 /**
  * @description 确保目录存在
@@ -26,18 +28,43 @@ export async function ensureDir(dirPath: string): Promise<void> {
  * 确保目录存在后写入文件内容
  * @param filePath 文件路径
  * @param content 文件内容
+ * @param hooks 可选的钩子函数对象
  *
  * @example
  * ```typescript
  * await writeFormattedFile('./src/api/user.ts', 'export const api = {};');
  * ```
  */
-export async function writeFormattedFile(filePath: string, content: string): Promise<void> {
+export async function writeFormattedFile(
+  filePath: string,
+  content: string,
+  hooks?: CliHooks,
+): Promise<void> {
+  let finalContent = content;
+
+  // 调用 beforeWriteFile 钩子
+  if (hooks?.beforeWriteFile) {
+    try {
+      finalContent = await getHookManager().executeTransformHook(
+        hooks.beforeWriteFile,
+        filePath,
+        content,
+      );
+    } catch {
+      finalContent = content;
+    }
+  }
+
   // 确保目录存在
   await ensureDir(dirname(filePath));
 
   // 写入文件
-  await fs.writeFile(filePath, content, 'utf-8');
+  await fs.writeFile(filePath, finalContent, 'utf-8');
+
+  // 调用 afterWriteFile 钩子
+  if (hooks?.afterWriteFile) {
+    await getHookManager().executeHook(hooks.afterWriteFile, filePath);
+  }
 }
 
 /**

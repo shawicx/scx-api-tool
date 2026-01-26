@@ -4,7 +4,7 @@
  */
 
 import consola from 'consola';
-import { ApiConfig } from '../types';
+import { ApiConfig, CliHooks } from '../types';
 import { fileExists, writeFormattedFile } from '../utils/file';
 import { formatCode } from '../utils/formatter';
 import { aliasToRealPath } from './pathUtils';
@@ -22,6 +22,7 @@ export { generateSchemaFiles } from './generators/schemaGenerator';
  * @description 生成请求函数文件
  * 生成统一的 HTTP 请求函数和相关配置
  * @param config API 配置
+ * @param hooks 钩子函数
  *
  * @example
  * ```typescript
@@ -29,7 +30,7 @@ export { generateSchemaFiles } from './generators/schemaGenerator';
  * // 生成 request.ts 文件，包含 request 函数和 requestMethods 对象
  * ```
  */
-export async function generateRequestFile(config: ApiConfig): Promise<void> {
+export async function generateRequestFile(config: ApiConfig, hooks?: CliHooks): Promise<void> {
   const requestFilePath = aliasToRealPath(config.requestFunctionFilePath);
 
   if (await fileExists(requestFilePath)) {
@@ -47,7 +48,7 @@ export async function generateRequestFile(config: ApiConfig): Promise<void> {
 
     const formattedCode = await formatCode(requestFileContent, requestFilePath);
 
-    await writeFormattedFile(requestFilePath, formattedCode);
+    await writeFormattedFile(requestFilePath, formattedCode, hooks);
 
     consola.info(`创建请求函数文件: ${requestFilePath}`);
   } catch (error: any) {
