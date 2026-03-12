@@ -451,15 +451,31 @@ api:generate:
 
 ### 启用调试模式
 
+使用 `api-power debug` 命令可以在代码生成过程中显示详细的调试信息：
+
 ```bash
 api-power debug
 ```
 
-或设置环境变量：
+或通过设置环境变量达到相同效果：
 
 ```bash
 DEBUG=true api-power
 ```
+
+**调试输出的信息包括：**
+
+- 配置处理的详细信息
+- API 请求详情（URL、headers、请求体等）
+- API 响应详情（状态码、数据类型等）
+- 数据处理统计（接口数、类型数、分类数）
+- 文件生成进度
+- 模板编译和缓存状态
+
+**两种方式的区别：**
+
+- `api-power debug`：默认启用 verbose 模式（显示详细错误堆栈）
+- `DEBUG=true api-power`：需要手动添加 `--verbose` 选项才能显示详细错误信息
 
 ### 常见问题
 
@@ -492,6 +508,20 @@ hooks: {
 #### 3. Watch 模式不触发
 
 检查配置文件路径是否正确，确保文件在监视范围内。
+
+#### 4. 调试信息不够详细
+
+如果需要查看更详细的调试信息，可以使用以下方式：
+
+```bash
+# 方式 1: 使用 debug 命令
+api-power debug --verbose
+
+# 方式 2: 设置环境变量并启用 verbose
+DEBUG=true api-power --verbose
+```
+
+这将显示所有的调试信息，包括 API 请求详情、数据处理统计、文件生成进度等。
 
 ## 最佳实践
 

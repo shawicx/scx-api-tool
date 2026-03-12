@@ -100,7 +100,7 @@ Watch 模式会在配置文件更改时自动重新生成代码，适用于开�
 
 ### 3. 调试命令 - `api-power debug`
 
-调试配置和 API 连接，帮助排查问题。
+启用详细输出模式，在代码生成过程中显示更多调试信息。
 
 ```bash
 # 基本调试
@@ -112,15 +112,27 @@ api-power debug --config ./config.ts
 
 **调试内容：**
 
-- 配置文件加载状态
-- API 平台连接测试
-- 认证信息验证
-- 项目权限检查
-- 接口数据获取测试
+- 配置处理的详细信息（serverUrl、serverType 等）
+- API 请求/响应详情（请求头、请求体、响应状态等）
+- 数据处理统计（接口数量、类型数量、分类数量）
+- 文件生成进度和状态
+- 模板编译和缓存状态
+- 各步骤的详细执行信息
 
 **选项参数：**
 
 - `--config, -c`: 指定配置文件路径
+- `--verbose, -v`: 显示详细的错误信息和堆栈跟踪（debug 模式默认启用）
+
+**说明：**
+
+`api-power debug` 命令会设置 `DEBUG=true` 环境变量，然后执行正常的代码生成流程。你也可以通过设置环境变量达到相同效果：
+
+```bash
+DEBUG=true api-power
+```
+
+两者的区别是 `api-power debug` 默认启用 verbose 模式，而使用环境变量时需要手动添加 `--verbose` 选项。
 
 ### 4. 可视化 - `api-power viz`
 
@@ -175,8 +187,15 @@ api-power help debug
 [DEBUG] 处理配置: serverUrl = https://api.apifox.com, serverType = apifox
 步骤 2/4 完成: API 数据获取完成
 [DEBUG] 从 API 源获取原始数据成功
-[DEBUG] 处理后的数据计数: {"interfaces":23,"types":45,"categories":5}
+[DEBUG] Apifox API 请求配置: { headers: {...}, requestBody: {...} }
+[DEBUG] Apifox response status: 200
+[DEBUG] Apifox response data type: object
 步骤 3/4 完成: 数据处理完成 (23 接口, 45 类型)
+[DEBUG] 处理后的数据计数: {"interfaces":23,"types":45,"categories":5}
+[DEBUG] 正在生成 45 个类型文件...
+[DEBUG] 创建类型文件: src/service/types/User.ts
+[DEBUG] 正在生成 23 个接口文件...
+[DEBUG] 创建接口文件: src/service/user/index.ts
 步骤 4/4 完成: 代码文件生成完成
 所有处理步骤完成 (总耗时: 2s)
 输出目录: src/service
@@ -192,7 +211,7 @@ api-power help debug
 api-power --config config/dev.ts
 api-power --config config/prod.ts
 
-# 验证配置文件
+# 启用调试模式查看详细信息
 api-power debug --config config/prod.ts
 ```
 
@@ -207,6 +226,7 @@ api-power debug --config config/prod.ts
     "api:debug": "api-power debug",
     "api:init": "api-power init",
     "api:types": "api-power",
+    "api:watch": "api-power --watch",
     "precommit": "api-power && git add src/service/"
   }
 }
@@ -267,6 +287,7 @@ Error: 连接 Apifox 平台失败
 
 # 解决方案
 api-power debug
+# 查看详细的 API 请求和响应信息
 # 检查网络、代理、防火墙设置
 ```
 

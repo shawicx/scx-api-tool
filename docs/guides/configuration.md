@@ -418,6 +418,7 @@ Error: Failed to fetch API data
   ```bash
   npx api-power debug
   ```
+  这将显示详细的 API 请求和响应信息，帮助你诊断问题
 
 ## 类型生成格式
 

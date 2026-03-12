@@ -371,7 +371,8 @@ export default defineConfig({
   "scripts": {
     "api:gen": "api-power",
     "api:init": "api-power init",
-    "api:debug": "api-power debug"
+    "api:debug": "api-power debug",
+    "api:watch": "api-power --watch"
   }
 }
 ```
