@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.1](https://github.com/shawicx/scx-api-tool/compare/v0.4.10...v0.5.1) (2026-03-15)
+
+### Features
+
+- 优化构建配置 ([6adea45](https://github.com/shawicx/scx-api-tool/commit/6adea452ec9b03b15ef6d142888be0c49b3480be))
+- 添加 OpenSpec ([e01591e](https://github.com/shawicx/scx-api-tool/commit/e01591ee149101a5abcf28ecfc23ac672edf70ee))
+- 添加注释以及统一注释风格 ([926fac2](https://github.com/shawicx/scx-api-tool/commit/926fac26d018ef3bc98e47e87ed14f448a596918))
+- 添加配置-生成hooks ([040e72e](https://github.com/shawicx/scx-api-tool/commit/040e72e7ad16899e94cc58d633dd76d61d85f335))
+- 重构zod生成系统，简化配置并统一文件结构 ([b800a98](https://github.com/shawicx/scx-api-tool/commit/b800a986eed1e7af65fdfdf0c8cbcf29557d699f))
+
+### Bug Fixes
+
+- 修复生成代码的问题 ([9782c80](https://github.com/shawicx/scx-api-tool/commit/9782c80c0cd549033f9fc206f843d9fe6a4404ce))
+
+### Refactors
+
+- 优化生成代码的导入语句，将 RequestConfig 改为类型导入 ([1414b08](https://github.com/shawicx/scx-api-tool/commit/1414b0848f2dd04023c4868ff12dbdb1692ddb2d))
+- 提取公共逻辑到 processors/common.ts，删除接口按标签分组的重复代码 ([5f59251](https://github.com/shawicx/scx-api-tool/commit/5f59251cee5fe4cceedb5794681da8405cda13c2))
+- 重构代码结构，拆分大文件并优化模块组织 ([642c071](https://github.com/shawicx/scx-api-tool/commit/642c071c15c47706f03debe7b51e9dc8f3e5f875))
+
+### Documentation
+
+- **refactor:** 更新 AGENTS.md 和 tasks.md，完成代码结构重构文档 ([9615215](https://github.com/shawicx/scx-api-tool/commit/9615215fc74c0abd0d5ccfb1b4c1a7272be00d57))
+- 修改文档 ([08aa929](https://github.com/shawicx/scx-api-tool/commit/08aa92983990e9cdc087edf81f85dc2164d4523b))
+- 删除不需要文件 ([c9dfb1d](https://github.com/shawicx/scx-api-tool/commit/c9dfb1d605c9b3b90cc47ebca1a6b47bc520a61c))
+- 文档更新 ([05596bf](https://github.com/shawicx/scx-api-tool/commit/05596bf62485f27dd704b1bf3fa07c413fa71595))
+- 更新一些文档 ([4cb2c56](https://github.com/shawicx/scx-api-tool/commit/4cb2c564c372869481824f8bc1ca1e5f1b6d50f6))
+- 更新文档 ([4f83a07](https://github.com/shawicx/scx-api-tool/commit/4f83a076b99b96fb00648f394a3cecadacc8d8bc))
+- 更新文档 ([6819ce3](https://github.com/shawicx/scx-api-tool/commit/6819ce32d67b86e13b251f090023b7d247ad26d5))
+- 更新文档 ([2eb163f](https://github.com/shawicx/scx-api-tool/commit/2eb163fdcb788e3970e798e79e333e075eca7039))
+
 ### [0.4.10](https://github.com/shawicx/scx-api-tool/compare/v0.4.9...v0.4.10) (2026-01-10)
 
 ### Refactors
