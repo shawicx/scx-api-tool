@@ -6,6 +6,7 @@ export default defineConfig({
   typesFormat: 'typescript',
   concurrency: 5,
   // pathPrefix: 'api',
+  comment: false,
   hooks: {
     beforeGenerate: () => {},
     beforeWriteFile: (filePath, content) => {
