@@ -104,7 +104,11 @@ async function generateTypeSchemasFiles(
         config,
       );
 
-      const formattedCode = await formatCode(schemaCode, join(schemasDir, `${fileName}.ts`));
+      const formattedCode = await formatCode(
+        schemaCode,
+        join(schemasDir, `${fileName}.ts`),
+        config.indentSize,
+      );
 
       const filePath = join(schemasDir, `${fileName}.ts`);
       await writeFormattedFile(filePath, formattedCode, hooks);
@@ -158,10 +162,13 @@ async function generateInterfaceSchemasFiles(
         config,
         getRequestTypeName,
         getResponseTypeName,
-        generatedSchemas,
       );
 
-      const formattedCode = await formatCode(result.code, join(dirPath, 'schema.ts'));
+      const formattedCode = await formatCode(
+        result.code,
+        join(dirPath, 'schema.ts'),
+        config.indentSize,
+      );
       const filePath = join(dirPath, 'schema.ts');
       await writeFormattedFile(filePath, formattedCode, hooks);
 

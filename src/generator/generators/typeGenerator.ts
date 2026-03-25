@@ -120,7 +120,11 @@ async function generateTypeFile(
     code = importStatement + code;
   }
 
-  const formattedCode = await formatCode(code, join(typesDir, `${cleanFileName}.ts`));
+  const formattedCode = await formatCode(
+    code,
+    join(typesDir, `${cleanFileName}.ts`),
+    config.indentSize,
+  );
 
   const filePath = join(typesDir, `${cleanFileName}.ts`);
   await writeFormattedFile(filePath, formattedCode, hooks);

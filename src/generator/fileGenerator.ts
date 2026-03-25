@@ -46,7 +46,7 @@ export async function generateRequestFile(config: ApiConfig, hooks?: CliHooks): 
 
     const requestFileContent = generateRequestFileContent(config);
 
-    const formattedCode = await formatCode(requestFileContent, requestFilePath);
+    const formattedCode = await formatCode(requestFileContent, requestFilePath, config.indentSize);
 
     await writeFormattedFile(requestFilePath, formattedCode, hooks);
 

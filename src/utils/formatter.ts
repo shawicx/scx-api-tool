@@ -11,6 +11,7 @@ import { format } from 'prettier';
  * 使用 Prettier 格式化代码字符串
  * @param code 代码字符串
  * @param filePath 文件路径
+ * @param indentSize 缩进大小（默认 2）
  * @returns 格式化后的代码字符串
  *
  * @example
@@ -19,7 +20,7 @@ import { format } from 'prettier';
  * // formatted = 'const x = 1;'
  * ```
  */
-export async function formatCode(code: string, filePath: string): Promise<string> {
+export async function formatCode(code: string, filePath: string, indentSize = 2): Promise<string> {
   try {
     // 根据文件扩展名确定解析器
     const parser = getFileParser(filePath);
@@ -29,7 +30,7 @@ export async function formatCode(code: string, filePath: string): Promise<string
       parser,
       singleQuote: true,
       trailingComma: 'es5',
-      tabWidth: 2,
+      tabWidth: indentSize,
       semi: true,
     });
 

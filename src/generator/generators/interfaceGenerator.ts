@@ -212,7 +212,11 @@ export async function generateInterfaceFileForTag(
     combinedCode += `${codeWithoutImport}\n\n`;
   }
 
-  const formattedCode = await formatCode(combinedCode, join(dirPath, 'index.ts'));
+  const formattedCode = await formatCode(
+    combinedCode,
+    join(dirPath, 'index.ts'),
+    config.indentSize,
+  );
 
   const filePath = join(dirPath, 'index.ts');
   await writeFormattedFile(filePath, formattedCode, hooks);
@@ -285,7 +289,7 @@ async function generateZodTypesOnlySchemaFile(
   };
 
   const code = template(templateData);
-  const formattedCode = await formatCode(code, join(dirPath, 'schema.ts'));
+  const formattedCode = await formatCode(code, join(dirPath, 'schema.ts'), config.indentSize);
   const filePath = join(dirPath, 'schema.ts');
   await writeFormattedFile(filePath, formattedCode, hooks);
 
