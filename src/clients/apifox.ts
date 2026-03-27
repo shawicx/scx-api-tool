@@ -28,6 +28,10 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
   try {
     const { token } = config;
 
+    if (!token) {
+      throw new Error('Apifox 需要 token，但未提供');
+    }
+
     const headers = {
       'X-Apifox-Api-Version': '2024-03-28',
       Authorization: `Bearer ${token}`,

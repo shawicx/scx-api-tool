@@ -40,18 +40,20 @@ export function validateRequiredFields(config: UserConfig): ValidationError[] {
     );
   }
 
-  // 验证 token 字段
-  if (!config.token || typeof config.token !== 'string' || config.token.trim() === '') {
-    errors.push(
-      createValidationError(
-        'token',
-        'REQUIRED_FIELD',
-        'token 是必需的，必须是有效的认证令牌字符串',
-        ValidationSeverity.ERROR,
-        '请提供有效的认证令牌，确保令牌具有访问 API 数据的权限',
-        config.token,
-      ),
-    );
+  // 验证 token 字段（仅对 Apifox 必需）
+  if (config.source.includes('apifox.com')) {
+    if (!config.token || typeof config.token !== 'string' || config.token.trim() === '') {
+      errors.push(
+        createValidationError(
+          'token',
+          'REQUIRED_FIELD',
+          'Apifox 源需要 token，必须是有效的认证令牌字符串',
+          ValidationSeverity.ERROR,
+          '请提供有效的认证令牌，确保令牌具有访问 API 数据的权限',
+          config.token,
+        ),
+      );
+    }
   }
 
   return errors;

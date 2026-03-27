@@ -164,8 +164,8 @@ export interface ApiConfig {
 
   /** API 数据源 URL (包含完整的服务器信息) */
   source: string;
-  /** 认证令牌 */
-  token: string;
+  /** 认证令牌（Swagger 不需要） */
+  token?: string;
 
   /** 是否生成 API 请求方法 */
   generateApi: boolean;

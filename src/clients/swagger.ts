@@ -22,7 +22,7 @@ import { makeRequestWithProgress } from '@/utils/progress';
  */
 export async function fetchSwaggerData(config: ApiConfig): Promise<any> {
   try {
-    const apiUrl = config.serverUrl;
+    const apiUrl = config.source;
 
     // 如果启用，则记录调试信息
     if (process.env.DEBUG) {
