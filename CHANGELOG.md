@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.2](https://github.com/shawicx/scx-api-tool/compare/v0.5.1...v0.5.2) (2026-03-28)
+
+### Features
+
+- 支持 Swagger 无 token 使用，优化 token 验证逻辑 ([2743eb5](https://github.com/shawicx/scx-api-tool/commit/2743eb5773a75640cc6ec42f4957e911d205b635))
+
+### Bug Fixes
+
+- 修复 indentSize 配置不生效的问题 ([7fba8bb](https://github.com/shawicx/scx-api-tool/commit/7fba8bb1586db7b80eb965a5d22d20ef2c814596))
+
 ### [0.5.1](https://github.com/shawicx/scx-api-tool/compare/v0.4.10...v0.5.1) (2026-03-15)
 
 ### Features
