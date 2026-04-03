@@ -58,8 +58,8 @@ export async function generateFiles(
       await generateRequestFile(config, config.hooks);
     }
 
-    // 生成类型定义（如果需要）
-    if (config.generateTypes) {
+    // 生成类型定义（如果需要且目标不是 JavaScript）
+    if (config.generateTypes && config.target !== 'javascript') {
       if (config.typesFormat === 'typescript') {
         consola.info('生成 TypeScript 类型定义');
         await generateTypeFiles(processedData, config, config.hooks);

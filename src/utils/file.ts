@@ -120,7 +120,7 @@ export async function cleanOutputDir(dirPath: string, excludeFiles: string[] = [
       const isExcluded = excludeFiles.some((excludePath) => {
         // 计算相对路径进行比较
         const relativePath = relative(dirPath, excludePath);
-        return entry === relativePath || entry === relativePath.replace(/\.ts$/, '');
+        return entry === relativePath || entry === relativePath.replace(/\.(ts|js)$/, '');
       });
 
       if (isExcluded) {

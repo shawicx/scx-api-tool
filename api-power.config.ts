@@ -5,10 +5,13 @@ export default defineConfig({
   token: 'APS-bEl8yPD58wfRzsXXkx4psEekqm4k2YhD',
   typesFormat: 'typescript',
   concurrency: 5,
+  // target: 'javascript',
   // pathPrefix: 'api',
-  comment: false,
+  // comment: false,
   hooks: {
-    beforeGenerate: () => {},
+    beforeGenerate: () => {
+      console.log('Generating start');
+    },
     beforeWriteFile: (filePath, content) => {
       console.log('Generating file', filePath);
       return content;

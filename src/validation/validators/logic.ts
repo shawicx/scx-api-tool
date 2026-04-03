@@ -123,5 +123,33 @@ export function validateConfigLogic(config: UserConfig): ValidationError[] {
     );
   }
 
+  // 验证 javascript 目标下的类型相关配置
+  if (config.target === 'javascript') {
+    if (config.generateTypes) {
+      errors.push(
+        createValidationError(
+          'target & generateTypes',
+          'JS_TARGET_IGNORES_TYPES',
+          '当 target 为 "javascript" 时，generateTypes 配置将被忽略（不生成类型文件）',
+          ValidationSeverity.WARNING,
+          'JavaScript 目标生成 .js 文件，不包含类型定义。设置 generateTypes: false 可消除此警告。',
+          { target: config.target, generateTypes: config.generateTypes },
+        ),
+      );
+    }
+    if (config.typesFormat === 'zod') {
+      errors.push(
+        createValidationError(
+          'target & typesFormat',
+          'JS_TARGET_IGNORES_ZOD',
+          '当 target 为 "javascript" 时，typesFormat: "zod" 配置将被忽略',
+          ValidationSeverity.WARNING,
+          'JavaScript 目标不支持 Zod Schema 生成。设置 typesFormat: "typescript" 可消除此警告。',
+          { target: config.target, typesFormat: config.typesFormat },
+        ),
+      );
+    }
+  }
+
   return errors;
 }

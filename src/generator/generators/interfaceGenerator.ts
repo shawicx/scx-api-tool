@@ -16,6 +16,7 @@ import { applyNamingStrategy, type NamingContext } from '../naming/strategy';
 import { generateInterfaceFunction, compileTemplate } from '../template';
 import { executeWithConcurrency } from '../../utils/concurrency';
 import { generateZodSchemaFromOperation } from '../../templates/schema-zod/interfaces';
+import { getFileExtension } from '../../utils/config';
 
 /**
  * @description 生成所有接口文件
@@ -94,7 +95,11 @@ export async function generateInterfaceFileForTag(
   dirPath: string,
   hooks?: CliHooks,
 ): Promise<void> {
-  const typesOnly = config.generateTypes && !config.generateApi;
+  const isJS = config.target === 'javascript';
+  const ext = getFileExtension(config.target);
+  const effectiveGenerateTypes = isJS ? false : config.generateTypes;
+
+  const typesOnly = effectiveGenerateTypes && !config.generateApi;
   const isZodTypesOnly = typesOnly && config.typesFormat === 'zod';
 
   if (isZodTypesOnly) {
@@ -106,44 +111,47 @@ export async function generateInterfaceFileForTag(
 
   const usedTypes = new Set<string>();
 
-  for (const apiInterface of interfaces) {
-    const requestProps = extractRequestProperties(apiInterface.operation, processedData);
-    for (const prop of requestProps) {
-      if (processedData.types.some((t: any) => t.name === prop.type)) {
-        usedTypes.add(prop.type);
-      }
-      if (prop.type.endsWith('[]')) {
-        const baseType = prop.type.slice(0, -2);
-        if (processedData.types.some((t: any) => t.name === baseType)) {
-          usedTypes.add(baseType);
+  // JavaScript 模式下不需要收集类型引用
+  if (!isJS) {
+    for (const apiInterface of interfaces) {
+      const requestProps = extractRequestProperties(apiInterface.operation, processedData);
+      for (const prop of requestProps) {
+        if (processedData.types.some((t: any) => t.name === prop.type)) {
+          usedTypes.add(prop.type);
+        }
+        if (prop.type.endsWith('[]')) {
+          const baseType = prop.type.slice(0, -2);
+          if (processedData.types.some((t: any) => t.name === baseType)) {
+            usedTypes.add(baseType);
+          }
         }
       }
-    }
 
-    const responseProps = extractResponseProperties(
-      apiInterface.operation.responses,
-      processedData,
-    );
-    for (const prop of responseProps) {
-      if (processedData.types.some((t: any) => t.name === prop.type)) {
-        usedTypes.add(prop.type);
-      }
-      if (prop.type.endsWith('[]')) {
-        const baseType = prop.type.slice(0, -2);
-        if (processedData.types.some((t: any) => t.name === baseType)) {
-          usedTypes.add(baseType);
+      const responseProps = extractResponseProperties(
+        apiInterface.operation.responses,
+        processedData,
+      );
+      for (const prop of responseProps) {
+        if (processedData.types.some((t: any) => t.name === prop.type)) {
+          usedTypes.add(prop.type);
+        }
+        if (prop.type.endsWith('[]')) {
+          const baseType = prop.type.slice(0, -2);
+          if (processedData.types.some((t: any) => t.name === baseType)) {
+            usedTypes.add(baseType);
+          }
         }
       }
     }
   }
 
   const relativePath = getNormalizedPathWithAlias(dirPath, config.requestFunctionFilePath);
-  const cleanRelativePath = relativePath.replace(/\.ts$/, '');
+  const cleanRelativePath = relativePath.replace(/\.(ts|js)$/, '');
 
   const requestFunctionName = config.requestFunctionName || 'request';
   const requestMethodsObjectName = config.requestMethodsObjectName || 'requestMethods';
 
-  const apiOnly = config.generateApi && !config.generateTypes;
+  const apiOnly = config.generateApi && !effectiveGenerateTypes;
 
   if (typesOnly) {
     if (config.typesFormat === 'typescript' && usedTypes.size > 0) {
@@ -152,7 +160,7 @@ export async function generateInterfaceFileForTag(
       const cleanTypesRelativePath = typesRelativePath.replace(/\/$/, '');
       combinedCode += `import type { ${Array.from(usedTypes).join(', ')} } from '${cleanTypesRelativePath}';\n`;
     }
-  } else if (apiOnly) {
+  } else if (apiOnly || isJS) {
     combinedCode += `import { ${requestFunctionName} } from '${cleanRelativePath}';\n`;
   } else {
     if (config.requestMethodStyle === 'method-specific' || config.requestMethodStyle === 'both') {
@@ -212,13 +220,14 @@ export async function generateInterfaceFileForTag(
     combinedCode += `${codeWithoutImport}\n\n`;
   }
 
+  const indexFileName = `index${ext}`;
   const formattedCode = await formatCode(
     combinedCode,
-    join(dirPath, 'index.ts'),
+    join(dirPath, indexFileName),
     config.indentSize,
   );
 
-  const filePath = join(dirPath, 'index.ts');
+  const filePath = join(dirPath, indexFileName);
   await writeFormattedFile(filePath, formattedCode, hooks);
 
   if (process.env.DEBUG) {
@@ -383,12 +392,15 @@ export async function generateRootIndexFile(
 
   let rootIndexContent = '';
 
-  const isZodMode = config.typesFormat === 'zod';
-  const isZodTypesOnly = isZodMode && config.generateTypes && !config.generateApi;
+  const isJS = config.target === 'javascript';
+  const effectiveGenerateTypes = isJS ? false : config.generateTypes;
+  const isZodMode = !isJS && config.typesFormat === 'zod';
+  const isZodTypesOnly = isZodMode && effectiveGenerateTypes && !config.generateApi;
 
   if (!isZodTypesOnly) {
     const relativePath = getNormalizedPathWithAlias(outputDir, config.requestFunctionFilePath);
-    const cleanRelativePath = relativePath.replace(/\.ts$/, '');
+    const ext = getFileExtension(config.target);
+    const cleanRelativePath = relativePath.replace(new RegExp(`\\${ext}$`), '');
     rootIndexContent += `export * from '${cleanRelativePath}';\n\n`;
   }
 
@@ -399,7 +411,7 @@ export async function generateRootIndexFile(
     tagDirs.push(tagDir);
   }
 
-  if (isZodMode && config.generateTypes) {
+  if (isZodMode && effectiveGenerateTypes) {
     for (const tagDir of tagDirs) {
       rootIndexContent += `export * from './${tagDir}/schema';\n`;
     }
@@ -415,7 +427,7 @@ export async function generateRootIndexFile(
     for (const tagDir of tagDirs) {
       rootIndexContent += `export * from './${tagDir}';\n`;
     }
-  } else if (config.generateTypes) {
+  } else if (effectiveGenerateTypes) {
     for (const tagDir of tagDirs) {
       rootIndexContent += `export * from './${tagDir}';\n`;
     }
@@ -426,7 +438,8 @@ export async function generateRootIndexFile(
     }
   }
 
-  const rootIndexPath = join(outputDir, 'index.ts');
+  const ext = getFileExtension(config.target);
+  const rootIndexPath = join(outputDir, `index${ext}`);
   await writeFormattedFile(rootIndexPath, rootIndexContent, hooks);
 
   if (process.env.DEBUG) {

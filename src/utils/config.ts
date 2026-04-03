@@ -166,7 +166,24 @@ export function defineConfig(config: UserConfig): ApiConfig {
     ...(config.hooks && { hooks: config.hooks }),
   };
 
+  // 当 target 为 javascript 时，自动调整默认的 requestFunctionFilePath 扩展名
+  if (finalConfig.target === 'javascript' && !config.requestFunctionFilePath) {
+    finalConfig.requestFunctionFilePath = finalConfig.requestFunctionFilePath.replace(
+      /\.ts$/,
+      '.js',
+    );
+  }
+
   return finalConfig;
+}
+
+/**
+ * @description 根据目标语言获取文件扩展名
+ * @param target 目标语言
+ * @returns 文件扩展名（包含点号）
+ */
+export function getFileExtension(target: 'javascript' | 'typescript'): '.ts' | '.js' {
+  return target === 'javascript' ? '.js' : '.ts';
 }
 
 // 导出预设常量

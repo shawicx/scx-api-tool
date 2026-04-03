@@ -565,6 +565,10 @@ export function generateRequestFile(config: any): string {
   const requestFunctionName = config.requestFunctionName || 'request';
   const requestMethodsObjectName = config.requestMethodsObjectName || 'requestMethods';
 
+  if (config.target === 'javascript') {
+    return generateRequestFileJS(config, requestFunctionName, requestMethodsObjectName);
+  }
+
   let template = "import type { AxiosRequestConfig } from 'axios';\n";
   template += "import axios from 'axios';\n";
   template += "import consola from 'consola';\n\n";
@@ -665,6 +669,111 @@ export function generateRequestFile(config: any): string {
 }
 
 /**
+ * @description 生成 JavaScript 版本的请求文件内容
+ * 不含 TypeScript 语法（无 interface、泛型、import type）
+ * @param config 配置对象
+ * @param requestFunctionName 请求函数名
+ * @param requestMethodsObjectName 请求方法对象名
+ * @returns 生成的请求文件代码字符串
+ */
+function generateRequestFileJS(
+  config: any,
+  requestFunctionName: string,
+  requestMethodsObjectName: string,
+): string {
+  let template = "import axios from 'axios';\n";
+  template += "import consola from 'consola';\n\n";
+  template += '// 用于转发请求的代理地址\n';
+  template += "const BASE_LINE_PROXY_PATH = '/api';\n\n";
+  template += '// 超时时间\n';
+  template += 'const TIMEOUT = 5 * 1000;\n\n';
+  template += `export async function ${requestFunctionName}(config) {\n`;
+  template += '  try {\n';
+  template += '    const response = await axios({\n';
+  template += '      ...config,\n';
+  template += '      baseURL: BASE_LINE_PROXY_PATH,\n';
+  template += '      timeout: TIMEOUT,\n';
+  template += '    });\n\n';
+  template += '    return response.data;\n';
+  template += '  } catch (error) {\n';
+  template += "    consola.error('Request failed:', error);\n";
+  template += '    throw error;\n';
+  template += '  }\n';
+  template += '}';
+
+  if (
+    config.requestMethodStyle === RequestMethodStyle.METHOD_SPECIFIC ||
+    config.requestMethodStyle === RequestMethodStyle.BOTH
+  ) {
+    template += '\n\n';
+    template += `export const ${requestMethodsObjectName} = {\n`;
+    template += `  get: (url, params) => {\n`;
+    template += `    const config = { url, method: 'GET' };\n`;
+    template += `    if (params) {\n`;
+    template += `      config.params = params;\n`;
+    template += `    }\n`;
+    template += `    return ${requestFunctionName}(config);\n`;
+    template += `  },\n`;
+    template += `  post: (url, data, params) => {\n`;
+    template += `    const config = { url, method: 'POST' };\n`;
+    template += `    if (data) {\n`;
+    template += `      config.data = data;\n`;
+    template += `    }\n`;
+    template += `    if (params) {\n`;
+    template += `      config.params = params;\n`;
+    template += `    }\n`;
+    template += `    return ${requestFunctionName}(config);\n`;
+    template += `  },\n`;
+    template += `  put: (url, data, params) => {\n`;
+    template += `    const config = { url, method: 'PUT' };\n`;
+    template += `    if (data) {\n`;
+    template += `      config.data = data;\n`;
+    template += `    }\n`;
+    template += `    if (params) {\n`;
+    template += `      config.params = params;\n`;
+    template += `    }\n`;
+    template += `    return ${requestFunctionName}(config);\n`;
+    template += `  },\n`;
+    template += `  delete: (url, params) => {\n`;
+    template += `    const config = { url, method: 'DELETE' };\n`;
+    template += `    if (params) {\n`;
+    template += `      config.params = params;\n`;
+    template += `    }\n`;
+    template += `    return ${requestFunctionName}(config);\n`;
+    template += `  },\n`;
+    template += `  patch: (url, data, params) => {\n`;
+    template += `    const config = { url, method: 'PATCH' };\n`;
+    template += `    if (data) {\n`;
+    template += `      config.data = data;\n`;
+    template += `    }\n`;
+    template += `    if (params) {\n`;
+    template += `      config.params = params;\n`;
+    template += `    }\n`;
+    template += `    return ${requestFunctionName}(config);\n`;
+    template += `  },\n`;
+    template += `  head: (url, params) => {\n`;
+    template += `    const config = { url, method: 'HEAD' };\n`;
+    template += `    if (params) {\n`;
+    template += `      config.params = params;\n`;
+    template += `    }\n`;
+    template += `    return ${requestFunctionName}(config);\n`;
+    template += `  },\n`;
+    template += `  options: (url, params) => {\n`;
+    template += `    const config = { url, method: 'OPTIONS' };\n`;
+    template += `    if (params) {\n`;
+    template += `      config.params = params;\n`;
+    template += `    }\n`;
+    template += `    return ${requestFunctionName}(config);\n`;
+    template += `  },\n`;
+    template += `};`;
+  }
+
+  // JavaScript 模式不生成 METHOD_MAP（使用了 as const 等 TS 语法）
+
+  return template;
+}
+
+/**
  * @description 生成接口函数内容
  * 根据 generateApi、generateTypes、typesFormat 和 comment 配置选择合适的模板
  * @param interfaceInfo 接口信息对象
@@ -674,6 +783,18 @@ export function generateRequestFile(config: any): string {
 export function generateInterfaceFunction(interfaceInfo: any, config: any): string {
   let template: string;
   const comment = config.comment !== false;
+
+  // JavaScript 目标始终使用 API-only 模板（无类型注解）
+  if (config.target === 'javascript') {
+    template = getApiOnlyTemplateByConfig(comment);
+    const compiledTemplate = compileTemplate(template);
+    return compiledTemplate({
+      ...interfaceInfo,
+      requestFunctionName: config.requestFunctionName || 'request',
+      requestMethodsObjectName: config.requestMethodsObjectName || 'requestMethods',
+      requestMethodStyle: config.requestMethodStyle,
+    });
+  }
 
   const shouldGenerateTypes = config.generateTypes && config.typesFormat === 'typescript';
   const shouldGenerateApi = config.generateApi;
