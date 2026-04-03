@@ -7,6 +7,7 @@ import consola from 'consola';
 import { join } from 'path';
 import { ProcessedApiData } from '../../processors/openapi';
 import { ApiConfig, CliHooks } from '../../types';
+import type { ApiTypeDefinition } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
 import { formatCode } from '../../utils/formatter';
 import { getNormalizedPathWithAlias } from '../pathUtils';
@@ -55,7 +56,7 @@ export async function generateTypeFiles(
 
   await executeWithConcurrency(
     processedData.types,
-    async (type: any) => {
+    async (type: ApiTypeDefinition) => {
       await generateTypeFile(type, processedData, config, typesDir, hooks);
     },
     concurrency,
@@ -76,7 +77,7 @@ export async function generateTypeFiles(
  * @param hooks 钩子函数
  */
 async function generateTypeFile(
-  type: any,
+  type: ApiTypeDefinition,
   processedData: ProcessedApiData,
   config: ApiConfig,
   typesDir: string,
@@ -104,7 +105,7 @@ async function generateTypeFile(
       !['any', 'string', 'number', 'boolean', 'object', 'unknown', 'never'].includes(
         baseType.toLowerCase(),
       ) &&
-      processedData.types.some((t: any) => t.name === baseType)
+      processedData.types.some((t) => t.name === baseType)
     ) {
       dependencies.add(baseType);
     }

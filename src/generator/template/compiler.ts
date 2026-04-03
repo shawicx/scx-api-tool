@@ -6,6 +6,7 @@
 
 import Handlebars from 'handlebars';
 import { RequestMethodStyle } from '../../types';
+import type { ApiConfig, InterfaceTemplateData } from '../../types';
 import consola from 'consola';
 import {
   getTemplateFromCache,
@@ -505,7 +506,7 @@ export function getTypeTemplateByConfig(comment: boolean): string {
  * console.log(compiled({ name: 'World' })); // 输出: Hello World!
  * ```
  */
-export function compileTemplate(template: string): (data: any) => string {
+export function compileTemplate(template: string): HandlebarsTemplateDelegate {
   if (isTemplateCached(template)) {
     if (process.env.DEBUG) {
       consola.debug('模板缓存命中');
@@ -531,7 +532,7 @@ export function compileTemplate(template: string): (data: any) => string {
  * @param config 配置对象
  * @returns 生成的请求文件代码字符串
  */
-export function generateRequestFile(config: any): string {
+export function generateRequestFile(config: ApiConfig): string {
   registerTemplateHelpers();
   registerTemplatePartials();
 
@@ -650,7 +651,7 @@ export function generateRequestFile(config: any): string {
  * @returns 生成的请求文件代码字符串
  */
 function generateRequestFileJS(
-  config: any,
+  config: ApiConfig,
   requestFunctionName: string,
   requestMethodsObjectName: string,
 ): string {
@@ -753,7 +754,10 @@ function generateRequestFileJS(
  * @param config 配置对象
  * @returns 生成的接口代码字符串
  */
-export function generateInterfaceFunction(interfaceInfo: any, config: any): string {
+export function generateInterfaceFunction(
+  interfaceInfo: InterfaceTemplateData,
+  config: ApiConfig,
+): string {
   let template: string;
   const comment = config.comment !== false;
 

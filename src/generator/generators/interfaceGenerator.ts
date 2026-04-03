@@ -7,6 +7,7 @@ import consola from 'consola';
 import { join } from 'path';
 import { ProcessedApiData, groupInterfacesByTag } from '../../processors/openapi';
 import { ApiConfig, CliHooks } from '../../types';
+import type { ApiInterface, InterfaceTemplateData, OpenApiOperation } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
 import { formatCode } from '../../utils/formatter';
 import { chineseToPinyinCamelCase } from '../../utils/path';
@@ -89,7 +90,7 @@ export async function generateInterfaceFiles(
  */
 export async function generateInterfaceFileForTag(
   tag: string,
-  interfaces: any[],
+  interfaces: ApiInterface[],
   processedData: ProcessedApiData,
   config: ApiConfig,
   dirPath: string,
@@ -116,12 +117,12 @@ export async function generateInterfaceFileForTag(
     for (const apiInterface of interfaces) {
       const requestProps = extractRequestProperties(apiInterface.operation, processedData);
       for (const prop of requestProps) {
-        if (processedData.types.some((t: any) => t.name === prop.type)) {
+        if (processedData.types.some((t) => t.name === prop.type)) {
           usedTypes.add(prop.type);
         }
         if (prop.type.endsWith('[]')) {
           const baseType = prop.type.slice(0, -2);
-          if (processedData.types.some((t: any) => t.name === baseType)) {
+          if (processedData.types.some((t) => t.name === baseType)) {
             usedTypes.add(baseType);
           }
         }
@@ -132,12 +133,12 @@ export async function generateInterfaceFileForTag(
         processedData,
       );
       for (const prop of responseProps) {
-        if (processedData.types.some((t: any) => t.name === prop.type)) {
+        if (processedData.types.some((t) => t.name === prop.type)) {
           usedTypes.add(prop.type);
         }
         if (prop.type.endsWith('[]')) {
           const baseType = prop.type.slice(0, -2);
-          if (processedData.types.some((t: any) => t.name === baseType)) {
+          if (processedData.types.some((t) => t.name === baseType)) {
             usedTypes.add(baseType);
           }
         }
@@ -187,7 +188,7 @@ export async function generateInterfaceFileForTag(
       config,
     );
 
-    const templateData: any = {
+    const templateData: InterfaceTemplateData = {
       interfaceName: namingResult.interfaceName,
       requestTypeName: namingResult.requestTypeName,
       responseTypeName: namingResult.responseTypeName,
@@ -245,13 +246,22 @@ export async function generateInterfaceFileForTag(
  * @param hooks 钩子函数
  */
 async function generateZodTypesOnlySchemaFile(
-  interfaces: any[],
+  interfaces: ApiInterface[],
   processedData: ProcessedApiData,
   config: ApiConfig,
   dirPath: string,
   hooks?: CliHooks,
 ): Promise<void> {
-  const schemas: any[] = [];
+  const schemas: Array<{
+    requestSchemaName: string;
+    responseSchemaName: string;
+    requestTypeName: string;
+    responseTypeName: string;
+    requestDescription: string;
+    responseDescription: string;
+    requestSchemaContent: string;
+    responseSchemaContent: string;
+  }> = [];
   const typeImports = new Set<string>();
 
   for (const apiInterface of interfaces) {
@@ -459,7 +469,7 @@ export async function generateRootIndexFile(
 function getNamingResult(
   path: string,
   method: string,
-  operation: any,
+  operation: OpenApiOperation,
   config: ApiConfig,
 ): {
   interfaceName: string;

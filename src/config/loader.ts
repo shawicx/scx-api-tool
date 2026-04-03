@@ -5,7 +5,7 @@
 import { existsSync } from 'fs';
 import { resolve } from 'path';
 import { pathToFileURL } from 'url';
-import type { ApiConfig } from '@/types';
+import type { ApiConfig, UserConfig } from '@/types';
 import { defineConfig } from '@/utils/config';
 import { validateConfiguration } from '@/validation';
 import { ErrorFactory } from '@/errors';
@@ -38,7 +38,7 @@ function mergeWithDefaults(userConfig: Partial<ApiConfig>): ApiConfig {
   }
 
   // 否则使用 defineConfig 函数来合并默认配置
-  return defineConfig(userConfig as ApiConfig);
+  return defineConfig(userConfig as unknown as UserConfig);
 }
 
 export async function loadConfig(configPath: string): Promise<ApiConfig> {

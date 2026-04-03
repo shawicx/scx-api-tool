@@ -6,12 +6,21 @@
 import consola from 'consola';
 import { ServerType } from '@/types';
 import type { ApiConfig } from '@/types';
+import type {
+  ApiCategory,
+  ApiInterface,
+  ApiTypeDefinition,
+  OpenApiDocument,
+  OpenApiOperation,
+  OpenApiRequestBody,
+  OpenApiResponse,
+} from '@/types';
 import { sanitizeTypeName } from '../generator/naming';
 
 export interface ProcessedApiData {
-  interfaces: any[];
-  types: any[];
-  categories: any[];
+  interfaces: ApiInterface[];
+  types: ApiTypeDefinition[];
+  categories: ApiCategory[];
 }
 
 export { groupInterfacesByTag, extractUsedTypeNames } from './common';
@@ -33,7 +42,7 @@ export { groupInterfacesByTag, extractUsedTypeNames } from './common';
  * // }
  * ```
  */
-export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiData {
+export function processOpenApiData(data: OpenApiDocument, config: ApiConfig): ProcessedApiData {
   // 如果启用，则记录调试信息
   if (process.env.DEBUG) {
     if (typeof data === 'object' && data !== null) {
@@ -53,9 +62,9 @@ export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiDa
     }
   }
 
-  const interfaces: any[] = [];
-  const types: any[] = [];
-  const categories: any[] = [];
+  const interfaces: ApiInterface[] = [];
+  const types: ApiTypeDefinition[] = [];
+  const categories: ApiCategory[] = [];
 
   // 处理包括 Apifox 在内的所有服务器类型的标准 OpenAPI 格式
   if (data.paths) {
@@ -65,7 +74,7 @@ export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiDa
         ? path.replace(new RegExp(`^${config.pathPrefix}`), '')
         : path;
 
-      for (const [method, operation] of Object.entries(methods as any)) {
+      for (const [method, operation] of Object.entries(methods)) {
         // 处理 Apifox 特定格式的操作
         const processedOperation = processOperation(operation, config);
 
@@ -132,7 +141,7 @@ export function processOpenApiData(data: any, config: ApiConfig): ProcessedApiDa
  * // 对于其他类型，原样返回
  * ```
  */
-function processOperation(operation: any, config: ApiConfig): any {
+function processOperation(operation: OpenApiOperation, config: ApiConfig): OpenApiOperation {
   // 对于 Apifox，我们需要以特定方式处理参数和响应
   if (config.serverType === ServerType.Apifox) {
     return {
@@ -163,7 +172,7 @@ function processOperation(operation: any, config: ApiConfig): any {
  * // ]
  * ```
  */
-function processApifoxParameters(parameters: any): any[] {
+function processApifoxParameters(parameters: unknown): OpenApiOperation['parameters'] {
   if (!parameters || !Array.isArray(parameters)) return [];
 
   return parameters.map((param) => ({
@@ -192,11 +201,11 @@ function processApifoxParameters(parameters: any): any[] {
  * // }
  * ```
  */
-function processApifoxResponses(responses: any): any {
+function processApifoxResponses(responses: unknown): Record<string, OpenApiResponse> {
   if (!responses) return {};
 
-  const processed: any = {};
-  for (const [statusCode, response] of Object.entries(responses)) {
+  const processed: Record<string, OpenApiResponse> = {};
+  for (const [statusCode, response] of Object.entries(responses as Record<string, any>)) {
     processed[statusCode] = {
       description: (response as any).description || '',
       content: {
@@ -224,7 +233,7 @@ function processApifoxResponses(responses: any): any {
  * // body = { content: { 'application/json': { schema: {...} } }
  * ```
  */
-function processApifoxRequestBody(requestBody: any): any {
+function processApifoxRequestBody(requestBody: any): OpenApiRequestBody | undefined {
   if (!requestBody) return undefined;
 
   return {

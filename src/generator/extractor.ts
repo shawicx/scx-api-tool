@@ -4,6 +4,7 @@
  */
 
 import { ProcessedApiData } from '../processors/openapi';
+import type { ApiProperty, OpenApiOperation, OpenApiSchema } from '../types';
 import { sanitizePropertyName, sanitizeTypeName } from './naming';
 
 /**
@@ -22,8 +23,11 @@ import { sanitizePropertyName, sanitizeTypeName } from './naming';
  * // ]
  * ```
  */
-export function extractRequestProperties(operation: any, processedData: ProcessedApiData): any[] {
-  const properties: any[] = [];
+export function extractRequestProperties(
+  operation: OpenApiOperation,
+  processedData: ProcessedApiData,
+): ApiProperty[] {
+  const properties: ApiProperty[] = [];
 
   // 处理请求体
   if (operation.requestBody && operation.requestBody.content) {
@@ -34,13 +38,13 @@ export function extractRequestProperties(operation: any, processedData: Processe
       // 处理引用模式
       if (schema.$ref) {
         const refName = schema.$ref.split('/').pop();
-        const refSchema = processedData.types.find((t: any) => t.name === refName)?.schema;
+        const refSchema = processedData.types.find((t) => t.name === refName)?.schema;
         if (refSchema && refSchema.properties) {
           for (const [name, property] of Object.entries(refSchema.properties)) {
             properties.push({
               name: sanitizePropertyName(name),
               type: getPropertyType(property),
-              description: (property as any).description || '',
+              description: property.description || '',
               required: refSchema.required?.includes(name) || false,
             });
           }
@@ -51,7 +55,7 @@ export function extractRequestProperties(operation: any, processedData: Processe
           properties.push({
             name: sanitizePropertyName(name),
             type: getPropertyType(property),
-            description: (property as any).description || '',
+            description: property.description || '',
             required: schema.required?.includes(name) || false,
           });
         }
@@ -89,10 +93,13 @@ export function extractRequestProperties(operation: any, processedData: Processe
  * // ]
  * ```
  */
-export function extractResponseProperties(responses: any, processedData: ProcessedApiData): any[] {
+export function extractResponseProperties(
+  responses: OpenApiOperation['responses'],
+  processedData: ProcessedApiData,
+): ApiProperty[] {
   if (!responses) return [];
 
-  const properties: any[] = [];
+  const properties: ApiProperty[] = [];
 
   // 从200响应中提取属性
   const successResponse = responses['200'] || responses['201'];
@@ -103,14 +110,14 @@ export function extractResponseProperties(responses: any, processedData: Process
 
       // 处理引用模式
       if (schema.$ref) {
-        const refName = schema.$ref.split('/').pop();
-        const refSchema = processedData.types.find((t: any) => t.name === refName)?.schema;
+        const refName = schema.$ref.split('/').pop()!;
+        const refSchema = processedData.types.find((t) => t.name === refName)?.schema;
         if (refSchema && refSchema.properties) {
           for (const [name, property] of Object.entries(refSchema.properties)) {
             properties.push({
               name: sanitizePropertyName(name),
               type: getPropertyType(property),
-              description: (property as any).description || '',
+              description: property.description || '',
               required: refSchema.required?.includes(name) || false,
             });
           }
@@ -138,7 +145,7 @@ export function extractResponseProperties(responses: any, processedData: Process
           properties.push({
             name: sanitizePropertyName(name),
             type: getPropertyType(property),
-            description: (property as any).description || '',
+            description: property.description || '',
             required: schema.required?.includes(name) || false,
           });
         }
@@ -188,7 +195,7 @@ export function extractResponseProperties(responses: any, processedData: Process
  * // ]
  * ```
  */
-export function extractTypeProperties(schema: any): any[] {
+export function extractTypeProperties(schema: OpenApiSchema): ApiProperty[] {
   if (!schema) {
     return [];
   }
@@ -205,13 +212,13 @@ export function extractTypeProperties(schema: any): any[] {
     return [];
   }
 
-  const properties: any[] = [];
+  const properties: ApiProperty[] = [];
 
   for (const [name, property] of Object.entries(schema.properties)) {
     properties.push({
       name: sanitizePropertyName(name),
       type: getPropertyType(property),
-      description: (property as any).description || '',
+      description: property.description || '',
       required: schema.required?.includes(name) || false,
     });
   }
@@ -232,12 +239,12 @@ export function extractTypeProperties(schema: any): any[] {
  * const type = getPropertyType({ $ref: '#/components/schemas/User' }); // 'User'
  * ```
  */
-export function getPropertyType(property: any): string {
+export function getPropertyType(property: OpenApiSchema): string {
   if (!property) return 'any';
 
   // 处理引用类型
   if (property.$ref) {
-    const refName = property.$ref.split('/').pop();
+    const refName = property.$ref.split('/').pop()!;
     return sanitizeTypeName(refName);
   }
 
@@ -250,7 +257,7 @@ export function getPropertyType(property: any): string {
   if (property.type === 'object') {
     // 检查是否为引用对象
     if (property.additionalProperties && property.additionalProperties.$ref) {
-      const refName = property.additionalProperties.$ref.split('/').pop();
+      const refName = property.additionalProperties.$ref.split('/').pop()!;
       return `Record<string, ${sanitizeTypeName(refName)}>`;
     }
     return 'Record<string, any>';
@@ -283,6 +290,6 @@ export function getPropertyType(property: any): string {
  * // 如果操作有 requestBody，返回 true
  * ```
  */
-export function hasRequestBody(operation: any): boolean {
+export function hasRequestBody(operation: OpenApiOperation): boolean {
   return !!operation.requestBody;
 }

@@ -7,6 +7,7 @@ import consola from 'consola';
 import { join } from 'path';
 import { ProcessedApiData, groupInterfacesByTag } from '../../processors/openapi';
 import { ApiConfig, CliHooks } from '../../types';
+import type { OpenApiOperation } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
 import { formatCode } from '../../utils/formatter';
 import { chineseToPinyinCamelCase } from '../../utils/path';
@@ -215,7 +216,7 @@ async function generateSchemaIndexFile(
 function getRequestTypeName(
   path: string,
   method: string,
-  operation: any,
+  operation: OpenApiOperation,
   config: ApiConfig,
 ): string {
   const ctx: NamingContext = {
@@ -242,7 +243,7 @@ function getRequestTypeName(
 function getResponseTypeName(
   path: string,
   method: string,
-  operation: any,
+  operation: OpenApiOperation,
   config: ApiConfig,
 ): string {
   const ctx: NamingContext = {

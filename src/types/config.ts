@@ -3,6 +3,7 @@
  */
 
 import { RequestMethodStyle } from './enums';
+import type { ServerType } from './enums';
 import { CliHooks } from './hooks';
 
 /**
@@ -158,7 +159,7 @@ export interface ApiConfig {
   /** 服务器地址 (从 source 解析) */
   serverUrl: string;
   /** 服务器类型 (从 source 解析) */
-  serverType: import('./enums').ServerType;
+  serverType: ServerType;
   /** Apifox 项目 ID (从 source 解析) */
   apifoxProjectId?: string;
 

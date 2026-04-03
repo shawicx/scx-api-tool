@@ -3,6 +3,7 @@
  * 提供数据处理相关的公共函数
  */
 
+import type { ApiInterface } from '../types';
 import { ProcessedApiData } from './openapi';
 
 /**
@@ -25,8 +26,8 @@ import { ProcessedApiData } from './openapi';
  * // }
  * ```
  */
-export function groupInterfacesByTag(interfaces: any[]): Record<string, any[]> {
-  const interfacesByTag: Record<string, any[]> = {};
+export function groupInterfacesByTag(interfaces: ApiInterface[]): Record<string, ApiInterface[]> {
+  const interfacesByTag: Record<string, ApiInterface[]> = {};
 
   for (const apiInterface of interfaces) {
     const tags = apiInterface.operation.tags || [];
@@ -61,7 +62,7 @@ export function groupInterfacesByTag(interfaces: any[]): Record<string, any[]> {
  * ```
  */
 export function extractUsedTypeNames(
-  interfaces: any[],
+  interfaces: ApiInterface[],
   processedData: ProcessedApiData,
 ): Set<string> {
   const usedTypes = new Set<string>();
@@ -164,5 +165,5 @@ function isCustomType(typeName: string, processedData: ProcessedApiData): boolea
   }
 
   // 检查是否在类型定义中
-  return processedData.types.some((t: any) => t.name === typeName);
+  return processedData.types.some((t) => t.name === typeName);
 }
