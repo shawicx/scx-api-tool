@@ -4,7 +4,7 @@
  */
 
 import Handlebars from 'handlebars';
-import { compileTemplate } from '../../generator/template';
+import { compileTemplate } from '../../generator/template/index';
 
 /**
  * @description Zod Request Schema 模板内容 - 带注释（不包含 import）

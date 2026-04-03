@@ -4,25 +4,15 @@
  */
 
 export {
-  getTemplateCacheStats,
   getTemplateFromCache,
   setTemplateCache,
   isTemplateCached,
-  clearTemplateCache,
   templateCache,
 } from './templateCache';
 
-export {
-  registerTemplateHelpers,
-  getRegisteredHelpers,
-  isHelperRegistered,
-} from './templateHelpers';
+export { registerTemplateHelpers } from './templateHelpers';
 
-export {
-  registerTemplatePartials,
-  getRegisteredPartials,
-  isPartialRegistered,
-} from './templatePartials';
+export { registerTemplatePartials } from './templatePartials';
 
 export {
   generatePrecompiledMethodMap,
@@ -41,9 +31,6 @@ export {
   getTypesOnlyTemplateWithComment,
   getTypesOnlyTemplateWithoutComment,
   getTypesOnlyTemplateByConfig,
-  getInterfaceTemplate,
-  getApiOnlyTemplate,
-  getTypeTemplate,
   getInterfaceTemplateByConfig,
   getApiOnlyTemplateByConfig,
   getTypeTemplateByConfig,

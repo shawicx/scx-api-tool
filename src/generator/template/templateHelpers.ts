@@ -34,33 +34,3 @@ export function registerTemplateHelpers(): void {
 
   // 移除了 requestFunctionName 和 requestMethodsObjectName helpers，直接使用数据字段
 }
-
-/**
- * @description 获取所有已注册的辅助函数名称
- * @returns 辅助函数名称数组
- *
- * @example
- * ```typescript
- * const helpers = getRegisteredHelpers();
- * console.log('已注册的辅助函数:', helpers);
- * ```
- */
-export function getRegisteredHelpers(): string[] {
-  return Object.keys(Handlebars.helpers);
-}
-
-/**
- * @description 检查辅助函数是否已注册
- * @param name 辅助函数名称
- * @returns 是否已注册
- *
- * @example
- * ```typescript
- * if (isHelperRegistered('toLowerCase')) {
- *   console.log('toLowerCase 已注册');
- * }
- * ```
- */
-export function isHelperRegistered(name: string): boolean {
-  return name in Handlebars.helpers;
-}

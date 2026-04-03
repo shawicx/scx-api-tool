@@ -96,33 +96,3 @@ import consola from 'consola';
 `,
   );
 }
-
-/**
- * @description 获取所有已注册的 partials 名称
- * @returns partials 名称数组
- *
- * @example
- * ```typescript
- * const partials = getRegisteredPartials();
- * console.log('已注册的 partials:', partials);
- * ```
- */
-export function getRegisteredPartials(): string[] {
-  return Object.keys(Handlebars.partials);
-}
-
-/**
- * @description 检查 partial 是否已注册
- * @param name partial 名称
- * @returns 是否已注册
- *
- * @example
- * ```typescript
- * if (isPartialRegistered('functionBody')) {
- *   console.log('functionBody 已注册');
- * }
- * ```
- */
-export function isPartialRegistered(name: string): boolean {
-  return name in Handlebars.partials;
-}

@@ -5,7 +5,7 @@
 
 import Handlebars from 'handlebars';
 import consola from 'consola';
-import { compileTemplate } from '../../generator/template';
+import { compileTemplate } from '../../generator/template/index';
 import { ProcessedApiData } from '../../processors/openapi';
 import { sanitizeTypeName } from '../../generator/naming';
 import { generateZodSchemaFromOpenApiSchema, openApiPropertyToZodType } from './types';

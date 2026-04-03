@@ -463,33 +463,6 @@ export function getTypesOnlyTemplateByConfig(comment: boolean): string {
 
 // ==================== 向后兼容的接口 ====================
 
-/**
- * @deprecated 使用 getInterfaceTemplateWithComment 或 getInterfaceTemplateWithoutComment
- * @description 获取完整的接口模板（向后兼容，默认带注释）
- * @returns 模板字符串
- */
-export function getInterfaceTemplate(): string {
-  return getInterfaceTemplateWithComment();
-}
-
-/**
- * @deprecated 使用 getApiOnlyTemplateWithComment 或 getApiOnlyTemplateWithoutComment
- * @description 获取 API Only 模式的接口模板（向后兼容，默认带注释）
- * @returns 模板字符串
- */
-export function getApiOnlyTemplate(): string {
-  return getApiOnlyTemplateWithComment();
-}
-
-/**
- * @deprecated 使用 getTypeTemplateWithComment 或 getTypeTemplateWithoutComment
- * @description 获取类型模板（向后兼容，默认带注释）
- * @returns 模板字符串
- */
-export function getTypeTemplate(): string {
-  return getTypeTemplateWithComment();
-}
-
 // ==================== 新的获取模板方法 ====================
 
 /**
