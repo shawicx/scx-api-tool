@@ -6,6 +6,7 @@
 import consola from 'consola';
 import { join } from 'path';
 import { ProcessedApiData, groupInterfacesByTag } from '../../processors/openapi';
+import { collectUsedTypesFromProperties } from '../../processors/common';
 import { ApiConfig, CliHooks } from '../../types';
 import type { ApiInterface, InterfaceTemplateData, OpenApiOperation } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
@@ -116,33 +117,13 @@ export async function generateInterfaceFileForTag(
   if (!isJS) {
     for (const apiInterface of interfaces) {
       const requestProps = extractRequestProperties(apiInterface.operation, processedData);
-      for (const prop of requestProps) {
-        if (processedData.types.some((t) => t.name === prop.type)) {
-          usedTypes.add(prop.type);
-        }
-        if (prop.type.endsWith('[]')) {
-          const baseType = prop.type.slice(0, -2);
-          if (processedData.types.some((t) => t.name === baseType)) {
-            usedTypes.add(baseType);
-          }
-        }
-      }
+      collectUsedTypesFromProperties(requestProps, processedData).forEach((t) => usedTypes.add(t));
 
       const responseProps = extractResponseProperties(
         apiInterface.operation.responses,
         processedData,
       );
-      for (const prop of responseProps) {
-        if (processedData.types.some((t) => t.name === prop.type)) {
-          usedTypes.add(prop.type);
-        }
-        if (prop.type.endsWith('[]')) {
-          const baseType = prop.type.slice(0, -2);
-          if (processedData.types.some((t) => t.name === baseType)) {
-            usedTypes.add(baseType);
-          }
-        }
-      }
+      collectUsedTypesFromProperties(responseProps, processedData).forEach((t) => usedTypes.add(t));
     }
   }
 

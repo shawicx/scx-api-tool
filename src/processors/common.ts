@@ -3,7 +3,7 @@
  * 提供数据处理相关的公共函数
  */
 
-import type { ApiInterface } from '../types';
+import type { ApiInterface, ApiProperty } from '../types';
 import { ProcessedApiData } from './openapi';
 
 /**
@@ -46,6 +46,27 @@ export function groupInterfacesByTag(interfaces: ApiInterface[]): Record<string,
   }
 
   return interfacesByTag;
+}
+
+/**
+ * @description 从属性列表中收集使用的自定义类型名称
+ * 遍历属性的类型，检查是否为自定义类型，支持数组后缀
+ * @param properties 属性数组
+ * @param processedData 处理后的 API 数据
+ * @returns 类型名称集合
+ */
+export function collectUsedTypesFromProperties(
+  properties: ApiProperty[],
+  processedData: ProcessedApiData,
+): Set<string> {
+  const usedTypes = new Set<string>();
+  for (const prop of properties) {
+    const baseType = prop.type.endsWith('[]') ? prop.type.slice(0, -2) : prop.type;
+    if (processedData.types.some((t) => t.name === baseType)) {
+      usedTypes.add(baseType);
+    }
+  }
+  return usedTypes;
 }
 
 /**

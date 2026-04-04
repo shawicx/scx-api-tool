@@ -8,11 +8,7 @@ import { ApiConfig, CliHooks } from '../types';
 import { fileExists, writeFormattedFile } from '../utils/file';
 import { formatCode } from '../utils/formatter';
 import { aliasToRealPath } from './pathUtils';
-import {
-  generateRequestFile as generateRequestFileContent,
-  registerTemplateHelpers,
-  registerTemplatePartials,
-} from './template';
+import { generateRequestFile as generateRequestFileContent } from './template';
 
 export { generateInterfaceFiles, generateRootIndexFile } from './generators/interfaceGenerator';
 export { generateTypeFiles } from './generators/typeGenerator';
@@ -41,9 +37,6 @@ export async function generateRequestFile(config: ApiConfig, hooks?: CliHooks): 
   }
 
   try {
-    registerTemplateHelpers();
-    registerTemplatePartials();
-
     const requestFileContent = generateRequestFileContent(config);
 
     const formattedCode = await formatCode(requestFileContent, requestFilePath, config.indentSize);

@@ -6,6 +6,7 @@
 import consola from 'consola';
 import { join } from 'path';
 import { ProcessedApiData } from '../../processors/openapi';
+import { collectUsedTypesFromProperties } from '../../processors/common';
 import { ApiConfig, CliHooks } from '../../types';
 import type { ApiTypeDefinition } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
@@ -96,20 +97,7 @@ async function generateTypeFile(
 
   let code = template(templateData);
 
-  const dependencies = new Set<string>();
-  for (const prop of templateData.properties) {
-    const propType = prop.type;
-    const baseType = propType.endsWith('[]') ? propType.slice(0, -2) : propType;
-    if (
-      /^[A-Z]/.test(baseType) &&
-      !['any', 'string', 'number', 'boolean', 'object', 'unknown', 'never'].includes(
-        baseType.toLowerCase(),
-      ) &&
-      processedData.types.some((t) => t.name === baseType)
-    ) {
-      dependencies.add(baseType);
-    }
-  }
+  const dependencies = collectUsedTypesFromProperties(templateData.properties, processedData);
 
   if (dependencies.size > 0) {
     const importPath = getNormalizedPathWithAlias(

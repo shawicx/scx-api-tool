@@ -205,55 +205,49 @@ async function generateSchemaIndexFile(
 }
 
 /**
- * @description 获取请求类型名称
- * 使用命名策略生成请求类型名称
+ * @description 获取命名结果中的指定类型名称
  * @param path API 路径
  * @param method HTTP 方法
  * @param operation 操作对象
  * @param config API 配置
- * @returns 请求类型名称
+ * @param field 要获取的字段：'requestTypeName' 或 'responseTypeName'
+ * @returns 类型名称
  */
+function getTypeName(
+  path: string,
+  method: string,
+  operation: OpenApiOperation,
+  config: ApiConfig,
+  field: 'requestTypeName' | 'responseTypeName',
+): string {
+  const ctx: NamingContext = {
+    path,
+    method,
+    summary: operation.summary,
+    description: operation.description,
+    operationId: operation.operationId,
+    tags: operation.tags,
+    config,
+  };
+  return applyNamingStrategy(ctx, config.namingStrategy)[field];
+}
+
+/** 获取请求类型名称 */
 function getRequestTypeName(
   path: string,
   method: string,
   operation: OpenApiOperation,
   config: ApiConfig,
 ): string {
-  const ctx: NamingContext = {
-    path,
-    method,
-    summary: operation.summary,
-    description: operation.description,
-    operationId: operation.operationId,
-    tags: operation.tags,
-    config,
-  };
-  return applyNamingStrategy(ctx, config.namingStrategy).requestTypeName;
+  return getTypeName(path, method, operation, config, 'requestTypeName');
 }
 
-/**
- * @description 获取响应类型名称
- * 使用命名策略生成响应类型名称
- * @param path API 路径
- * @param method HTTP 方法
- * @param operation 操作对象
- * @param config API 配置
- * @returns 响应类型名称
- */
+/** 获取响应类型名称 */
 function getResponseTypeName(
   path: string,
   method: string,
   operation: OpenApiOperation,
   config: ApiConfig,
 ): string {
-  const ctx: NamingContext = {
-    path,
-    method,
-    summary: operation.summary,
-    description: operation.description,
-    operationId: operation.operationId,
-    tags: operation.tags,
-    config,
-  };
-  return applyNamingStrategy(ctx, config.namingStrategy).responseTypeName;
+  return getTypeName(path, method, operation, config, 'responseTypeName');
 }

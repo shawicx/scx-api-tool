@@ -17,6 +17,17 @@ import {
 import { registerTemplateHelpers } from './templateHelpers';
 import { registerTemplatePartials } from './templatePartials';
 
+/** 标记 helpers 和 partials 是否已注册，避免重复注册 */
+let registered = false;
+
+/** 确保 helpers 和 partials 只注册一次 */
+function ensureRegistered(): void {
+  if (registered) return;
+  registerTemplateHelpers();
+  registerTemplatePartials();
+  registered = true;
+}
+
 /**
  * @description 预编译方法映射 - 性能优化
  * 生成 METHOD_MAP 常量，避免运行时字符串操作
@@ -514,8 +525,7 @@ export function compileTemplate(template: string): HandlebarsTemplateDelegate {
     return getTemplateFromCache(template)!;
   }
 
-  registerTemplateHelpers();
-  registerTemplatePartials();
+  ensureRegistered();
 
   const compiledTemplate = Handlebars.compile(template);
   setTemplateCache(template, compiledTemplate);
@@ -533,28 +543,39 @@ export function compileTemplate(template: string): HandlebarsTemplateDelegate {
  * @returns 生成的请求文件代码字符串
  */
 export function generateRequestFile(config: ApiConfig): string {
-  registerTemplateHelpers();
-  registerTemplatePartials();
+  ensureRegistered();
 
+  const isJS = config.target === 'javascript';
   const requestFunctionName = config.requestFunctionName || 'request';
   const requestMethodsObjectName = config.requestMethodsObjectName || 'requestMethods';
 
-  if (config.target === 'javascript') {
-    return generateRequestFileJS(config, requestFunctionName, requestMethodsObjectName);
-  }
+  let template = '';
 
-  let template = "import type { AxiosRequestConfig } from 'axios';\n";
+  // import 部分
+  if (!isJS) {
+    template += "import type { AxiosRequestConfig } from 'axios';\n";
+  }
   template += "import axios from 'axios';\n";
   template += "import consola from 'consola';\n\n";
-  template += 'export interface RequestConfig extends AxiosRequestConfig {\n';
-  template += '  url: string;\n';
-  template += '  method: string;\n';
-  template += '}\n\n';
+
+  // RequestConfig 接口（仅 TypeScript）
+  if (!isJS) {
+    template += 'export interface RequestConfig extends AxiosRequestConfig {\n';
+    template += '  url: string;\n';
+    template += '  method: string;\n';
+    template += '}\n\n';
+  }
+
   template += '// 用于转发请求的代理地址\n';
   template += "const BASE_LINE_PROXY_PATH = '/api';\n\n";
   template += '// 超时时间\n';
   template += 'const TIMEOUT = 5 * 1000;\n\n';
-  template += `export async function ${requestFunctionName}<T = any>(config: RequestConfig): Promise<T> {\n`;
+
+  // 请求函数
+  const configType = isJS ? 'config' : 'config: RequestConfig';
+  const genericDecl = isJS ? '' : '<T = any>';
+  const returnType = isJS ? '' : ': Promise<T>';
+  template += `export async function ${requestFunctionName}${genericDecl}(${configType})${returnType} {\n`;
   template += '  try {\n';
   template += '    const response = await axios({\n';
   template += '      ...config,\n';
@@ -568,181 +589,58 @@ export function generateRequestFile(config: ApiConfig): string {
   template += '  }\n';
   template += '}';
 
+  // 方法特定函数
   if (
     config.requestMethodStyle === RequestMethodStyle.METHOD_SPECIFIC ||
     config.requestMethodStyle === RequestMethodStyle.BOTH
   ) {
     template += '\n\n';
     template += `export const ${requestMethodsObjectName} = {\n`;
-    template += '  get: <T = any>(url: string, params?: any) => {\n';
-    template += "    const config: RequestConfig = { url, method: 'GET' };\n";
-    template += '    if (params) {\n';
-    template += '      config.params = params;\n';
-    template += '    }\n';
-    template += `    return ${requestFunctionName}<T>(config);\n`;
-    template += '  },\n';
-    template += '  post: <T = any>(url: string, data?: any, params?: any) => {\n';
-    template += "    const config: RequestConfig = { url, method: 'POST' };\n";
-    template += '    if (data) {\n';
-    template += '      config.data = data;\n';
-    template += '    }\n';
-    template += '    if (params) {\n';
-    template += '      config.params = params;\n';
-    template += '    }\n';
-    template += `    return ${requestFunctionName}<T>(config);\n`;
-    template += '  },\n';
-    template += '  put: <T = any>(url: string, data?: any, params?: any) => {\n';
-    template += "    const config: RequestConfig = { url, method: 'PUT' };\n";
-    template += '    if (data) {\n';
-    template += '      config.data = data;\n';
-    template += '    }\n';
-    template += '    if (params) {\n';
-    template += '      config.params = params;\n';
-    template += '    }\n';
-    template += `    return ${requestFunctionName}<T>(config);\n`;
-    template += '  },\n';
-    template += '  delete: <T = any>(url: string, params?: any) => {\n';
-    template += "    const config: RequestConfig = { url, method: 'DELETE' };\n";
-    template += '    if (params) {\n';
-    template += '      config.params = params;\n';
-    template += '    }\n';
-    template += `    return ${requestFunctionName}<T>(config);\n`;
-    template += '  },\n';
-    template += '  patch: <T = any>(url: string, data?: any, params?: any) => {\n';
-    template += "    const config: RequestConfig = { url, method: 'PATCH' };\n";
-    template += '    if (data) {\n';
-    template += '      config.data = data;\n';
-    template += '    }\n';
-    template += '    if (params) {\n';
-    template += '      config.params = params;\n';
-    template += '    }\n';
-    template += `    return ${requestFunctionName}<T>(config);\n`;
-    template += '  },\n';
-    template += '  head: <T = any>(url: string, params?: any) => {\n';
-    template += "    const config: RequestConfig = { url, method: 'HEAD' };\n";
-    template += '    if (params) {\n';
-    template += '      config.params = params;\n';
-    template += '    }\n';
-    template += `    return ${requestFunctionName}<T>(config);\n`;
-    template += '  },\n';
-    template += '  options: <T = any>(url: string, params?: any) => {\n';
-    template += "    const config: RequestConfig = { url, method: 'OPTIONS' };\n";
-    template += '    if (params) {\n';
-    template += '      config.params = params;\n';
-    template += '    }\n';
-    template += `    return ${requestFunctionName}<T>(config);\n`;
-    template += '  },\n';
+
+    // get, delete, head, options — 无 body 参数
+    for (const method of ['get', 'delete', 'head', 'options'] as const) {
+      const methodUpper = method.toUpperCase();
+      const tsGeneric = isJS ? '' : '<T = any>';
+      const tsParams = isJS ? '(url, params)' : '(url: string, params?: any)';
+      const tsConfigType = isJS ? 'config' : 'config: RequestConfig';
+      const tsReturn = isJS ? '' : '<T>';
+
+      template += `  ${method}: ${tsGeneric}${tsParams} => {\n`;
+      template += `    const ${tsConfigType} = { url, method: '${methodUpper}' };\n`;
+      template += `    if (params) {\n`;
+      template += `      config.params = params;\n`;
+      template += `    }\n`;
+      template += `    return ${requestFunctionName}${tsReturn}(config);\n`;
+      template += `  },\n`;
+    }
+
+    // post, put, patch — 有 body 参数
+    for (const method of ['post', 'put', 'patch'] as const) {
+      const methodUpper = method.toUpperCase();
+      const tsGeneric = isJS ? '' : '<T = any>';
+      const tsParams = isJS ? '(url, data, params)' : '(url: string, data?: any, params?: any)';
+      const tsConfigType = isJS ? 'config' : 'config: RequestConfig';
+      const tsReturn = isJS ? '' : '<T>';
+
+      template += `  ${method}: ${tsGeneric}${tsParams} => {\n`;
+      template += `    const ${tsConfigType} = { url, method: '${methodUpper}' };\n`;
+      template += `    if (data) {\n`;
+      template += `      config.data = data;\n`;
+      template += `    }\n`;
+      template += `    if (params) {\n`;
+      template += `      config.params = params;\n`;
+      template += `    }\n`;
+      template += `    return ${requestFunctionName}${tsReturn}(config);\n`;
+      template += `  },\n`;
+    }
+
     template += '};';
   }
 
-  if (config.requestMethodStyle === RequestMethodStyle.BOTH) {
+  // METHOD_MAP（仅 TypeScript）
+  if (!isJS && config.requestMethodStyle === RequestMethodStyle.BOTH) {
     template += generatePrecompiledMethodMap(requestMethodsObjectName);
   }
-
-  return template;
-}
-
-/**
- * @description 生成 JavaScript 版本的请求文件内容
- * 不含 TypeScript 语法（无 interface、泛型、import type）
- * @param config 配置对象
- * @param requestFunctionName 请求函数名
- * @param requestMethodsObjectName 请求方法对象名
- * @returns 生成的请求文件代码字符串
- */
-function generateRequestFileJS(
-  config: ApiConfig,
-  requestFunctionName: string,
-  requestMethodsObjectName: string,
-): string {
-  let template = "import axios from 'axios';\n";
-  template += "import consola from 'consola';\n\n";
-  template += '// 用于转发请求的代理地址\n';
-  template += "const BASE_LINE_PROXY_PATH = '/api';\n\n";
-  template += '// 超时时间\n';
-  template += 'const TIMEOUT = 5 * 1000;\n\n';
-  template += `export async function ${requestFunctionName}(config) {\n`;
-  template += '  try {\n';
-  template += '    const response = await axios({\n';
-  template += '      ...config,\n';
-  template += '      baseURL: BASE_LINE_PROXY_PATH,\n';
-  template += '      timeout: TIMEOUT,\n';
-  template += '    });\n\n';
-  template += '    return response.data;\n';
-  template += '  } catch (error) {\n';
-  template += "    consola.error('Request failed:', error);\n";
-  template += '    throw error;\n';
-  template += '  }\n';
-  template += '}';
-
-  if (
-    config.requestMethodStyle === RequestMethodStyle.METHOD_SPECIFIC ||
-    config.requestMethodStyle === RequestMethodStyle.BOTH
-  ) {
-    template += '\n\n';
-    template += `export const ${requestMethodsObjectName} = {\n`;
-    template += `  get: (url, params) => {\n`;
-    template += `    const config = { url, method: 'GET' };\n`;
-    template += `    if (params) {\n`;
-    template += `      config.params = params;\n`;
-    template += `    }\n`;
-    template += `    return ${requestFunctionName}(config);\n`;
-    template += `  },\n`;
-    template += `  post: (url, data, params) => {\n`;
-    template += `    const config = { url, method: 'POST' };\n`;
-    template += `    if (data) {\n`;
-    template += `      config.data = data;\n`;
-    template += `    }\n`;
-    template += `    if (params) {\n`;
-    template += `      config.params = params;\n`;
-    template += `    }\n`;
-    template += `    return ${requestFunctionName}(config);\n`;
-    template += `  },\n`;
-    template += `  put: (url, data, params) => {\n`;
-    template += `    const config = { url, method: 'PUT' };\n`;
-    template += `    if (data) {\n`;
-    template += `      config.data = data;\n`;
-    template += `    }\n`;
-    template += `    if (params) {\n`;
-    template += `      config.params = params;\n`;
-    template += `    }\n`;
-    template += `    return ${requestFunctionName}(config);\n`;
-    template += `  },\n`;
-    template += `  delete: (url, params) => {\n`;
-    template += `    const config = { url, method: 'DELETE' };\n`;
-    template += `    if (params) {\n`;
-    template += `      config.params = params;\n`;
-    template += `    }\n`;
-    template += `    return ${requestFunctionName}(config);\n`;
-    template += `  },\n`;
-    template += `  patch: (url, data, params) => {\n`;
-    template += `    const config = { url, method: 'PATCH' };\n`;
-    template += `    if (data) {\n`;
-    template += `      config.data = data;\n`;
-    template += `    }\n`;
-    template += `    if (params) {\n`;
-    template += `      config.params = params;\n`;
-    template += `    }\n`;
-    template += `    return ${requestFunctionName}(config);\n`;
-    template += `  },\n`;
-    template += `  head: (url, params) => {\n`;
-    template += `    const config = { url, method: 'HEAD' };\n`;
-    template += `    if (params) {\n`;
-    template += `      config.params = params;\n`;
-    template += `    }\n`;
-    template += `    return ${requestFunctionName}(config);\n`;
-    template += `  },\n`;
-    template += `  options: (url, params) => {\n`;
-    template += `    const config = { url, method: 'OPTIONS' };\n`;
-    template += `    if (params) {\n`;
-    template += `      config.params = params;\n`;
-    template += `    }\n`;
-    template += `    return ${requestFunctionName}(config);\n`;
-    template += `  },\n`;
-    template += `};`;
-  }
-
-  // JavaScript 模式不生成 METHOD_MAP（使用了 as const 等 TS 语法）
 
   return template;
 }
