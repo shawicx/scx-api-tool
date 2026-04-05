@@ -7,8 +7,8 @@ import { resolve } from 'path';
 import { pathToFileURL } from 'url';
 import type { ApiConfig, UserConfig } from '@/types';
 import { defineConfig } from '@/utils/config';
-import { validateConfiguration } from '@/validation';
-import { ErrorFactory } from '@/errors';
+import { validateConfiguration, ConfigValidationError } from '@/validation';
+import { ErrorFactory, BaseError } from '@/errors';
 
 /**
  * 检查配置是否已经被 defineConfig 处理过
@@ -67,7 +67,7 @@ export async function loadConfig(configPath: string): Promise<ApiConfig> {
     return finalConfig;
   } catch (error: any) {
     // 如果是我们自定义的错误，直接抛出
-    if (error.code && error.code.startsWith('E1')) {
+    if (error instanceof BaseError || error instanceof ConfigValidationError) {
       throw error;
     }
     // 否则包装为配置解析错误

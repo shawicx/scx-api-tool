@@ -105,12 +105,8 @@ export function processOpenApiData(data: OpenApiDocument, config: ApiConfig): Pr
     }
   }
 
-  // 处理不同服务器类型的类别提取
-  if (config.serverType === ServerType.Apifox && data.tags) {
-    // 对于 Apifox，使用标签作为类别
-    categories.push(...data.tags);
-  } else if (config.serverType === ServerType.Swagger && data.tags) {
-    // 对于 Swagger，也使用标签作为类别
+  // 处理类别提取 — Apifox 和 Swagger 均使用标签作为类别
+  if (data.tags) {
     categories.push(...data.tags);
   }
 

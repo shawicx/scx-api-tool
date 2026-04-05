@@ -195,11 +195,7 @@ export async function generateInterfaceFileForTag(
 
     const code = generateInterfaceFunction(templateData, config);
 
-    const codeWithoutImport = code.replace(
-      /import type \{ AxiosRequestConfig \} from 'axios';\nimport axios from 'axios';\nimport consola from 'consola';\n\n?/g,
-      '',
-    );
-    combinedCode += `${codeWithoutImport}\n\n`;
+    combinedCode += `${code}\n\n`;
   }
 
   const indexFileName = `index${ext}`;

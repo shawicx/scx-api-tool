@@ -37,7 +37,7 @@ export function extractRequestProperties(
 
       // 处理引用模式
       if (schema.$ref) {
-        const refName = schema.$ref.split('/').pop();
+        const refName = sanitizeTypeName(schema.$ref.split('/').pop()!);
         const refSchema = processedData.types.find((t) => t.name === refName)?.schema;
         if (refSchema && refSchema.properties) {
           for (const [name, property] of Object.entries(refSchema.properties)) {
@@ -110,7 +110,7 @@ export function extractResponseProperties(
 
       // 处理引用模式
       if (schema.$ref) {
-        const refName = schema.$ref.split('/').pop()!;
+        const refName = sanitizeTypeName(schema.$ref.split('/').pop()!);
         const refSchema = processedData.types.find((t) => t.name === refName)?.schema;
         if (refSchema && refSchema.properties) {
           for (const [name, property] of Object.entries(refSchema.properties)) {
@@ -121,20 +121,11 @@ export function extractResponseProperties(
               required: refSchema.required?.includes(name) || false,
             });
           }
-        } else if (refSchema) {
-          // 如果我们找到了引用模式但没有属性，
-          // 它可能是一个直接类型引用
-          properties.push({
-            name: 'data',
-            type: sanitizeTypeName(refName),
-            description: '响应数据',
-            required: true,
-          });
         } else {
-          // 如果我们找不到引用，添加一个通用响应
+          // 引用模式没有属性或找不到引用，添加通用响应
           properties.push({
             name: 'data',
-            type: sanitizeTypeName(refName),
+            type: refName,
             description: '响应数据',
             required: true,
           });

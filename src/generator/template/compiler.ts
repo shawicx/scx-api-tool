@@ -676,21 +676,18 @@ export function generateInterfaceFunction(
   const isZodMode = config.typesFormat === 'zod';
   const isZodGenerateTypes = config.generateTypes && isZodMode;
 
-  if (isZodMode && shouldGenerateApi && isZodGenerateTypes) {
-    template = getZodInterfaceTemplateByConfig(comment);
-  } else if (isZodMode && isZodGenerateTypes && !shouldGenerateApi) {
-    template = getZodTypesOnlyTemplateByConfig(comment);
-  } else if (isZodMode && shouldGenerateApi && !isZodGenerateTypes) {
-    template = getZodApiOnlyTemplateByConfig(comment);
-  } else if (shouldGenerateTypes && !shouldGenerateApi) {
-    template = getTypesOnlyTemplateByConfig(comment);
-  } else if (shouldGenerateApi && !isZodMode && !shouldGenerateTypes) {
-    template = getApiOnlyTemplateByConfig(comment);
-  } else if (shouldGenerateApi && shouldGenerateTypes && !isZodMode) {
-    template = getInterfaceTemplateByConfig(comment);
-  } else {
-    template = getApiOnlyTemplateByConfig(comment);
-  }
+  const templateKey = `${isZodMode ? 'zod' : 'ts'}_${shouldGenerateApi ? 'api' : 'noapi'}_${shouldGenerateTypes || isZodGenerateTypes ? 'types' : 'notypes'}`;
+
+  const templateMap: Record<string, () => string> = {
+    zod_api_types: () => getZodInterfaceTemplateByConfig(comment),
+    zod_noapi_types: () => getZodTypesOnlyTemplateByConfig(comment),
+    zod_api_notypes: () => getZodApiOnlyTemplateByConfig(comment),
+    ts_noapi_types: () => getTypesOnlyTemplateByConfig(comment),
+    ts_api_notypes: () => getApiOnlyTemplateByConfig(comment),
+    ts_api_types: () => getInterfaceTemplateByConfig(comment),
+  };
+
+  template = (templateMap[templateKey] || (() => getApiOnlyTemplateByConfig(comment)))();
 
   const compiledTemplate = compileTemplate(template);
 
