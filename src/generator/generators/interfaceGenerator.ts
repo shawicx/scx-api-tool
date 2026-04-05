@@ -156,6 +156,21 @@ export async function generateInterfaceFileForTag(
       const typesRelativePath = getNormalizedPathWithAlias(dirPath, typesDirPath);
       const cleanTypesRelativePath = typesRelativePath.replace(/\/$/, '');
       combinedCode += `import type { ${Array.from(usedTypes).join(', ')} } from '${cleanTypesRelativePath}';\n`;
+    } else if (config.typesFormat === 'zod') {
+      const usedZodTypes = new Set<string>();
+      for (const apiInterface of interfaces) {
+        const namingResult = getNamingResult(
+          apiInterface.path,
+          apiInterface.method,
+          apiInterface.operation,
+          config,
+        );
+        usedZodTypes.add(namingResult.requestTypeName);
+        usedZodTypes.add(namingResult.responseTypeName);
+      }
+      if (usedZodTypes.size > 0) {
+        combinedCode += `import type { ${Array.from(usedZodTypes).join(', ')} } from './schema';\n`;
+      }
     }
   }
 
