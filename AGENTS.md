@@ -1,25 +1,3 @@
-<!-- OPENSPEC:START -->
-
-# OpenSpec Instructions
-
-These instructions are for AI assistants working in this project.
-
-Always open `@/openspec/AGENTS.md` when the request:
-
-- Mentions planning or proposals (words like proposal, spec, change, plan)
-- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
-- Sounds ambiguous and you need the authoritative spec before coding
-
-Use `@/openspec/AGENTS.md` to learn:
-
-- How to create and apply change proposals
-- Spec format and conventions
-- Project structure and guidelines
-
-Keep this managed block so 'openspec update' can refresh the instructions.
-
-<!-- OPENSPEC:END -->
-
 # AGENTS.md
 
 本文件为代理编码助手在该仓库中工作时提供指导。
@@ -218,6 +196,10 @@ pnpm run release       # 完整发布流程
 5. **高级用法文档** (`docs/guides/advanced.md`)：
    - 测试钩子功能、监视模式等高级特性
    - 更新与实际行为不一致的输出示例
+
+6. **项目wiki文档** (`./wiki/`)：
+   - 包括项目架构、设计决策等
+   - 确保文档内容与当前实现保持一致，及时更新过时信息
 
 **重要**：文档必须与实际实现保持一致，避免用户困惑。
 

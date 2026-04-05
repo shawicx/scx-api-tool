@@ -56,6 +56,37 @@ CLI 入口 (src/cli/program.ts)
 - 不论 `typesFormat` 值如何，均不生成 TS 类型和 Zod 内容
 - `requestFunctionFilePath` 默认值自动从 `.ts` 调整为 `.js`
 
+## 文档验证
+
+当更新实现或添加新功能时，请同步更新文档：
+
+1. **CLI 命令文档** (`docs/guides/cli.md`)：
+   - 运行 `npx api-power --help` 验证命令选项
+   - 运行命令并捕获实际输出，更新文档中的示例
+
+2. **配置文档** (`docs/guides/configuration.md`)：
+   - 参考 `src/types/config.ts` 和 `src/utils/config.ts` 确认默认值
+   - 更新新增或修改的配置选项
+
+3. **代码示例文档** (`docs/guides/examples.md`)：
+   - 运行代码生成并检查 `src/service/` 输出
+   - 验证生成的文件结构、命名规范、代码模式
+   - 更新与实际输出不符的示例
+
+4. **快速入门指南** (`docs/getting-started/quick-start.md`)：
+   - 按照步骤执行初始化和生成流程
+   - 验证控制台输出和文件结构示例
+
+5. **高级用法文档** (`docs/guides/advanced.md`)：
+   - 测试钩子功能、监视模式等高级特性
+   - 更新与实际行为不一致的输出示例
+
+6. **项目wiki文档** (`./wiki/`)：
+   - 包括项目架构、设计决策等
+   - 确保文档内容与当前实现保持一致，及时更新过时信息
+
+**重要**：文档必须与实际实现保持一致，避免用户困惑。
+
 ## 项目约定
 
 - **语言**：TypeScript strict 模式，ESM 模块系统，ESNext target
