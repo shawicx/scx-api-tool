@@ -14,6 +14,8 @@ export { registerTemplateHelpers } from './templateHelpers';
 
 export { registerTemplatePartials } from './templatePartials';
 
+export { compileTemplate, ensureRegistered } from './compiler';
+
 export {
   generatePrecompiledMethodMap,
   getInterfaceTemplateWithComment,
@@ -34,7 +36,8 @@ export {
   getInterfaceTemplateByConfig,
   getApiOnlyTemplateByConfig,
   getTypeTemplateByConfig,
-  compileTemplate,
-  generateRequestFile,
-  generateInterfaceFunction,
-} from './compiler';
+} from './templateDefinitions';
+
+export { generateRequestFile } from './requestFileGenerator';
+
+export { generateInterfaceFunction } from './interfaceFunctionGenerator';

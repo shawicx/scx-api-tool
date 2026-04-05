@@ -9,7 +9,7 @@
 `namingStrategy` 配置允许你完全覆盖默认的命名生成逻辑：
 
 ```typescript
-import { defineConfig, type InterfaceNamingInfo } from '@scxfe/api-tool';
+import { defineConfig, type NamingContext } from '@scxfe/api-tool';
 
 export default defineConfig({
   source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
@@ -18,7 +18,7 @@ export default defineConfig({
   // 自定义命名策略
   namingStrategy: {
     // 自定义接口名称生成
-    interfaceName: (info: InterfaceNamingInfo) => {
+    interfaceName: (info: NamingContext) => {
       const method = info.method.charAt(0).toUpperCase() + info.method.slice(1).toLowerCase();
       const pathName = info.path
         .replace(/\{[^}]+\}/g, '')
@@ -36,7 +36,7 @@ export default defineConfig({
     },
 
     // 自定义函数名称生成
-    functionName: (info: InterfaceNamingInfo) => {
+    functionName: (info: NamingContext) => {
       const camelCaseName = info.path
         .replace(/\{[^}]+\}/g, '')
         .replace(/^\//, '')
@@ -52,12 +52,12 @@ export default defineConfig({
     },
 
     // 自定义请求类型名称生成
-    requestTypeName: (info: InterfaceNamingInfo) => {
+    requestTypeName: (info: NamingContext) => {
       return `${info.operationId || info.path.replace(/\//g, '_')}RequestType`;
     },
 
     // 自定义响应类型名称生成
-    responseTypeName: (info: InterfaceNamingInfo) => {
+    responseTypeName: (info: NamingContext) => {
       return `${info.operationId || info.path.replace(/\//g, '_')}ResponseType`;
     },
   },
@@ -66,16 +66,17 @@ export default defineConfig({
 
 ### 命名函数参数说明
 
-每个命名函数接收 `InterfaceNamingInfo` 对象：
+每个命名函数接收 `NamingContext` 对象：
 
 ```typescript
-interface InterfaceNamingInfo {
+interface NamingContext {
   path: string; // API 路径，如 "/api/users/{id}"
   method: string; // HTTP 方法，如 "GET", "POST"
   summary?: string; // 操作描述
   description?: string; // 操作详细描述
   operationId?: string; // 操作 ID（如果存在）
   tags?: string[]; // 标签数组
+  config: ApiConfig; // 完整配置对象
 }
 ```
 

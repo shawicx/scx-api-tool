@@ -19,9 +19,9 @@ export type PresetType = 'minimal' | 'standard' | 'verbose';
 export type TypesFormat = 'typescript' | 'zod';
 
 /**
- * 接口命名信息，用于自定义命名策略
+ * 命名上下文，提供命名策略所需的上下文信息
  */
-export interface InterfaceNamingInfo {
+export interface NamingContext {
   /** API 路径 */
   path: string;
   /** HTTP 方法 */
@@ -34,6 +34,8 @@ export interface InterfaceNamingInfo {
   operationId?: string;
   /** 标签 */
   tags?: string[];
+  /** 配置对象 */
+  config: ApiConfig;
 }
 
 /**
@@ -43,31 +45,31 @@ export interface InterfaceNamingInfo {
 export interface NamingStrategy {
   /**
    * 自定义接口名称生成函数
-   * @param info 接口命名信息
+   * @param ctx 命名上下文
    * @returns 接口名称，例如：GetAiCompletionStream
    */
-  interfaceName?: (info: InterfaceNamingInfo) => string;
+  interfaceName?: (ctx: NamingContext) => string;
 
   /**
    * 自定义函数名称生成函数
-   * @param info 接口命名信息
+   * @param ctx 命名上下文
    * @returns 函数名称，例如：getAiCompletionStreamApi
    */
-  functionName?: (info: InterfaceNamingInfo) => string;
+  functionName?: (ctx: NamingContext) => string;
 
   /**
    * 自定义请求类型名称生成函数
-   * @param info 接口命名信息
+   * @param ctx 命名上下文
    * @returns 请求类型名称，例如：GetAiCompletionStreamRequestType
    */
-  requestTypeName?: (info: InterfaceNamingInfo) => string;
+  requestTypeName?: (ctx: NamingContext) => string;
 
   /**
    * 自定义响应类型名称生成函数
-   * @param info 接口命名信息
+   * @param ctx 命名上下文
    * @returns 响应类型名称，例如：GetAiCompletionStreamResponseType
    */
-  responseTypeName?: (info: InterfaceNamingInfo) => string;
+  responseTypeName?: (ctx: NamingContext) => string;
 }
 
 /**

@@ -28,6 +28,8 @@ import type {
   ProjectInfo,
   CliHooks,
   PresetType,
+  NamingStrategy,
+  NamingContext,
 } from './types';
 import { PRESETS } from './types';
 
@@ -41,6 +43,8 @@ export type {
   ProjectInfo,
   CliHooks,
   PresetType,
+  NamingStrategy,
+  NamingContext,
 };
 
 // 导出常量和函数
