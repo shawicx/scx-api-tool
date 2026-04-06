@@ -163,6 +163,30 @@ OpenAPI 规范使用 `$ref`（如 `#/components/schemas/User`）引用共享 Sch
 
 一个可配置的前缀，在生成时添加到所有 API 路径。当前端使用的路径与 API 定义不同时非常有用。
 
+## 错误系统
+
+### 错误码体系
+
+错误码按模块分段，格式为 `Exxxx`：
+
+| 范围  | 类              | 说明                                     |
+| ----- | --------------- | ---------------------------------------- |
+| E1xxx | `ConfigError`   | 配置加载、解析、验证错误                 |
+| E2xxx | `FetchError`    | API 数据获取错误（认证、超时、网络）     |
+| E3xxx | `GenerateError` | 代码生成错误（模板、写入、类型、Schema） |
+
+### ErrorFactory
+
+工厂模式创建错误实例。所有模块应通过 `ErrorFactory` 方法（如 `configNotFound()`、`unauthorized()`、`templateError()`）创建错误，而非直接 `throw new Error()`。
+
+每个错误附带 `solutions` 数组，提供可操作的修复建议。
+
+## 工具概念
+
+### chineseToPinyinCamelCase（中文拼音转换）
+
+将中文字符串转为拼音驼峰格式。用于将中文 OpenAPI 标签（如"用户管理"）转为有效的目录名（`YongHuGuanLi`）。基于 `pinyin-pro` 库。
+
 ## 输出目录结构
 
 ```

@@ -100,9 +100,9 @@ graph TD
 工具的入口点，基于 Commander.js 构建，提供 4 个子命令：
 
 - **`generate`** — 核心功能，获取 API 定义并生成代码。支持 `--watch` 模式，配置变更时自动重新生成。
-- **`init`** — 使用 `@clack/prompts` 进行交互式配置初始化。
+- **`init`** — 非交互式配置初始化，直接生成默认 `api-power.config.ts` 文件。
 - **`debug`** — 调试工具，用于检查 API 定义。
-- **`visualize`** — API 可视化工具。
+- **`visualize`** — API 可视化工具（别名 `viz`，启动 HTTP 服务器，提供配置和 Schema 查看界面）。
 
 入口文件：`src/index.ts` → `src/cli/program.ts`
 
@@ -153,14 +153,17 @@ graph TD
 
 ### 横切关注点
 
-| 关注点   | 位置                    | 说明                                                                               |
-| -------- | ----------------------- | ---------------------------------------------------------------------------------- |
-| 类型定义 | `src/types/`            | 所有层的中心类型系统                                                               |
-| 命名策略 | `src/generator/naming/` | 通过 `NamingStrategy` 接口实现可插拔命名                                           |
-| 文件工具 | `src/utils/file.ts`     | 文件 I/O、目录清理                                                                 |
-| 钩子     | `src/types/hooks.ts`    | `CliHooks`：`beforeGenerate`、`afterGenerate`、`beforeWriteFile`、`afterWriteFile` |
-| 进度条   | `src/utils/progress.ts` | 基于 `@clack/prompts` 的进度指示器                                                 |
-| 日志     | `consola`               | 全局结构化日志                                                                     |
+| 关注点   | 位置                     | 说明                                                                               |
+| -------- | ------------------------ | ---------------------------------------------------------------------------------- |
+| 类型定义 | `src/types/`             | 所有层的中心类型系统                                                               |
+| 命名策略 | `src/generator/naming/`  | 通过 `NamingStrategy` 接口实现可插拔命名                                           |
+| 错误系统 | `src/errors/`            | 分层错误类（ConfigError/FetchError/GenerateError）+ ErrorFactory                   |
+| 路径工具 | `src/utils/path.ts`      | 中文标签 → 拼音目录名（基于 `pinyin-pro`）                                         |
+| 文件工具 | `src/utils/file.ts`      | 文件 I/O、目录清理                                                                 |
+| 格式化   | `src/utils/formatter.ts` | 使用 Prettier 格式化生成代码                                                       |
+| 钩子     | `src/types/hooks.ts`     | `CliHooks`：`beforeGenerate`、`afterGenerate`、`beforeWriteFile`、`afterWriteFile` |
+| 进度条   | `src/utils/progress.ts`  | 基于 `consola` 的进度指示器                                                        |
+| 日志     | `consola`                | 全局结构化日志                                                                     |
 
 ## 模块依赖关系图
 
@@ -173,6 +176,7 @@ graph LR
     PROC["processors/"]
     GEN["generator/"]
     TYPES["types/"]
+    ERRORS["errors/"]
     UTILS["utils/"]
     TMPL["templates/"]
 
@@ -181,6 +185,7 @@ graph LR
     CLI --> PROC
     CLI --> GEN
     CLI --> VALIDATE
+    CLI --> ERRORS
 
     CONFIG --> TYPES
     CONFIG --> UTILS
@@ -194,6 +199,7 @@ graph LR
     GEN --> PROC
     GEN --> TMPL
     GEN --> UTILS
+    GEN --> ERRORS
 ```
 
 ## 数据流

@@ -72,15 +72,19 @@ scx-api-tool/
 │   ├── cli/              # CLI 命令和程序设置
 │   ├── clients/          # API 数据获取器（Swagger、Apifox）
 │   ├── config/           # 配置文件加载器
+│   ├── errors/           # 分层错误系统（ConfigError/FetchError/GenerateError）
 │   ├── generator/        # 代码生成引擎
 │   │   ├── generators/   # 专用生成器（接口、类型、Schema）
 │   │   ├── naming/       # 命名策略和名称清理
 │   │   └── template/     # Handlebars 模板引擎
 │   ├── processors/       # OpenAPI 数据处理
+│   ├── service/          # 生成的示例输出（已提交到仓库）
 │   ├── templates/        # Handlebars 模板文件
+│   │   └── schema-zod/   # Zod Schema 模板子模块
 │   ├── types/            # TypeScript 类型定义
 │   ├── utils/            # 公共工具函数
-│   └── validation/       # 配置验证
+│   ├── validation/       # 配置验证
+│   └── visualize/        # 可视化命令的 HTML 界面
 ├── docs/                 # VitePress 文档源码
 ├── scripts/              # 构建和工具脚本
 ├── .husky/               # Git 钩子
