@@ -26,7 +26,7 @@ import {
 } from '../index';
 import { ValidationSeverity } from '../errors';
 import type { ValidationReport, ValidationError } from '../errors';
-import { validSwaggerUserConfig, validApifoxUserConfig } from '../../../../tests/fixtures/mockData';
+import { validSwaggerUserConfig, validApifoxUserConfig } from '../../../tests/fixtures/mockData';
 
 // ---------------------------------------------------------------------------
 // createValidationError

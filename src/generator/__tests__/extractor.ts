@@ -295,7 +295,7 @@ describe('extractResponseProperties', () => {
   it('should handle null response (return empty array)', () => {
     const processedData = createProcessedApiData();
 
-    const result = extractResponseProperties(null, processedData);
+    const result = extractResponseProperties(undefined, processedData);
 
     expect(result).toEqual([]);
   });

@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { defaultNamingStrategy, applyNamingStrategy } from '../strategy';
-import type { NamingContext } from '../../types';
+import type { NamingContext } from '../../../types';
 import { minimalApiConfig } from '../../../../tests/fixtures/mockData';
 
 /**

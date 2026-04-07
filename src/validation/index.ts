@@ -4,7 +4,8 @@
  */
 
 import { createValidationReport, ConfigValidationError, createValidationError } from './errors';
-import type { ValidationError, ValidationReport, ValidationSeverity } from './errors';
+import type { ValidationError, ValidationReport } from './errors';
+import { ValidationSeverity } from './errors';
 import { displayValidationResults, shouldContinue, getErrorSummary } from './reporter';
 import {
   validateRequiredFields,

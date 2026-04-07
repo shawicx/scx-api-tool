@@ -9,7 +9,8 @@ import {
   extractUsedTypeNames,
   collectUsedTypesFromProperties,
 } from '../common';
-import type { ApiInterface, ApiProperty, ProcessedApiData } from '@/types';
+import type { ApiInterface, ApiProperty } from '@/types';
+import type { ProcessedApiData } from '../openapi';
 
 // ==================== 测试数据工厂 ====================
 

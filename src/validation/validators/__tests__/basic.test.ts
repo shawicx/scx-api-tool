@@ -25,6 +25,7 @@ import {
 import { ValidationSeverity } from '../../errors';
 import { validSwaggerUserConfig, validApifoxUserConfig } from '../../../../tests/fixtures/mockData';
 import type { UserConfig } from '@/types';
+import { RequestMethodStyle } from '@/types';
 
 // ---------------------------------------------------------------------------
 // validateRequiredFields
@@ -127,7 +128,7 @@ describe('validateEnumValues', () => {
     const config = {
       ...validSwaggerUserConfig,
       target: 'typescript' as const,
-      requestMethodStyle: 'config' as const,
+      requestMethodStyle: RequestMethodStyle.CONFIG,
       preset: 'standard' as const,
     };
     const errors = validateEnumValues(config);
@@ -172,7 +173,11 @@ describe('validateEnumValues', () => {
   });
 
   it('accepts all valid requestMethodStyle values', () => {
-    const styles = ['config', 'method-specific', 'both'] as const;
+    const styles = [
+      RequestMethodStyle.CONFIG,
+      RequestMethodStyle.METHOD_SPECIFIC,
+      RequestMethodStyle.BOTH,
+    ];
 
     for (const style of styles) {
       const config = { ...validSwaggerUserConfig, requestMethodStyle: style };

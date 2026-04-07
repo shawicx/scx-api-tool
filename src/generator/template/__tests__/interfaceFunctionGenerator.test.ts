@@ -5,7 +5,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import type { InterfaceTemplateData, ApiConfig } from '../../../types';
 import { RequestMethodStyle } from '../../../types';
-import { minimalApiConfig } from '../../../../../tests/fixtures/mockData';
+import { minimalApiConfig } from '../../../../tests/fixtures/mockData';
 import { generateInterfaceFunction } from '../interfaceFunctionGenerator';
 import { templateCache } from '../templateCache';
 

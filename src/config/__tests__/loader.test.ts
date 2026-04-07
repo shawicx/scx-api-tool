@@ -28,7 +28,7 @@ vi.mock('consola', () => ({
 
 // Mock only existsSync from fs, keeping other fs functions real
 vi.mock('fs', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('fs')>();
+  const actual = (await importOriginal()) as typeof import('fs');
   return {
     ...actual,
     existsSync: vi.fn(),
@@ -36,17 +36,21 @@ vi.mock('fs', async (importOriginal) => {
 });
 
 // Mock validation module
-vi.mock('@/validation', () => ({
-  validateConfiguration: vi.fn(),
-  ConfigValidationError: class extends Error {
-    validationReport: any;
-    constructor(report: any) {
-      super('validation');
-      this.name = 'ConfigValidationError';
-      this.validationReport = report;
-    }
-  },
-}));
+vi.mock('@/validation', async (importOriginal) => {
+  const actual = (await importOriginal()) as typeof import('@/validation');
+  return {
+    ...actual,
+    validateConfiguration: vi.fn(),
+    ConfigValidationError: class extends Error {
+      validationReport: any;
+      constructor(report: any) {
+        super('validation');
+        this.name = 'ConfigValidationError';
+        this.validationReport = report;
+      }
+    },
+  };
+});
 
 // Mock defineConfig
 vi.mock('@/utils/config', () => ({
@@ -82,7 +86,7 @@ vi.mock('@/errors', () => {
 
 import { existsSync } from 'fs';
 import { loadConfig } from '../loader';
-import { validateConfiguration, ConfigValidationError } from '@/validation';
+import { validateConfiguration, ConfigValidationError, ValidationSeverity } from '@/validation';
 import { defineConfig } from '@/utils/config';
 import { ErrorFactory, BaseError } from '@/errors';
 
@@ -188,7 +192,7 @@ describe('loadConfig', () => {
           field: 'source',
           code: 'INVALID_URL',
           message: 'Invalid URL',
-          severity: 'error',
+          severity: ValidationSeverity.ERROR,
         },
       ],
       summary: { total: 1, errors: 1, warnings: 0, infos: 0 },
@@ -278,7 +282,7 @@ describe('loadConfig', () => {
     const configPath = createTempConfigFile('base-error-config.mjs', userConfig);
     mockExistsSync.mockReturnValue(true);
 
-    const baseError = new BaseError('Base error message');
+    const baseError = new (BaseError as any)('Base error message');
     mockValidateConfiguration.mockImplementation(() => {
       throw baseError;
     });
