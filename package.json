@@ -61,7 +61,10 @@
     "prepublish": "pnpm run build",
     "versioning": "standard-version",
     "release": "pnpm run prepublish && pnpm run versioning && pnpm run postaction && pnpm publish",
-    "docs:preview": "vitepress preview"
+    "docs:preview": "vitepress preview",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest run --coverage"
   },
   "commitlint": {
     "extends": [
@@ -111,6 +114,7 @@
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@types/node": "^25.0.3",
+    "@vitest/coverage-v8": "^4.1.2",
     "eslint": "^9.39.2",
     "eslint-config-ali": "^16.6.0",
     "eslint-config-prettier": "^10.1.8",
@@ -123,7 +127,8 @@
     "tsdown": "^0.13.5",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitepress": "2.0.0-alpha.15"
+    "vitepress": "2.0.0-alpha.15",
+    "vitest": "^4.1.2"
   },
   "engines": {
     "node": ">=20.0.0"

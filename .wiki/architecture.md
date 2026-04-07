@@ -11,6 +11,7 @@
 | 模板引擎    | Handlebars                            | 代码生成模板                       |
 | 构建工具    | tsdown (基于 rolldown)                | 生产构建打包                       |
 | 代码检查    | ESLint + Prettier (eslint-config-ali) | 代码质量保障                       |
+| 单元测试    | Vitest + @vitest/coverage-v8          | 单元测试 + 覆盖率报告              |
 | 版本管理    | standard-version                      | 语义化版本 + 变更日志              |
 | Git 钩子    | Husky + lint-staged                   | 提交前质量检查                     |
 | 文档站      | VitePress                             | 项目文档网站                       |
@@ -164,6 +165,62 @@ graph TD
 | 钩子     | `src/types/hooks.ts`     | `CliHooks`：`beforeGenerate`、`afterGenerate`、`beforeWriteFile`、`afterWriteFile` |
 | 进度条   | `src/utils/progress.ts`  | 基于 `consola` 的进度指示器                                                        |
 | 日志     | `consola`                | 全局结构化日志                                                                     |
+
+## 测试体系
+
+项目使用 **Vitest** 作为单元测试框架，测试文件位于各模块同级的 `__tests__/` 目录下。
+
+### 测试配置
+
+- **配置文件**：`vitest.config.ts`
+- **路径别名**：`@/*` → `src/*`（与 `tsconfig.json` 一致）
+- **覆盖率提供者**：v8（`@vitest/coverage-v8`）
+- **覆盖率阈值**：语句、分支、函数、行覆盖率均 ≥ 75%
+- **排除目录**：`src/service/**/*`（生成文件）、`src/templates/**/*`（模板字符串）
+
+### 测试结构
+
+```
+src/
+  processors/__tests__/common.test.ts        # 数据处理工具
+  processors/__tests__/openapi.test.ts       # OpenAPI 解析
+  validation/__tests__/validation.test.ts    # 验证集成测试
+  validation/validators/__tests__/basic.test.ts
+  validation/validators/__tests__/url.test.ts
+  validation/validators/__tests__/logic.test.ts
+  utils/__tests__/config.test.ts             # 配置工具
+  utils/__tests__/path.test.ts               # 路径工具
+  utils/__tests__/file.test.ts               # 文件工具
+  utils/__tests__/formatter.test.ts          # 代码格式化
+  utils/__tests__/hooks.test.ts              # 钩子管理
+  utils/__tests__/concurrency.test.ts        # 并发控制
+  errors/__tests__/errors.test.ts            # 错误系统
+  generator/__tests__/extractor.test.ts      # 数据提取
+  generator/__tests__/pathUtils.test.ts      # 路径工具
+  generator/__tests__/codegen.test.ts        # 代码生成协调器
+  generator/__tests__/fileGenerator.test.ts  # 文件生成器
+  generator/naming/__tests__/sanitizer.test.ts
+  generator/naming/__tests__/strategy.test.ts
+  generator/template/__tests__/templateCache.test.ts
+  generator/template/__tests__/compiler.test.ts
+  generator/template/__tests__/templateDefinitions.test.ts
+  generator/template/__tests__/interfaceFunctionGenerator.test.ts
+  generator/template/__tests__/requestFileGenerator.test.ts
+  clients/__tests__/swagger.test.ts          # Swagger 客户端
+  clients/__tests__/apifox.test.ts           # Apifox 客户端
+  clients/__tests__/index.test.ts            # 客户端调度
+  config/__tests__/loader.test.ts            # 配置加载器
+tests/
+  fixtures/mockData.ts                       # 共享测试夹具
+```
+
+### 常用命令
+
+```bash
+pnpm test             # 运行所有测试
+pnpm test:watch       # 监听模式
+pnpm test:coverage    # 生成覆盖率报告
+```
 
 ## 模块依赖关系图
 

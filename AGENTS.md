@@ -9,9 +9,12 @@ pnpm install && pnpm run build       # 安装依赖并构建项目
 pnpm run lint:fix                    # 格式化并修复代码
 pnpm run dev                         # 开发模式（使用配置文件生成代码）
 npx api-power generate --config xxx  # 使用配置生成代码
+pnpm test                            # 运行单元测试
+pnpm test:watch                      # 监听模式运行测试
+pnpm test:coverage                   # 运行测试并生成覆盖率报告
 ```
 
-**重要**: 本项目没有单元测试，通过运行生成代码并检查 `src/service/` 输出来验证更改。
+**重要**: 修改代码后务必运行 `pnpm test` 确保所有测试通过。测试框架为 Vitest，测试文件位于各模块的 `__tests__/` 目录下，共享夹具在 `tests/fixtures/mockData.ts`。
 
 ## 代码风格指南
 

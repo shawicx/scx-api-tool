@@ -17,6 +17,9 @@ pnpm run dev          # 开发模式，使用 tsx 直接运行代码生成
 pnpm run lint         # ESLint 检查
 pnpm run lint:fix     # ESLint + Prettier 自动修复
 pnpm run check:linesize  # 检查是否有超过 360 行的文件
+pnpm test             # 运行单元测试 (Vitest)
+pnpm test:watch       # 监听模式运行测试
+pnpm test:coverage    # 运行测试并生成覆盖率报告
 ```
 
 发布：`pnpm run release`（构建 → standard-version → 推送 → npm 发布）
@@ -42,6 +45,7 @@ CLI 入口 (src/cli/program.ts)
 - **包管理器**：pnpm
 - **路径别名**：`@/*` → `src/*`，`@scxfe/api-tool` → `src/index.ts`
 - **Commit 规范**：遵循 commitlint conventional 规范，允许的类型：`feat`、`fix`、`docs`、`style`、`test`、`refactor`、`chore`、`revert`
+- **单元测试**：Vitest + @vitest/coverage-v8（v8 覆盖率，阈值 75%）
 - **Pre-commit**：husky + lint-staged（ESLint + Prettier）
 - **CLI 入口**：`api-power`（package.json bin），源码入口 `src/index.ts`
 - **Node.js 版本**：>= 20.0.0
@@ -56,5 +60,15 @@ CLI 入口 (src/cli/program.ts)
 4. **快速入门指南** (`docs/getting-started/quick-start.md`)：验证初始化和生成流程
 5. **高级用法文档** (`docs/guides/advanced.md`)：测试钩子、监视模式等高级特性
 6. **项目 wiki 文档** (`.wiki/`)：确保架构、设计决策等内容与实现一致
+
+## 测试约定
+
+- **框架**：Vitest（ESM 原生、Vite 驱动）
+- **测试文件位置**：与被测模块同级的 `__tests__/` 目录下，命名为 `<module>.test.ts`
+- **共享夹具**：`tests/fixtures/mockData.ts`
+- **Mock 策略**：使用 `vi.mock()` 模块级 mock，`vi.fn()` 函数级 mock
+- **ESLint 覆盖**：测试文件禁用 `consistent-type-assertions` 和 `no-unused-vars` 规则
+- **覆盖率配置**：`vitest.config.ts`，覆盖率阈值各维度 75%
+- **排除目录**：`src/service/**/*`（生成文件）、`src/templates/**/*`（模板字符串）
 
 **重要**：文档必须与实际实现保持一致。

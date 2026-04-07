@@ -29,4 +29,12 @@ export default [
       '.vitepress/cache/**/*',
     ],
   },
+  {
+    files: ['src/**/__tests__/**/*.test.ts', 'src/**/__tests__/*.ts', 'tests/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/consistent-type-assertions': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+    },
+  },
 ];

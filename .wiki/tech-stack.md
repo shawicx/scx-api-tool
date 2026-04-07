@@ -23,6 +23,8 @@
 | `prettier` + `prettier-config-ali` | ^3.7.4 / ^1.5.0   | 代码格式化                |
 | `standard-version`                 | ^9.5.0            | 语义化版本 + 变更日志     |
 | `husky` + `lint-staged`            | ^9.1.7 / ^16.2.7  | Git 提交前质量检查        |
+| `vitest`                           | ^3.1.4            | 单元测试框架              |
+| `@vitest/coverage-v8`              | ^3.1.4            | 测试覆盖率（v8 引擎）     |
 | `vitepress`                        | 2.0.0-alpha.15    | 文档网站                  |
 | `@commitlint/cli`                  | ^19.8.1           | Commit 消息规范检查       |
 
