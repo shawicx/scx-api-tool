@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.3](https://github.com/shawicx/scx-api-tool/compare/v0.5.2...v0.5.3) (2026-04-07)
+
+### Features
+
+- 支持文件类型配置，生成 JS 文件时 ([0db52ad](https://github.com/shawicx/scx-api-tool/commit/0db52ade1c7eea3d6b17b50e64be788d0016fc2f))
+- 添加 Vitest 单元测试 ([0e25ace](https://github.com/shawicx/scx-api-tool/commit/0e25ace5cf7d7f46ec215d11541384b9e7b4df9d))
+
+### Bug Fixes
+
+- 修复 zod 模式下 service index.ts 未导入 schema 类型的问题 ([564d0ad](https://github.com/shawicx/scx-api-tool/commit/564d0ad8c752774854661173ba314e161caedd7f))
+
+### Refactors
+
+- 修复逻辑与健壮性问题 ([83aaad9](https://github.com/shawicx/scx-api-tool/commit/83aaad9f8ca5be8afb5a75080d4bf12be08a0385))
+- 处理any类型 ([59ad834](https://github.com/shawicx/scx-api-tool/commit/59ad83449c173e48d1e82e020689cf7bd9edeba2))
+- 拆分 compiler.ts 并消除 NamingStrategy 双重定义 ([2cd1170](https://github.com/shawicx/scx-api-tool/commit/2cd11708c57f0a7aefdebfc47959bbcbe48283f9))
+- 提取公共逻辑消除代码重复 ([8864574](https://github.com/shawicx/scx-api-tool/commit/88645745a5071d4f05c87baa357aca709dc198de))
+- 死代码清理 ([5335728](https://github.com/shawicx/scx-api-tool/commit/5335728744e9149db7c0bb7f9f1a1ba49692c037))
+
+### Documentation
+
+- 更新项目 Wiki 知识库 ([4cba513](https://github.com/shawicx/scx-api-tool/commit/4cba51317b5cb16162cb4780e73d782c31a120f8))
+- 添加项目 Wiki 知识库 ([a86f4b6](https://github.com/shawicx/scx-api-tool/commit/a86f4b6327ff708624aa73f94f288a5499faa851))
+
 ### [0.5.2](https://github.com/shawicx/scx-api-tool/compare/v0.5.1...v0.5.2) (2026-03-28)
 
 ### Features
