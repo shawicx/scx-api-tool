@@ -9,7 +9,7 @@ import { ErrorFactory } from '@/errors';
 /**
  * @description API 数据获取结果
  */
-export interface FetchResult<T = any> {
+export interface FetchResult<T = unknown> {
   /** 原始数据 */
   data: T;
   /** 数据来源类型 */
@@ -80,7 +80,7 @@ export abstract class BaseClient {
    * @param config API 配置
    * @returns Promise<FetchResult>
    */
-  protected abstract fetchDataInternal(config: ApiConfig): Promise<any>;
+  protected abstract fetchDataInternal(config: ApiConfig): Promise<unknown>;
 
   /**
    * @description 公共的数据获取接口
@@ -88,7 +88,7 @@ export abstract class BaseClient {
    * @param config API 配置
    * @returns Promise<FetchResult>
    */
-  async fetch(config: ApiConfig): Promise<FetchResult> {
+  async fetch(config: ApiConfig): Promise<FetchResult<unknown>> {
     const metadata = this.getMetadata();
 
     if (!this.supports(config)) {
@@ -113,7 +113,7 @@ export abstract class BaseClient {
         sourceType: metadata.type,
         timestamp: Date.now(),
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw this.wrapError(error, config);
     }
   }
@@ -129,8 +129,8 @@ export abstract class BaseClient {
     for (let attempt = 0; attempt <= (this.options.maxRetries || 0); attempt++) {
       try {
         return await fn();
-      } catch (error: any) {
-        lastError = error;
+      } catch (error: unknown) {
+        lastError = error instanceof Error ? error : new Error(String(error));
 
         // 最后一次重试失败，不再延迟
         if (attempt < (this.options.maxRetries || 0)) {
@@ -150,7 +150,7 @@ export abstract class BaseClient {
    * @param config API 配置
    * @returns 包装后的错误
    */
-  protected wrapError(error: any, config: ApiConfig): Error {
+  protected wrapError(error: unknown, config: ApiConfig): Error {
     const metadata = this.getMetadata();
 
     // 如果已经是我们的错误类型，直接返回

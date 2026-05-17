@@ -3,8 +3,8 @@
  * 使用 Prettier 格式化生成的代码
  */
 
-import consola from 'consola';
 import { format } from 'prettier';
+import { withErrorHandler } from './decorators';
 
 /**
  * @description 格式化代码
@@ -20,8 +20,8 @@ import { format } from 'prettier';
  * // formatted = 'const x = 1;'
  * ```
  */
-export async function formatCode(code: string, filePath: string, indentSize = 2): Promise<string> {
-  try {
+export const formatCode = withErrorHandler(
+  async (code: string, filePath: string, indentSize = 2): Promise<string> => {
     // 根据文件扩展名确定解析器
     const parser = getFileParser(filePath);
 
@@ -35,11 +35,14 @@ export async function formatCode(code: string, filePath: string, indentSize = 2)
     });
 
     return formattedCode;
-  } catch (error: any) {
-    consola.warn('使用 Prettier 格式化代码失败，返回原始代码:', error.message);
-    return code;
-  }
-}
+  },
+  {
+    // 格式化失败时返回原始代码
+    fallbackValue: (originalCode: string) => originalCode,
+    logError: true,
+    logPrefix: '[FormatCode]',
+  },
+);
 
 function getFileParser(filePath: string): string {
   if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) {

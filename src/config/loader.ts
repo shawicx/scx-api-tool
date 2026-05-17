@@ -92,10 +92,9 @@ const configCache = new ConfigCacheManager();
 /**
  * 检查配置是否已经被 defineConfig 处理过
  */
-function isProcessedConfig(config: any): config is ApiConfig {
+function isProcessedConfig(config: unknown): config is ApiConfig {
   // 检查是否有所有必需的 ApiConfig 属性
-  return (
-    config &&
+  return (config &&
     typeof config === 'object' &&
     'serverUrl' in config &&
     'serverType' in config &&
@@ -103,8 +102,7 @@ function isProcessedConfig(config: any): config is ApiConfig {
     'token' in config &&
     'generateApi' in config &&
     'generateTypes' in config &&
-    'typesFormat' in config
-  );
+    'typesFormat' in config) as boolean;
 }
 
 /**
@@ -201,7 +199,7 @@ export async function loadConfig(
     }
 
     return config;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // 如果是我们自定义的错误，直接抛出
     if (error instanceof BaseError || error instanceof ConfigValidationError) {
       throw error;

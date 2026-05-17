@@ -178,19 +178,19 @@ export async function makeRequestWithProgress<T>(
  * 简单的进度管理器（替代复杂的 ProgressManager）
  */
 class SimpleProgressManager {
-  info(message: string, ...args: any[]): void {
+  info(message: string, ...args: unknown[]): void {
     consola.info(message, ...args);
   }
 
-  success(message: string, ...args: any[]): void {
+  success(message: string, ...args: unknown[]): void {
     consola.success(message, ...args);
   }
 
-  error(message: string, ...args: any[]): void {
+  error(message: string, ...args: unknown[]): void {
     consola.error(message, ...args);
   }
 
-  warn(message: string, ...args: any[]): void {
+  warn(message: string, ...args: unknown[]): void {
     consola.warn(message, ...args);
   }
 }

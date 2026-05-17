@@ -10,7 +10,12 @@ import { ErrorFactory } from '@/errors';
 /**
  * @description 客户端工厂函数类型
  */
-type ClientFactory<T extends BaseClient = BaseClient> = (options?: any) => T;
+type ClientFactory<T extends BaseClient = BaseClient> = (options?: ClientOptions) => T;
+
+/**
+ * @description 客户端配置选项（从 BaseClient 导入）
+ */
+type ClientOptions = import('./BaseClient').ClientOptions;
 
 /**
  * @description 注册的客户端信息
