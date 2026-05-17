@@ -1,12 +1,26 @@
 /**
- * @description 客户端主模块 负责与不同类型的 API 服务器通信
+ * @description 客户端主模块
+ * 负责与不同类型的 API 服务器通信
+ * 支持插件化客户端架构
  */
-import { ServerType } from '@/types';
+
 import type { ApiConfig } from '@/types';
-import { fetchApifoxData } from './apifox';
-import { fetchSwaggerData } from './swagger';
+import { clientRegistry } from './base/registry';
+import { createSwaggerClient } from './implementations/SwaggerClient';
+import { createApifoxClient } from './implementations/ApifoxClient';
+import type { SwaggerClient } from './implementations/SwaggerClient';
+import type { ApifoxClient } from './implementations/ApifoxClient';
 import consola from 'consola';
-import { ErrorFactory } from '@/errors';
+
+// ==================== 注册默认客户端 ====================
+
+// 注册 Swagger 客户端（优先级 10，作为默认）
+clientRegistry.register('swagger', createSwaggerClient, 10);
+
+// 注册 Apifox 客户端（优先级 5）
+clientRegistry.register('apifox', createApifoxClient, 5);
+
+// ==================== 公共 API ====================
 
 /**
  * @description 根据服务器类型获取 API 数据
@@ -19,30 +33,66 @@ import { ErrorFactory } from '@/errors';
  * ```typescript
  * const data = await fetchData(config);
  * // 根据配置自动选择：
- * // - fetchApifoxData() 如果 serverType === 'apifox'
- * // - fetchSwaggerData() 如果 serverType === 'swagger'
+ * // - ApifoxClient 如果 serverType === 'apifox'
+ * // - SwaggerClient 如果 serverType === 'swagger'
+ * // - 或根据 URL 模式自动识别
  * ```
  */
 export async function fetchData(config: ApiConfig): Promise<any> {
   if (process.env.DEBUG) {
-    consola.debug('Fetching data with config:', config);
+    consola.debug('正在使用配置获取数据:', config);
   }
 
-  switch (config.serverType) {
-    case ServerType.Apifox:
-      return fetchApifoxData(config);
-    case ServerType.Swagger:
-      return fetchSwaggerData(config);
-    default:
-      throw ErrorFactory.configInvalid(`不支持的服务器类型: ${config.serverType}`, [
-        {
-          title: '检查服务器类型配置',
-          steps: [
-            '确认 serverType 为 "apifox" 或 "swagger"',
-            'source URL 应该自动识别服务器类型',
-            '尝试使用 `npx api-power init` 重新生成配置',
-          ],
-        },
-      ]);
+  try {
+    // 使用客户端注册器自动选择合适的客户端
+    const client = clientRegistry.autoSelectClient(config);
+    const result = await client.fetch(config);
+
+    if (process.env.DEBUG) {
+      consola.debug(`数据获取成功，来源: ${result.sourceType}`);
+    }
+
+    return result.data;
+  } catch (error: any) {
+    // 确保错误信息清晰
+    if (error.message) {
+      consola.error('获取数据失败:', error.message);
+    }
+    throw error;
   }
 }
+
+/**
+ * @description 根据服务器类型获取 API 数据（旧版 API，向后兼容）
+ * @deprecated 使用 fetchData 替代
+ * @param config API 配置
+ * @returns OpenAPI 数据对象
+ */
+export async function fetchSwaggerData(config: ApiConfig): Promise<any> {
+  const client = clientRegistry.getClient<SwaggerClient>('swagger');
+  const result = await client.fetch(config);
+  return result.data;
+}
+
+/**
+ * @description 从 Apifox 获取数据（旧版 API，向后兼容）
+ * @deprecated 使用 fetchData 替代
+ * @param config API 配置
+ * @returns OpenAPI 数据对象
+ */
+export async function fetchApifoxData(config: ApiConfig): Promise<any> {
+  const client = clientRegistry.getClient<ApifoxClient>('apifox');
+  const result = await client.fetch(config);
+  return result.data;
+}
+
+// ==================== 导出类型和注册器 ====================
+
+// 导出基础模块
+export * from './base';
+
+// 导出实现
+export * from './implementations';
+
+// 导出注册器（允许外部注册自定义客户端）
+export { clientRegistry };

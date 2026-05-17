@@ -82,9 +82,8 @@ describe('defaultNamingStrategy', () => {
       const ctx = createNamingContext({ path: '/api/users/{id}', method: 'GET' });
       const result = defaultNamingStrategy.functionName(ctx);
 
-      // Note: functionName uses a regex without a capture group for param extraction,
-      // so {id} resolves to literal "$1", which then gets sanitized to "By_1"
-      expect(result).toBe('getUsersBy_1Func');
+      // 正确提取参数名 "id" 并生成 "ById"
+      expect(result).toBe('getUsersByIdFunc');
     });
 
     it('should generate function name for POST method', () => {
@@ -98,8 +97,8 @@ describe('defaultNamingStrategy', () => {
       const ctx = createNamingContext({ path: '/api/users/{id}', method: 'DELETE' });
       const result = defaultNamingStrategy.functionName(ctx);
 
-      // Same regex issue as other path parameter tests
-      expect(result).toBe('deleteUsersBy_1Func');
+      // 正确提取参数名 "id" 并生成 "ById"
+      expect(result).toBe('deleteUsersByIdFunc');
     });
   });
 
