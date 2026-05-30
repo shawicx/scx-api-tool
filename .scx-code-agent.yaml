@@ -1,0 +1,40 @@
+# Code Agent configuration example
+# Copy this file to .code-agent.yaml and modify as needed
+
+provider:
+  # LLM provider: anthropic, openai, deepseek, glm
+  name: deepseek
+  # Model name
+  model: deepseek-v4-flash
+  # API Key (supports environment variable references)
+  api_key: sk-60e3553d948b4e9eb3645eae06d4d8ba
+  # API base URL (optional)
+  base_url: https://api.deepseek.com
+  # Request timeout (seconds)
+  timeout: 120
+
+review:
+  # Maximum concurrent workers
+  max_workers: 5
+  # Context lines for diff mode
+  context_lines: 3
+  # Directories to skip
+  skip_dirs:
+    - node_modules
+    - .venv
+    - venv
+    - dist
+    - build
+    - .git
+    - __pycache__
+  # File extensions to skip
+  skip_extensions:
+    - .min.js
+    - .min.css
+    - .map
+
+output:
+  # Default output format: markdown or json
+  default_format: markdown
+  # Default output path
+  default_path: report.md
