@@ -12,7 +12,12 @@ import type { ApiInterface, InterfaceTemplateData, OpenApiOperation } from '../.
 import { ensureDir, writeFormattedFile } from '../../utils/file';
 import { formatCode } from '../../utils/formatter';
 import { chineseToPinyinCamelCase } from '../../utils/path';
-import { extractRequestProperties, extractResponseProperties, hasRequestBody } from '../extractor';
+import {
+  extractRequestProperties,
+  extractResponseProperties,
+  hasRequestBody,
+  isFormDataRequest,
+} from '../extractor';
 import { getNormalizedPathWithAlias } from '../pathUtils';
 import { applyNamingStrategy, type NamingContext } from '../naming/strategy';
 import { generateInterfaceFunction, compileTemplate } from '../template';
@@ -202,6 +207,7 @@ export async function generateInterfaceFileForTag(
         processedData,
       ),
       hasBody: hasRequestBody(apiInterface.operation),
+      isFormData: isFormDataRequest(apiInterface.operation),
       requestMethodStyle: config.requestMethodStyle,
       requestFunctionName: config.requestFunctionName || 'request',
       requestMethodsObjectName: config.requestMethodsObjectName || 'requestMethods',

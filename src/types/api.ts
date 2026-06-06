@@ -233,6 +233,8 @@ export interface InterfaceTemplateData {
   responseProperties: ApiProperty[];
   /** 是否有请求体 */
   hasBody: boolean;
+  /** 是否为 multipart/form-data 请求 */
+  isFormData?: boolean;
   /** 请求方法调用风格 */
   requestMethodStyle?: string;
   /** 请求函数名称 */

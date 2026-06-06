@@ -21,54 +21,72 @@ export function registerTemplatePartials(): void {
 {{#if (eq requestMethodStyle 'method-specific')}}
   {{#if (eq method 'GET')}}
     {{#if hasParameters}}
-  // GET 请求 - 只有查询参数
   return {{requestMethodsObjectName}}.get<{{responseTypeName}}>('{{path}}', {{requestParamName}});
     {{else}}
-  // GET 请求 - 没有参数
   return {{requestMethodsObjectName}}.get<{{responseTypeName}}>('{{path}}');
     {{/if}}
   {{/if}}
   {{#if (eq method 'DELETE')}}
     {{#if hasParameters}}
-  // DELETE 请求 - 只有查询参数
   return {{requestMethodsObjectName}}.delete<{{responseTypeName}}>('{{path}}', {{requestParamName}});
     {{else}}
-  // DELETE 请求 - 没有参数
   return {{requestMethodsObjectName}}.delete<{{responseTypeName}}>('{{path}}');
     {{/if}}
   {{/if}}
   {{#if (eq method 'HEAD')}}
-  // HEAD 请求 - 没有请求体
   return {{requestMethodsObjectName}}.head<{{responseTypeName}}>('{{path}}'{{#if hasParameters}}, {{requestParamName}}{{/if}});
   {{/if}}
   {{#if (eq method 'OPTIONS')}}
-  // OPTIONS 请求 - 没有请求体
   return {{requestMethodsObjectName}}.options<{{responseTypeName}}>('{{path}}'{{#if hasParameters}}, {{requestParamName}}{{/if}});
   {{/if}}
   {{#if (eq method 'POST')}}
-    {{#if hasParameters}}
-  // POST 请求 - 有请求体参数
+    {{#if isFormData}}
+  const formData = new FormData();
+  Object.entries({{requestParamName}}).forEach(([key, value]) => {
+    if (value instanceof File || value instanceof Blob) {
+      formData.append(key, value);
+    } else {
+      formData.append(key, String(value));
+    }
+  });
+  return {{requestMethodsObjectName}}.post<{{responseTypeName}}>('{{path}}', formData);
+    {{else if hasParameters}}
   return {{requestMethodsObjectName}}.post<{{responseTypeName}}>('{{path}}', {{requestParamName}});
     {{else}}
-  // POST 请求 - 没有参数
   return {{requestMethodsObjectName}}.post<{{responseTypeName}}>('{{path}}');
     {{/if}}
   {{/if}}
   {{#if (eq method 'PUT')}}
-    {{#if hasParameters}}
-  // PUT 请求 - 有请求体参数
+    {{#if isFormData}}
+  const formData = new FormData();
+  Object.entries({{requestParamName}}).forEach(([key, value]) => {
+    if (value instanceof File || value instanceof Blob) {
+      formData.append(key, value);
+    } else {
+      formData.append(key, String(value));
+    }
+  });
+  return {{requestMethodsObjectName}}.put<{{responseTypeName}}>('{{path}}', formData);
+    {{else if hasParameters}}
   return {{requestMethodsObjectName}}.put<{{responseTypeName}}>('{{path}}', {{requestParamName}});
     {{else}}
-  // PUT 请求 - 没有参数
   return {{requestMethodsObjectName}}.put<{{responseTypeName}}>('{{path}}');
     {{/if}}
   {{/if}}
   {{#if (eq method 'PATCH')}}
-    {{#if hasParameters}}
-  // PATCH 请求 - 有请求体参数
+    {{#if isFormData}}
+  const formData = new FormData();
+  Object.entries({{requestParamName}}).forEach(([key, value]) => {
+    if (value instanceof File || value instanceof Blob) {
+      formData.append(key, value);
+    } else {
+      formData.append(key, String(value));
+    }
+  });
+  return {{requestMethodsObjectName}}.patch<{{responseTypeName}}>('{{path}}', formData);
+    {{else if hasParameters}}
   return {{requestMethodsObjectName}}.patch<{{responseTypeName}}>('{{path}}', {{requestParamName}});
     {{else}}
-  // PATCH 请求 - 没有参数
   return {{requestMethodsObjectName}}.patch<{{responseTypeName}}>('{{path}}');
     {{/if}}
   {{/if}}
@@ -76,7 +94,11 @@ export function registerTemplatePartials(): void {
    const config: RequestConfig = {
      url: '{{path}}',
      method: '{{method}}',
+     {{#if isFormData}}
+     data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),
+     {{else}}
      {{#if hasBody}}data: {{requestParamName}},{{/if}}{{#unless hasBody}}{{#if hasParameters}}{{requestParamName}},{{/if}}{{/unless}}
+     {{/if}}
    };
    return {{requestFunctionName}}<{{responseTypeName}}>(config);
  {{/if}}

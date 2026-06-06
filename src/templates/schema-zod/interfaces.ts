@@ -3,11 +3,10 @@
  * 处理 Zod 接口（包含 Request/Response Schema）的模板生成
  */
 
-import Handlebars from 'handlebars';
-import consola from 'consola';
 import { compileTemplate } from '../../generator/template/index';
 import { ProcessedApiData } from '../../processors/openapi';
 import { sanitizeTypeName } from '../../generator/naming';
+import { getRequestBodySchema } from '../../generator/extractor';
 import { generateZodSchemaFromOpenApiSchema, openApiPropertyToZodType } from './types';
 
 /**
@@ -135,8 +134,9 @@ export function generateZodSchemaFromOperation(
   const imports: Set<string> = new Set();
 
   if (type === 'request') {
-    if (operation.requestBody?.content?.['application/json']?.schema) {
-      schema = operation.requestBody.content['application/json'].schema;
+    const bodySchema = getRequestBodySchema(operation);
+    if (bodySchema) {
+      schema = bodySchema.schema;
     } else if (operation.parameters && operation.parameters.length > 0) {
       const nonHeaderParams = operation.parameters.filter((param: any) => param.in !== 'header');
 

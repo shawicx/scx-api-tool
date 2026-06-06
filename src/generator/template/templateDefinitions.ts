@@ -108,7 +108,11 @@ export async function {{functionName}}(
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
+ {{#if isFormData}}
+     data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),
+ {{else}}
      data: {{requestParamName}},
+ {{/if}}
  {{else}}
      {{requestParamName}},
  {{/if}}
@@ -129,7 +133,11 @@ export function getApiOnlyTemplateWithoutComment(): string {
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
+ {{#if isFormData}}
+     data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),
+ {{else}}
      data: {{requestParamName}},
+ {{/if}}
  {{else}}
      {{requestParamName}},
  {{/if}}
@@ -157,7 +165,11 @@ export async function {{functionName}}(
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
+ {{#if isFormData}}
+     data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),
+ {{else}}
      data: {{requestParamName}},
+ {{/if}}
  {{else}}
      params: {{requestParamName}},
  {{/if}}
@@ -178,7 +190,11 @@ export function getZodInterfaceTemplateWithoutComment(): string {
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
+ {{#if isFormData}}
+     data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),
+ {{else}}
      data: {{requestParamName}},
+ {{/if}}
  {{else}}
      params: {{requestParamName}},
  {{/if}}
@@ -204,7 +220,11 @@ export async function {{functionName}}(
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
+ {{#if isFormData}}
+     data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),
+ {{else}}
      data: {{requestParamName}},
+ {{/if}}
  {{else}}
      params: {{requestParamName}},
  {{/if}}
@@ -225,7 +245,11 @@ export function getZodApiOnlyTemplateWithoutComment(): string {
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
+ {{#if isFormData}}
+     data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),
+ {{else}}
      data: {{requestParamName}},
+ {{/if}}
  {{else}}
      params: {{requestParamName}},
  {{/if}}

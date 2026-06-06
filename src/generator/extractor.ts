@@ -30,35 +30,33 @@ export function extractRequestProperties(
   const properties: ApiProperty[] = [];
 
   // 处理请求体
-  if (operation.requestBody && operation.requestBody.content) {
-    const jsonContent = operation.requestBody.content['application/json'];
-    if (jsonContent && jsonContent.schema) {
-      const { schema } = jsonContent;
+  const requestBodySchema = getRequestBodySchema(operation);
+  if (requestBodySchema) {
+    const { schema } = requestBodySchema;
 
-      // 处理引用模式
-      if (schema.$ref) {
-        const refName = sanitizeTypeName(schema.$ref.split('/').pop()!);
-        const refSchema = processedData.types.find((t) => t.name === refName)?.schema;
-        if (refSchema && refSchema.properties) {
-          for (const [name, property] of Object.entries(refSchema.properties)) {
-            properties.push({
-              name: sanitizePropertyName(name),
-              type: getPropertyType(property),
-              description: property.description || '',
-              required: refSchema.required?.includes(name) || false,
-            });
-          }
-        }
-      } else if (schema.properties) {
-        // 处理内联模式
-        for (const [name, property] of Object.entries(schema.properties)) {
+    // 处理引用模式
+    if (schema.$ref) {
+      const refName = sanitizeTypeName(schema.$ref.split('/').pop()!);
+      const refSchema = processedData.types.find((t) => t.name === refName)?.schema;
+      if (refSchema && refSchema.properties) {
+        for (const [name, property] of Object.entries(refSchema.properties)) {
           properties.push({
             name: sanitizePropertyName(name),
             type: getPropertyType(property),
             description: property.description || '',
-            required: schema.required?.includes(name) || false,
+            required: refSchema.required?.includes(name) || false,
           });
         }
+      }
+    } else if (schema.properties) {
+      // 处理内联模式
+      for (const [name, property] of Object.entries(schema.properties)) {
+        properties.push({
+          name: sanitizePropertyName(name),
+          type: getPropertyType(property),
+          description: property.description || '',
+          required: schema.required?.includes(name) || false,
+        });
       }
     }
   }
@@ -257,6 +255,7 @@ export function getPropertyType(property: OpenApiSchema): string {
   // 映射基本类型
   switch (property.type) {
     case 'string':
+      if (property.format === 'binary') return 'File';
       return 'string';
     case 'number':
     case 'integer':
@@ -268,6 +267,59 @@ export function getPropertyType(property: OpenApiSchema): string {
     default:
       return 'any';
   }
+}
+
+/**
+ * @description 获取请求体的 schema
+ * 按优先级查找 content-type：multipart/form-data → application/json → 其他
+ * @param operation OpenAPI 操作对象
+ * @returns 包含 schema 的对象，或 null
+ */
+export function getRequestBodySchema(
+  operation: OpenApiOperation,
+): { schema: OpenApiSchema } | null {
+  if (!operation.requestBody?.content) return null;
+
+  const { content } = operation.requestBody;
+
+  // 优先查找 multipart/form-data
+  if (content['multipart/form-data']?.schema) {
+    return { schema: content['multipart/form-data'].schema };
+  }
+
+  // 其次查找 application/json
+  if (content['application/json']?.schema) {
+    return { schema: content['application/json'].schema };
+  }
+
+  // fallback：取第一个可用的 content-type
+  for (const mediaType of Object.values(content)) {
+    if (mediaType.schema) {
+      return { schema: mediaType.schema };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * @description 获取请求体的 content-type
+ * @param operation OpenAPI 操作对象
+ * @returns content-type 字符串，如 'multipart/form-data'、'application/json'，或 null
+ */
+export function getRequestContentType(operation: OpenApiOperation): string | null {
+  if (!operation.requestBody?.content) return null;
+  const contentTypes = Object.keys(operation.requestBody.content);
+  return contentTypes[0] || null;
+}
+
+/**
+ * @description 判断请求是否为 multipart/form-data
+ * @param operation OpenAPI 操作对象
+ * @returns 是否为 multipart/form-data 请求
+ */
+export function isFormDataRequest(operation: OpenApiOperation): boolean {
+  return getRequestContentType(operation) === 'multipart/form-data';
 }
 
 /**

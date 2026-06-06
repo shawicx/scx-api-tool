@@ -232,10 +232,26 @@ function processApifoxResponses(responses: unknown): Record<string, OpenApiRespo
 function processApifoxRequestBody(requestBody: any): OpenApiRequestBody | undefined {
   if (!requestBody) return undefined;
 
+  // 如果已有标准 content 映射，保留所有 content-type（包括 multipart/form-data）
+  if (requestBody.content && typeof requestBody.content === 'object') {
+    const content: Record<string, any> = {};
+    for (const [mediaType, mediaTypeObj] of Object.entries(requestBody.content)) {
+      content[mediaType] = {
+        schema: (mediaTypeObj as any).schema || {},
+      };
+    }
+    return {
+      description: requestBody.description,
+      required: requestBody.required,
+      content,
+    };
+  }
+
+  // fallback：无 content 时用 schema 构建
   return {
     content: {
       'application/json': {
-        schema: requestBody.content?.['application/json']?.schema || requestBody.schema || {},
+        schema: requestBody.schema || {},
       },
     },
   };
