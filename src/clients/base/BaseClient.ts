@@ -151,17 +151,16 @@ export abstract class BaseClient {
    * @returns 包装后的错误
    */
   protected wrapError(error: unknown, config: ApiConfig): Error {
-    const metadata = this.getMetadata();
-
     // 如果已经是我们的错误类型，直接返回
     if (error.name === 'FetchError') {
       return error;
     }
 
     // 否则包装为 FetchError
-    return ErrorFactory.fetchError(
-      `${metadata.name} 客户端获取数据失败: ${error.message || error}`,
+    return ErrorFactory.fetchFailed(
       config.source,
+      undefined,
+      error instanceof Error ? error : new Error(String(error)),
     );
   }
 

@@ -5,7 +5,7 @@
 
 import { compileTemplate } from '../../generator/template/index';
 import { ProcessedApiData } from '../../processors/openapi';
-import { sanitizeTypeName } from '../../generator/naming';
+import { sanitizeTypeName, sanitizePropertyName } from '../../generator/naming';
 import { getRequestBodySchema } from '../../generator/extractor';
 import { generateZodSchemaFromOpenApiSchema, openApiPropertyToZodType } from './types';
 
@@ -177,8 +177,4 @@ export function generateZodSchemaFromOperation(
   }
 
   return generateZodSchemaFromOpenApiSchema(schema);
-}
-
-function sanitizePropertyName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9_]/g, '_');
 }

@@ -6,6 +6,7 @@ import axios from 'axios';
 import consola from 'consola';
 import type { ApiConfig } from '@/types';
 import { makeRequestWithProgress } from '@/utils/progress';
+import { redactHeaders } from '@/utils/redact';
 import { ErrorFactory } from '@/errors';
 
 /**
@@ -52,9 +53,9 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
       exportFormat: 'JSON',
     };
 
-    // 如果启用，则记录调试信息
+    // 如果启用，则记录调试信息（Authorization 头已脱敏）
     if (process.env.DEBUG) {
-      consola.debug('Apifox API 请求配置:', headers, requestBody, realUrl);
+      consola.debug('Apifox API 请求配置:', redactHeaders(headers), requestBody, realUrl);
     }
 
     // 使用带进度显示的请求

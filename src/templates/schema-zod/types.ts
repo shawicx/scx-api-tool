@@ -6,7 +6,7 @@
 import Handlebars from 'handlebars';
 import consola from 'consola';
 import { compileTemplate } from '../../generator/template/index';
-import { sanitizeTypeName } from '../../generator/naming';
+import { sanitizeTypeName, sanitizePropertyName } from '../../generator/naming';
 import { ProcessedApiData } from '../../processors/openapi';
 
 /**
@@ -195,8 +195,4 @@ export function openApiPropertyToZodType(property: any): {
   }
 
   return { type: 'z.any()', imports: [] };
-}
-
-function sanitizePropertyName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9_]/g, '_');
 }

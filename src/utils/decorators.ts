@@ -130,9 +130,11 @@ export function handleClientError(error: unknown, config: ApiConfig, clientName:
     throw error;
   }
 
-  // 否则包装为 FetchError
+  // 否则包装为 FetchError（保留 clientName 上下文）
   const message = error instanceof Error ? error.message : String(error);
-  throw ErrorFactory.fetchError(`${clientName} 客户端获取数据失败: ${message}`, config.source);
+  const wrappedError =
+    error instanceof Error ? error : new Error(`${clientName} 客户端获取数据失败: ${message}`);
+  throw ErrorFactory.fetchFailed(config.source, undefined, wrappedError);
 }
 
 /**

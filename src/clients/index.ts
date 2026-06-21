@@ -10,6 +10,7 @@ import { createSwaggerClient } from './implementations/SwaggerClient';
 import { createApifoxClient } from './implementations/ApifoxClient';
 import type { SwaggerClient } from './implementations/SwaggerClient';
 import type { ApifoxClient } from './implementations/ApifoxClient';
+import { redactConfig } from '@/utils/redact';
 import consola from 'consola';
 
 // ==================== 注册默认客户端 ====================
@@ -40,7 +41,7 @@ clientRegistry.register('apifox', createApifoxClient, 5);
  */
 export async function fetchData(config: ApiConfig): Promise<any> {
   if (process.env.DEBUG) {
-    consola.debug('正在使用配置获取数据:', config);
+    consola.debug('正在使用配置获取数据:', redactConfig(config));
   }
 
   try {

@@ -212,4 +212,24 @@ describe('fetchApifoxData', () => {
     // Should log request config debug info
     expect(consola.debug).toHaveBeenCalled();
   });
+
+  it('DEBUG 日志中不应包含明文 token（脱敏回归）', async () => {
+    process.env.DEBUG = 'true';
+    // 使用一个可识别的长 token，确保能验证脱敏生效
+    const sensitiveConfig = { ...apifoxApiConfig, token: 'sk-secret-token-xxxxx' };
+    mockMakeRequestWithProgress.mockResolvedValue({
+      data: { openapi: '3.1.0' },
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+
+    await fetchApifoxData(sensitiveConfig);
+
+    // 所有 debug 调用的参数都不应包含完整的明文 token
+    const allCalls = (consola.debug as any).mock.calls.map((call: any[]) =>
+      call.map((arg) => (typeof arg === 'string' ? arg : JSON.stringify(arg))).join(' '),
+    );
+    const combined = allCalls.join('\n');
+    expect(combined).not.toContain('sk-secret-token-xxxxx');
+  });
 });

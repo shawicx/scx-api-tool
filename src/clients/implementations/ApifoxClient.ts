@@ -7,6 +7,7 @@ import consola from 'consola';
 import { BaseClient, ClientMetadata, ClientOptions } from '../base/BaseClient';
 import type { ApiConfig } from '@/types';
 import { makeRequestWithProgress } from '@/utils/progress';
+import { redactHeaders } from '@/utils/redact';
 import { ErrorFactory } from '@/errors';
 
 /**
@@ -81,9 +82,9 @@ export class ApifoxClient extends BaseClient {
       exportFormat: 'JSON',
     };
 
-    // 如果启用，则记录调试信息
+    // 如果启用，则记录调试信息（Authorization 头已脱敏）
     if (process.env.DEBUG) {
-      consola.debug('[ApifoxClient] API 请求配置:', headers, requestBody, realUrl);
+      consola.debug('[ApifoxClient] API 请求配置:', redactHeaders(headers), requestBody, realUrl);
     }
 
     try {
