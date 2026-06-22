@@ -6,6 +6,7 @@
 import { ValidationError, ValidationSeverity, createValidationError } from '../errors';
 import type { UserConfig } from '@/types';
 import { RequestMethodStyle } from '@/types';
+import { isWithinCwd } from '@/utils/pathSafety';
 
 /**
  * @description 验证必需字段
@@ -152,6 +153,18 @@ export function validateStringFields(config: UserConfig): ValidationError[] {
           'outputDir 必须是非空字符串',
           ValidationSeverity.ERROR,
           '请提供有效的输出目录路径，例如: "src/service"',
+          config.outputDir,
+        ),
+      );
+    } else if (!isWithinCwd(config.outputDir)) {
+      // 安全护栏：禁止指向项目根目录之外，避免 cleanOutputDir 误删
+      errors.push(
+        createValidationError(
+          'outputDir',
+          'PATH_TRAVERSAL',
+          'outputDir 不能指向项目根目录之外',
+          ValidationSeverity.ERROR,
+          '请使用项目内的相对路径（如 src/service），避免使用 .. 或绝对路径',
           config.outputDir,
         ),
       );

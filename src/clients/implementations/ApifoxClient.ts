@@ -65,12 +65,19 @@ export class ApifoxClient extends BaseClient {
    */
   protected normalize(rawData: unknown): OpenApiDocument {
     const data = rawData as OpenApiDocument;
-    if (!data.paths) return data;
+    if (!data.paths || typeof data.paths !== 'object') return data;
 
     const normalizedPaths: OpenApiDocument['paths'] = {};
     for (const [path, methods] of Object.entries(data.paths)) {
       normalizedPaths[path] = {};
+      // 防御畸形输入：跳过非对象的 methods
+      if (!methods || typeof methods !== 'object') continue;
       for (const [method, operation] of Object.entries(methods)) {
+        // 防御畸形输入：跳过非对象的 operation
+        if (!operation || typeof operation !== 'object') {
+          normalizedPaths[path][method] = operation as any;
+          continue;
+        }
         const originalOp = operation as Record<string, unknown>;
         const normalizedOp: OpenApiOperation = {
           ...originalOp,

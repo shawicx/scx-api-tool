@@ -58,14 +58,22 @@ export function processOpenApiData(data: OpenApiDocument, config: ApiConfig): Pr
   const categories: ApiCategory[] = [];
 
   // 处理包括 Apifox 在内的所有服务器类型的标准 OpenAPI 格式
-  if (data.paths) {
+  // 防御畸形输入：仅处理 paths 为对象的情况
+  if (data.paths && typeof data.paths === 'object') {
     for (const [path, methods] of Object.entries(data.paths)) {
-      // 应用路径前缀转换
-      const normalizedPath = config.pathPrefix
-        ? path.replace(new RegExp(`^${config.pathPrefix}`), '')
-        : path;
+      // 应用路径前缀转换（字面字符串匹配，避免正则注入风险）
+      const normalizedPath =
+        config.pathPrefix && path.startsWith(config.pathPrefix)
+          ? path.slice(config.pathPrefix.length)
+          : path;
+
+      // 防御畸形输入：仅处理 methods 为对象的情况
+      if (!methods || typeof methods !== 'object') continue;
 
       for (const [method, operation] of Object.entries(methods)) {
+        // 防御畸形输入：跳过非对象的 operation
+        if (!operation || typeof operation !== 'object') continue;
+
         // 数据已由各客户端的 normalize() 标准化为统一 OpenAPI 格式
         if (process.env.DEBUG) {
           // 记录前几个操作用于调试
@@ -84,7 +92,7 @@ export function processOpenApiData(data: OpenApiDocument, config: ApiConfig): Pr
   }
 
   // 提取 components/schemas 用于类型定义
-  if (data.components?.schemas) {
+  if (data.components?.schemas && typeof data.components.schemas === 'object') {
     for (const [name, schema] of Object.entries(data.components.schemas)) {
       types.push({
         name: sanitizeTypeName(name),
@@ -95,7 +103,7 @@ export function processOpenApiData(data: OpenApiDocument, config: ApiConfig): Pr
   }
 
   // 处理类别提取 — Apifox 和 Swagger 均使用标签作为类别
-  if (data.tags) {
+  if (Array.isArray(data.tags)) {
     categories.push(...data.tags);
   }
 

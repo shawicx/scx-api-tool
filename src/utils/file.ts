@@ -6,6 +6,7 @@ import { promises as fs } from 'fs';
 import { dirname, relative, join } from 'path';
 import consola from 'consola';
 import { getHookManager } from './hooks';
+import { assertWithinCwd } from './pathSafety';
 import type { CliHooks } from '@/types';
 
 /**
@@ -93,6 +94,9 @@ export async function fileExists(filePath: string): Promise<boolean> {
  * @param excludeFiles 要排除的文件路径数组（绝对路径）
  */
 export async function cleanOutputDir(dirPath: string, excludeFiles: string[] = []): Promise<void> {
+  // 安全护栏：禁止清理项目根目录之外的路径，避免误删
+  assertWithinCwd(dirPath, 'outputDir');
+
   // 检查目录是否存在
   const exists = await fileExists(dirPath);
   if (!exists) {

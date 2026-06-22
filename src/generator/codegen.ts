@@ -3,6 +3,7 @@
  */
 
 import consola from 'consola';
+import { resolve } from 'path';
 import { ProcessedApiData } from '../processors/openapi';
 import { ApiConfig } from '../types';
 import {
@@ -11,6 +12,7 @@ import {
   generateTypeFiles,
   generateSchemaFiles,
 } from './fileGenerator';
+import { aliasToRealPath } from './pathUtils';
 import { cleanOutputDir } from '../utils/file';
 
 /**
@@ -34,14 +36,15 @@ export async function generateFiles(
   config: ApiConfig,
 ): Promise<void> {
   try {
-    // 清理输出目录，排除 requestFunctionFilePath
+    // 清理输出目录，排除 requestFunctionFilePath（规范化路径后比较，避免别名/相对路径不一致）
     const excludeFiles: string[] = [];
-    // 只在 requestFunctionFilePath 在输出目录下时才排除
-    if (
-      config.requestFunctionFilePath &&
-      config.requestFunctionFilePath.startsWith(config.outputDir)
-    ) {
-      excludeFiles.push(config.requestFunctionFilePath);
+    const resolvedOutputDir = resolve(process.cwd(), config.outputDir);
+    const resolvedRequestPath = resolve(
+      process.cwd(),
+      aliasToRealPath(config.requestFunctionFilePath),
+    );
+    if (resolvedRequestPath.startsWith(resolvedOutputDir)) {
+      excludeFiles.push(resolvedRequestPath);
     }
 
     await cleanOutputDir(config.outputDir, excludeFiles);

@@ -11,6 +11,7 @@ import { ApiConfig, CliHooks } from '../../types';
 import type { ApiInterface, InterfaceTemplateData, OpenApiOperation } from '../../types';
 import { ensureDir } from '../../utils/file';
 import { chineseToPinyinCamelCase } from '../../utils/path';
+import { escapeJsDocComment, escapeStringLiteral } from '@/utils/escape';
 import { writeGeneratedFile } from '../fileWriter';
 import { generateZodTypesOnlySchemaFile } from './zodTypesOnlyGenerator';
 import {
@@ -196,9 +197,11 @@ export async function generateInterfaceFileForTag(
       requestSchemaName: `${namingResult.requestTypeName}Schema`,
       responseSchemaName: `${namingResult.responseTypeName}Schema`,
       functionName: namingResult.functionName,
-      path: apiInterface.path,
+      path: escapeStringLiteral(apiInterface.path),
       method: apiInterface.method.toUpperCase(),
-      description: apiInterface.operation.summary || apiInterface.operation.description || '',
+      description: escapeJsDocComment(
+        apiInterface.operation.summary || apiInterface.operation.description || '',
+      ),
       hasParameters: !!(apiInterface.operation.parameters || apiInterface.operation.requestBody),
       parameters: extractRequestProperties(apiInterface.operation, processedData),
       hasResponse: !!apiInterface.operation.responses,

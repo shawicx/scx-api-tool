@@ -6,6 +6,7 @@
 import { compileTemplate } from '../index';
 import { ProcessedApiData } from '../../../processors/openapi';
 import { generateZodSchemaFromOperation } from './interfaces';
+import { escapeJsDocComment } from '@/utils/escape';
 
 /**
  * @description 合并的 Schema 文件模板 - 带注释
@@ -128,10 +129,12 @@ export function generateMergedSchemaFile(
       responseSchemaName: `${responseTypeName}Schema`,
       requestTypeName,
       responseTypeName,
-      requestDescription:
+      requestDescription: escapeJsDocComment(
         apiInterface.operation.summary || apiInterface.operation.description || '',
-      responseDescription:
+      ),
+      responseDescription: escapeJsDocComment(
         apiInterface.operation.summary || apiInterface.operation.description || '',
+      ),
       requestSchemaContent: requestResult.code,
       responseSchemaContent: responseResult.code,
     });

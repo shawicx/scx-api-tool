@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { resolve } from 'path';
 import type { ApiConfig } from '@/types';
 
 // Mock consola
@@ -61,9 +62,9 @@ describe('generateFiles', () => {
 
     await generateFiles(mockProcessedApiData, config);
 
-    // Should clean output dir
+    // Should clean output dir（excludeFiles 已规范化为解析后的绝对路径）
     expect(mockCleanOutputDir).toHaveBeenCalledWith(config.outputDir, [
-      config.requestFunctionFilePath,
+      resolve(process.cwd(), config.requestFunctionFilePath),
     ]);
 
     // Should generate interface files (shared by both generateApi and generateTypes)
@@ -186,8 +187,10 @@ describe('generateFiles', () => {
 
     await generateFiles(mockProcessedApiData, config);
 
-    // Should exclude requestFunctionFilePath
-    expect(mockCleanOutputDir).toHaveBeenCalledWith('src/service', ['src/service/request.ts']);
+    // Should exclude requestFunctionFilePath（excludeFiles 已规范化为解析后的绝对路径）
+    expect(mockCleanOutputDir).toHaveBeenCalledWith('src/service', [
+      resolve(process.cwd(), 'src/service/request.ts'),
+    ]);
   });
 
   it('should re-throw errors after logging', async () => {

@@ -8,6 +8,7 @@ import { ApiConfig, CliHooks } from '../types';
 import { fileExists, writeFormattedFile } from '../utils/file';
 import { formatCode } from '../utils/formatter';
 import { aliasToRealPath } from './pathUtils';
+import { assertWithinCwd } from '@/utils/pathSafety';
 import { generateRequestFile as generateRequestFileContent } from './template';
 
 export { generateInterfaceFiles } from './generators/interfaceGenerator';
@@ -29,6 +30,8 @@ export { generateSchemaFiles } from './generators/schemaGenerator';
  */
 export async function generateRequestFile(config: ApiConfig, hooks?: CliHooks): Promise<void> {
   const requestFilePath = aliasToRealPath(config.requestFunctionFilePath);
+  // 安全护栏：禁止写入项目根目录之外
+  assertWithinCwd(requestFilePath, 'requestFunctionFilePath');
 
   if (await fileExists(requestFilePath)) {
     if (process.env.DEBUG) {

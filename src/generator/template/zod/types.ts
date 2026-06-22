@@ -6,6 +6,8 @@
 import consola from 'consola';
 import { compileTemplate } from '../index';
 import { sanitizeTypeName, sanitizePropertyName } from '@/naming';
+import { isDepthExceeded, CircularRefGuard } from '@/utils/schemaSafety';
+import { escapeStringLiteral, escapeJsDocComment } from '@/utils/escape';
 
 /**
  * @description Zod 类型模板 - 带注释
@@ -78,7 +80,7 @@ export function generateZodTypeSchema(typeInfo: any, config: any): string {
   const templateData = {
     schemaName: `${typeInfo.name}Schema`,
     typeName: typeInfo.name,
-    description: typeInfo.schema.description || typeInfo.name,
+    description: escapeJsDocComment(typeInfo.schema.description || typeInfo.name),
     schemaContent: result.code,
   };
 
@@ -88,27 +90,41 @@ export function generateZodTypeSchema(typeInfo: any, config: any): string {
 /**
  * @description 将 OpenAPI Schema 转换为 Zod Schema 字符串
  * @param schema OpenAPI Schema 对象
+ * @param depth 当前递归深度（防 DoS）
+ * @param guard 循环引用检测器
  * @returns 包含代码和需要导入的 schema 列表的对象
  */
-export function generateZodSchemaFromOpenApiSchema(schema: any): {
+export function generateZodSchemaFromOpenApiSchema(
+  schema: any,
+  depth = 0,
+  guard: CircularRefGuard = new CircularRefGuard(),
+): {
   code: string;
   imports: string[];
 } {
-  if (!schema || !schema.properties) {
+  if (!schema || !schema.properties || isDepthExceeded(depth)) {
+    return { code: 'z.object({})', imports: [] };
+  }
+
+  if (typeof schema === 'object' && guard.begin(schema)) {
     return { code: 'z.object({})', imports: [] };
   }
 
   const fields: string[] = [];
   const imports: Set<string> = new Set();
 
-  for (const [name, prop] of Object.entries(schema.properties)) {
-    const sanitizedName = sanitizePropertyName(name);
-    const result = openApiPropertyToZodType(prop);
-    const required = schema.required?.includes(name);
-    const optional = required ? '' : '.optional()';
-    fields.push(`  ${sanitizedName}: ${result.type}${optional},`);
+  try {
+    for (const [name, prop] of Object.entries(schema.properties)) {
+      const sanitizedName = sanitizePropertyName(name);
+      const result = openApiPropertyToZodType(prop, depth + 1, guard);
+      const required = schema.required?.includes(name);
+      const optional = required ? '' : '.optional()';
+      fields.push(`  ${sanitizedName}: ${result.type}${optional},`);
 
-    result.imports.forEach((imp) => imports.add(imp));
+      result.imports.forEach((imp) => imports.add(imp));
+    }
+  } finally {
+    if (typeof schema === 'object') guard.end(schema);
   }
 
   return {
@@ -120,13 +136,19 @@ export function generateZodSchemaFromOpenApiSchema(schema: any): {
 /**
  * @description 将 OpenAPI property 转换为 Zod 类型
  * @param property OpenAPI property 对象
+ * @param depth 当前递归深度（防 DoS）
+ * @param guard 循环引用检测器
  * @returns 包含类型字符串和引用的 schema 列表的对象
  */
-export function openApiPropertyToZodType(property: any): {
+export function openApiPropertyToZodType(
+  property: any,
+  depth = 0,
+  guard: CircularRefGuard = new CircularRefGuard(),
+): {
   type: string;
   imports: string[];
 } {
-  if (!property) return { type: 'z.any()', imports: [] };
+  if (!property || isDepthExceeded(depth)) return { type: 'z.any()', imports: [] };
 
   if (property.$ref) {
     const refName = property.$ref.split('/').pop();
@@ -138,7 +160,7 @@ export function openApiPropertyToZodType(property: any): {
   }
 
   if (property.type === 'array' && property.items) {
-    const result = openApiPropertyToZodType(property.items);
+    const result = openApiPropertyToZodType(property.items, depth + 1, guard);
     return {
       type: `z.array(${result.type})`,
       imports: result.imports,
@@ -155,14 +177,14 @@ export function openApiPropertyToZodType(property: any): {
           imports: [`${sanitizedRefName}Schema`],
         };
       }
-      const result = openApiPropertyToZodType(property.additionalProperties);
+      const result = openApiPropertyToZodType(property.additionalProperties, depth + 1, guard);
       return {
         type: `z.record(${result.type})`,
         imports: result.imports,
       };
     }
     if (property.properties) {
-      const result = generateZodSchemaFromOpenApiSchema(property);
+      const result = generateZodSchemaFromOpenApiSchema(property, depth + 1, guard);
       return { type: result.code, imports: result.imports };
     }
     return { type: 'z.record(z.any())', imports: [] };
@@ -170,7 +192,7 @@ export function openApiPropertyToZodType(property: any): {
 
   if (property.enum) {
     const enumValues = property.enum.map((v: any) => {
-      if (typeof v === 'string') return `'${v}'`;
+      if (typeof v === 'string') return `'${escapeStringLiteral(v)}'`;
       return String(v);
     });
     return { type: `z.union([${enumValues.join(', ')}])`, imports: [] };

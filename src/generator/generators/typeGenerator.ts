@@ -16,6 +16,7 @@ import { compileTemplate, getTypeTemplateByConfig } from '../template';
 import { extractTypeProperties } from '../extractor';
 import { executeWithConcurrency } from '../../utils/concurrency';
 import { writeGeneratedFile } from '../fileWriter';
+import { escapeJsDocComment } from '@/utils/escape';
 
 /**
  * @description 生成所有类型文件
@@ -91,7 +92,7 @@ async function generateTypeFile(
 
   const templateData = {
     typeName: cleanTypeName,
-    description: type.schema.description || type.name,
+    description: escapeJsDocComment(type.schema.description || type.name),
     properties: extractTypeProperties(type.schema),
   };
 

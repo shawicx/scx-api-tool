@@ -149,23 +149,23 @@ describe('cleanOutputDir', () => {
     // Directory contains files
     vi.mocked(fs.readdir).mockResolvedValue(['user.ts', 'request.ts', 'types.ts'] as any);
 
-    await cleanOutputDir('/output', ['/output/request.ts']);
+    await cleanOutputDir('src/output', ['src/output/request.ts']);
 
     // Should remove non-excluded files
     expect(fs.rm).toHaveBeenCalledTimes(2);
     // request.ts should NOT be removed (excluded)
     const rmCalls = vi.mocked(fs.rm).mock.calls.map((call) => call[0]);
-    expect(rmCalls).not.toContain('/output/request.ts');
+    expect(rmCalls).not.toContain('src/output/request.ts');
     // user.ts and types.ts should be removed
-    expect(rmCalls).toContain('/output/user.ts');
-    expect(rmCalls).toContain('/output/types.ts');
+    expect(rmCalls).toContain('src/output/user.ts');
+    expect(rmCalls).toContain('src/output/types.ts');
   });
 
   it('should handle non-existent directory', async () => {
     // Directory does not exist
     vi.mocked(fs.access).mockRejectedValue(new Error('ENOENT'));
 
-    await cleanOutputDir('/nonexistent');
+    await cleanOutputDir('src/nonexistent');
 
     // Should not attempt to read or remove anything
     expect(fs.readdir).not.toHaveBeenCalled();

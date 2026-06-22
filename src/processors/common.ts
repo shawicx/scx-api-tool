@@ -5,6 +5,7 @@
 
 import type { ApiInterface, ApiProperty } from '../types';
 import { ProcessedApiData } from './openapi';
+import { isDepthExceeded, CircularRefGuard } from '@/utils/schemaSafety';
 
 /**
  * @description 按标签分组接口
@@ -129,42 +130,63 @@ export function extractUsedTypeNames(
  * 递归解析 Schema 提取所有引用的自定义类型
  * @param schema OpenAPI Schema 对象
  * @param processedData 处理后的 API 数据
+ * @param depth 当前递归深度（内部使用，防 DoS）
+ * @param guard 循环引用检测器（内部使用）
  * @returns 类型名称数组
  */
-function extractTypesFromSchema(schema: any, processedData: ProcessedApiData): string[] {
+function extractTypesFromSchema(
+  schema: any,
+  processedData: ProcessedApiData,
+  depth = 0,
+  guard: CircularRefGuard = new CircularRefGuard(),
+): string[] {
   const types: string[] = [];
 
-  if (!schema) {
+  if (!schema || isDepthExceeded(depth)) {
     return types;
   }
 
-  // 处理引用类型
-  if (schema.$ref) {
-    const refName = schema.$ref.split('/').pop();
-    if (isCustomType(refName, processedData)) {
-      types.push(refName);
+  // 循环引用检测（仅对对象生效）
+  if (typeof schema === 'object' && guard.begin(schema)) {
+    return types;
+  }
+
+  try {
+    // 处理引用类型
+    if (schema.$ref) {
+      const refName = schema.$ref.split('/').pop();
+      if (isCustomType(refName, processedData)) {
+        types.push(refName);
+      }
+      return types;
     }
-    return types;
-  }
 
-  // 处理对象属性
-  if (schema.properties) {
-    for (const property of Object.values(schema.properties) as any[]) {
-      const extracted = extractTypesFromSchema(property, processedData);
+    // 处理对象属性
+    if (schema.properties) {
+      for (const property of Object.values(schema.properties) as any[]) {
+        const extracted = extractTypesFromSchema(property, processedData, depth + 1, guard);
+        extracted.forEach((type) => types.push(type));
+      }
+    }
+
+    // 处理数组
+    if (schema.type === 'array' && schema.items) {
+      const extracted = extractTypesFromSchema(schema.items, processedData, depth + 1, guard);
       extracted.forEach((type) => types.push(type));
     }
-  }
 
-  // 处理数组
-  if (schema.type === 'array' && schema.items) {
-    const extracted = extractTypesFromSchema(schema.items, processedData);
-    extracted.forEach((type) => types.push(type));
-  }
-
-  // 处理 additionalProperties
-  if (schema.additionalProperties) {
-    const extracted = extractTypesFromSchema(schema.additionalProperties, processedData);
-    extracted.forEach((type) => types.push(type));
+    // 处理 additionalProperties
+    if (schema.additionalProperties) {
+      const extracted = extractTypesFromSchema(
+        schema.additionalProperties,
+        processedData,
+        depth + 1,
+        guard,
+      );
+      extracted.forEach((type) => types.push(type));
+    }
+  } finally {
+    if (typeof schema === 'object') guard.end(schema);
   }
 
   return types;

@@ -6,6 +6,8 @@
 import { ProcessedApiData } from '../processors/openapi';
 import type { ApiProperty, OpenApiOperation, OpenApiSchema } from '../types';
 import { sanitizePropertyName, sanitizeTypeName } from '@/naming';
+import { isDepthExceeded } from '@/utils/schemaSafety';
+import { escapeJsDocComment } from '@/utils/escape';
 
 /**
  * @description 提取请求属性
@@ -43,7 +45,7 @@ export function extractRequestProperties(
           properties.push({
             name: sanitizePropertyName(name),
             type: getPropertyType(property),
-            description: property.description || '',
+            description: escapeJsDocComment(property.description || ''),
             required: refSchema.required?.includes(name) || false,
           });
         }
@@ -54,7 +56,7 @@ export function extractRequestProperties(
         properties.push({
           name: sanitizePropertyName(name),
           type: getPropertyType(property),
-          description: property.description || '',
+          description: escapeJsDocComment(property.description || ''),
           required: schema.required?.includes(name) || false,
         });
       }
@@ -67,7 +69,7 @@ export function extractRequestProperties(
       properties.push({
         name: sanitizePropertyName(param.name),
         type: getPropertyType({ type: param.type || 'string' }),
-        description: param.description || '',
+        description: escapeJsDocComment(param.description || ''),
         required: !!param.required,
       });
     }
@@ -115,7 +117,7 @@ export function extractResponseProperties(
             properties.push({
               name: sanitizePropertyName(name),
               type: getPropertyType(property),
-              description: property.description || '',
+              description: escapeJsDocComment(property.description || ''),
               required: refSchema.required?.includes(name) || false,
             });
           }
@@ -134,7 +136,7 @@ export function extractResponseProperties(
           properties.push({
             name: sanitizePropertyName(name),
             type: getPropertyType(property),
-            description: property.description || '',
+            description: escapeJsDocComment(property.description || ''),
             required: schema.required?.includes(name) || false,
           });
         }
@@ -207,7 +209,7 @@ export function extractTypeProperties(schema: OpenApiSchema): ApiProperty[] {
     properties.push({
       name: sanitizePropertyName(name),
       type: getPropertyType(property),
-      description: property.description || '',
+      description: escapeJsDocComment(property.description || ''),
       required: schema.required?.includes(name) || false,
     });
   }
@@ -228,8 +230,8 @@ export function extractTypeProperties(schema: OpenApiSchema): ApiProperty[] {
  * const type = getPropertyType({ $ref: '#/components/schemas/User' }); // 'User'
  * ```
  */
-export function getPropertyType(property: OpenApiSchema): string {
-  if (!property) return 'any';
+export function getPropertyType(property: OpenApiSchema, depth = 0): string {
+  if (!property || isDepthExceeded(depth)) return 'any';
 
   // 处理引用类型
   if (property.$ref) {
@@ -239,7 +241,7 @@ export function getPropertyType(property: OpenApiSchema): string {
 
   // 处理数组类型
   if (property.type === 'array' && property.items) {
-    return `${getPropertyType(property.items)}[]`;
+    return `${getPropertyType(property.items, depth + 1)}[]`;
   }
 
   // 处理对象类型

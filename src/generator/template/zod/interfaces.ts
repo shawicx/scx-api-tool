@@ -8,6 +8,7 @@ import { ProcessedApiData } from '../../../processors/openapi';
 import { sanitizeTypeName, sanitizePropertyName } from '@/naming';
 import { getRequestBodySchema } from '../../extractor';
 import { generateZodSchemaFromOpenApiSchema, openApiPropertyToZodType } from './types';
+import { escapeJsDocComment } from '@/utils/escape';
 
 /**
  * @description Zod 接口 Schema 模板 - 带注释
@@ -105,8 +106,8 @@ export function generateZodInterfaceSchemaFile(
     responseSchemaName: `${interfaceInfo.responseTypeName}Schema`,
     requestTypeName: interfaceInfo.requestTypeName,
     responseTypeName: interfaceInfo.responseTypeName,
-    requestDescription: interfaceInfo.description,
-    responseDescription: interfaceInfo.description,
+    requestDescription: escapeJsDocComment(interfaceInfo.description || ''),
+    responseDescription: escapeJsDocComment(interfaceInfo.description || ''),
     requestSchemaContent: requestResult.code,
     responseSchemaContent: responseResult.code,
     typeImports: Array.from(imports),
