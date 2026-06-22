@@ -3,7 +3,7 @@
  * 为所有 API 客户端提供统一的接口和通用功能
  */
 
-import type { ApiConfig } from '@/types';
+import type { ApiConfig, OpenApiDocument } from '@/types';
 import { ErrorFactory } from '@/errors';
 
 /**
@@ -83,6 +83,15 @@ export abstract class BaseClient {
   protected abstract fetchDataInternal(config: ApiConfig): Promise<unknown>;
 
   /**
+   * @description 将原始获取数据标准化为标准 OpenAPI 文档
+   * 各客户端实现特定平台的格式适配（如 Apifox 的非标准字段补全）。
+   * 在 fetch() 内部于获取成功后自动调用，对上层透明。
+   * @param rawData 原始获取数据
+   * @returns 标准化后的 OpenApiDocument
+   */
+  protected abstract normalize(rawData: unknown): OpenApiDocument;
+
+  /**
    * @description 公共的数据获取接口
    * 提供重试、超时、错误处理等通用功能
    * @param config API 配置
@@ -107,9 +116,11 @@ export abstract class BaseClient {
     try {
       // 执行数据获取（带重试）
       const data = await this.executeWithRetry(() => this.fetchDataInternal(config));
+      // 标准化为统一 OpenAPI 文档格式（平台特定适配在各客户端 normalize 中实现）
+      const normalized = this.normalize(data);
 
       return {
-        data,
+        data: normalized,
         sourceType: metadata.type,
         timestamp: Date.now(),
       };

@@ -10,7 +10,8 @@ import { formatCode } from '../utils/formatter';
 import { aliasToRealPath } from './pathUtils';
 import { generateRequestFile as generateRequestFileContent } from './template';
 
-export { generateInterfaceFiles, generateRootIndexFile } from './generators/interfaceGenerator';
+export { generateInterfaceFiles } from './generators/interfaceGenerator';
+export { generateRootIndexFile } from './generators/rootIndexGenerator';
 export { generateTypeFiles } from './generators/typeGenerator';
 export { generateSchemaFiles } from './generators/schemaGenerator';
 

@@ -3,10 +3,8 @@
  * 处理多个接口的 Request/Response Schema 合并生成
  */
 
-import Handlebars from 'handlebars';
-import consola from 'consola';
-import { compileTemplate } from '../../generator/template/index';
-import { ProcessedApiData } from '../../processors/openapi';
+import { compileTemplate } from '../index';
+import { ProcessedApiData } from '../../../processors/openapi';
 import { generateZodSchemaFromOperation } from './interfaces';
 
 /**

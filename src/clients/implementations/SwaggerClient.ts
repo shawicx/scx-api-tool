@@ -5,7 +5,7 @@
 import axios from 'axios';
 import consola from 'consola';
 import { BaseClient, ClientMetadata, ClientOptions } from '../base/BaseClient';
-import type { ApiConfig } from '@/types';
+import type { ApiConfig, OpenApiDocument } from '@/types';
 import { makeRequestWithProgress } from '@/utils/progress';
 
 /**
@@ -54,6 +54,16 @@ export class SwaggerClient extends BaseClient {
     // 然后检查 URL 模式
     const metadata = this.getMetadata();
     return this.matchUrlPatterns(config.source, metadata.urlPatterns);
+  }
+
+  /**
+   * @description 标准化原始数据
+   * Swagger/OpenAPI 端点返回的已是标准格式，原样返回即可
+   * @param rawData 原始获取数据
+   * @returns 标准 OpenApiDocument
+   */
+  protected normalize(rawData: unknown): OpenApiDocument {
+    return rawData as OpenApiDocument;
   }
 
   /**

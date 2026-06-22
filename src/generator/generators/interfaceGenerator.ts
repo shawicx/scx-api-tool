@@ -9,9 +9,10 @@ import { ProcessedApiData, groupInterfacesByTag } from '../../processors/openapi
 import { collectUsedTypesFromProperties } from '../../processors/common';
 import { ApiConfig, CliHooks } from '../../types';
 import type { ApiInterface, InterfaceTemplateData, OpenApiOperation } from '../../types';
-import { ensureDir, writeFormattedFile } from '../../utils/file';
-import { formatCode } from '../../utils/formatter';
+import { ensureDir } from '../../utils/file';
 import { chineseToPinyinCamelCase } from '../../utils/path';
+import { writeGeneratedFile } from '../fileWriter';
+import { generateZodTypesOnlySchemaFile } from './zodTypesOnlyGenerator';
 import {
   extractRequestProperties,
   extractResponseProperties,
@@ -19,10 +20,9 @@ import {
   isFormDataRequest,
 } from '../extractor';
 import { getNormalizedPathWithAlias } from '../pathUtils';
-import { applyNamingStrategy, type NamingContext } from '../naming/strategy';
-import { generateInterfaceFunction, compileTemplate } from '../template';
+import { applyNamingStrategy, type NamingContext } from '@/naming';
+import { generateInterfaceFunction } from '../template';
 import { executeWithConcurrency } from '../../utils/concurrency';
-import { generateZodSchemaFromOperation } from '../../templates/schema-zod/interfaces';
 import { getFileExtension } from '../../utils/config';
 
 /**
@@ -220,239 +220,13 @@ export async function generateInterfaceFileForTag(
   }
 
   const indexFileName = `index${ext}`;
-  const formattedCode = await formatCode(
-    combinedCode,
+  await writeGeneratedFile(
     join(dirPath, indexFileName),
-    config.indentSize,
+    combinedCode,
+    config,
+    hooks,
+    '创建合并接口文件',
   );
-
-  const filePath = join(dirPath, indexFileName);
-  await writeFormattedFile(filePath, formattedCode, hooks);
-
-  if (process.env.DEBUG) {
-    consola.debug(`创建合并接口文件: ${filePath}`);
-  }
-}
-
-/**
- * @description 为 Zod TypesOnly 模式生成 Schema 文件
- * 直接在服务目录下生成 schema.ts 文件
- * @param interfaces 接口数组
- * @param processedData 处理后的 API 数据
- * @param config API 配置
- * @param dirPath 目录路径
- * @param hooks 钩子函数
- */
-async function generateZodTypesOnlySchemaFile(
-  interfaces: ApiInterface[],
-  processedData: ProcessedApiData,
-  config: ApiConfig,
-  dirPath: string,
-  hooks?: CliHooks,
-): Promise<void> {
-  const schemas: Array<{
-    requestSchemaName: string;
-    responseSchemaName: string;
-    requestTypeName: string;
-    responseTypeName: string;
-    requestDescription: string;
-    responseDescription: string;
-    requestSchemaContent: string;
-    responseSchemaContent: string;
-  }> = [];
-  const typeImports = new Set<string>();
-
-  for (const apiInterface of interfaces) {
-    const namingResult = getNamingResult(
-      apiInterface.path,
-      apiInterface.method,
-      apiInterface.operation,
-      config,
-    );
-
-    const requestResult = generateZodSchemaFromOperation(
-      apiInterface.operation,
-      processedData,
-      'request',
-    );
-    const responseResult = generateZodSchemaFromOperation(
-      apiInterface.operation,
-      processedData,
-      'response',
-    );
-
-    requestResult.imports.forEach((imp: string) => typeImports.add(imp));
-    responseResult.imports.forEach((imp: string) => typeImports.add(imp));
-
-    schemas.push({
-      requestSchemaName: `${namingResult.requestTypeName}Schema`,
-      responseSchemaName: `${namingResult.responseTypeName}Schema`,
-      requestTypeName: namingResult.requestTypeName,
-      responseTypeName: namingResult.responseTypeName,
-      requestDescription:
-        apiInterface.operation.summary || apiInterface.operation.description || '',
-      responseDescription:
-        apiInterface.operation.summary || apiInterface.operation.description || '',
-      requestSchemaContent: requestResult.code,
-      responseSchemaContent: responseResult.code,
-    });
-  }
-
-  const template = compileTemplate(getZodTypesOnlySchemaTemplateByConfig(config.comment !== false));
-
-  const templateData = {
-    typeImports: Array.from(typeImports),
-    schemas,
-  };
-
-  const code = template(templateData);
-  const formattedCode = await formatCode(code, join(dirPath, 'schema.ts'), config.indentSize);
-  const filePath = join(dirPath, 'schema.ts');
-  await writeFormattedFile(filePath, formattedCode, hooks);
-
-  if (process.env.DEBUG) {
-    consola.debug(`创建 Zod Schema 文件: ${filePath}`);
-  }
-}
-
-/**
- * @description Zod TypesOnly Schema 模板 - 带注释
- * @returns 模板字符串
- */
-function getZodTypesOnlySchemaTemplateWithComment(): string {
-  return `import { z } from 'zod';
-{{#if typeImports}}
-import {
-  {{#each typeImports}}
-  {{.}},
-  {{/each}}
-} from '../schemas';
-{{/if}}
-
-{{#each schemas}}
-/**
- * @description {{this.requestDescription}}
- */
-export const {{this.requestSchemaName}} = {{{this.requestSchemaContent}}};
-
-/**
- * @description {{this.responseDescription}}
- */
-export const {{this.responseSchemaName}} = {{{this.responseSchemaContent}}};
-
-export type {{this.requestTypeName}} = z.infer<typeof {{this.requestSchemaName}}>;
-export type {{this.responseTypeName}} = z.infer<typeof {{this.responseSchemaName}}>;
-
-{{/each}}
-`;
-}
-
-/**
- * @description Zod TypesOnly Schema 模板 - 不带注释
- * @returns 模板字符串
- */
-function getZodTypesOnlySchemaTemplateWithoutComment(): string {
-  return `import { z } from 'zod';
-{{#if typeImports}}
-import {
-  {{#each typeImports}}
-  {{.}},
-  {{/each}}
-} from '../schemas';
-{{/if}}
-
-{{#each schemas}}
-export const {{this.requestSchemaName}} = {{{this.requestSchemaContent}}};
-
-export const {{this.responseSchemaName}} = {{{this.responseSchemaContent}}};
-
-export type {{this.requestTypeName}} = z.infer<typeof {{this.requestSchemaName}}>;
-export type {{this.responseTypeName}} = z.infer<typeof {{this.responseSchemaName}}>;
-
-{{/each}}
-`;
-}
-
-/**
- * @description 根据配置获取 Zod TypesOnly Schema 模板
- * @param comment 是否包含注释
- * @returns 模板字符串
- */
-function getZodTypesOnlySchemaTemplateByConfig(comment: boolean): string {
-  return comment
-    ? getZodTypesOnlySchemaTemplateWithComment()
-    : getZodTypesOnlySchemaTemplateWithoutComment();
-}
-
-/**
- * @description 生成根目录 index.ts 文件
- * 导出所有标签目录和请求函数
- * @param processedData 处理后的 API 数据
- * @param config API 配置
- * @param hooks 钩子函数
- */
-export async function generateRootIndexFile(
-  processedData: ProcessedApiData,
-  config: ApiConfig,
-  hooks?: CliHooks,
-): Promise<void> {
-  const { outputDir } = config;
-
-  let rootIndexContent = '';
-
-  const isJS = config.target === 'javascript';
-  const effectiveGenerateTypes = isJS ? false : config.generateTypes;
-  const isZodMode = !isJS && config.typesFormat === 'zod';
-  const isZodTypesOnly = isZodMode && effectiveGenerateTypes && !config.generateApi;
-
-  if (!isZodTypesOnly) {
-    const relativePath = getNormalizedPathWithAlias(outputDir, config.requestFunctionFilePath);
-    const ext = getFileExtension(config.target);
-    const cleanRelativePath = relativePath.replace(new RegExp(`\\${ext}$`), '');
-    rootIndexContent += `export * from '${cleanRelativePath}';\n\n`;
-  }
-
-  const tagDirs: string[] = [];
-
-  for (const category of processedData.categories) {
-    const tagDir = chineseToPinyinCamelCase(category.name);
-    tagDirs.push(tagDir);
-  }
-
-  if (isZodMode && effectiveGenerateTypes) {
-    for (const tagDir of tagDirs) {
-      rootIndexContent += `export * from './${tagDir}/schema';\n`;
-    }
-    rootIndexContent += `export * from './schemas';\n`;
-
-    if (config.generateApi) {
-      rootIndexContent += '\n';
-      for (const tagDir of tagDirs) {
-        rootIndexContent += `export * from './${tagDir}';\n`;
-      }
-    }
-  } else if (isZodMode) {
-    for (const tagDir of tagDirs) {
-      rootIndexContent += `export * from './${tagDir}';\n`;
-    }
-  } else if (effectiveGenerateTypes) {
-    for (const tagDir of tagDirs) {
-      rootIndexContent += `export * from './${tagDir}';\n`;
-    }
-    rootIndexContent += `export * from './types';\n`;
-  } else {
-    for (const tagDir of tagDirs) {
-      rootIndexContent += `export * from './${tagDir}';\n`;
-    }
-  }
-
-  const ext = getFileExtension(config.target);
-  const rootIndexPath = join(outputDir, `index${ext}`);
-  await writeFormattedFile(rootIndexPath, rootIndexContent, hooks);
-
-  if (process.env.DEBUG) {
-    consola.debug(`创建根索引文件: ${rootIndexPath}`);
-  }
 }
 
 /**

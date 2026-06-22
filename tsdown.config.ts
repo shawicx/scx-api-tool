@@ -14,7 +14,7 @@ export default defineConfig([
     target: 'ESNext',
     outDir: 'dist',
     dts: true,
-    copy: ['src/templates/', 'src/visualize/'],
+    copy: ['src/visualize/'],
     minify: isProd,
     sourcemap: !isProd,
     treeshake: true,

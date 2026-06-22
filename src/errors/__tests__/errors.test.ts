@@ -41,7 +41,7 @@ describe('ErrorCode', () => {
     expect(ErrorCode.FETCH_REQUEST_FAILED).toBe('E2001');
     expect(ErrorCode.FETCH_UNAUTHORIZED).toBe('E2002');
     expect(ErrorCode.FETCH_TIMEOUT).toBe('E2003');
-    expect(ErrorCode._FETCH_INVALID_RESPONSE).toBe('E2004');
+    expect(ErrorCode.FETCH_INVALID_RESPONSE).toBe('E2004');
     expect(ErrorCode.FETCH_NETWORK_ERROR).toBe('E2005');
   });
 
@@ -373,6 +373,80 @@ describe('ErrorFactory', () => {
       expect(error).toBeInstanceOf(GenerateError);
       expect(error.message).toContain('missing required field');
       expect(error.solutions.length).toBeGreaterThan(0);
+    });
+  });
+
+  // -- 新增工厂方法 --
+  describe('networkError', () => {
+    it('should return a FetchError with URL in message', () => {
+      const error = ErrorFactory.networkError('https://api.example.com/data');
+      expect(error).toBeInstanceOf(FetchError);
+      expect(error.message).toContain('https://api.example.com/data');
+      expect(error.solutions.length).toBeGreaterThan(0);
+    });
+
+    it('should include originalError when provided', () => {
+      const inner = new Error('ENOTFOUND');
+      const error = ErrorFactory.networkError('https://api.example.com', inner);
+      expect(error.originalError).toBe(inner);
+    });
+  });
+
+  describe('typeError', () => {
+    it('should return a GenerateError with type name and message', () => {
+      const error = ErrorFactory.typeError('UserDTO', '无法解析的属性结构');
+      expect(error).toBeInstanceOf(GenerateError);
+      expect(error.message).toContain('UserDTO');
+      expect(error.message).toContain('无法解析的属性结构');
+      expect(error.solutions.length).toBeGreaterThan(0);
+    });
+  });
+
+  // -- 错误码映射锁定（防止 dead enum 复现）--
+  describe('错误码映射', () => {
+    it('配置类工厂方法应返回精确错误码', () => {
+      expect(ErrorFactory.configNotFound('./c.ts').code).toBe(ErrorCode.CONFIG_FILE_NOT_FOUND);
+      expect(ErrorFactory.configInvalid('msg', []).code).toBe(ErrorCode.CONFIG_INVALID);
+      expect(ErrorFactory.configParseError('./c.ts', new Error('e')).code).toBe(
+        ErrorCode.CONFIG_PARSE_ERROR,
+      );
+      expect(ErrorFactory.configMissingRequired('source').code).toBe(
+        ErrorCode.CONFIG_MISSING_REQUIRED,
+      );
+      expect(ErrorFactory.invalidUrl('ftp://x').code).toBe(ErrorCode.CONFIG_INVALID_URL);
+    });
+
+    it('网络类工厂方法应返回精确错误码', () => {
+      expect(ErrorFactory.fetchFailed('https://x').code).toBe(ErrorCode.FETCH_REQUEST_FAILED);
+      expect(ErrorFactory.unauthorized('https://x').code).toBe(ErrorCode.FETCH_UNAUTHORIZED);
+      expect(ErrorFactory.timeout('https://x', 30000).code).toBe(ErrorCode.FETCH_TIMEOUT);
+      expect(ErrorFactory.invalidResponse('https://x', 'json').code).toBe(
+        ErrorCode.FETCH_INVALID_RESPONSE,
+      );
+      expect(ErrorFactory.networkError('https://x').code).toBe(ErrorCode.FETCH_NETWORK_ERROR);
+    });
+
+    it('生成类工厂方法应返回精确错误码', () => {
+      expect(ErrorFactory.templateError('t.hbs', new Error('e')).code).toBe(
+        ErrorCode.GENERATE_TEMPLATE_ERROR,
+      );
+      expect(ErrorFactory.writeError('/o.ts', new Error('e')).code).toBe(
+        ErrorCode.GENERATE_WRITE_ERROR,
+      );
+      expect(ErrorFactory.typeError('T', 'msg').code).toBe(ErrorCode.GENERATE_TYPE_ERROR);
+      expect(ErrorFactory.schemaError('/p', 'msg').code).toBe(ErrorCode.GENERATE_SCHEMA_ERROR);
+    });
+
+    it('子类构造函数支持自定义错误码', () => {
+      expect(new ConfigError('m', [], undefined, ErrorCode.CONFIG_PARSE_ERROR).code).toBe(
+        ErrorCode.CONFIG_PARSE_ERROR,
+      );
+      expect(new FetchError('m', [], undefined, ErrorCode.FETCH_TIMEOUT).code).toBe(
+        ErrorCode.FETCH_TIMEOUT,
+      );
+      expect(new GenerateError('m', [], undefined, ErrorCode.GENERATE_WRITE_ERROR).code).toBe(
+        ErrorCode.GENERATE_WRITE_ERROR,
+      );
     });
   });
 });

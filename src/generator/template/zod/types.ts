@@ -3,11 +3,9 @@
  * 处理 Zod 类型的模板生成
  */
 
-import Handlebars from 'handlebars';
 import consola from 'consola';
-import { compileTemplate } from '../../generator/template/index';
-import { sanitizeTypeName, sanitizePropertyName } from '../../generator/naming';
-import { ProcessedApiData } from '../../processors/openapi';
+import { compileTemplate } from '../index';
+import { sanitizeTypeName, sanitizePropertyName } from '@/naming';
 
 /**
  * @description Zod 类型模板 - 带注释
@@ -66,11 +64,7 @@ export function getZodImportStatement(): string {
  * @param processedData 处理后的 API 数据
  * @returns 生成的 Zod Schema 代码
  */
-export function generateZodTypeSchema(
-  typeInfo: any,
-  config: any,
-  processedData?: ProcessedApiData,
-): string {
+export function generateZodTypeSchema(typeInfo: any, config: any): string {
   const template = compileTemplate(getZodTypeTemplateByConfig(config.comment !== false));
 
   const result = generateZodSchemaFromOpenApiSchema(typeInfo.schema);

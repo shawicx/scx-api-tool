@@ -5,7 +5,7 @@
 
 import { ProcessedApiData } from '../processors/openapi';
 import type { ApiProperty, OpenApiOperation, OpenApiSchema } from '../types';
-import { sanitizePropertyName, sanitizeTypeName } from './naming';
+import { sanitizePropertyName, sanitizeTypeName } from '@/naming';
 
 /**
  * @description 提取请求属性

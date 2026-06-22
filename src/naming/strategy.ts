@@ -4,7 +4,7 @@
  * 用于统一管理接口、函数、类型名称的生成逻辑
  */
 
-import type { NamingContext, NamingStrategy } from '../../types';
+import type { NamingContext, NamingStrategy } from '@/types';
 import { sanitizeInterfaceName, sanitizeParamName } from './sanitizer';
 
 export type { NamingContext, NamingStrategy };

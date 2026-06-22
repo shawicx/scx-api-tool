@@ -3,21 +3,11 @@
  * 统一导出 Zod Schema 相关的模板和生成函数
  */
 
-export { getZodTypeTemplateByConfig, getZodImportStatement, generateZodTypeSchema } from './types';
+export { generateZodTypeSchema } from './types';
 
-export {
-  getZodInterfaceSchemaTemplateByConfig,
-  generateZodInterfaceSchemaFile,
-} from './interfaces';
+export { generateZodSchemaFromOperation } from './interfaces';
 
-export {
-  getZodRequestSchemaContentByConfig,
-  getZodResponseSchemaContentByConfig,
-  generateZodRequestSchema,
-  generateZodResponseSchema,
-} from './requests';
-
-export { getMergedSchemaTemplateByConfig, generateMergedSchemaFile } from './merged';
+export { generateMergedSchemaFile } from './merged';
 
 /**
  * @description 生成 Zod Schema 索引文件内容

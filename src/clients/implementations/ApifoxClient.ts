@@ -5,7 +5,13 @@
 import axios from 'axios';
 import consola from 'consola';
 import { BaseClient, ClientMetadata, ClientOptions } from '../base/BaseClient';
-import type { ApiConfig } from '@/types';
+import type {
+  ApiConfig,
+  OpenApiDocument,
+  OpenApiOperation,
+  OpenApiRequestBody,
+  OpenApiResponse,
+} from '@/types';
 import { makeRequestWithProgress } from '@/utils/progress';
 import { redactHeaders } from '@/utils/redact';
 import { ErrorFactory } from '@/errors';
@@ -49,6 +55,96 @@ export class ApifoxClient extends BaseClient {
     // 然后检查 URL 模式
     const metadata = this.getMetadata();
     return this.matchUrlPatterns(config.source, metadata.urlPatterns);
+  }
+
+  /**
+   * @description 将 Apifox 原始数据标准化为标准 OpenAPI 文档
+   * Apifox 导出的参数/响应/请求体字段不完整，需补全默认值并统一为标准格式。
+   * @param rawData Apifox 原始数据
+   * @returns 标准 OpenApiDocument
+   */
+  protected normalize(rawData: unknown): OpenApiDocument {
+    const data = rawData as OpenApiDocument;
+    if (!data.paths) return data;
+
+    const normalizedPaths: OpenApiDocument['paths'] = {};
+    for (const [path, methods] of Object.entries(data.paths)) {
+      normalizedPaths[path] = {};
+      for (const [method, operation] of Object.entries(methods)) {
+        const originalOp = operation as Record<string, unknown>;
+        const normalizedOp: OpenApiOperation = {
+          ...originalOp,
+          parameters: ApifoxClient.normalizeParameters(originalOp.parameters),
+          responses: ApifoxClient.normalizeResponses(originalOp.responses),
+          requestBody: ApifoxClient.normalizeRequestBody(originalOp.requestBody),
+        };
+        normalizedPaths[path][method] = normalizedOp;
+      }
+    }
+
+    return { ...data, paths: normalizedPaths };
+  }
+
+  /**
+   * @description 标准化 Apifox 参数（补全缺失的默认字段）
+   */
+  private static normalizeParameters(parameters: unknown): OpenApiOperation['parameters'] {
+    if (!parameters || !Array.isArray(parameters)) return [];
+    return parameters.map((param: any) => ({
+      name: param.name,
+      in: param.in || 'query',
+      description: param.description || '',
+      required: !!param.required,
+      type: param.type || 'string',
+    }));
+  }
+
+  /**
+   * @description 标准化 Apifox 响应（统一为 content 包装格式）
+   */
+  private static normalizeResponses(responses: unknown): Record<string, OpenApiResponse> {
+    if (!responses) return {};
+    const processed: Record<string, OpenApiResponse> = {};
+    for (const [statusCode, response] of Object.entries(responses as Record<string, any>)) {
+      processed[statusCode] = {
+        description: response.description || '',
+        content: {
+          'application/json': {
+            schema: response.content?.['application/json']?.schema || response.schema || {},
+          },
+        },
+      };
+    }
+    return processed;
+  }
+
+  /**
+   * @description 标准化 Apifox 请求体（保留所有 content-type，无 content 时用 schema 兜底）
+   */
+  private static normalizeRequestBody(requestBody: any): OpenApiRequestBody | undefined {
+    if (!requestBody) return undefined;
+
+    if (requestBody.content && typeof requestBody.content === 'object') {
+      const content: Record<string, any> = {};
+      for (const [mediaType, mediaTypeObj] of Object.entries(requestBody.content)) {
+        content[mediaType] = {
+          schema: (mediaTypeObj as any).schema || {},
+        };
+      }
+      return {
+        description: requestBody.description,
+        required: requestBody.required,
+        content,
+      };
+    }
+
+    return {
+      content: {
+        'application/json': {
+          schema: requestBody.schema || {},
+        },
+      },
+    };
   }
 
   /**

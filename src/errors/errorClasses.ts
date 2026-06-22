@@ -146,9 +146,15 @@ export class ConfigError extends BaseError {
    * @param message 错误消息
    * @param solutions 解决方案列表
    * @param originalError 原始错误（可选）
+   * @param code 错误码（默认 CONFIG_INVALID，推荐通过 ErrorFactory 工厂方法传入精确码）
    */
-  constructor(message: string, solutions: ErrorSolution[], originalError?: Error) {
-    super(ErrorCode.CONFIG_INVALID, message, solutions, originalError);
+  constructor(
+    message: string,
+    solutions: ErrorSolution[],
+    originalError?: Error,
+    code: ErrorCode = ErrorCode.CONFIG_INVALID,
+  ) {
+    super(code, message, solutions, originalError);
   }
 }
 
@@ -168,9 +174,15 @@ export class FetchError extends BaseError {
    * @param message 错误消息
    * @param solutions 解决方案列表
    * @param originalError 原始错误（可选）
+   * @param code 错误码（默认 FETCH_REQUEST_FAILED，推荐通过 ErrorFactory 工厂方法传入精确码）
    */
-  constructor(message: string, solutions: ErrorSolution[], originalError?: Error) {
-    super(ErrorCode.FETCH_REQUEST_FAILED, message, solutions, originalError);
+  constructor(
+    message: string,
+    solutions: ErrorSolution[],
+    originalError?: Error,
+    code: ErrorCode = ErrorCode.FETCH_REQUEST_FAILED,
+  ) {
+    super(code, message, solutions, originalError);
   }
 }
 
@@ -190,8 +202,14 @@ export class GenerateError extends BaseError {
    * @param message 错误消息
    * @param solutions 解决方案列表
    * @param originalError 原始错误（可选）
+   * @param code 错误码（默认 GENERATE_TEMPLATE_ERROR，推荐通过 ErrorFactory 工厂方法传入精确码）
    */
-  constructor(message: string, solutions: ErrorSolution[], originalError?: Error) {
-    super(ErrorCode.GENERATE_TEMPLATE_ERROR, message, solutions, originalError);
+  constructor(
+    message: string,
+    solutions: ErrorSolution[],
+    originalError?: Error,
+    code: ErrorCode = ErrorCode.GENERATE_TEMPLATE_ERROR,
+  ) {
+    super(code, message, solutions, originalError);
   }
 }

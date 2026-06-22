@@ -10,12 +10,12 @@ import { collectUsedTypesFromProperties } from '../../processors/common';
 import { ApiConfig, CliHooks } from '../../types';
 import type { ApiTypeDefinition } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
-import { formatCode } from '../../utils/formatter';
 import { getNormalizedPathWithAlias } from '../pathUtils';
-import { sanitizeTypeName } from '../naming';
+import { sanitizeTypeName } from '@/naming';
 import { compileTemplate, getTypeTemplateByConfig } from '../template';
 import { extractTypeProperties } from '../extractor';
 import { executeWithConcurrency } from '../../utils/concurrency';
+import { writeGeneratedFile } from '../fileWriter';
 
 /**
  * @description 生成所有类型文件
@@ -109,18 +109,13 @@ async function generateTypeFile(
     code = importStatement + code;
   }
 
-  const formattedCode = await formatCode(
-    code,
+  await writeGeneratedFile(
     join(typesDir, `${cleanFileName}.ts`),
-    config.indentSize,
+    code,
+    config,
+    hooks,
+    '创建类型文件',
   );
-
-  const filePath = join(typesDir, `${cleanFileName}.ts`);
-  await writeFormattedFile(filePath, formattedCode, hooks);
-
-  if (process.env.DEBUG) {
-    consola.debug(`创建类型文件: ${filePath}`);
-  }
 }
 
 /**

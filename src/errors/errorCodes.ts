@@ -57,7 +57,7 @@ export enum ErrorCode {
    * @description 无效的响应格式
    * @example 当 API 返回的响应不符合预期的 OpenAPI 格式时抛出此错误
    */
-  _FETCH_INVALID_RESPONSE = 'E2004',
+  FETCH_INVALID_RESPONSE = 'E2004',
 
   /**
    * @description 网络错误

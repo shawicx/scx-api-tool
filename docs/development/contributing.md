@@ -64,8 +64,8 @@ scx-api-tool/
 │   │   ├── commands/      # 命令实现
 │   │   └── program.ts     # 主程序入口
 │   ├── clients/           # API 客户端
-│   │   ├── apifox.ts      # Apifox 客户端
-│   │   ├── swagger.ts     # Swagger 客户端
+│   │   ├── base/          # 基类 + 注册表
+│   │   ├── implementations/ # ApifoxClient / SwaggerClient
 │   │   └── index.ts       # 客户端工厂
 │   ├── generator/         # 代码生成器
 │   │   ├── index.ts       # 生成器主文件
@@ -196,7 +196,7 @@ pnpm run test:watch
 
 ```typescript
 // tests/client/apifox.test.ts
-import { ApifoxClient } from '../../src/clients/apifox';
+import { ApifoxClient } from '../../src/clients/implementations/ApifoxClient';
 import { mockConfig } from '../mocks/config';
 
 describe('ApifoxClient', () => {

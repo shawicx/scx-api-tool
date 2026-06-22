@@ -9,16 +9,15 @@ import { ProcessedApiData, groupInterfacesByTag } from '../../processors/openapi
 import { ApiConfig, CliHooks } from '../../types';
 import type { OpenApiOperation } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
-import { formatCode } from '../../utils/formatter';
 import { chineseToPinyinCamelCase } from '../../utils/path';
-import { sanitizeTypeName } from '../naming';
-import { applyNamingStrategy, type NamingContext } from '../naming/strategy';
+import { sanitizeTypeName, applyNamingStrategy, type NamingContext } from '@/naming';
 import {
   generateZodTypeSchema,
   generateZodSchemaIndex,
   generateMergedSchemaFile,
-} from '../../templates/schema-zod';
+} from '../template/zod';
 import { executeWithConcurrency } from '../../utils/concurrency';
+import { writeGeneratedFile } from '../fileWriter';
 
 /**
  * @description 生成所有 Zod Schema 文件
@@ -105,20 +104,10 @@ async function generateTypeSchemasFiles(
         config,
       );
 
-      const formattedCode = await formatCode(
-        schemaCode,
-        join(schemasDir, `${fileName}.ts`),
-        config.indentSize,
-      );
-
       const filePath = join(schemasDir, `${fileName}.ts`);
-      await writeFormattedFile(filePath, formattedCode, hooks);
+      await writeGeneratedFile(filePath, schemaCode, config, hooks, '创建类型 Schema 文件');
 
       generatedSchemas.push(schemaName);
-
-      if (process.env.DEBUG) {
-        consola.debug(`创建类型 Schema 文件: ${filePath}`);
-      }
     },
     concurrency,
     `生成类型 Schema`,
@@ -165,17 +154,8 @@ async function generateInterfaceSchemasFiles(
         getResponseTypeName,
       );
 
-      const formattedCode = await formatCode(
-        result.code,
-        join(dirPath, 'schema.ts'),
-        config.indentSize,
-      );
       const filePath = join(dirPath, 'schema.ts');
-      await writeFormattedFile(filePath, formattedCode, hooks);
-
-      if (process.env.DEBUG) {
-        consola.debug(`创建合并 Schema 文件: ${filePath}`);
-      }
+      await writeGeneratedFile(filePath, result.code, config, hooks, '创建合并 Schema 文件');
     },
     concurrency,
     `生成接口 Schema`,
