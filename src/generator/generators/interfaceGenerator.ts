@@ -111,7 +111,7 @@ export async function generateInterfaceFileForTag(
   const isZodTypesOnly = typesOnly && config.typesFormat === 'zod';
 
   if (isZodTypesOnly) {
-    await generateZodTypesOnlySchemaFile(interfaces, processedData, config, dirPath, hooks);
+    await generateZodTypesOnlySchemaFile(interfaces, config, dirPath, hooks);
     return;
   }
 

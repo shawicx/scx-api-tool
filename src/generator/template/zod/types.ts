@@ -8,6 +8,15 @@ import { compileTemplate } from '../index';
 import { sanitizeTypeName, sanitizePropertyName } from '@/naming';
 import { isDepthExceeded, CircularRefGuard } from '@/utils/schemaSafety';
 import { escapeStringLiteral, escapeJsDocComment } from '@/utils/escape';
+import type { ApiConfig, OpenApiSchema } from '@/types';
+
+/**
+ * @description Zod 类型生成所需的类型信息
+ */
+export interface ZodTypeInfo {
+  name: string;
+  schema: OpenApiSchema;
+}
 
 /**
  * @description Zod 类型模板 - 带注释
@@ -66,7 +75,7 @@ export function getZodImportStatement(): string {
  * @param processedData 处理后的 API 数据
  * @returns 生成的 Zod Schema 代码
  */
-export function generateZodTypeSchema(typeInfo: any, config: any): string {
+export function generateZodTypeSchema(typeInfo: ZodTypeInfo, config: ApiConfig): string {
   const template = compileTemplate(getZodTypeTemplateByConfig(config.comment !== false));
 
   const result = generateZodSchemaFromOpenApiSchema(typeInfo.schema);
@@ -95,7 +104,7 @@ export function generateZodTypeSchema(typeInfo: any, config: any): string {
  * @returns 包含代码和需要导入的 schema 列表的对象
  */
 export function generateZodSchemaFromOpenApiSchema(
-  schema: any,
+  schema: OpenApiSchema,
   depth = 0,
   guard: CircularRefGuard = new CircularRefGuard(),
 ): {
@@ -141,7 +150,7 @@ export function generateZodSchemaFromOpenApiSchema(
  * @returns 包含类型字符串和引用的 schema 列表的对象
  */
 export function openApiPropertyToZodType(
-  property: any,
+  property: OpenApiSchema,
   depth = 0,
   guard: CircularRefGuard = new CircularRefGuard(),
 ): {
@@ -191,10 +200,7 @@ export function openApiPropertyToZodType(
   }
 
   if (property.enum) {
-    const enumValues = property.enum.map((v: any) => {
-      if (typeof v === 'string') return `'${escapeStringLiteral(v)}'`;
-      return String(v);
-    });
+    const enumValues = property.enum.map((v) => `'${escapeStringLiteral(v)}'`);
     return { type: `z.union([${enumValues.join(', ')}])`, imports: [] };
   }
 

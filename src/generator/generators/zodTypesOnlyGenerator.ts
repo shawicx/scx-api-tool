@@ -5,13 +5,7 @@
  */
 
 import { join } from 'path';
-import type {
-  ApiConfig,
-  ApiInterface,
-  CliHooks,
-  OpenApiOperation,
-  ProcessedApiData,
-} from '@/types';
+import type { ApiConfig, ApiInterface, CliHooks, OpenApiOperation } from '@/types';
 import { compileTemplate } from '../template';
 import { generateZodSchemaFromOperation } from '../template/zod/interfaces';
 import { writeGeneratedFile } from '../fileWriter';
@@ -41,14 +35,12 @@ function getNamingResult(
 /**
  * @description 生成 Zod TypesOnly Schema 文件
  * @param interfaces 该 tag 下的接口列表
- * @param processedData 处理后的 API 数据
  * @param config API 配置
  * @param dirPath 目标目录路径
  * @param hooks 钩子函数
  */
 export async function generateZodTypesOnlySchemaFile(
   interfaces: ApiInterface[],
-  processedData: ProcessedApiData,
   config: ApiConfig,
   dirPath: string,
   hooks?: CliHooks,
@@ -73,16 +65,8 @@ export async function generateZodTypesOnlySchemaFile(
       config,
     );
 
-    const requestResult = generateZodSchemaFromOperation(
-      apiInterface.operation,
-      processedData,
-      'request',
-    );
-    const responseResult = generateZodSchemaFromOperation(
-      apiInterface.operation,
-      processedData,
-      'response',
-    );
+    const requestResult = generateZodSchemaFromOperation(apiInterface.operation, 'request');
+    const responseResult = generateZodSchemaFromOperation(apiInterface.operation, 'response');
 
     requestResult.imports.forEach((imp: string) => typeImports.add(imp));
     responseResult.imports.forEach((imp: string) => typeImports.add(imp));

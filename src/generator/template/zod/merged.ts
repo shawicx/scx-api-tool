@@ -4,9 +4,9 @@
  */
 
 import { compileTemplate } from '../index';
-import { ProcessedApiData } from '../../../processors/openapi';
 import { generateZodSchemaFromOperation } from './interfaces';
 import { escapeJsDocComment } from '@/utils/escape';
+import type { ApiConfig, ApiInterface, OpenApiOperation } from '@/types';
 
 /**
  * @description 合并的 Schema 文件模板 - 带注释
@@ -83,15 +83,24 @@ export function getMergedSchemaTemplateByConfig(comment: boolean): string {
  * @returns 包含代码和 schema 名称列表的对象
  */
 export function generateMergedSchemaFile(
-  interfaces: any[],
-  processedData: ProcessedApiData,
-  config: any,
-  getRequestTypeName: (path: string, method: string, operation: any, config: any) => string,
-  getResponseTypeName: (path: string, method: string, operation: any, config: any) => string,
+  interfaces: ApiInterface[],
+  config: ApiConfig,
+  getRequestTypeName: (
+    path: string,
+    method: string,
+    operation: OpenApiOperation,
+    config: ApiConfig,
+  ) => string,
+  getResponseTypeName: (
+    path: string,
+    method: string,
+    operation: OpenApiOperation,
+    config: ApiConfig,
+  ) => string,
 ): { code: string; schemaNames: string[] } {
   const template = compileTemplate(getMergedSchemaTemplateByConfig(config.comment !== false));
 
-  const schemas: any[] = [];
+  const schemas: Array<Record<string, string>> = [];
   const typeImports = new Set<string>();
   const schemaNames: string[] = [];
 
@@ -109,17 +118,9 @@ export function generateMergedSchemaFile(
       config,
     );
 
-    const requestResult = generateZodSchemaFromOperation(
-      apiInterface.operation,
-      processedData,
-      'request',
-    );
+    const requestResult = generateZodSchemaFromOperation(apiInterface.operation, 'request');
 
-    const responseResult = generateZodSchemaFromOperation(
-      apiInterface.operation,
-      processedData,
-      'response',
-    );
+    const responseResult = generateZodSchemaFromOperation(apiInterface.operation, 'response');
 
     requestResult.imports.forEach((imp) => typeImports.add(imp));
     responseResult.imports.forEach((imp) => typeImports.add(imp));

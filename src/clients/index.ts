@@ -4,7 +4,7 @@
  * 支持插件化客户端架构
  */
 
-import type { ApiConfig } from '@/types';
+import type { ApiConfig, OpenApiDocument } from '@/types';
 import { clientRegistry } from './base/registry';
 import { createSwaggerClient } from './implementations/SwaggerClient';
 import { createApifoxClient } from './implementations/ApifoxClient';
@@ -39,7 +39,7 @@ clientRegistry.register('apifox', createApifoxClient, 5);
  * // - 或根据 URL 模式自动识别
  * ```
  */
-export async function fetchData(config: ApiConfig): Promise<any> {
+export async function fetchData(config: ApiConfig): Promise<OpenApiDocument> {
   if (process.env.DEBUG) {
     consola.debug('正在使用配置获取数据:', redactConfig(config));
   }
@@ -54,9 +54,9 @@ export async function fetchData(config: ApiConfig): Promise<any> {
     }
 
     return result.data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // 确保错误信息清晰
-    if (error.message) {
+    if (error instanceof Error && error.message) {
       consola.error('获取数据失败:', error.message);
     }
     throw error;
@@ -69,7 +69,7 @@ export async function fetchData(config: ApiConfig): Promise<any> {
  * @param config API 配置
  * @returns OpenAPI 数据对象
  */
-export async function fetchSwaggerData(config: ApiConfig): Promise<any> {
+export async function fetchSwaggerData(config: ApiConfig): Promise<OpenApiDocument> {
   const client = clientRegistry.getClient<SwaggerClient>('swagger');
   const result = await client.fetch(config);
   return result.data;
@@ -81,7 +81,7 @@ export async function fetchSwaggerData(config: ApiConfig): Promise<any> {
  * @param config API 配置
  * @returns OpenAPI 数据对象
  */
-export async function fetchApifoxData(config: ApiConfig): Promise<any> {
+export async function fetchApifoxData(config: ApiConfig): Promise<OpenApiDocument> {
   const client = clientRegistry.getClient<ApifoxClient>('apifox');
   const result = await client.fetch(config);
   return result.data;

@@ -69,7 +69,7 @@ export class SwaggerClient extends BaseClient {
   /**
    * @description 内部数据获取实现
    */
-  protected async fetchDataInternal(config: ApiConfig): Promise<any> {
+  protected async fetchDataInternal(config: ApiConfig): Promise<unknown> {
     const apiUrl = config.source;
 
     // 如果启用，则记录调试信息

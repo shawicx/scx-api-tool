@@ -157,7 +157,7 @@ export class ApifoxClient extends BaseClient {
   /**
    * @description 内部数据获取实现
    */
-  protected async fetchDataInternal(config: ApiConfig): Promise<any> {
+  protected async fetchDataInternal(config: ApiConfig): Promise<unknown> {
     const realUrl = `${config.source}?locale=zh-CN`;
     const { token } = config;
 

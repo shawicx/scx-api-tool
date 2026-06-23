@@ -97,7 +97,7 @@ export abstract class BaseClient {
    * @param config API 配置
    * @returns Promise<FetchResult>
    */
-  async fetch(config: ApiConfig): Promise<FetchResult<unknown>> {
+  async fetch(config: ApiConfig): Promise<FetchResult<OpenApiDocument>> {
     const metadata = this.getMetadata();
 
     if (!this.supports(config)) {

@@ -4,11 +4,11 @@
  */
 
 import { compileTemplate } from '../index';
-import { ProcessedApiData } from '../../../processors/openapi';
 import { sanitizeTypeName, sanitizePropertyName } from '@/naming';
 import { getRequestBodySchema } from '../../extractor';
 import { generateZodSchemaFromOpenApiSchema, openApiPropertyToZodType } from './types';
 import { escapeJsDocComment } from '@/utils/escape';
+import type { ApiConfig, OpenApiOperation, OpenApiSchema } from '@/types';
 
 /**
  * @description Zod 接口 Schema 模板 - 带注释
@@ -78,24 +78,25 @@ export function getZodInterfaceSchemaTemplateByConfig(comment: boolean): string 
  * @param config 配置对象
  * @returns 包含代码和引用的 schema 名称列表的对象
  */
+/**
+ * @description Zod 接口 Schema 生成所需的接口信息（扩展自 ApiInterface）
+ */
+export interface ZodInterfaceInfo {
+  operation: OpenApiOperation;
+  requestTypeName: string;
+  responseTypeName: string;
+  description?: string;
+}
+
 export function generateZodInterfaceSchemaFile(
-  interfaceInfo: any,
-  processedData: ProcessedApiData,
-  config: any,
+  interfaceInfo: ZodInterfaceInfo,
+  config: ApiConfig,
 ): { code: string; imports: string[] } {
   const template = compileTemplate(getZodInterfaceSchemaTemplateByConfig(config.comment !== false));
 
-  const requestResult = generateZodSchemaFromOperation(
-    interfaceInfo.operation,
-    processedData,
-    'request',
-  );
+  const requestResult = generateZodSchemaFromOperation(interfaceInfo.operation, 'request');
 
-  const responseResult = generateZodSchemaFromOperation(
-    interfaceInfo.operation,
-    processedData,
-    'response',
-  );
+  const responseResult = generateZodSchemaFromOperation(interfaceInfo.operation, 'response');
 
   const imports = new Set<string>();
   requestResult.imports.forEach((imp) => imports.add(imp));
@@ -127,11 +128,10 @@ export function generateZodInterfaceSchemaFile(
  * @returns 包含代码和引用的 schema 列表的对象
  */
 export function generateZodSchemaFromOperation(
-  operation: any,
-  processedData: any,
+  operation: OpenApiOperation,
   type: 'request' | 'response',
 ): { code: string; imports: string[] } {
-  let schema: any = null;
+  let schema: OpenApiSchema | null = null;
   const imports: Set<string> = new Set();
 
   if (type === 'request') {
@@ -139,7 +139,7 @@ export function generateZodSchemaFromOperation(
     if (bodySchema) {
       schema = bodySchema.schema;
     } else if (operation.parameters && operation.parameters.length > 0) {
-      const nonHeaderParams = operation.parameters.filter((param: any) => param.in !== 'header');
+      const nonHeaderParams = operation.parameters.filter((param) => param.in !== 'header');
 
       if (nonHeaderParams.length > 0) {
         const fields: string[] = [];
