@@ -9,6 +9,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 在修改或添加功能时，必须更新相关文档，确保文档与代码保持一致。
 - 在生成代码时，必须遵循项目的代码生成模式和文件结构。
 
+## 规则
+
+1. **禁止提交代码** — 不要执行 `git commit`、`git push` 等提交操作，由用户自行提交
+2. **删除文件前必须告知用户并取得同意** — 不能未经确认删除任何文件
+3. **Superpowers spec/plan 文件位置** — 仅存放在 `superpowers/spec/` 和 `superpowers/plan/` 下。这两个目录已在 `.gitignore` 中，禁止从 `.gitignore` 中删除 `superpowers/` 条目，禁止将 spec/plan 文件放到其他文件夹
+
 ## 常用命令
 
 ```bash
