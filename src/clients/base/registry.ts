@@ -32,7 +32,7 @@ interface RegisteredClient {
 /**
  * @description 客户端注册器类
  */
-class ClientRegistry {
+export class ClientRegistry {
   private registeredClients = new Map<string, RegisteredClient>();
 
   /**
