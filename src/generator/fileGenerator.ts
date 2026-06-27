@@ -7,7 +7,7 @@ import consola from 'consola';
 import { ApiConfig, CliHooks } from '../types';
 import { fileExists, writeFormattedFile } from '../utils/file';
 import { formatCode } from '../utils/formatter';
-import { aliasToRealPath } from './pathUtils';
+import { aliasToRealPath } from '@/utils/pathUtils';
 import { assertWithinCwd } from '@/utils/pathSafety';
 import { generateRequestFile as generateRequestFileContent } from './template';
 

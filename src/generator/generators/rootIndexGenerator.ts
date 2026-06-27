@@ -9,7 +9,7 @@ import type { ApiConfig, CliHooks } from '@/types';
 import type { ProcessedApiData } from '@/processors/openapi';
 import { writeFormattedFile } from '@/utils/file';
 import { chineseToPinyinCamelCase } from '@/utils/path';
-import { getNormalizedPathWithAlias } from '../pathUtils';
+import { getNormalizedPathWithAlias } from '@/utils/pathUtils';
 import { getFileExtension } from '@/utils/config';
 
 /**

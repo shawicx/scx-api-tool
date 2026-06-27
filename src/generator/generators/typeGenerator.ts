@@ -10,7 +10,7 @@ import { collectUsedTypesFromProperties } from '../../processors/common';
 import { ApiConfig, CliHooks } from '../../types';
 import type { ApiTypeDefinition } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
-import { getNormalizedPathWithAlias } from '../pathUtils';
+import { getNormalizedPathWithAlias } from '@/utils/pathUtils';
 import { sanitizeTypeName } from '@/naming';
 import { compileTemplate, getTypeTemplateByConfig } from '../template';
 import { extractTypeProperties } from '../extractor';

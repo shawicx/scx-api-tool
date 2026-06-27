@@ -21,7 +21,7 @@ import {
   hasRequestBody,
   isFormDataRequest,
 } from '../extractor';
-import { getNormalizedPathWithAlias } from '../pathUtils';
+import { getNormalizedPathWithAlias } from '@/utils/pathUtils';
 import { applyNamingStrategy, type NamingContext } from '@/naming';
 import { generateInterfaceFunction } from '../template';
 import { executeWithConcurrency } from '../../utils/concurrency';

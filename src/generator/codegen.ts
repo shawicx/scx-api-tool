@@ -12,7 +12,7 @@ import {
   generateTypeFiles,
   generateSchemaFiles,
 } from './fileGenerator';
-import { aliasToRealPath } from './pathUtils';
+import { aliasToRealPath } from '@/utils/pathUtils';
 import { cleanOutputDir } from '../utils/file';
 
 /**
