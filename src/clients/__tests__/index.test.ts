@@ -130,7 +130,7 @@ describe('fetchData', () => {
       serverType: 'unknown-type',
       source: 'https://unknown-service.com/api',
       token: '',
-    } as ApiConfig;
+    } as unknown as ApiConfig;
 
     // 清除注册的客户端以确保失败
     const originalRegistry = clientRegistry;

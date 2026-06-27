@@ -169,7 +169,7 @@ export function generateZodSchemaFromOperation(
   }
 
   if (schema.$ref) {
-    const refName = schema.$ref.split('/').pop();
+    const refName = schema.$ref.split('/').pop()!;
     const sanitizedRefName = sanitizeTypeName(refName);
     return {
       code: `${sanitizedRefName}Schema`,

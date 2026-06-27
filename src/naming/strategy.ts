@@ -18,7 +18,7 @@ interface ProcessedPathInfo {
   /** 参数部分（如 ById ByUserId） */
   paramsPart: string;
   /** 原始路径参数数组 */
-  paramMatches: RegExpMatchArray;
+  paramMatches: string[];
 }
 
 /**

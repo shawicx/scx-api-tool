@@ -205,7 +205,10 @@ export async function loadConfig(
       throw error;
     }
     // 否则包装为配置解析错误
-    throw ErrorFactory.configParseError(absolutePath, error);
+    throw ErrorFactory.configParseError(
+      absolutePath,
+      error instanceof Error ? error : new Error(String(error)),
+    );
   }
 }
 

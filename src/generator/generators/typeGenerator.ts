@@ -93,7 +93,7 @@ async function generateTypeFile(
   const templateData = {
     typeName: cleanTypeName,
     description: escapeJsDocComment(type.schema.description || type.name),
-    properties: extractTypeProperties(type.schema),
+    properties: extractTypeProperties(type.schema, processedData),
   };
 
   let code = template(templateData);

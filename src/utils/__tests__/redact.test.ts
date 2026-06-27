@@ -60,7 +60,7 @@ describe('redactConfig', () => {
   });
 
   it('当 token 为 undefined 时应保持 undefined', () => {
-    const config = { source: 'https://api.example.com' };
+    const config: { source: string; token?: string } = { source: 'https://api.example.com' };
     const result = redactConfig(config);
     expect(result.token).toBeUndefined();
   });

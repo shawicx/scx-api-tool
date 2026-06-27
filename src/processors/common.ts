@@ -185,6 +185,17 @@ function extractTypesFromSchema(
       );
       extracted.forEach((type) => types.push(type));
     }
+
+    // 处理 allOf / oneOf / anyOf 组合（递归子 schema，透传 depth+1 与 guard）
+    for (const compositeKey of ['allOf', 'oneOf', 'anyOf'] as const) {
+      const composite = schema[compositeKey];
+      if (Array.isArray(composite)) {
+        for (const sub of composite) {
+          const extracted = extractTypesFromSchema(sub, processedData, depth + 1, guard);
+          extracted.forEach((type) => types.push(type));
+        }
+      }
+    }
   } finally {
     if (typeof schema === 'object') guard.end(schema);
   }

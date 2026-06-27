@@ -6,8 +6,16 @@
 import { ProcessedApiData } from '../processors/openapi';
 import type { ApiProperty, OpenApiOperation, OpenApiSchema } from '../types';
 import { sanitizePropertyName, sanitizeTypeName } from '@/naming';
-import { isDepthExceeded } from '@/utils/schemaSafety';
 import { escapeJsDocComment } from '@/utils/escape';
+import { resolveComposedSchema } from '@/utils/refResolver';
+import { getPropertyType } from './propertyType';
+
+/**
+ * @description 属性类型映射（getPropertyType 等）
+ * 实现位于 propertyType.ts，支持 nullable / oneOf / anyOf / allOf。
+ * 此处重新导出以保持既有 `from '../extractor'` 的导入兼容性。
+ */
+export { getPropertyType };
 
 /**
  * @description 提取请求属性
@@ -35,10 +43,12 @@ export function extractRequestProperties(
   const requestBodySchema = getRequestBodySchema(operation);
   if (requestBodySchema) {
     const { schema } = requestBodySchema;
+    // allOf 展平（顶层合并）
+    const resolved = resolveComposedSchema(schema, processedData);
 
     // 处理引用模式
-    if (schema.$ref) {
-      const refName = sanitizeTypeName(schema.$ref.split('/').pop()!);
+    if (resolved.$ref) {
+      const refName = sanitizeTypeName(resolved.$ref.split('/').pop()!);
       const refSchema = processedData.types.find((t) => t.name === refName)?.schema;
       if (refSchema && refSchema.properties) {
         for (const [name, property] of Object.entries(refSchema.properties)) {
@@ -50,14 +60,14 @@ export function extractRequestProperties(
           });
         }
       }
-    } else if (schema.properties) {
-      // 处理内联模式
-      for (const [name, property] of Object.entries(schema.properties)) {
+    } else if (resolved.properties) {
+      // 处理内联模式（含 allOf 展平后的 properties）
+      for (const [name, property] of Object.entries(resolved.properties)) {
         properties.push({
           name: sanitizePropertyName(name),
           type: getPropertyType(property),
           description: escapeJsDocComment(property.description || ''),
-          required: schema.required?.includes(name) || false,
+          required: resolved.required?.includes(name) || false,
         });
       }
     }
@@ -107,10 +117,12 @@ export function extractResponseProperties(
     const jsonContent = successResponse.content['application/json'];
     if (jsonContent && jsonContent.schema) {
       const { schema } = jsonContent;
+      // allOf 展平（顶层合并）
+      const resolved = resolveComposedSchema(schema, processedData);
 
       // 处理引用模式
-      if (schema.$ref) {
-        const refName = sanitizeTypeName(schema.$ref.split('/').pop()!);
+      if (resolved.$ref) {
+        const refName = sanitizeTypeName(resolved.$ref.split('/').pop()!);
         const refSchema = processedData.types.find((t) => t.name === refName)?.schema;
         if (refSchema && refSchema.properties) {
           for (const [name, property] of Object.entries(refSchema.properties)) {
@@ -130,29 +142,29 @@ export function extractResponseProperties(
             required: true,
           });
         }
-      } else if (schema.properties) {
-        // 处理内联模式
-        for (const [name, property] of Object.entries(schema.properties)) {
+      } else if (resolved.properties) {
+        // 处理内联模式（含 allOf 展平后的 properties）
+        for (const [name, property] of Object.entries(resolved.properties)) {
           properties.push({
             name: sanitizePropertyName(name),
             type: getPropertyType(property),
             description: escapeJsDocComment(property.description || ''),
-            required: schema.required?.includes(name) || false,
+            required: resolved.required?.includes(name) || false,
           });
         }
-      } else if (schema.type === 'array' && schema.items) {
+      } else if (resolved.type === 'array' && resolved.items) {
         // 处理数组响应
         properties.push({
           name: 'data',
-          type: `${getPropertyType(schema.items)}[]`,
+          type: `${getPropertyType(resolved.items)}[]`,
           description: '响应数据数组',
           required: true,
         });
-      } else if (schema.type) {
+      } else if (resolved.type) {
         // 处理基本类型
         properties.push({
           name: 'data',
-          type: getPropertyType(schema),
+          type: getPropertyType(resolved),
           description: '响应数据',
           required: true,
         });
@@ -173,8 +185,9 @@ export function extractResponseProperties(
 
 /**
  * @description 提取类型属性
- * 从 Schema 中提取类型属性
+ * 从 Schema 中提取类型属性。当传入 processedData 时，会先展平 allOf 组合 schema。
  * @param schema OpenAPI Schema 对象
+ * @param processedData 处理后的 API 数据（可选，用于解析 allOf 子 schema 的 $ref）
  * @returns 类型属性数组
  *
  * @example
@@ -184,91 +197,49 @@ export function extractResponseProperties(
  * //   { name: 'id', type: 'number', description: 'ID', required: true },
  * //   { name: 'name', type: 'string', description: '名称', required: false }
  * // ]
+ *
+ * // 含 allOf 展平：
+ * const merged = extractTypeProperties(
+ *   { allOf: [{ $ref: '#/components/schemas/Base' }, { properties: { ext: { type: 'string' } } }] },
+ *   processedData,
+ * );
  * ```
  */
-export function extractTypeProperties(schema: OpenApiSchema): ApiProperty[] {
+export function extractTypeProperties(
+  schema: OpenApiSchema,
+  processedData?: ProcessedApiData,
+): ApiProperty[] {
   if (!schema) {
     return [];
   }
 
+  // allOf 展平（顶层合并，仅在传入 processedData 时）
+  const resolved = processedData ? resolveComposedSchema(schema, processedData) : schema;
+
   // 处理引用模式
-  if (schema.$ref) {
+  if (resolved.$ref) {
     // 目前，我们对引用类型返回空数组
     // 在更完整的实现中，我们将解析引用
     // 并从引用的模式中提取属性
     return [];
   }
 
-  if (!schema.properties) {
+  if (!resolved.properties) {
     return [];
   }
 
   const properties: ApiProperty[] = [];
 
-  for (const [name, property] of Object.entries(schema.properties)) {
+  for (const [name, property] of Object.entries(resolved.properties)) {
     properties.push({
       name: sanitizePropertyName(name),
       type: getPropertyType(property),
       description: escapeJsDocComment(property.description || ''),
-      required: schema.required?.includes(name) || false,
+      required: resolved.required?.includes(name) || false,
     });
   }
 
   return properties;
-}
-
-/**
- * @description 获取属性类型
- * 将 OpenAPI Schema 属性转换为 TypeScript 类型字符串
- * @param property OpenAPI Schema 属性对象
- * @returns TypeScript 类型字符串
- *
- * @example
- * ```typescript
- * const type = getPropertyType({ type: 'string' }); // 'string'
- * const type = getPropertyType({ type: 'array', items: { type: 'number' } }); // 'number[]'
- * const type = getPropertyType({ $ref: '#/components/schemas/User' }); // 'User'
- * ```
- */
-export function getPropertyType(property: OpenApiSchema, depth = 0): string {
-  if (!property || isDepthExceeded(depth)) return 'any';
-
-  // 处理引用类型
-  if (property.$ref) {
-    const refName = property.$ref.split('/').pop()!;
-    return sanitizeTypeName(refName);
-  }
-
-  // 处理数组类型
-  if (property.type === 'array' && property.items) {
-    return `${getPropertyType(property.items, depth + 1)}[]`;
-  }
-
-  // 处理对象类型
-  if (property.type === 'object') {
-    // 检查是否为引用对象
-    if (property.additionalProperties && property.additionalProperties.$ref) {
-      const refName = property.additionalProperties.$ref.split('/').pop()!;
-      return `Record<string, ${sanitizeTypeName(refName)}>`;
-    }
-    return 'Record<string, any>';
-  }
-
-  // 映射基本类型
-  switch (property.type) {
-    case 'string':
-      if (property.format === 'binary') return 'File';
-      return 'string';
-    case 'number':
-    case 'integer':
-      return 'number';
-    case 'boolean':
-      return 'boolean';
-    case 'null':
-      return 'null';
-    default:
-      return 'any';
-  }
 }
 
 /**

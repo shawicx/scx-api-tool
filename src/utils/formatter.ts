@@ -30,7 +30,7 @@ export const formatCode = withErrorHandler(
       parser,
       singleQuote: true,
       trailingComma: 'es5',
-      tabWidth: indentSize,
+      tabWidth: typeof indentSize === 'number' ? indentSize : 2,
       semi: true,
     });
 

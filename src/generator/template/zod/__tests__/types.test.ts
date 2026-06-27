@@ -23,6 +23,7 @@ import {
   getZodImportStatement,
 } from '../types';
 import { generateZodSchemaIndex } from '../index';
+import { CircularRefGuard } from '@/utils/schemaSafety';
 import type { ApiConfig, OpenApiSchema } from '@/types';
 import { minimalApiConfig } from '../../../../../tests/fixtures/mockData';
 
@@ -250,6 +251,144 @@ describe('zod/types', () => {
   describe('getZodImportStatement', () => {
     it('应返回 zod import 语句', () => {
       expect(getZodImportStatement()).toBe("import { z } from 'zod';\n");
+    });
+  });
+
+  // ==================== 组合 schema 分支（nullable / oneOf / anyOf / allOf）====================
+
+  describe('openApiPropertyToZodType - nullable', () => {
+    it('nullable:true 的 string 应输出 z.string().nullable()', () => {
+      expect(
+        openApiPropertyToZodType({ type: 'string', nullable: true } as OpenApiSchema).type,
+      ).toBe('z.string().nullable()');
+    });
+
+    it('3.1 风格 type:[string,null] 应输出 z.string().nullable()', () => {
+      expect(
+        openApiPropertyToZodType({ type: ['string', 'null'] } as unknown as OpenApiSchema).type,
+      ).toBe('z.string().nullable()');
+    });
+
+    it('非 nullable 不应追加 .nullable()', () => {
+      expect(openApiPropertyToZodType({ type: 'string' } as OpenApiSchema).type).toBe('z.string()');
+    });
+  });
+
+  describe('openApiPropertyToZodType - oneOf / anyOf', () => {
+    it('oneOf 两个基本类型应输出 z.union([z.string(), z.number()])', () => {
+      const result = openApiPropertyToZodType({
+        oneOf: [{ type: 'string' }, { type: 'number' }],
+      } as OpenApiSchema);
+      expect(result.type).toBe('z.union([z.string(), z.number()])');
+      expect(result.imports).toEqual([]);
+    });
+
+    it('anyOf 应与 oneOf 同语义', () => {
+      const result = openApiPropertyToZodType({
+        anyOf: [{ type: 'string' }, { type: 'boolean' }],
+      } as OpenApiSchema);
+      expect(result.type).toBe('z.union([z.string(), z.boolean()])');
+    });
+
+    it('oneOf 含 $ref 应收集 import 并输出 {Name}Schema', () => {
+      const result = openApiPropertyToZodType({
+        oneOf: [{ $ref: '#/components/schemas/User' }, { type: 'string' }],
+      } as OpenApiSchema);
+      expect(result.type).toBe('z.union([UserSchema, z.string()])');
+      expect(result.imports).toEqual(['UserSchema']);
+    });
+
+    it('oneOf + nullable 应末尾追加 .nullable()', () => {
+      const result = openApiPropertyToZodType({
+        oneOf: [{ type: 'string' }, { type: 'number' }],
+        nullable: true,
+      } as OpenApiSchema);
+      expect(result.type).toBe('z.union([z.string(), z.number()]).nullable()');
+    });
+
+    it('oneOf 数组项应透传 guard（自引用不陷入死循环）', () => {
+      // 构造自引用 schema：oneOf 第一项引用自身对象
+      const selfRef: OpenApiSchema = {
+        type: 'object',
+        properties: { x: { type: 'string' } },
+      } as OpenApiSchema;
+      (selfRef as any).oneOf = [selfRef];
+      const guard = new CircularRefGuard();
+      // 不应抛栈溢出；guard.begin 命中后降级
+      const result = openApiPropertyToZodType(selfRef, 0, guard);
+      expect(result.type).toBeDefined();
+    });
+  });
+
+  describe('openApiPropertyToZodType - allOf', () => {
+    it('allOf 全为 $ref 应输出 z.intersection(A, B) 并收集 imports', () => {
+      const result = openApiPropertyToZodType({
+        allOf: [{ $ref: '#/components/schemas/A' }, { $ref: '#/components/schemas/B' }],
+      } as OpenApiSchema);
+      expect(result.type).toBe('z.intersection(ASchema, BSchema)');
+      expect(result.imports).toEqual(['ASchema', 'BSchema']);
+    });
+
+    it('allOf 单个 $ref 应退化为 {Name}Schema', () => {
+      const result = openApiPropertyToZodType({
+        allOf: [{ $ref: '#/components/schemas/A' }],
+      } as OpenApiSchema);
+      expect(result.type).toBe('ASchema');
+      expect(result.imports).toEqual(['ASchema']);
+    });
+
+    it('allOf + nullable 应末尾追加 .nullable()', () => {
+      const result = openApiPropertyToZodType({
+        allOf: [{ $ref: '#/components/schemas/A' }, { $ref: '#/components/schemas/B' }],
+        nullable: true,
+      } as OpenApiSchema);
+      expect(result.type).toBe('z.intersection(ASchema, BSchema).nullable()');
+    });
+  });
+
+  describe('generateZodSchemaFromOpenApiSchema - 组合分支', () => {
+    it('无 properties 无组合关键字应返回 z.object({})（保持既有行为）', () => {
+      const result = generateZodSchemaFromOpenApiSchema({} as OpenApiSchema);
+      expect(result.code).toBe('z.object({})');
+      expect(result.imports).toEqual([]);
+    });
+
+    it('oneOf 顶层应返回 z.union(...)（不被 properties 短路吞掉）', () => {
+      const result = generateZodSchemaFromOpenApiSchema({
+        oneOf: [{ type: 'string' }, { type: 'number' }],
+      } as OpenApiSchema);
+      expect(result.code).toBe('z.union([z.string(), z.number()])');
+    });
+
+    it('oneOf 顶层含 $ref 应收集 import', () => {
+      const result = generateZodSchemaFromOpenApiSchema({
+        oneOf: [{ $ref: '#/components/schemas/A' }, { $ref: '#/components/schemas/B' }],
+      } as OpenApiSchema);
+      expect(result.code).toBe('z.union([ASchema, BSchema])');
+      expect(result.imports).toEqual(['ASchema', 'BSchema']);
+    });
+
+    it('allOf 顶层全为 $ref 应输出 z.intersection（不被 properties 短路吞掉）', () => {
+      const result = generateZodSchemaFromOpenApiSchema({
+        allOf: [{ $ref: '#/components/schemas/A' }, { $ref: '#/components/schemas/B' }],
+      } as OpenApiSchema);
+      expect(result.code).toBe('z.intersection(ASchema, BSchema)');
+      expect(result.imports).toEqual(['ASchema', 'BSchema']);
+    });
+
+    it('allOf 单个 $ref 应退化为 {Name}Schema', () => {
+      const result = generateZodSchemaFromOpenApiSchema({
+        allOf: [{ $ref: '#/components/schemas/A' }],
+      } as OpenApiSchema);
+      expect(result.code).toBe('ASchema');
+    });
+
+    it('depth 超限的 oneOf 应降级为 z.object({})', () => {
+      const result = generateZodSchemaFromOpenApiSchema(
+        { oneOf: [{ type: 'string' }] } as OpenApiSchema,
+        20,
+      );
+      expect(result.code).toBe('z.object({})');
     });
   });
 });

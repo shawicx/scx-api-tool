@@ -384,6 +384,112 @@ describe('extractUsedTypeNames', () => {
 
     expect(result.size).toBe(0);
   });
+
+  it('应收集 response 中 oneOf 组合 schema 内嵌的 $ref 类型', () => {
+    const processedData = createProcessedApiData({
+      types: [
+        { name: 'User', schema: { type: 'object' } },
+        { name: 'Product', schema: { type: 'object' } },
+        { name: 'Order', schema: { type: 'object' } },
+      ],
+    });
+    const interfaces: ApiInterface[] = [
+      {
+        path: '/api',
+        method: 'get',
+        operation: {
+          responses: {
+            '200': {
+              content: {
+                'application/json': {
+                  schema: {
+                    oneOf: [
+                      { $ref: '#/components/schemas/User' },
+                      { $ref: '#/components/schemas/Product' },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ];
+
+    const result = extractUsedTypeNames(interfaces, processedData);
+
+    expect(result.has('User')).toBe(true);
+    expect(result.has('Product')).toBe(true);
+  });
+
+  it('应收集 response 中 anyOf 组合 schema 内嵌的 $ref 类型', () => {
+    const processedData = createProcessedApiData({
+      types: [
+        { name: 'User', schema: { type: 'object' } },
+        { name: 'Order', schema: { type: 'object' } },
+      ],
+    });
+    const interfaces: ApiInterface[] = [
+      {
+        path: '/api',
+        method: 'get',
+        operation: {
+          responses: {
+            '200': {
+              content: {
+                'application/json': {
+                  schema: {
+                    anyOf: [{ $ref: '#/components/schemas/Order' }],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ];
+
+    const result = extractUsedTypeNames(interfaces, processedData);
+
+    expect(result.has('Order')).toBe(true);
+  });
+
+  it('应收集 response 中 allOf 组合 schema 内嵌的 $ref 类型', () => {
+    const processedData = createProcessedApiData({
+      types: [
+        { name: 'User', schema: { type: 'object' } },
+        { name: 'Product', schema: { type: 'object' } },
+        { name: 'Order', schema: { type: 'object' } },
+      ],
+    });
+    const interfaces: ApiInterface[] = [
+      {
+        path: '/api',
+        method: 'get',
+        operation: {
+          responses: {
+            '200': {
+              content: {
+                'application/json': {
+                  schema: {
+                    allOf: [
+                      { $ref: '#/components/schemas/User' },
+                      { $ref: '#/components/schemas/Order' },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ];
+
+    const result = extractUsedTypeNames(interfaces, processedData);
+
+    expect(result.has('User')).toBe(true);
+    expect(result.has('Order')).toBe(true);
+  });
 });
 
 // ==================== collectUsedTypesFromProperties ====================

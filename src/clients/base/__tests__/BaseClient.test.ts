@@ -6,7 +6,8 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { BaseClient } from '../BaseClient';
-import type { ApiConfig, ClientMetadata, ClientOptions } from '../BaseClient';
+import type { ClientMetadata, ClientOptions } from '../BaseClient';
+import type { ApiConfig } from '@/types';
 import type { OpenApiDocument } from '@/types';
 import { FetchError } from '@/errors/errorClasses';
 import { apifoxApiConfig } from '../../../../tests/fixtures/mockData';
@@ -32,7 +33,7 @@ class TestClient extends BaseClient {
   }
 
   supports(config: ApiConfig): boolean {
-    return config.serverType === 'test';
+    return String(config.serverType) === 'test';
   }
 
   protected normalize(rawData: unknown): OpenApiDocument {

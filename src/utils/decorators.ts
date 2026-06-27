@@ -23,7 +23,7 @@ export interface DecoratorOptions {
 
 /**
  * @description 异步函数包装器（函数式版本）
- * 用于不需要装饰器语法的地方
+ * 用于不需要装饰器语法的地方。保留被包装函数的完整类型签名（参数与返回值）。
  *
  * @example
  * ```typescript
@@ -34,13 +34,13 @@ export interface DecoratorOptions {
  * });
  * ```
  */
-export function withErrorHandler<T extends (...args: unknown[]) => Promise<unknown>>(
-  fn: T,
+export function withErrorHandler<A extends unknown[], R>(
+  fn: (...args: A) => Promise<R>,
   options: DecoratorOptions = {},
-): T {
+): (...args: A) => Promise<R> {
   const { fallbackValue, logError = false, errorMessage, logPrefix = '[ErrorHandler]' } = options;
 
-  return async function (this: unknown, ...args: unknown[]) {
+  return async function (this: unknown, ...args: A): Promise<R> {
     try {
       return await fn.apply(this, args);
     } catch (error: unknown) {
@@ -52,12 +52,14 @@ export function withErrorHandler<T extends (...args: unknown[]) => Promise<unkno
 
       if (fallbackValue !== undefined) {
         // 如果 fallbackValue 是函数，调用它获取返回值
-        return typeof fallbackValue === 'function'
-          ? (fallbackValue as (...args: unknown[]) => unknown)(...args)
-          : fallbackValue;
+        return (
+          typeof fallbackValue === 'function'
+            ? (fallbackValue as (...args: A) => R)(...args)
+            : (fallbackValue as R)
+        ) as R;
       }
 
       throw err;
     }
-  } as T;
+  };
 }

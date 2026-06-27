@@ -14,6 +14,7 @@ import { chineseToPinyinCamelCase } from '../../utils/path';
 import { escapeJsDocComment, escapeStringLiteral } from '@/utils/escape';
 import { writeGeneratedFile } from '../fileWriter';
 import { generateZodTypesOnlySchemaFile } from './zodTypesOnlyGenerator';
+import { generateRootIndexFile } from './rootIndexGenerator';
 import {
   extractRequestProperties,
   extractResponseProperties,

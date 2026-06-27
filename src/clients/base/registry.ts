@@ -90,10 +90,13 @@ export class ClientRegistry {
       }
     }
 
-    // 如果没有精确匹配，则根据优先级遍历所有客户端
-    const clients = this.getAllClients().sort((a, b) => b.priority - a.priority); // 按优先级降序排列
+    // 如果没有精确匹配，则根据优先级遍历所有客户端（priority 存于 RegisteredClient，非 BaseClient）
+    const registered = Array.from(this.registeredClients.values()).sort(
+      (a, b) => b.priority - a.priority,
+    ); // 按优先级降序排列
 
-    for (const client of clients) {
+    for (const entry of registered) {
+      const client = entry.factory();
       if (client.supports(config)) {
         return client;
       }

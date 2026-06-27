@@ -163,7 +163,7 @@ export abstract class BaseClient {
    */
   protected wrapError(error: unknown, config: ApiConfig): Error {
     // 如果已经是我们的错误类型，直接返回
-    if (error.name === 'FetchError') {
+    if (error instanceof Error && error.name === 'FetchError') {
       return error;
     }
 
