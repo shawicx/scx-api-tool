@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.4](https://github.com/shawicx/scx-api-tool/compare/v0.5.3...v0.5.4) (2026-07-12)
+
+### Features
+
+- 支持 multipart/form-data 请求参数解析和 FormData 代码生成 ([b3a025b](https://github.com/shawicx/scx-api-tool/commit/b3a025bdbf4bbfd3aef49d79da547df53ee20b70))
+- 支持组合 schema（allOf/oneOf/anyOf/nullable）并修复类型错误 ([5e4d537](https://github.com/shawicx/scx-api-tool/commit/5e4d53742371dd910a11a8fccf673c8364fa5b3f))
+- 添加code-agent ([af188ee](https://github.com/shawicx/scx-api-tool/commit/af188eea8747814b70b2ff5bb26cf2dc7ee263f9))
+
+### Bug Fixes
+
+- env 配置文件 ([76a0b99](https://github.com/shawicx/scx-api-tool/commit/76a0b99b26c0a93f0d1517cb847a3f8f296ea4b3))
+- 修复 BaseClient 错误包装崩溃并对 DEBUG 日志进行敏感信息脱敏 ([eb1c7e9](https://github.com/shawicx/scx-api-tool/commit/eb1c7e97e3b97f493636ac1c3bcf68a1041d14e8))
+- 修复 pathPrefix 正则注入、远端数据 DoS、代码注入与路径遍历等安全问题 ([6b1aec0](https://github.com/shawicx/scx-api-tool/commit/6b1aec06fe04a602e511bc8d320eb931a4ddee48))
+- 修复 ts 报错 ([74a0e82](https://github.com/shawicx/scx-api-tool/commit/74a0e82e03f10966c047f34bebef5c9b1aef4492))
+
+### Documentation
+
+- 更新项目规则文档 ([d995bc0](https://github.com/shawicx/scx-api-tool/commit/d995bc036b6bafa0fc6ee66cb5b9ab3fc08a796e))
+
+### Refactors
+
+- 将 pathUtils 从 generator 迁移至 utils ([1aa550d](https://github.com/shawicx/scx-api-tool/commit/1aa550d54b541dd3ecc79a7462465efb74dfcef1))
+- 引入统一 logger 模块并将 debug 命令改为 dry-run 诊断模式 ([bb208b4](https://github.com/shawicx/scx-api-tool/commit/bb208b470e2ae1d6d3cefa2d378b0716d6a6f762))
+- 新增错误处理装饰器 ([27fe4b5](https://github.com/shawicx/scx-api-tool/commit/27fe4b5e6df14b9c5979389375a92516d2d0f3b4))
+- 清理装饰器死代码并强化 Zod 层与 fetcher 的类型定义 ([171da3f](https://github.com/shawicx/scx-api-tool/commit/171da3fec173917502f146cb19967c40e3bafcf7))
+- 重构客户端架构，引入基类和注册表模式 ([4b4f1cc](https://github.com/shawicx/scx-api-tool/commit/4b4f1cc3f7399800f6ebfcf6118f6f13f04d9dcf))
+- 重构客户端架构并拆分生成器模块 ([f9369dc](https://github.com/shawicx/scx-api-tool/commit/f9369dc36c35cf414ac1c6cd3b40a51892cd80c0))
+
 ### [0.5.3](https://github.com/shawicx/scx-api-tool/compare/v0.5.2...v0.5.3) (2026-04-07)
 
 ### Features
