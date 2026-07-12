@@ -6,15 +6,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { resolve } from 'path';
 import type { ApiConfig } from '@/types';
 
-// Mock consola
-vi.mock('consola', () => ({
-  default: {
+// Mock logger
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
     success: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 // Hoist mock functions so they are available inside vi.mock factories
@@ -43,7 +45,7 @@ vi.mock('../../utils/file', () => ({
   cleanOutputDir: mockCleanOutputDir,
 }));
 
-import consola from 'consola';
+import { logger } from '@/utils/logger';
 import { generateFiles } from '../codegen';
 import { minimalApiConfig, mockProcessedApiData } from '../../../tests/fixtures/mockData';
 
@@ -200,6 +202,6 @@ describe('generateFiles', () => {
 
     await expect(generateFiles(mockProcessedApiData, config)).rejects.toThrow('generation failed');
 
-    expect(consola.error).toHaveBeenCalledWith('生成文件失败:', 'generation failed');
+    expect(logger.error).toHaveBeenCalledWith('生成文件失败:', 'generation failed');
   });
 });

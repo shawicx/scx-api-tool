@@ -5,7 +5,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { resolve, join } from 'path';
 import { writeFileSync, mkdirSync, existsSync as realExistsSync, rmSync } from 'fs';
-import consola from 'consola';
 
 // Temp directory for config fixture files
 const tempDir = resolve(import.meta.dirname, '__test_fixtures__');
@@ -15,15 +14,17 @@ if (!realExistsSync(tempDir)) {
   mkdirSync(tempDir, { recursive: true });
 }
 
-// Mock consola
-vi.mock('consola', () => ({
-  default: {
+// Mock logger
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
     success: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 // Mock only existsSync from fs, keeping other fs functions real

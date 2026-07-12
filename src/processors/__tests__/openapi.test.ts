@@ -3,9 +3,10 @@
  * 测试 OpenAPI 数据处理模块的核心功能
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { ServerType } from '@/types';
 import type { OpenApiDocument } from '@/types';
+import { logger } from '@/utils/logger';
 import { processOpenApiData, ProcessedApiData } from '../openapi';
 import {
   mockOpenApiDocument,
@@ -14,19 +15,17 @@ import {
   apifoxApiConfig,
 } from '../../../tests/fixtures/mockData';
 
-// 抑制 consola 日志噪音
-vi.mock('consola', () => ({
-  default: {
+// Mock 统一 logger 模块（抑制日志噪音 + 便于断言 debug 调用）
+vi.mock('@/utils/logger', () => ({
+  logger: {
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
     success: vi.fn(),
-    log: vi.fn(),
-    ready: vi.fn(),
-    start: vi.fn(),
-    box: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 // Mock sanitizeTypeName to return predictable names for testing
@@ -178,29 +177,18 @@ describe('processOpenApiData', () => {
   });
 
   describe('debug mode', () => {
-    beforeEach(() => {
-      vi.stubEnv('DEBUG', '1');
+    it('should call logger.debug when processing data', () => {
+      processOpenApiData(mockOpenApiDocument, minimalApiConfig);
+
+      expect(logger.debug).toHaveBeenCalled();
     });
 
-    afterEach(() => {
-      vi.unstubAllEnvs();
-    });
-
-    it('should call consola.debug when DEBUG is set', async () => {
-      // Import the mocked consola to verify calls
-      const consola = await import('consola');
+    it('should log data keys, first path entry, tags, and counts via logger.debug', () => {
+      vi.mocked(logger.debug).mockClear();
 
       processOpenApiData(mockOpenApiDocument, minimalApiConfig);
 
-      expect(consola.default.debug).toHaveBeenCalled();
-    });
-
-    it('should log data keys, first path entry, tags, and counts in debug mode', async () => {
-      const consola = await import('consola');
-
-      processOpenApiData(mockOpenApiDocument, minimalApiConfig);
-
-      const debugCalls = (consola.default.debug as ReturnType<typeof vi.fn>).mock.calls;
+      const debugCalls = vi.mocked(logger.debug).mock.calls;
 
       // Should log data keys
       expect(

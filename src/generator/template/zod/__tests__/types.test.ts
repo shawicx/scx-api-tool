@@ -5,14 +5,16 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('consola', () => ({
-  default: {
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
     success: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 import {

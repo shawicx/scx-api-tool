@@ -3,7 +3,7 @@
  * 提供带并发控制和错误处理的批量执行功能
  */
 
-import consola from 'consola';
+import { logger } from '@/utils/logger';
 
 /**
  * @description 并发执行器
@@ -33,9 +33,7 @@ export async function executeWithConcurrency<T>(
     return;
   }
 
-  if (process.env.DEBUG) {
-    consola.debug(`${taskName}：开始并发处理 ${items.length} 个项目，并发数：${concurrency}`);
-  }
+  logger.debug(`${taskName}：开始并发处理 ${items.length} 个项目，并发数：${concurrency}`);
 
   const errors: Array<{ item: T; error: Error }> = [];
   let completed = 0;
@@ -53,19 +51,15 @@ export async function executeWithConcurrency<T>(
 
     completed += batch.length;
 
-    if (process.env.DEBUG) {
-      consola.debug(`${taskName}：进度 ${completed}/${items.length}`);
-    }
+    logger.debug(`${taskName}：进度 ${completed}/${items.length}`);
   }
 
   if (errors.length > 0) {
-    consola.warn(`${taskName}：${errors.length}/${items.length} 个项目处理失败`);
-    if (process.env.DEBUG) {
-      errors.forEach(({ error }) => {
-        consola.error(`  - ${error.message}`);
-      });
-    }
-  } else if (process.env.DEBUG) {
-    consola.success(`${taskName}：成功完成 ${items.length} 个项目`);
+    logger.warn(`${taskName}：${errors.length}/${items.length} 个项目处理失败`);
+    errors.forEach(({ error }) => {
+      logger.error(`  - ${error.message}`);
+    });
+  } else {
+    logger.success(`${taskName}：成功完成 ${items.length} 个项目`);
   }
 }

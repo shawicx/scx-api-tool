@@ -3,10 +3,10 @@
  */
 
 import { Command } from 'commander';
-import consola from 'consola';
-import { fileExists, writeFormattedFile } from '@/utils/file';
 import { join } from 'path';
 import { cwd } from 'process';
+import { fileExists, writeFormattedFile } from '@/utils/file';
+import { logger } from '@/utils/logger';
 import { DEFAULT_CONFIG } from '../constants';
 import { handleError } from '@/errors';
 
@@ -22,13 +22,13 @@ export const initCommand = new Command('init')
       // 检查文件是否存在
       if (!options.force) {
         if (await fileExists(configPath)) {
-          consola.warn('配置文件已存在。使用 --force 覆盖。');
+          logger.warn('配置文件已存在。使用 --force 覆盖。');
           return;
         }
       }
 
       await writeFormattedFile(configPath, DEFAULT_CONFIG);
-      consola.success(`配置文件创建成功: ${configPath}`);
+      logger.success(`配置文件创建成功: ${configPath}`);
     } catch (error: any) {
       handleError(error, verbose);
     }

@@ -3,7 +3,6 @@
  * 负责生成 Zod Schema 验证文件
  */
 
-import consola from 'consola';
 import { join } from 'path';
 import { ProcessedApiData, groupInterfacesByTag } from '../../processors/openapi';
 import { ApiConfig, CliHooks } from '../../types';
@@ -18,6 +17,7 @@ import {
 } from '../template/zod';
 import { executeWithConcurrency } from '../../utils/concurrency';
 import { writeGeneratedFile } from '../fileWriter';
+import { logger } from '@/utils/logger';
 
 /**
  * @description 生成所有 Zod Schema 文件
@@ -44,9 +44,7 @@ export async function generateSchemaFiles(
   hooks?: CliHooks,
 ): Promise<void> {
   if (config.typesFormat !== 'zod') {
-    if (process.env.DEBUG) {
-      consola.debug('typesFormat 不是 zod，跳过 Schema 生成');
-    }
+    logger.debug('typesFormat 不是 zod，跳过 Schema 生成');
     return;
   }
 
@@ -66,7 +64,7 @@ export async function generateSchemaFiles(
 
   await generateSchemaIndexFile(typesSchemasDir, generatedSchemas, hooks);
 
-  consola.success(`成功生成 ${generatedSchemas.length} 个 Zod Schema 文件`);
+  logger.success(`成功生成 ${generatedSchemas.length} 个 Zod Schema 文件`);
 }
 
 /**
@@ -85,9 +83,7 @@ async function generateTypeSchemasFiles(
   generatedSchemas: string[],
   hooks?: CliHooks,
 ): Promise<void> {
-  if (process.env.DEBUG) {
-    consola.debug(`正在生成 ${processedData.types.length} 个类型 Schema...`);
-  }
+  logger.debug(`正在生成 ${processedData.types.length} 个类型 Schema...`);
 
   const concurrency = config.concurrency || 50;
   await executeWithConcurrency(
@@ -130,9 +126,7 @@ async function generateInterfaceSchemasFiles(
   generatedSchemas: string[],
   hooks?: CliHooks,
 ): Promise<void> {
-  if (process.env.DEBUG) {
-    consola.debug(`正在生成 ${processedData.interfaces.length} 个接口 Schema...`);
-  }
+  logger.debug(`正在生成 ${processedData.interfaces.length} 个接口 Schema...`);
 
   const interfacesByTag = groupInterfacesByTag(processedData.interfaces);
 
@@ -178,9 +172,7 @@ async function generateSchemaIndexFile(
   const indexPath = join(schemasDir, 'index.ts');
   await writeFormattedFile(indexPath, indexContent, hooks);
 
-  if (process.env.DEBUG) {
-    consola.debug(`创建 Schema 索引文件: ${indexPath}`);
-  }
+  logger.debug(`创建 Schema 索引文件: ${indexPath}`);
 }
 
 /**

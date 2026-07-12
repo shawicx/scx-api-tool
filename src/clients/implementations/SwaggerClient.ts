@@ -3,9 +3,9 @@
  */
 
 import axios from 'axios';
-import consola from 'consola';
 import { BaseClient, ClientMetadata, ClientOptions } from '../base/BaseClient';
 import type { ApiConfig, OpenApiDocument } from '@/types';
+import { logger } from '@/utils/logger';
 import { makeRequestWithProgress } from '@/utils/progress';
 
 /**
@@ -73,9 +73,7 @@ export class SwaggerClient extends BaseClient {
     const apiUrl = config.source;
 
     // 如果启用，则记录调试信息
-    if (process.env.DEBUG) {
-      consola.debug(`[SwaggerClient] 正在从以下位置获取数据: ${apiUrl}`);
-    }
+    logger.debug(`[SwaggerClient] 正在从以下位置获取数据: ${apiUrl}`);
 
     // 使用带进度显示的请求
     const response = await makeRequestWithProgress(

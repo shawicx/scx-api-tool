@@ -187,6 +187,6 @@ export default defineConfig({
 ## 调试技巧
 
 1. 使用 `--verbose` 参数获取详细错误信息：`api-power generate --verbose`
-2. 使用 `debug` 命令在不生成代码的情况下检查 API 定义
+2. 使用 `debug` 命令在不生成代码的情况下检查 API 定义（dry-run 诊断模式，打印接口/类型/分类摘要）
 3. 使用 `visualize` 命令可视化查看 API 结构
 4. 查看 `src/cli/commands/generate.ts` 了解主要生成流程

@@ -6,9 +6,9 @@
 import { existsSync } from 'fs';
 import { resolve } from 'path';
 import { pathToFileURL } from 'url';
-import consola from 'consola';
 import type { ApiConfig, UserConfig } from '@/types';
 import { defineConfig } from '@/utils/config';
+import { logger } from '@/utils/logger';
 import { validateConfiguration, ConfigValidationError } from '@/validation';
 import { ErrorFactory, BaseError } from '@/errors';
 
@@ -179,9 +179,7 @@ export async function loadConfig(
   if (useCache) {
     const cached = configCache.get(absolutePath, cacheTTL);
     if (cached) {
-      if (process.env.DEBUG) {
-        consola.debug(`[ConfigCache] 使用缓存的配置: ${absolutePath}`);
-      }
+      logger.debug(`[ConfigCache] 使用缓存的配置: ${absolutePath}`);
       return cached;
     }
   }
@@ -193,9 +191,7 @@ export async function loadConfig(
     // 如果启用缓存，将配置存入缓存
     if (useCache) {
       configCache.set(absolutePath, config);
-      if (process.env.DEBUG) {
-        consola.debug(`[ConfigCache] 配置已缓存: ${absolutePath}`);
-      }
+      logger.debug(`[ConfigCache] 配置已缓存: ${absolutePath}`);
     }
 
     return config;
@@ -229,14 +225,10 @@ export function clearConfigCache(configPath?: string): void {
   if (configPath) {
     const absolutePath = resolve(configPath);
     configCache.delete(absolutePath);
-    if (process.env.DEBUG) {
-      consola.debug(`[ConfigCache] 已清除缓存: ${absolutePath}`);
-    }
+    logger.debug(`[ConfigCache] 已清除缓存: ${absolutePath}`);
   } else {
     configCache.clear();
-    if (process.env.DEBUG) {
-      consola.debug('[ConfigCache] 已清除所有缓存');
-    }
+    logger.debug('[ConfigCache] 已清除所有缓存');
   }
 }
 

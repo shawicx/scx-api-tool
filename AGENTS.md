@@ -117,13 +117,22 @@ export async function fetchApifoxData(config: ApiConfig): Promise<any> {
 
 ### 日志输出
 
-使用 **consola** 库进行日志输出：
+使用统一日志模块（`@/utils/logger`）进行日志输出，该模块基于 consola 封装：
 
 ```typescript
-if (process.env.DEBUG) {
-  consola.debug('调试信息:', data);
-}
+import { logger } from '@/utils/logger';
+
+// 普通日志，始终输出
+logger.info('处理开始');
+logger.success('处理完成');
+logger.warn('警告信息');
+logger.error('错误信息');
+
+// debug 日志，仅 setDebugEnabled(true) 后输出（debug 命令自动启用）
+logger.debug('调试信息:', data);
 ```
+
+**设计要点**：不要使用 `if (process.env.DEBUG)` 手动守卫——logger 模块内部已通过运行时开关控制 debug 日志输出。`debug` 命令会调用 `setDebugEnabled(true)` 激活 debug 日志。
 
 ## 核心配置
 

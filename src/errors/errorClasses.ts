@@ -1,4 +1,4 @@
-import consola from 'consola';
+import { logger } from '@/utils/logger';
 import { ErrorCode } from './errorCodes';
 
 /**
@@ -126,7 +126,7 @@ export class BaseError extends Error {
    * ```
    */
   print(verbose = false): void {
-    consola.error(this.format(verbose));
+    logger.error(this.format(verbose));
   }
 }
 

@@ -6,15 +6,17 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { compileTemplate, ensureRegistered } from '../compiler';
 import { templateCache } from '../templateCache';
 
-// Mock consola
-vi.mock('consola', () => ({
-  default: {
+// Mock logger
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
     success: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 describe('compileTemplate', () => {

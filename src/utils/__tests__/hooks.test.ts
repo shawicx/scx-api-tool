@@ -4,18 +4,20 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock consola
-vi.mock('consola', () => ({
-  default: {
+// Mock logger
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
     success: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
-import consola from 'consola';
+import { logger } from '@/utils/logger';
 import { getHookManager } from '../hooks';
 
 describe('HookManager', () => {
@@ -59,7 +61,7 @@ describe('HookManager', () => {
       await expect(manager.executeHook(errorHook)).resolves.toBeUndefined();
 
       // Should have logged a warning
-      expect(consola.warn).toHaveBeenCalledWith('钩子执行失败:', 'hook error');
+      expect(logger.warn).toHaveBeenCalledWith('钩子执行失败:', 'hook error');
     });
   });
 
@@ -100,7 +102,7 @@ describe('HookManager', () => {
 
       await expect(manager.executeTransformHook(errorTransform)).rejects.toThrow('transform error');
 
-      expect(consola.warn).toHaveBeenCalledWith('钩子执行失败，使用原始值:', 'transform error');
+      expect(logger.warn).toHaveBeenCalledWith('钩子执行失败，使用原始值:', 'transform error');
     });
   });
 

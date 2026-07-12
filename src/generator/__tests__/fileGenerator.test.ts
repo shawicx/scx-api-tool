@@ -5,15 +5,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ApiConfig, CliHooks } from '@/types';
 
-// Mock consola
-vi.mock('consola', () => ({
-  default: {
+// Mock logger
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
     success: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 // Hoist mock functions so they are available inside vi.mock factories
@@ -42,7 +44,7 @@ vi.mock('../pathUtils', () => ({
   aliasToRealPath: vi.fn((path: string) => path),
 }));
 
-import consola from 'consola';
+import { logger } from '@/utils/logger';
 import { generateRequestFile } from '../fileGenerator';
 import { minimalApiConfig } from '../../../tests/fixtures/mockData';
 
@@ -80,7 +82,7 @@ describe('generateRequestFile', () => {
     );
 
     // Should log success message
-    expect(consola.info).toHaveBeenCalledWith('创建请求函数文件: src/service/request.ts');
+    expect(logger.info).toHaveBeenCalledWith('创建请求函数文件: src/service/request.ts');
   });
 
   it('should skip generation when file already exists', async () => {
@@ -106,7 +108,7 @@ describe('generateRequestFile', () => {
 
     await expect(generateRequestFile(config)).rejects.toThrow('write failed');
 
-    expect(consola.error).toHaveBeenCalledWith('生成请求文件失败:', 'write failed');
+    expect(logger.error).toHaveBeenCalledWith('生成请求文件失败:', 'write failed');
   });
 
   it('should pass hooks to writeFormattedFile', async () => {

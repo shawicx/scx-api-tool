@@ -3,20 +3,22 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import consola from 'consola';
+import { logger } from '@/utils/logger';
 import { ErrorCode, BaseError, ErrorFactory, handleError, withErrorHandling } from '../index';
 import { ConfigError, FetchError, GenerateError } from '../errorClasses';
 import type { ErrorSolution } from '../errorClasses';
 
-// Mock consola
-vi.mock('consola', () => ({
-  default: {
+// Mock logger
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
     success: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 // Helper to create a basic ErrorSolution
@@ -146,15 +148,15 @@ describe('BaseError', () => {
 
   describe('print', () => {
     beforeEach(() => {
-      vi.mocked(consola.error).mockClear();
+      vi.mocked(logger.error).mockClear();
     });
 
-    it('should call consola.error with format result', () => {
+    it('should call logger.error with format result', () => {
       const error = new BaseError(ErrorCode.CONFIG_INVALID, 'msg', []);
       error.print(false);
 
-      expect(consola.error).toHaveBeenCalledTimes(1);
-      expect(consola.error).toHaveBeenCalledWith(error.format(false));
+      expect(logger.error).toHaveBeenCalledTimes(1);
+      expect(logger.error).toHaveBeenCalledWith(error.format(false));
     });
 
     it('should pass verbose flag to format', () => {
@@ -461,7 +463,7 @@ describe('handleError', () => {
     exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {
       throw new Error('exit');
     }) as never);
-    vi.mocked(consola.error).mockClear();
+    vi.mocked(logger.error).mockClear();
   });
 
   afterEach(() => {
@@ -486,11 +488,11 @@ describe('handleError', () => {
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 
-  it('should use consola.error and exit for plain Error', () => {
+  it('should use logger.error and exit for plain Error', () => {
     const error = new Error('plain error');
 
     expect(() => handleError(error)).toThrow('exit');
-    expect(consola.error).toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalled();
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 
@@ -498,20 +500,20 @@ describe('handleError', () => {
     const error = new Error('plain error');
 
     expect(() => handleError(error, true)).toThrow('exit');
-    // consola.error is called multiple times: message + blank + stack header + stack
-    expect(consola.error).toHaveBeenCalledTimes(4);
+    // logger.error is called multiple times: message + blank + stack header + stack
+    expect(logger.error).toHaveBeenCalledTimes(4);
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 
-  it('should use consola.error and exit for non-Error value', () => {
+  it('should use logger.error and exit for non-Error value', () => {
     expect(() => handleError('string error')).toThrow('exit');
-    expect(consola.error).toHaveBeenCalledWith('✖ string error');
+    expect(logger.error).toHaveBeenCalledWith('✖ string error');
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 
   it('should handle non-Error objects by converting to string', () => {
     expect(() => handleError(42)).toThrow('exit');
-    expect(consola.error).toHaveBeenCalledWith('✖ 42');
+    expect(logger.error).toHaveBeenCalledWith('✖ 42');
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 });
@@ -526,7 +528,7 @@ describe('withErrorHandling', () => {
     exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {
       throw new Error('exit');
     }) as never);
-    vi.mocked(consola.error).mockClear();
+    vi.mocked(logger.error).mockClear();
   });
 
   afterEach(() => {
@@ -559,7 +561,7 @@ describe('withErrorHandling', () => {
     const wrapped = withErrorHandling(fn);
 
     await expect(wrapped()).rejects.toThrow('exit');
-    expect(consola.error).toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalled();
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 
@@ -570,8 +572,8 @@ describe('withErrorHandling', () => {
     const wrapped = withErrorHandling(fn, true);
 
     await expect(wrapped()).rejects.toThrow('exit');
-    // When verbose is true, handleError calls consola.error multiple times for Error
-    expect(consola.error).toHaveBeenCalledTimes(4);
+    // When verbose is true, handleError calls logger.error multiple times for Error
+    expect(logger.error).toHaveBeenCalledTimes(4);
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 });

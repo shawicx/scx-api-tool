@@ -14,14 +14,16 @@ import { join } from 'path';
 import type { ProcessedApiData } from '@/processors/openapi';
 import type { ApiConfig } from '@/types';
 
-vi.mock('consola', () => ({
-  default: {
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
     success: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 // 捕获 writeGeneratedFile 写入内容（跳过 Prettier）

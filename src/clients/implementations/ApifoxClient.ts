@@ -3,7 +3,6 @@
  */
 
 import axios from 'axios';
-import consola from 'consola';
 import { BaseClient, ClientMetadata, ClientOptions } from '../base/BaseClient';
 import type {
   ApiConfig,
@@ -12,6 +11,7 @@ import type {
   OpenApiRequestBody,
   OpenApiResponse,
 } from '@/types';
+import { logger } from '@/utils/logger';
 import { makeRequestWithProgress } from '@/utils/progress';
 import { redactHeaders } from '@/utils/redact';
 import { ErrorFactory } from '@/errors';
@@ -186,9 +186,7 @@ export class ApifoxClient extends BaseClient {
     };
 
     // 如果启用，则记录调试信息（Authorization 头已脱敏）
-    if (process.env.DEBUG) {
-      consola.debug('[ApifoxClient] API 请求配置:', redactHeaders(headers), requestBody, realUrl);
-    }
+    logger.debug('[ApifoxClient] API 请求配置:', redactHeaders(headers), requestBody, realUrl);
 
     try {
       // 使用带进度显示的请求
@@ -224,10 +222,8 @@ export class ApifoxClient extends BaseClient {
         throw ErrorFactory.invalidResponse(realUrl, 'application/json');
       }
 
-      if (process.env.DEBUG) {
-        consola.debug('[ApifoxClient] 响应状态:', response.status);
-        consola.debug('[ApifoxClient] 响应数据类型:', typeof response.data);
-      }
+      logger.debug('[ApifoxClient] 响应状态:', response.status);
+      logger.debug('[ApifoxClient] 响应数据类型:', typeof response.data);
 
       return response.data;
     } catch (error: any) {

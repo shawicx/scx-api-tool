@@ -102,7 +102,7 @@ graph TD
 
 - **`generate`** — 核心功能，获取 API 定义并生成代码。支持 `--watch` 模式，配置变更时自动重新生成。
 - **`init`** — 非交互式配置初始化，直接生成默认 `api-power.config.ts` 文件。
-- **`debug`** — 调试工具，用于检查 API 定义。
+- **`debug`** — 诊断模式（dry-run），加载配置、获取 API 定义并打印诊断报告（接口数/类型数/分类摘要），但不生成任何文件。
 - **`visualize`** — API 可视化工具（别名 `viz`，启动 HTTP 服务器，提供配置和 Schema 查看界面）。
 
 入口文件：`src/index.ts` → `src/cli/program.ts`

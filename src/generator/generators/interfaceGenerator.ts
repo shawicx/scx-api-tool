@@ -3,7 +3,6 @@
  * 负责生成 API 接口相关的文件
  */
 
-import consola from 'consola';
 import { join } from 'path';
 import { ProcessedApiData, groupInterfacesByTag } from '../../processors/openapi';
 import { collectUsedTypesFromProperties } from '../../processors/common';
@@ -26,6 +25,7 @@ import { applyNamingStrategy, type NamingContext } from '@/naming';
 import { generateInterfaceFunction } from '../template';
 import { executeWithConcurrency } from '../../utils/concurrency';
 import { getFileExtension } from '../../utils/config';
+import { logger } from '@/utils/logger';
 
 /**
  * @description 生成所有接口文件
@@ -49,9 +49,7 @@ export async function generateInterfaceFiles(
   config: ApiConfig,
   hooks?: CliHooks,
 ): Promise<void> {
-  if (process.env.DEBUG) {
-    consola.debug(`正在生成 ${processedData.interfaces.length} 个接口文件...`);
-  }
+  logger.debug(`正在生成 ${processedData.interfaces.length} 个接口文件...`);
 
   const { outputDir } = config;
 

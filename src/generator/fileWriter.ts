@@ -4,10 +4,10 @@
  * 消除 interfaceGenerator / typeGenerator / schemaGenerator 中的样板代码
  */
 
-import consola from 'consola';
 import type { ApiConfig, CliHooks } from '@/types';
 import { writeFormattedFile } from '@/utils/file';
 import { formatCode } from '@/utils/formatter';
+import { logger } from '@/utils/logger';
 
 /**
  * @description 格式化代码并写入文件，附带调试日志
@@ -39,7 +39,5 @@ export async function writeGeneratedFile(
 ): Promise<void> {
   const formatted = await formatCode(code, filePath, config.indentSize);
   await writeFormattedFile(filePath, formatted, hooks);
-  if (process.env.DEBUG) {
-    consola.debug(`${debugLabel}: ${filePath}`);
-  }
+  logger.debug(`${debugLabel}: ${filePath}`);
 }

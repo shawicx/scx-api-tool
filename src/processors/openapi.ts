@@ -3,10 +3,10 @@
  * 处理 OpenAPI 格式的数据，提取接口、类型和类别信息
  */
 
-import consola from 'consola';
 import type { ApiConfig } from '@/types';
 import type { ApiCategory, ApiInterface, ApiTypeDefinition, OpenApiDocument } from '@/types';
 import { sanitizeTypeName } from '@/naming';
+import { logger } from '@/utils/logger';
 
 export interface ProcessedApiData {
   interfaces: ApiInterface[];
@@ -34,22 +34,20 @@ export { groupInterfacesByTag, extractUsedTypeNames } from './common';
  * ```
  */
 export function processOpenApiData(data: OpenApiDocument, config: ApiConfig): ProcessedApiData {
-  // 如果启用，则记录调试信息
-  if (process.env.DEBUG) {
-    if (typeof data === 'object' && data !== null) {
-      consola.debug('数据键:', Object.keys(data));
-      // 记录第一个路径条目用于调试
-      if (data.paths) {
-        const firstPath = Object.keys(data.paths)[0];
-        const firstMethod = Object.keys(data.paths[firstPath])[0];
-        consola.debug('第一个路径条目:', firstPath, firstMethod);
-        consola.debug('第一个操作键:', Object.keys(data.paths[firstPath][firstMethod]));
-      }
+  // 记录调试信息
+  if (typeof data === 'object' && data !== null) {
+    logger.debug('数据键:', Object.keys(data));
+    // 记录第一个路径条目用于调试
+    if (data.paths) {
+      const firstPath = Object.keys(data.paths)[0];
+      const firstMethod = Object.keys(data.paths[firstPath])[0];
+      logger.debug('第一个路径条目:', firstPath, firstMethod);
+      logger.debug('第一个操作键:', Object.keys(data.paths[firstPath][firstMethod]));
+    }
 
-      // 记录标签信息
-      if (data.tags) {
-        consola.debug('标签:', data.tags);
-      }
+    // 记录标签信息
+    if (data.tags) {
+      logger.debug('标签:', data.tags);
     }
   }
 
@@ -75,11 +73,9 @@ export function processOpenApiData(data: OpenApiDocument, config: ApiConfig): Pr
         if (!operation || typeof operation !== 'object') continue;
 
         // 数据已由各客户端的 normalize() 标准化为统一 OpenAPI 格式
-        if (process.env.DEBUG) {
-          // 记录前几个操作用于调试
-          if (interfaces.length < 3) {
-            consola.debug(`操作 ${path} ${method}:`, Object.keys(operation));
-          }
+        // 记录前几个操作用于调试
+        if (interfaces.length < 3) {
+          logger.debug(`操作 ${path} ${method}:`, Object.keys(operation));
         }
 
         interfaces.push({
@@ -107,11 +103,9 @@ export function processOpenApiData(data: OpenApiDocument, config: ApiConfig): Pr
     categories.push(...data.tags);
   }
 
-  if (process.env.DEBUG) {
-    consola.debug(
-      `Processed ${interfaces.length} interfaces, ${types.length} types, ${categories.length} categories`,
-    );
-  }
+  logger.debug(
+    `Processed ${interfaces.length} interfaces, ${types.length} types, ${categories.length} categories`,
+  );
 
   return {
     interfaces,

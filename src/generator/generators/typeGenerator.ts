@@ -3,7 +3,6 @@
  * 负责生成 TypeScript 类型定义文件
  */
 
-import consola from 'consola';
 import { join } from 'path';
 import { ProcessedApiData } from '../../processors/openapi';
 import { collectUsedTypesFromProperties } from '../../processors/common';
@@ -17,6 +16,7 @@ import { extractTypeProperties } from '../extractor';
 import { executeWithConcurrency } from '../../utils/concurrency';
 import { writeGeneratedFile } from '../fileWriter';
 import { escapeJsDocComment } from '@/utils/escape';
+import { logger } from '@/utils/logger';
 
 /**
  * @description 生成所有类型文件
@@ -41,15 +41,11 @@ export async function generateTypeFiles(
   hooks?: CliHooks,
 ): Promise<void> {
   if (config.generateApi && !config.generateTypes) {
-    if (process.env.DEBUG) {
-      consola.debug('API Only 模式：跳过类型文件生成');
-    }
+    logger.debug('API Only 模式：跳过类型文件生成');
     return;
   }
 
-  if (process.env.DEBUG) {
-    consola.debug(`正在生成 ${processedData.types.length} 个类型文件...`);
-  }
+  logger.debug(`正在生成 ${processedData.types.length} 个类型文件...`);
 
   const typesDir = join(config.outputDir, 'types');
   await ensureDir(typesDir);
@@ -144,7 +140,5 @@ async function generateTypesIndexFile(
   const indexPath = join(typesDir, 'index.ts');
   await writeFormattedFile(indexPath, indexContent, hooks);
 
-  if (process.env.DEBUG) {
-    consola.debug(`创建类型索引文件: ${indexPath}`);
-  }
+  logger.debug(`创建类型索引文件: ${indexPath}`);
 }

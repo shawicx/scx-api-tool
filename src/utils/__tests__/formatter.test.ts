@@ -5,15 +5,17 @@
 
 import { describe, it, expect, vi } from 'vitest';
 
-// Mock consola to suppress warnings in test output
-vi.mock('consola', () => ({
-  default: {
+// Mock logger to suppress warnings in test output
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
     success: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 import { formatCode } from '../formatter';

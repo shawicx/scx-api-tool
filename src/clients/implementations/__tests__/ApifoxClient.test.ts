@@ -4,8 +4,8 @@
  * 响应 content-type 校验、以及 DEBUG 日志中的 token 脱敏
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import consola from 'consola';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { logger } from '@/utils/logger';
 import { ApifoxClient } from '../ApifoxClient';
 import { apifoxApiConfig } from '../../../../tests/fixtures/mockData';
 import type { OpenApiDocument } from '@/types';
@@ -20,15 +20,17 @@ class TestableApifoxClient extends ApifoxClient {
   }
 }
 
-// Mock consola
-vi.mock('consola', () => ({
-  default: {
+// Mock 统一 logger 模块（抑制日志噪音 + 便于断言 debug 调用）
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
     success: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 // Mock makeRequestWithProgress（透传内部请求函数）
@@ -42,19 +44,8 @@ import { ErrorFactory } from '@/errors';
 const mockMakeRequestWithProgress = vi.mocked(makeRequestWithProgress);
 
 describe('ApifoxClient', () => {
-  const originalDebug = process.env.DEBUG;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    delete process.env.DEBUG;
-  });
-
-  afterEach(() => {
-    if (originalDebug !== undefined) {
-      process.env.DEBUG = originalDebug;
-    } else {
-      delete process.env.DEBUG;
-    }
   });
 
   it('成功获取时应返回响应数据', async () => {
@@ -91,7 +82,6 @@ describe('ApifoxClient', () => {
   });
 
   it('DEBUG 日志中不应包含明文 token（脱敏回归）', async () => {
-    process.env.DEBUG = 'true';
     const sensitiveConfig = { ...apifoxApiConfig, token: 'sk-secret-token-xxxxx' };
     mockMakeRequestWithProgress.mockResolvedValueOnce({
       data: { openapi: '3.1.0' },
@@ -102,7 +92,8 @@ describe('ApifoxClient', () => {
     const client = new TestableApifoxClient({ maxRetries: 0 });
     await client.fetch(sensitiveConfig);
 
-    const allCalls = (consola.debug as any).mock.calls.map((call: any[]) =>
+    // logger.debug 被调用时，参数中不应包含明文 token（应由 redactHeaders 脱敏）
+    const allCalls = (logger.debug as any).mock.calls.map((call: any[]) =>
       call.map((arg) => (typeof arg === 'string' ? arg : JSON.stringify(arg))).join(' '),
     );
     const combined = allCalls.join('\n');

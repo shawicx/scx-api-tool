@@ -75,11 +75,13 @@
    api-power generate --verbose
    ```
 
-2. **`debug` 命令**：检查 API 定义而不生成代码
+2. **`debug` 命令**：dry-run 诊断模式，检查 API 定义而不生成代码
 
    ```bash
    api-power debug
    ```
+
+   输出诊断报告（接口数、类型数、分类摘要、前 5 个接口/类型），不会写入或清空输出目录。
 
 3. **`visualize` 命令**：可视化查看 API 结构
 

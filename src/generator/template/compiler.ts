@@ -4,7 +4,6 @@
  */
 
 import Handlebars from 'handlebars';
-import consola from 'consola';
 import {
   getTemplateFromCache,
   isTemplateCached,
@@ -13,6 +12,7 @@ import {
 } from './templateCache';
 import { registerTemplateHelpers } from './templateHelpers';
 import { registerTemplatePartials } from './templatePartials';
+import { logger } from '@/utils/logger';
 
 /** 标记 helpers 和 partials 是否已注册，避免重复注册 */
 let registered = false;
@@ -33,9 +33,7 @@ export function ensureRegistered(): void {
  */
 export function compileTemplate(template: string): HandlebarsTemplateDelegate {
   if (isTemplateCached(template)) {
-    if (process.env.DEBUG) {
-      consola.debug('模板缓存命中');
-    }
+    logger.debug('模板缓存命中');
     return getTemplateFromCache(template)!;
   }
 
@@ -44,9 +42,7 @@ export function compileTemplate(template: string): HandlebarsTemplateDelegate {
   const compiledTemplate = Handlebars.compile(template);
   setTemplateCache(template, compiledTemplate);
 
-  if (process.env.DEBUG) {
-    consola.debug(`模板已编译并缓存，当前缓存数量：${templateCache.size}`);
-  }
+  logger.debug(`模板已编译并缓存，当前缓存数量：${templateCache.size}`);
 
   return compiledTemplate;
 }

@@ -3,13 +3,13 @@
  * 统一协调各类文件的生成工作，包括请求函数、接口文件、类型文件和 Schema 文件
  */
 
-import consola from 'consola';
 import { ApiConfig, CliHooks } from '../types';
 import { fileExists, writeFormattedFile } from '../utils/file';
 import { formatCode } from '../utils/formatter';
 import { aliasToRealPath } from '@/utils/pathUtils';
 import { assertWithinCwd } from '@/utils/pathSafety';
 import { generateRequestFile as generateRequestFileContent } from './template';
+import { logger } from '@/utils/logger';
 
 export { generateInterfaceFiles } from './generators/interfaceGenerator';
 export { generateRootIndexFile } from './generators/rootIndexGenerator';
@@ -34,9 +34,7 @@ export async function generateRequestFile(config: ApiConfig, hooks?: CliHooks): 
   assertWithinCwd(requestFilePath, 'requestFunctionFilePath');
 
   if (await fileExists(requestFilePath)) {
-    if (process.env.DEBUG) {
-      consola.debug(`请求文件已存在，跳过: ${requestFilePath}`);
-    }
+    logger.debug(`请求文件已存在，跳过: ${requestFilePath}`);
     return;
   }
 
@@ -47,9 +45,9 @@ export async function generateRequestFile(config: ApiConfig, hooks?: CliHooks): 
 
     await writeFormattedFile(requestFilePath, formattedCode, hooks);
 
-    consola.info(`创建请求函数文件: ${requestFilePath}`);
+    logger.info(`创建请求函数文件: ${requestFilePath}`);
   } catch (error: any) {
-    consola.error('生成请求文件失败:', error.message);
+    logger.error('生成请求文件失败:', error.message);
     throw error;
   }
 }

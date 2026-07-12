@@ -13,7 +13,7 @@ import {
   TypesFormat,
   CliHooks,
 } from '@/types';
-import consola from 'consola';
+import { logger } from '@/utils/logger';
 
 /**
  * 默认配置值
@@ -117,7 +117,7 @@ export function parseSourceUrl(source: string): {
       apifoxProjectId,
     };
   } catch (error) {
-    consola.error('parseSourceUrl error:', error);
+    logger.error('parseSourceUrl error:', error);
     throw new Error(`Invalid source URL format: ${source}`);
   }
 }

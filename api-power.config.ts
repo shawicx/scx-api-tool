@@ -2,7 +2,7 @@ import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
   source: 'https://api.apifox.com/v1/projects/6997172/export-openapi',
-  token: 'APS-bEl8yPD58wfRzsXXkx4psEekqm4k2YhD',
+  token: 'ssshD',
   typesFormat: 'zod',
   concurrency: 5,
   // pathPrefix: 'api',
@@ -14,9 +14,9 @@ export default defineConfig({
     //   console.log('Generating file', filePath);
     //   return content;
     // },
-    afterWriteFile: (filePath) => {
-      console.log('Generated file:', filePath);
-    },
-    afterGenerate: () => {},
+    // afterWriteFile: (filePath) => {
+    //   console.log('Generated file:', filePath);
+    // },
+    // afterGenerate: () => {},
   },
 });

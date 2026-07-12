@@ -11,16 +11,17 @@ import {
   aliasToRealPath,
 } from '../pathUtils';
 
-// Mock consola to suppress any console output during tests
-vi.mock('consola', () => ({
-  default: {
-    info: vi.fn(),
-    warn: vi.fn(),
+// Mock logger to suppress any console output during tests
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
     debug: vi.fn(),
     success: vi.fn(),
-    log: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 // ==================== getRelativeImportPath ====================

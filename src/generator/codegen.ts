@@ -2,7 +2,6 @@
  * @description 代码生成协调器
  */
 
-import consola from 'consola';
 import { resolve } from 'path';
 import { ProcessedApiData } from '../processors/openapi';
 import { ApiConfig } from '../types';
@@ -14,6 +13,7 @@ import {
 } from './fileGenerator';
 import { aliasToRealPath } from '@/utils/pathUtils';
 import { cleanOutputDir } from '../utils/file';
+import { logger } from '@/utils/logger';
 
 /**
  * @description 生成所有代码文件
@@ -51,30 +51,30 @@ export async function generateFiles(
 
     // 生成接口文件
     if (config.generateApi || config.generateTypes) {
-      consola.info('生成接口文件');
+      logger.info('生成接口文件');
       await generateInterfaceFiles(processedData, config, config.hooks);
     }
 
     // 生成 API 请求方法（如果需要）
     if (config.generateApi) {
-      consola.info('生成 API 请求方法');
+      logger.info('生成 API 请求方法');
       await generateRequestFile(config, config.hooks);
     }
 
     // 生成类型定义（如果需要且目标不是 JavaScript）
     if (config.generateTypes && config.target !== 'javascript') {
       if (config.typesFormat === 'typescript') {
-        consola.info('生成 TypeScript 类型定义');
+        logger.info('生成 TypeScript 类型定义');
         await generateTypeFiles(processedData, config, config.hooks);
       } else if (config.typesFormat === 'zod') {
-        consola.info('生成 Zod Schema');
+        logger.info('生成 Zod Schema');
         await generateSchemaFiles(processedData, config, config.hooks);
       }
     }
 
     // 文件生成成功后，由上层 generateCode 输出成功消息
   } catch (error: any) {
-    consola.error('生成文件失败:', error.message);
+    logger.error('生成文件失败:', error.message);
     throw error;
   }
 }

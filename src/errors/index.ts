@@ -2,7 +2,7 @@
  * @description 统一的错误处理系统
  * 提供结构化的错误类型和解决方案建议
  */
-import consola from 'consola';
+import { logger } from '@/utils/logger';
 import { BaseError } from './errorClasses';
 
 export { ErrorCode } from './errorCodes';
@@ -34,19 +34,19 @@ export function handleError(error: unknown, verbose = false): never {
 
   if (error instanceof Error) {
     const message = error.message || '发生未知错误';
-    consola.error(`✖ ${message}`);
+    logger.error(`✖ ${message}`);
 
     if (verbose) {
-      consola.error('');
-      consola.error('堆栈跟踪:');
-      consola.error(error.stack);
+      logger.error('');
+      logger.error('堆栈跟踪:');
+      logger.error(error.stack);
     }
 
     process.exit(1);
   }
 
   const errorMessage = String(error);
-  consola.error(`✖ ${errorMessage}`);
+  logger.error(`✖ ${errorMessage}`);
   process.exit(1);
 }
 

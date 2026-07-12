@@ -6,10 +6,10 @@ import { Command } from 'commander';
 import { createServer } from 'http';
 import { promises as fs } from 'fs';
 import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { loadConfig } from '@/config/loader';
 import { fetchData } from '@/clients';
-import consola from 'consola';
-import { fileURLToPath } from 'url';
+import { logger } from '@/utils/logger';
 import { handleError } from '@/errors';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -28,11 +28,11 @@ export const visualizeCommand = new Command('visualize')
 
     try {
       // 加载配置
-      consola.info('加载配置文件...');
+      logger.info('加载配置文件...');
       const config = await loadConfig(configPath);
 
       // 获取 OpenAPI Schema
-      consola.info('获取 OpenAPI Schema...');
+      logger.info('获取 OpenAPI Schema...');
       const schema = await fetchData(config);
 
       // 创建 HTTP 服务器
@@ -69,7 +69,7 @@ export const visualizeCommand = new Command('visualize')
                 const content = await fs.readFile(path, 'utf-8');
                 html = content as string;
                 htmlPath = path;
-                consola.success(`找到 HTML 文件: ${htmlPath}`);
+                logger.success(`找到 HTML 文件: ${htmlPath}`);
                 break;
               } catch {
                 // consola.error(`未找到 HTML 文件`);
@@ -79,9 +79,9 @@ export const visualizeCommand = new Command('visualize')
             if (!html) {
               res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
               res.end('无法找到 HTML 文件');
-              consola.error('无法找到 index.html，尝试的路径:', possiblePaths);
-              consola.error('当前 __dirname:', __dirname);
-              consola.error('当前 cwd:', process.cwd());
+              logger.error('无法找到 index.html，尝试的路径:', possiblePaths);
+              logger.error('当前 __dirname:', __dirname);
+              logger.error('当前 cwd:', process.cwd());
               return;
             }
 
@@ -114,7 +114,7 @@ export const visualizeCommand = new Command('visualize')
           res.writeHead(404, { 'Content-Type': 'text/plain' });
           res.end('Not Found');
         } catch (error) {
-          consola.error('请求处理错误:', error);
+          logger.error('请求处理错误:', error);
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Internal Server Error' }));
         }
@@ -122,16 +122,16 @@ export const visualizeCommand = new Command('visualize')
 
       // 启动服务器
       server.listen(serverPort, host, () => {
-        consola.success(`可视化服务器已启动!`);
-        consola.info(`  访问地址: http://${host}:${serverPort}`);
-        consola.info(`  按 Ctrl+C 停止服务器`);
+        logger.success(`可视化服务器已启动!`);
+        logger.info(`  访问地址: http://${host}:${serverPort}`);
+        logger.info(`  按 Ctrl+C 停止服务器`);
       });
 
       // 处理进程退出
       process.on('SIGINT', () => {
-        consola.info('\n正在关闭服务器...');
+        logger.info('\n正在关闭服务器...');
         server.close(() => {
-          consola.success('服务器已关闭');
+          logger.success('服务器已关闭');
           process.exit(0);
         });
       });

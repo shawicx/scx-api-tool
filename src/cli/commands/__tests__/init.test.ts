@@ -10,14 +10,16 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('consola', () => ({
-  default: {
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
     success: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 vi.mock('@/errors', () => ({
@@ -35,7 +37,7 @@ vi.mock('@/utils/file', () => ({
   }),
 }));
 
-import consola from 'consola';
+import { logger } from '@/utils/logger';
 import { initCommand } from '../init';
 import { writeFormattedFile } from '@/utils/file';
 import { DEFAULT_CONFIG } from '../../constants';
@@ -54,14 +56,14 @@ describe('init command', () => {
     expect(writeFormattedFile).toHaveBeenCalled();
     expect(captured.content).toBe(DEFAULT_CONFIG);
     expect(captured.path).toContain('api-power.config.ts');
-    expect(consola.success).toHaveBeenCalled();
+    expect(logger.success).toHaveBeenCalled();
   });
 
   it('文件已存在（无 --force）应 warn 且不写入', async () => {
     fileState.exists = true;
     await initCommand.parseAsync(['node', 'init']);
 
-    expect(consola.warn).toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalled();
     expect(writeFormattedFile).not.toHaveBeenCalled();
   });
 

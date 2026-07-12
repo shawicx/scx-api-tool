@@ -11,7 +11,7 @@ import { createApifoxClient } from './implementations/ApifoxClient';
 import type { SwaggerClient } from './implementations/SwaggerClient';
 import type { ApifoxClient } from './implementations/ApifoxClient';
 import { redactConfig } from '@/utils/redact';
-import consola from 'consola';
+import { logger } from '@/utils/logger';
 
 // ==================== 注册默认客户端 ====================
 
@@ -40,24 +40,20 @@ clientRegistry.register('apifox', createApifoxClient, 5);
  * ```
  */
 export async function fetchData(config: ApiConfig): Promise<OpenApiDocument> {
-  if (process.env.DEBUG) {
-    consola.debug('正在使用配置获取数据:', redactConfig(config));
-  }
+  logger.debug('正在使用配置获取数据:', redactConfig(config));
 
   try {
     // 使用客户端注册器自动选择合适的客户端
     const client = clientRegistry.autoSelectClient(config);
     const result = await client.fetch(config);
 
-    if (process.env.DEBUG) {
-      consola.debug(`数据获取成功，来源: ${result.sourceType}`);
-    }
+    logger.debug(`数据获取成功，来源: ${result.sourceType}`);
 
     return result.data;
   } catch (error: unknown) {
     // 确保错误信息清晰
     if (error instanceof Error && error.message) {
-      consola.error('获取数据失败:', error.message);
+      logger.error('获取数据失败:', error.message);
     }
     throw error;
   }

@@ -5,13 +5,16 @@
 
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('consola', () => ({
-  default: {
-    success: vi.fn(),
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
+    debug: vi.fn(),
+    success: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 import { validateUrlFormat, validateSourceUrl } from '../url';

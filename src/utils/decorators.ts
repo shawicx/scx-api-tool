@@ -3,7 +3,7 @@
  * 提供统一的错误处理模式，减少重复的 try-catch 代码
  */
 
-import consola from 'consola';
+import { logger } from '@/utils/logger';
 
 /**
  * @description 装饰器配置选项
@@ -47,7 +47,7 @@ export function withErrorHandler<A extends unknown[], R>(
       const err = error instanceof Error ? error : new Error(String(error));
 
       if (logError) {
-        consola.error(`${logPrefix} ${errorMessage || err.message}`, err);
+        logger.error(`${logPrefix} ${errorMessage || err.message}`, err);
       }
 
       if (fallbackValue !== undefined) {

@@ -3,7 +3,7 @@
  * 提供钩子函数的执行和错误处理
  */
 
-import consola from 'consola';
+import { logger } from '@/utils/logger';
 
 /**
  * @description 钩子管理器类
@@ -35,7 +35,7 @@ class HookManager {
         await result;
       }
     } catch (error: any) {
-      consola.warn('钩子执行失败:', error.message || error);
+      logger.warn('钩子执行失败:', error.message || error);
     }
   }
 
@@ -66,7 +66,7 @@ class HookManager {
       const result = hookFn(...args);
       return result instanceof Promise ? await result : result;
     } catch (error: any) {
-      consola.warn('钩子执行失败，使用原始值:', error.message || error);
+      logger.warn('钩子执行失败，使用原始值:', error.message || error);
       throw error;
     }
   }

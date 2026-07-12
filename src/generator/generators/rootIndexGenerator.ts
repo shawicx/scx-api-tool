@@ -3,7 +3,6 @@
  * 从 interfaceGenerator.ts 拆分而来，负责生成 outputDir/index.ts
  */
 
-import consola from 'consola';
 import { join } from 'path';
 import type { ApiConfig, CliHooks } from '@/types';
 import type { ProcessedApiData } from '@/processors/openapi';
@@ -11,6 +10,7 @@ import { writeFormattedFile } from '@/utils/file';
 import { chineseToPinyinCamelCase } from '@/utils/path';
 import { getNormalizedPathWithAlias } from '@/utils/pathUtils';
 import { getFileExtension } from '@/utils/config';
+import { logger } from '@/utils/logger';
 
 /**
  * @description 生成根目录 index.ts 文件
@@ -75,7 +75,5 @@ export async function generateRootIndexFile(
   const rootIndexPath = join(outputDir, `index${ext}`);
   await writeFormattedFile(rootIndexPath, rootIndexContent, hooks);
 
-  if (process.env.DEBUG) {
-    consola.debug(`创建根索引文件: ${rootIndexPath}`);
-  }
+  logger.debug(`创建根索引文件: ${rootIndexPath}`);
 }

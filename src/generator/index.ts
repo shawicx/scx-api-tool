@@ -9,6 +9,7 @@ import { ApiConfig } from '../types';
 import { generateFiles } from './codegen';
 import { getProgressManager, createMultiStepProgress } from '../utils/progress';
 import { getHookManager } from '../utils/hooks';
+import { logger } from '@/utils/logger';
 
 /**
  * @description 生成代码主入口
@@ -62,11 +63,7 @@ async function processConfig(config: ApiConfig): Promise<void> {
   try {
     // 步骤 1: 配置验证
     progress.startStep(0);
-    if (process.env.DEBUG) {
-      progressManager.info(
-        `处理配置: serverUrl = ${config.serverUrl}, serverType = ${config.serverType}`,
-      );
-    }
+    logger.debug(`处理配置: serverUrl = ${config.serverUrl}, serverType = ${config.serverType}`);
     progress.completeCurrentStep('配置验证完成');
 
     // 调用 beforeGenerate 钩子
@@ -75,9 +72,7 @@ async function processConfig(config: ApiConfig): Promise<void> {
     // 步骤 2: 获取 API 数据
     progress.startStep(1);
     const rawData = await fetchData(config);
-    if (process.env.DEBUG) {
-      progressManager.info('从 API 源获取原始数据成功');
-    }
+    logger.debug('从 API 源获取原始数据成功');
     progress.completeCurrentStep('API 数据获取完成');
 
     // 步骤 3: 处理数据结构
@@ -91,9 +86,7 @@ async function processConfig(config: ApiConfig): Promise<void> {
       categories: processedData.categories.length,
     };
 
-    if (process.env.DEBUG) {
-      progressManager.info(`处理后的数据计数: ${JSON.stringify(stats)}`);
-    }
+    logger.debug(`处理后的数据计数: ${JSON.stringify(stats)}`);
 
     progressManager.info(
       `数据处理完成: ${stats.interfaces} 个接口, ${stats.types} 个类型, ${stats.categories} 个分类`,

@@ -4,19 +4,21 @@
 
 import { describe, it, expect, vi } from 'vitest';
 
-// Mock consola
-vi.mock('consola', () => ({
-  default: {
+// Mock logger
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
     success: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 import { executeWithConcurrency } from '../concurrency';
-import consola from 'consola';
+import { logger } from '@/utils/logger';
 
 describe('executeWithConcurrency', () => {
   it('should return immediately for an empty array', async () => {
@@ -47,7 +49,7 @@ describe('executeWithConcurrency', () => {
 
     await executeWithConcurrency(items, handler, 10, 'SuccessTask');
 
-    expect(consola.warn).not.toHaveBeenCalled();
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 
   it('should warn when some items fail', async () => {
@@ -60,7 +62,7 @@ describe('executeWithConcurrency', () => {
 
     await executeWithConcurrency(items, handler, 10, 'PartialFailTask');
 
-    expect(consola.warn).toHaveBeenCalledWith('PartialFailTask：1/3 个项目处理失败');
+    expect(logger.warn).toHaveBeenCalledWith('PartialFailTask：1/3 个项目处理失败');
   });
 
   it('should process items in batches respecting concurrency', async () => {
@@ -92,7 +94,7 @@ describe('executeWithConcurrency', () => {
 
     await executeWithConcurrency(items, handler, 10, 'AllFailTask');
 
-    expect(consola.warn).toHaveBeenCalledWith('AllFailTask：3/3 个项目处理失败');
+    expect(logger.warn).toHaveBeenCalledWith('AllFailTask：3/3 个项目处理失败');
   });
 
   it('should handle a single item', async () => {

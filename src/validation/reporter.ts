@@ -3,7 +3,7 @@
  * 负责格式化并输出验证报告
  */
 
-import consola from 'consola';
+import { logger } from '@/utils/logger';
 import { ValidationReport, ValidationSeverity, ValidationError } from './errors';
 
 /**
@@ -19,7 +19,7 @@ import { ValidationReport, ValidationSeverity, ValidationError } from './errors'
  */
 export function displayValidationResults(report: ValidationReport): void {
   if (report.errors.length === 0) {
-    consola.success('配置验证通过');
+    logger.success('配置验证通过');
     return;
   }
 
@@ -32,17 +32,17 @@ export function displayValidationResults(report: ValidationReport): void {
   const infos = report.errors.filter((e) => e.severity === ValidationSeverity.INFO);
 
   if (errors.length > 0) {
-    consola.error(`\n发现 ${errors.length} 个错误：`);
+    logger.error(`\n发现 ${errors.length} 个错误：`);
     errors.forEach((error, index) => displayError(error, index + 1));
   }
 
   if (warnings.length > 0) {
-    consola.warn(`\n发现 ${warnings.length} 个警告：`);
+    logger.warn(`\n发现 ${warnings.length} 个警告：`);
     warnings.forEach((warning, index) => displayWarning(warning, index + 1));
   }
 
   if (infos.length > 0) {
-    consola.info(`\n${infos.length} 个建议：`);
+    logger.info(`\n${infos.length} 个建议：`);
     infos.forEach((info, index) => displayInfo(info, index + 1));
   }
 }
@@ -62,13 +62,13 @@ function displaySummary(report: ValidationReport): void {
   const { summary } = report;
 
   if (summary.errors > 0) {
-    consola.error(
+    logger.error(
       `验证完成：发现 ${summary.errors} 个错误，${summary.warnings} 个警告，${summary.infos} 个建议`,
     );
   } else if (summary.warnings > 0) {
-    consola.warn(`验证完成：发现 ${summary.warnings} 个警告，${summary.infos} 个建议`);
+    logger.warn(`验证完成：发现 ${summary.warnings} 个警告，${summary.infos} 个建议`);
   } else if (summary.infos > 0) {
-    consola.info(`验证完成：${summary.infos} 个建议`);
+    logger.info(`验证完成：${summary.infos} 个建议`);
   }
 }
 
@@ -85,17 +85,17 @@ function displaySummary(report: ValidationReport): void {
  * ```
  */
 function displayError(error: ValidationError, index: number): void {
-  consola.error(`${index}. ${error.field}: ${error.message}`);
+  logger.error(`${index}. ${error.field}: ${error.message}`);
 
   if (error.value !== undefined) {
-    consola.error(`   当前值: ${JSON.stringify(error.value)}`);
+    logger.error(`   当前值: ${JSON.stringify(error.value)}`);
   }
 
   if (error.suggestion) {
-    consola.info(`   修复建议:`);
+    logger.info(`   修复建议:`);
     error.suggestion.split('\n').forEach((line) => {
       if (line.trim()) {
-        consola.info(`      ${line}`);
+        logger.info(`      ${line}`);
       }
     });
   }
@@ -114,17 +114,17 @@ function displayError(error: ValidationError, index: number): void {
  * ```
  */
 function displayWarning(warning: ValidationError, index: number): void {
-  consola.warn(`${index}. ${warning.field}: ${warning.message}`);
+  logger.warn(`${index}. ${warning.field}: ${warning.message}`);
 
   if (warning.value !== undefined) {
-    consola.info(`   当前值: ${JSON.stringify(warning.value)}`);
+    logger.info(`   当前值: ${JSON.stringify(warning.value)}`);
   }
 
   if (warning.suggestion) {
-    consola.info(`   建议:`);
+    logger.info(`   建议:`);
     warning.suggestion.split('\n').forEach((line) => {
       if (line.trim()) {
-        consola.info(`      ${line}`);
+        logger.info(`      ${line}`);
       }
     });
   }
@@ -143,13 +143,13 @@ function displayWarning(warning: ValidationError, index: number): void {
  * ```
  */
 function displayInfo(info: ValidationError, index: number): void {
-  consola.info(`${index}. ${info.field}: ${info.message}`);
+  logger.info(`${index}. ${info.field}: ${info.message}`);
 
   if (info.suggestion) {
-    consola.info(`   说明:`);
+    logger.info(`   说明:`);
     info.suggestion.split('\n').forEach((line) => {
       if (line.trim()) {
-        consola.info(`      ${line}`);
+        logger.info(`      ${line}`);
       }
     });
   }

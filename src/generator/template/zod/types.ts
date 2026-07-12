@@ -3,12 +3,12 @@
  * 处理 Zod 类型的模板生成
  */
 
-import consola from 'consola';
 import { compileTemplate } from '../index';
 import { sanitizeTypeName, sanitizePropertyName } from '@/naming';
 import { isDepthExceeded, CircularRefGuard } from '@/utils/schemaSafety';
 import { escapeStringLiteral, escapeJsDocComment } from '@/utils/escape';
 import type { ApiConfig, OpenApiSchema } from '@/types';
+import { logger } from '@/utils/logger';
 
 /**
  * @description Zod 类型生成所需的类型信息
@@ -80,11 +80,9 @@ export function generateZodTypeSchema(typeInfo: ZodTypeInfo, config: ApiConfig):
 
   const result = generateZodSchemaFromOpenApiSchema(typeInfo.schema);
 
-  if (process.env.DEBUG) {
-    consola.debug(
-      `Generating Zod type schema: ${typeInfo.name}, properties count: ${result.imports.length}`,
-    );
-  }
+  logger.debug(
+    `Generating Zod type schema: ${typeInfo.name}, properties count: ${result.imports.length}`,
+  );
 
   const templateData = {
     schemaName: `${typeInfo.name}Schema`,

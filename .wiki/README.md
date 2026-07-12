@@ -18,7 +18,7 @@
 | ----------- | ----- | ------------------------------------- |
 | `generate`  | `gen` | 获取 API 定义并生成代码               |
 | `init`      | —     | 生成默认 `api-power.config.ts`        |
-| `debug`     | —     | 调试模式，检查 API 定义（DEBUG=true） |
+| `debug`     | —     | 诊断模式：检查 API 定义（不生成代码） |
 | `visualize` | `viz` | 启动 HTTP 服务器，可视化查看 API 结构 |
 
 ## 文档索引

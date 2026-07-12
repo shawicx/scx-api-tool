@@ -1,8 +1,9 @@
 /**
  * @description 轻量级进度显示模块
+ * 基础进度（步骤开始/完成/标题）默认对用户可见，仅额外细节走 debug 日志
  */
 
-import consola from 'consola';
+import { logger } from './logger';
 
 /**
  * 多步骤进度类
@@ -30,9 +31,8 @@ export class SimpleProgress {
     this.stepStartTimes[stepIndex] = Date.now();
     step.status = 'loading';
 
-    if (process.env.DEBUG) {
-      consola.info(`步骤 ${stepIndex + 1}/${this.steps.length}: ${step.title}`);
-    }
+    // 步骤开始默认可见，让用户实时了解进度
+    logger.info(`步骤 ${stepIndex + 1}/${this.steps.length}: ${step.title}`);
   }
 
   /**
@@ -49,10 +49,14 @@ export class SimpleProgress {
 
     step.status = 'success';
 
-    if (description || process.env.DEBUG) {
-      const msg = description || step.title;
-      consola.success(
-        `步骤 ${this.currentStep + 1}/${this.steps.length} 完成: ${msg} (${Math.round(duration)}ms)`,
+    // 有描述时始终显示；无描述时走 debug 日志
+    if (description) {
+      logger.success(
+        `步骤 ${this.currentStep + 1}/${this.steps.length} 完成: ${description} (${Math.round(duration)}ms)`,
+      );
+    } else {
+      logger.debug(
+        `步骤 ${this.currentStep + 1}/${this.steps.length} 完成: ${step.title} (${Math.round(duration)}ms)`,
       );
     }
 
@@ -68,7 +72,7 @@ export class SimpleProgress {
   complete(message?: string): void {
     const totalDuration = Date.now() - this.startTime;
     const finalMessage = message || '所有步骤完成';
-    consola.success(`${finalMessage} (总耗时: ${formatTime(totalDuration)})`);
+    logger.success(`${finalMessage} (总耗时: ${formatTime(totalDuration)})`);
   }
 
   /**
@@ -83,7 +87,7 @@ export class SimpleProgress {
     step.status = 'error';
 
     const errorMsg = error instanceof Error ? error.message : error;
-    consola.error(
+    logger.error(
       `步骤 ${this.currentStep + 1}/${this.steps.length} 失败: ${step.title} - ${errorMsg}`,
     );
   }
@@ -105,8 +109,9 @@ export function createMultiStepProgress(options: {
 }): SimpleProgress {
   const progress = new SimpleProgress(options.steps);
 
-  if (options.title && process.env.DEBUG) {
-    consola.info(options.title);
+  // 标题默认可见
+  if (options.title) {
+    logger.info(options.title);
   }
 
   return progress;
@@ -149,27 +154,26 @@ export async function makeRequestWithProgress<T>(
   const { url, method = 'GET' } = options;
   const startTime = Date.now();
 
-  if (process.env.DEBUG) {
-    consola.info(`网络请求: ${method} ${url}`);
-  }
+  // 请求开始的细节走 debug 日志
+  logger.debug(`网络请求: ${method} ${url}`);
 
   try {
     const result = await requestFn((loaded, total) => {
-      if (process.env.DEBUG && total) {
+      if (total) {
         const percentage = Math.round((loaded / total) * 100);
         const elapsed = Date.now() - startTime;
-        consola.info(`下载进度: ${percentage}% (${formatTime(elapsed)})`);
+        logger.debug(`下载进度: ${percentage}% (${formatTime(elapsed)})`);
       }
     });
 
     const duration = Date.now() - startTime;
-    consola.success(`请求完成: ${method} ${url} (${formatTime(duration)})`);
+    logger.success(`请求完成: ${method} ${url} (${formatTime(duration)})`);
 
     return result;
   } catch (error) {
     const duration = Date.now() - startTime;
     const errorMsg = error instanceof Error ? error.message : String(error);
-    consola.error(`请求失败: ${method} ${url} (${formatTime(duration)}) - ${errorMsg}`);
+    logger.error(`请求失败: ${method} ${url} (${formatTime(duration)}) - ${errorMsg}`);
     throw error;
   }
 }
@@ -179,19 +183,19 @@ export async function makeRequestWithProgress<T>(
  */
 class SimpleProgressManager {
   info(message: string, ...args: unknown[]): void {
-    consola.info(message, ...args);
+    logger.info(message, ...args);
   }
 
   success(message: string, ...args: unknown[]): void {
-    consola.success(message, ...args);
+    logger.success(message, ...args);
   }
 
   error(message: string, ...args: unknown[]): void {
-    consola.error(message, ...args);
+    logger.error(message, ...args);
   }
 
   warn(message: string, ...args: unknown[]): void {
-    consola.warn(message, ...args);
+    logger.warn(message, ...args);
   }
 }
 

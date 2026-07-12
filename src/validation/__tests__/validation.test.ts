@@ -4,15 +4,19 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { logger } from '@/utils/logger';
 
-// Mock consola before any imports that use it
-vi.mock('consola', () => ({
-  default: {
-    success: vi.fn(),
+// Mock logger before any imports that use it
+vi.mock('@/utils/logger', () => ({
+  logger: {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
+    debug: vi.fn(),
+    success: vi.fn(),
   },
+  setDebugEnabled: vi.fn(),
+  isDebugEnabled: vi.fn(() => false),
 }));
 
 import {
@@ -272,58 +276,55 @@ describe('getErrorSummary', () => {
 // displayValidationResults
 // ---------------------------------------------------------------------------
 describe('displayValidationResults', () => {
-  let consola: (typeof import('consola'))['default'];
-
-  beforeEach(async () => {
-    consola = (await import('consola')).default;
+  beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('calls consola.success when there are no errors', () => {
+  it('calls logger.success when there are no errors', () => {
     const report = createValidationReport([]);
 
     displayValidationResults(report);
 
-    expect(consola.success).toHaveBeenCalledWith('配置验证通过');
-    expect(consola.error).not.toHaveBeenCalled();
-    expect(consola.warn).not.toHaveBeenCalled();
+    expect(logger.success).toHaveBeenCalledWith('配置验证通过');
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 
-  it('displays error-level messages using consola.error', () => {
+  it('displays error-level messages using logger.error', () => {
     const report = createValidationReport([
       createValidationError('source', 'REQ', 'source 是必需的', ValidationSeverity.ERROR),
     ]);
 
     displayValidationResults(report);
 
-    expect(consola.error).toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalled();
     // Summary line + error detail line
-    const errorCalls = consola.error as ReturnType<typeof vi.fn>;
+    const errorCalls = logger.error as ReturnType<typeof vi.fn>;
     expect(errorCalls.mock.calls.some((c: string[]) => c[0].includes('发现 1 个错误'))).toBe(true);
     expect(errorCalls.mock.calls.some((c: string[]) => c[0].includes('source'))).toBe(true);
   });
 
-  it('displays warning-level messages using consola.warn', () => {
+  it('displays warning-level messages using logger.warn', () => {
     const report = createValidationReport([
       createValidationError('path', 'W', '路径警告', ValidationSeverity.WARNING),
     ]);
 
     displayValidationResults(report);
 
-    expect(consola.warn).toHaveBeenCalled();
-    const warnCalls = consola.warn as ReturnType<typeof vi.fn>;
+    expect(logger.warn).toHaveBeenCalled();
+    const warnCalls = logger.warn as ReturnType<typeof vi.fn>;
     expect(warnCalls.mock.calls.some((c: string[]) => c[0].includes('发现 1 个警告'))).toBe(true);
   });
 
-  it('displays info-level messages using consola.info', () => {
+  it('displays info-level messages using logger.info', () => {
     const report = createValidationReport([
       createValidationError('comment', 'I', '建议信息', ValidationSeverity.INFO),
     ]);
 
     displayValidationResults(report);
 
-    expect(consola.info).toHaveBeenCalled();
-    const infoCalls = consola.info as ReturnType<typeof vi.fn>;
+    expect(logger.info).toHaveBeenCalled();
+    const infoCalls = logger.info as ReturnType<typeof vi.fn>;
     expect(infoCalls.mock.calls.some((c: string[]) => c[0].includes('1 个建议'))).toBe(true);
   });
 
@@ -340,7 +341,7 @@ describe('displayValidationResults', () => {
 
     displayValidationResults(report);
 
-    const infoCalls = consola.info as ReturnType<typeof vi.fn>;
+    const infoCalls = logger.info as ReturnType<typeof vi.fn>;
     expect(infoCalls.mock.calls.some((c: string[]) => c[0].includes('修复建议'))).toBe(true);
   });
 
@@ -358,7 +359,7 @@ describe('displayValidationResults', () => {
 
     displayValidationResults(report);
 
-    const errorCalls = consola.error as ReturnType<typeof vi.fn>;
+    const errorCalls = logger.error as ReturnType<typeof vi.fn>;
     expect(errorCalls.mock.calls.some((c: string[]) => c[0].includes('当前值'))).toBe(true);
   });
 
@@ -371,7 +372,7 @@ describe('displayValidationResults', () => {
 
     displayValidationResults(report);
 
-    const errorCalls = consola.error as ReturnType<typeof vi.fn>;
+    const errorCalls = logger.error as ReturnType<typeof vi.fn>;
     // Summary line should mention all three categories
     expect(
       errorCalls.mock.calls.some(
@@ -386,10 +387,7 @@ describe('displayValidationResults', () => {
 // validateConfiguration (integration)
 // ---------------------------------------------------------------------------
 describe('validateConfiguration', () => {
-  let consola: (typeof import('consola'))['default'];
-
-  beforeEach(async () => {
-    consola = (await import('consola')).default;
+  beforeEach(() => {
     vi.clearAllMocks();
   });
 
@@ -403,11 +401,11 @@ describe('validateConfiguration', () => {
     expect(() => validateConfiguration(config)).not.toThrow();
   });
 
-  it('calls consola.success for a valid config', () => {
+  it('calls logger.success for a valid config', () => {
     const config = { ...validSwaggerUserConfig, generateApi: true, generateTypes: true };
     validateConfiguration(config);
 
-    expect(consola.success).toHaveBeenCalledWith('配置验证通过');
+    expect(logger.success).toHaveBeenCalledWith('配置验证通过');
   });
 
   it('throws ConfigValidationError for missing source', () => {
