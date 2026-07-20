@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.6.2](https://github.com/shawicx/scx-api-tool/compare/v0.6.1...v0.6.2) (2026-07-20)
+
+### Refactors
+
+- 将 pathPrefix 重命名为 transformPath 并移除命名策略中的隐式 api 前缀剥离 ([f8e9f19](https://github.com/shawicx/scx-api-tool/commit/f8e9f197e684012c362fc832880789421e837f17))
+
 ## [0.6.0] - 2026-07-20
 
 ### ⚠️ Breaking Changes
