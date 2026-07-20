@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.6.1](https://github.com/shawicx/scx-api-tool/compare/v0.5.4...v0.6.1) (2026-07-20)
+
+### Features
+
+- pathPrefix 配置项改为函数形式以支持自定义路径变换 ([ac72948](https://github.com/shawicx/scx-api-tool/commit/ac72948156982cdd08aa9d2e22e4f534e23b8a82))
+
+### Bug Fixes
+
+- 依赖 ([a986c53](https://github.com/shawicx/scx-api-tool/commit/a986c5388f9fc0a29c0d949d019dbe8f1d5d1c06))
+
 ## [0.6.0] - 2026-07-20
 
 ### ⚠️ Breaking Changes
