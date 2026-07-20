@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.6.0] - 2026-07-20
+
+### ⚠️ Breaking Changes
+
+- **`pathPrefix` 配置项函数化**：`pathPrefix` 不再接受字符串形式，改为只接受函数 `(path: string) => string`。
+
+  **迁移指南**：
+
+  ```ts
+  // 0.5.x（已废弃）
+  pathPrefix: '/api',
+
+  // 0.6.0 - 去除前缀
+  pathPrefix: (p) => (p.startsWith('/api') ? p.slice(4) : p),
+
+  // 0.6.0 - 添加前缀
+  pathPrefix: (p) => '/api/v1' + p,
+
+  // 0.6.0 - 不做修改（删除配置项即可，默认为恒等函数）
+  ```
+
+  当传入字符串时会抛出 `E1002 CONFIG_INVALID` 错误，错误消息包含迁移示例。
+
+### Features
+
+- `pathPrefix` 支持任意路径变换函数，可同时实现"加前缀"和"去前缀"以及更复杂的正则替换、条件分支等。
+- 新增错误码 `E3005 GENERATE_PATH_TRANSFORM_ERROR`：当 `pathPrefix` 函数抛错或返回非字符串时抛出。
+- 新增 `ErrorFactory.pathTransformError(path, message, originalError?)` 工厂方法。
+
+### Bug Fixes
+
+- 修复文档与代码语义矛盾：`docs/guides/configuration.md`、`.wiki/glossary.md` 中"pathPrefix 添加到路径"的错误描述已修正。
+- 删除 `logic.ts` 中针对字符串形式的"不应以 / 开头/结尾"校验（字符串形式已硬废弃，校验失去意义）。
+
+### Documentation
+
+- 重写所有 `pathPrefix` 相关文档（configuration.md / quick-start.md / README.md / glossary.md），统一为函数式描述，补充三个示例（去除前缀/添加前缀/正则替换）。
+- 文档中新增"函数命名副作用"和"硬编码 baseURL"的注意事项。
+
 ### [0.5.4](https://github.com/shawicx/scx-api-tool/compare/v0.5.3...v0.5.4) (2026-07-12)
 
 ### Features

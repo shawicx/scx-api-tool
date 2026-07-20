@@ -7,6 +7,7 @@ import type { ApiConfig } from '@/types';
 import type { ApiCategory, ApiInterface, ApiTypeDefinition, OpenApiDocument } from '@/types';
 import { sanitizeTypeName } from '@/naming';
 import { logger } from '@/utils/logger';
+import { ErrorFactory } from '@/errors';
 
 export interface ProcessedApiData {
   interfaces: ApiInterface[];
@@ -15,6 +16,40 @@ export interface ProcessedApiData {
 }
 
 export { groupInterfacesByTag, extractUsedTypeNames } from './common';
+
+/**
+ * @description 应用 pathPrefix 转换函数，处理异常和返回值校验。
+ * 当函数抛错或返回非字符串时，归一为 E3005 GenerateError。
+ * @param transform pathPrefix 函数（已规范化为函数）
+ * @param path 原始路径
+ * @returns 转换后的路径
+ * @throws {GenerateError} 当函数抛错或返回非字符串时（E3005）
+ *
+ * @example
+ * ```typescript
+ * const newPath = applyPathPrefix(config.pathPrefix, '/users');
+ * ```
+ */
+function applyPathPrefix(transform: (path: string) => string, path: string): string {
+  let result: unknown;
+  try {
+    result = transform(path);
+  } catch (err: any) {
+    throw ErrorFactory.pathTransformError(
+      path,
+      `pathPrefix 函数处理路径时抛出异常: ${err?.message ?? String(err)}`,
+      err instanceof Error ? err : new Error(String(err)),
+    );
+  }
+  if (typeof result !== 'string') {
+    throw ErrorFactory.pathTransformError(
+      path,
+      `pathPrefix 函数必须返回 string，实际返回类型: ${typeof result}`,
+      new Error(`Invalid return type: ${typeof result}`),
+    );
+  }
+  return result;
+}
 
 /**
  * @description 处理 OpenAPI 数据
@@ -59,11 +94,8 @@ export function processOpenApiData(data: OpenApiDocument, config: ApiConfig): Pr
   // 防御畸形输入：仅处理 paths 为对象的情况
   if (data.paths && typeof data.paths === 'object') {
     for (const [path, methods] of Object.entries(data.paths)) {
-      // 应用路径前缀转换（字面字符串匹配，避免正则注入风险）
-      const normalizedPath =
-        config.pathPrefix && path.startsWith(config.pathPrefix)
-          ? path.slice(config.pathPrefix.length)
-          : path;
+      // 应用 pathPrefix 转换函数（0.6.0 起为函数形式，由 defineConfig 规范化）
+      const normalizedPath = applyPathPrefix(config.pathPrefix, path);
 
       // 防御畸形输入：仅处理 methods 为对象的情况
       if (!methods || typeof methods !== 'object') continue;

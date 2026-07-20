@@ -120,42 +120,113 @@ describe('processOpenApiData', () => {
     });
   });
 
-  describe('with pathPrefix', () => {
-    it('should strip prefix from paths when pathPrefix is set', () => {
-      const configWithPathPrefix = {
+  describe('with pathPrefix (function form)', () => {
+    it('恒等函数应保留原始路径', () => {
+      const configWithIdentity = {
         ...minimalApiConfig,
-        pathPrefix: '/api',
+        pathPrefix: (p: string) => p,
       };
+      const result = processOpenApiData(mockOpenApiDocument, configWithIdentity);
 
-      const result = processOpenApiData(mockOpenApiDocument, configWithPathPrefix);
+      const paths = result.interfaces.map((i) => i.path);
+      expect(paths).toContain('/api/users');
+      expect(paths).toContain('/api/users/{id}');
+    });
 
-      // /api/users -> /users, /api/users/{id} -> /users/{id}
+    it('去除前缀函数应剥掉匹配的前缀', () => {
+      const configWithStrip = {
+        ...minimalApiConfig,
+        pathPrefix: (p: string) => (p.startsWith('/api') ? p.slice(4) : p),
+      };
+      const result = processOpenApiData(mockOpenApiDocument, configWithStrip);
+
       const paths = result.interfaces.map((i) => i.path);
       expect(paths).toContain('/users');
       expect(paths).toContain('/users/{id}');
-      // Should NOT contain /api prefix
       expect(paths.some((p) => p.startsWith('/api'))).toBe(false);
     });
 
-    it('should not modify paths when pathPrefix is empty string', () => {
-      const result = processOpenApiData(mockOpenApiDocument, minimalApiConfig);
+    it('添加前缀函数应给所有路径加上前缀', () => {
+      const configWithAdd = {
+        ...minimalApiConfig,
+        pathPrefix: (p: string) => `/v2${p}`,
+      };
+      const result = processOpenApiData(mockOpenApiDocument, configWithAdd);
 
       const paths = result.interfaces.map((i) => i.path);
-      expect(paths).toContain('/api/users');
-      expect(paths).toContain('/api/users/{id}');
+      expect(paths).toContain('/v2/api/users');
+      expect(paths).toContain('/v2/api/users/{id}');
     });
 
-    it('should not modify paths when pathPrefix does not match', () => {
-      const configWithPathPrefix = {
+    it('正则替换函数应正确替换路径', () => {
+      const configWithRegex = {
         ...minimalApiConfig,
-        pathPrefix: '/v2',
+        pathPrefix: (p: string) => p.replace(/^\/api/, '/v1'),
       };
-
-      const result = processOpenApiData(mockOpenApiDocument, configWithPathPrefix);
+      const result = processOpenApiData(mockOpenApiDocument, configWithRegex);
 
       const paths = result.interfaces.map((i) => i.path);
-      expect(paths).toContain('/api/users');
-      expect(paths).toContain('/api/users/{id}');
+      expect(paths).toContain('/v1/users');
+      expect(paths).toContain('/v1/users/{id}');
+    });
+
+    it('函数抛错时应抛 E3005 GenerateError', () => {
+      const configWithThrow = {
+        ...minimalApiConfig,
+        pathPrefix: () => {
+          throw new Error('boom');
+        },
+      };
+      expect(() => processOpenApiData(mockOpenApiDocument, configWithThrow)).toThrow(
+        /路径转换失败/,
+      );
+      try {
+        processOpenApiData(mockOpenApiDocument, configWithThrow);
+      } catch (e: any) {
+        expect(e.code).toBe('E3005');
+        expect(e.message).toContain('boom');
+      }
+    });
+
+    it('函数返回非字符串时应抛 E3005 GenerateError', () => {
+      const configWithBadReturn = {
+        ...minimalApiConfig,
+        pathPrefix: (() => 123) as any,
+      };
+      expect(() => processOpenApiData(mockOpenApiDocument, configWithBadReturn)).toThrow(
+        /必须返回 string|返回类型/,
+      );
+      try {
+        processOpenApiData(mockOpenApiDocument, configWithBadReturn);
+      } catch (e: any) {
+        expect(e.code).toBe('E3005');
+      }
+    });
+
+    it('函数返回空字符串应是合法的', () => {
+      const configWithEmpty = {
+        ...minimalApiConfig,
+        pathPrefix: () => '',
+      };
+      const result = processOpenApiData(mockOpenApiDocument, configWithEmpty);
+
+      const paths = result.interfaces.map((i) => i.path);
+      expect(paths.every((p) => p === '')).toBe(true);
+    });
+
+    it('错误对象应保留原始错误', () => {
+      const original = new TypeError('regex failed');
+      const configWithTypedErr = {
+        ...minimalApiConfig,
+        pathPrefix: () => {
+          throw original;
+        },
+      };
+      try {
+        processOpenApiData(mockOpenApiDocument, configWithTypedErr);
+      } catch (e: any) {
+        expect(e.originalError).toBe(original);
+      }
     });
   });
 

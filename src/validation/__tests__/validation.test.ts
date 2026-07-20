@@ -449,8 +449,13 @@ describe('validateConfiguration', () => {
   });
 
   it('does not throw for warnings-only config (non-blocking)', () => {
-    // pathPrefix with leading / produces a warning but not an error
-    const config = { ...validSwaggerUserConfig, generateApi: true, pathPrefix: '/api' };
+    // target: javascript + generateTypes: true produces a warning but not an error
+    const config = {
+      ...validSwaggerUserConfig,
+      generateApi: true,
+      target: 'javascript' as const,
+      generateTypes: true,
+    };
 
     expect(() => validateConfiguration(config)).not.toThrow();
   });

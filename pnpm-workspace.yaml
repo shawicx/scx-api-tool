@@ -1,0 +1,6 @@
+allowBuilds:
+  esbuild: true
+overrides:
+  '@scxfe/api-tool': 'link:'
+packages:
+  - .

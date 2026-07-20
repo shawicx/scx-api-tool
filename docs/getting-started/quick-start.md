@@ -322,7 +322,7 @@ export default defineConfig({
   source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
   token: 'APS-YourAccessTokenHere',
 
-  pathPrefix: '/api/v1',
+  pathPrefix: (p) => '/api/v1' + p,
 });
 ```
 

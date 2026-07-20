@@ -108,7 +108,7 @@ export default defineConfig({
   target: 'typescript',
   indentSize: 2,
   comment: true,
-  pathPrefix: '/api/v1',
+  pathPrefix: (p) => '/api/v1' + p,
 
   // 请求函数配置
   requestFunctionName: 'request',

@@ -107,7 +107,7 @@ export const defaultNamingStrategy: Required<NamingStrategy> = {
   /**
    * @description 默认接口名称生成
    * 格式：Method + Path + Parameters
-   * 例如：GET /api/users/{id} → GetUsersById
+   * 例如：GET /users/{id} → GetUsersById
    */
   interfaceName: (ctx: NamingContext): string => {
     const { path, method } = ctx;
@@ -156,7 +156,7 @@ export const defaultNamingStrategy: Required<NamingStrategy> = {
    */
   responseTypeName: (ctx: NamingContext): string => {
     const interfaceName = defaultNamingStrategy.interfaceName(ctx);
-    return `${interfaceName}Result`;
+    return `${interfaceName}ResultType`;
   },
 };
 

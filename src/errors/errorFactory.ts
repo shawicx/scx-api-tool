@@ -463,4 +463,38 @@ export const ErrorFactory = {
       ErrorCode.GENERATE_SCHEMA_ERROR,
     );
   },
+
+  /**
+   * @description 创建路径转换错误
+   * @param path 触发错误的原始路径
+   * @param message 错误消息
+   * @param originalError 原始错误（可选）
+   * @returns GenerateError 实例
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   const result = config.pathPrefix(path);
+   * } catch (e) {
+   *   throw ErrorFactory.pathTransformError(path, '处理失败', e);
+   * }
+   * ```
+   */
+  pathTransformError(path: string, message: string, originalError?: Error): GenerateError {
+    return new GenerateError(
+      `路径转换失败 [${path}]: ${message}`,
+      [
+        {
+          title: '检查 pathPrefix 函数实现',
+          steps: [
+            '确认 pathPrefix 函数对任意 path 都返回 string',
+            '检查函数内是否有运行时异常（如正则错误、未定义属性访问）',
+            '使用 `npx api-power debug` 查看触发异常的具体 path',
+          ],
+        },
+      ],
+      originalError,
+      ErrorCode.GENERATE_PATH_TRANSFORM_ERROR,
+    );
+  },
 };

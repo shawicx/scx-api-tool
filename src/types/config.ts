@@ -124,8 +124,23 @@ export interface UserConfig {
 
   /** 目标语言 */
   target?: 'javascript' | 'typescript';
-  /** 路径前缀 */
-  pathPrefix?: string;
+  /**
+   * @description 路径转换函数：接收原始 path，返回转换后的 path。
+   * 不配置时使用恒等函数（不做任何修改）。
+   *
+   * @example
+   * ```typescript
+   * // 去除前缀
+   * pathPrefix: (p) => p.startsWith('/api') ? p.slice(4) : p
+   *
+   * // 添加前缀
+   * pathPrefix: (p) => '/api/v1' + p
+   *
+   * // 正则替换
+   * pathPrefix: (p) => p.replace(/^\/v\d+/, '')
+   * ```
+   */
+  pathPrefix?: (path: string) => string;
   /** 输出目录 */
   outputDir?: string;
   /** 缩进大小 */
@@ -179,8 +194,11 @@ export interface ApiConfig {
 
   /** 目标语言 */
   target: 'javascript' | 'typescript';
-  /** 路径前缀 */
-  pathPrefix: string;
+  /**
+   * @description 路径转换函数（已规范化，恒为函数）。
+   * 接收原始 path，返回转换后的 path。
+   */
+  pathPrefix: (path: string) => string;
   /** 输出目录 */
   outputDir: string;
   /** 缩进大小 */

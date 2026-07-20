@@ -89,4 +89,10 @@ export enum ErrorCode {
    * @example 当生成 Zod Schema 出错时抛出此错误
    */
   GENERATE_SCHEMA_ERROR = 'E3004',
+
+  /**
+   * @description 路径转换失败
+   * @example 当 pathPrefix 函数抛错或返回非字符串时抛出此错误
+   */
+  GENERATE_PATH_TRANSFORM_ERROR = 'E3005',
 }

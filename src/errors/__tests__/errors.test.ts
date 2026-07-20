@@ -54,9 +54,9 @@ describe('ErrorCode', () => {
     expect(ErrorCode.GENERATE_SCHEMA_ERROR).toBe('E3004');
   });
 
-  it('should have exactly 14 enum members', () => {
+  it('should have exactly 15 enum members', () => {
     const keys = Object.keys(ErrorCode).filter((k) => isNaN(Number(k)));
-    expect(keys).toHaveLength(14);
+    expect(keys).toHaveLength(15);
   });
 });
 
@@ -575,5 +575,27 @@ describe('withErrorHandling', () => {
     // When verbose is true, handleError calls logger.error multiple times for Error
     expect(logger.error).toHaveBeenCalledTimes(4);
     expect(exitSpy).toHaveBeenCalledWith(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ErrorFactory.pathTransformError
+// ---------------------------------------------------------------------------
+describe('ErrorFactory.pathTransformError', () => {
+  it('应创建带原始 path 和消息的 GenerateError', () => {
+    const error = ErrorFactory.pathTransformError('/users', '处理失败');
+    expect(error).toBeInstanceOf(GenerateError);
+    expect(error.message).toContain('/users');
+    expect(error.message).toContain('处理失败');
+    expect(error.code).toBe(ErrorCode.GENERATE_PATH_TRANSFORM_ERROR);
+    expect(error.solutions).toHaveLength(1);
+    expect(error.solutions[0].title).toBe('检查 pathPrefix 函数实现');
+    expect(error.originalError).toBeUndefined();
+  });
+
+  it('应保留原始错误对象', () => {
+    const original = new Error('boom');
+    const error = ErrorFactory.pathTransformError('/users', '函数抛出异常', original);
+    expect(error.originalError).toBe(original);
   });
 });

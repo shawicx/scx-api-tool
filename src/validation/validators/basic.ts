@@ -171,16 +171,20 @@ export function validateStringFields(config: UserConfig): ValidationError[] {
     }
   }
 
-  // 验证 pathPrefix
-  if (config.pathPrefix !== undefined) {
-    if (typeof config.pathPrefix !== 'string') {
+  // 验证 pathPrefix（0.6.0 起仅接受函数；string 等已硬废弃）
+  if (config.pathPrefix !== undefined && config.pathPrefix !== null) {
+    if (typeof config.pathPrefix !== 'function') {
       errors.push(
         createValidationError(
           'pathPrefix',
-          'INVALID_STRING',
-          'pathPrefix 必须是字符串',
+          'INVALID_PATH_PREFIX_TYPE',
+          `pathPrefix 必须是函数，当前类型: ${typeof config.pathPrefix}`,
           ValidationSeverity.ERROR,
-          'pathPrefix 应该是字符串，如果不使用路径前缀请删除此配置项',
+          'pathPrefix 字符串形式已在 0.6.0 版本废弃，请迁移为函数形式：\n' +
+            '  // 去除前缀\n' +
+            '  pathPrefix: (p) => p.startsWith("/api") ? p.slice(4) : p\n' +
+            '  // 添加前缀\n' +
+            '  pathPrefix: (p) => "/api/v1" + p',
           config.pathPrefix,
         ),
       );

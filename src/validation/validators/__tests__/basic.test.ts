@@ -230,7 +230,7 @@ describe('validateStringFields', () => {
     const config = {
       ...validSwaggerUserConfig,
       outputDir: 'src/service',
-      pathPrefix: 'api',
+      pathPrefix: (p: string) => p,
       prodEnvName: 'production',
       requestFunctionFilePath: 'src/service/request.ts',
       requestFunctionName: 'request',
@@ -267,13 +267,44 @@ describe('validateStringFields', () => {
   });
 
   // pathPrefix
-  it('returns error for non-string pathPrefix', () => {
+  it('returns no error when pathPrefix is undefined', () => {
+    const config = { ...validSwaggerUserConfig };
+    const errors = validateStringFields(config);
+    const pathPrefixErrors = errors.filter((e) => e.field === 'pathPrefix');
+    expect(pathPrefixErrors).toHaveLength(0);
+  });
+
+  it('returns no error when pathPrefix is a function', () => {
+    const config = { ...validSwaggerUserConfig, pathPrefix: (p: string) => p };
+    const errors = validateStringFields(config);
+    const pathPrefixErrors = errors.filter((e) => e.field === 'pathPrefix');
+    expect(pathPrefixErrors).toHaveLength(0);
+  });
+
+  it('returns ERROR for string pathPrefix (deprecated in 0.6.0)', () => {
+    const config = { ...validSwaggerUserConfig, pathPrefix: '/api' as any };
+    const errors = validateStringFields(config);
+    const pathPrefixError = errors.find((e) => e.field === 'pathPrefix');
+    expect(pathPrefixError).toBeDefined();
+    expect(pathPrefixError!.severity).toBe('error');
+    expect(pathPrefixError!.code).toBe('INVALID_PATH_PREFIX_TYPE');
+    expect(pathPrefixError!.message).toMatch(/函数/);
+  });
+
+  it('returns ERROR for number pathPrefix', () => {
     const config = { ...validSwaggerUserConfig, pathPrefix: 123 as any };
     const errors = validateStringFields(config);
+    const pathPrefixError = errors.find((e) => e.field === 'pathPrefix');
+    expect(pathPrefixError).toBeDefined();
+    expect(pathPrefixError!.code).toBe('INVALID_PATH_PREFIX_TYPE');
+  });
 
-    expect(errors).toHaveLength(1);
-    expect(errors[0]!.field).toBe('pathPrefix');
-    expect(errors[0]!.code).toBe('INVALID_STRING');
+  it('returns ERROR for object pathPrefix', () => {
+    const config = { ...validSwaggerUserConfig, pathPrefix: { x: 1 } as any };
+    const errors = validateStringFields(config);
+    const pathPrefixError = errors.find((e) => e.field === 'pathPrefix');
+    expect(pathPrefixError).toBeDefined();
+    expect(pathPrefixError!.code).toBe('INVALID_PATH_PREFIX_TYPE');
   });
 
   // prodEnvName

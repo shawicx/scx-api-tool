@@ -69,39 +69,6 @@ export function validateConfigLogic(config: UserConfig): ValidationError[] {
     );
   }
 
-  // 验证 pathPrefix 的使用
-  if (config.pathPrefix && config.pathPrefix.trim() !== '') {
-    const trimmedPrefix = config.pathPrefix.trim();
-
-    // 检查是否以 / 开头
-    if (trimmedPrefix.startsWith('/')) {
-      errors.push(
-        createValidationError(
-          'pathPrefix',
-          'INVALID_PATH_PREFIX',
-          'pathPrefix 不应该以 / 开头',
-          ValidationSeverity.WARNING,
-          'pathPrefix 会自动添加，不需要包含前导 /，例如: "api" 而不是 "/api"',
-          config.pathPrefix,
-        ),
-      );
-    }
-
-    // 检查是否以 / 结尾
-    if (trimmedPrefix.endsWith('/')) {
-      errors.push(
-        createValidationError(
-          'pathPrefix',
-          'INVALID_PATH_PREFIX',
-          'pathPrefix 不应该以 / 结尾',
-          ValidationSeverity.WARNING,
-          'pathPrefix 会自动处理路径分隔符，不需要包含尾部 /',
-          config.pathPrefix,
-        ),
-      );
-    }
-  }
-
   // 验证 requestFunctionName 和 requestMethodsObjectName 的命名冲突
   if (
     config.requestFunctionName &&

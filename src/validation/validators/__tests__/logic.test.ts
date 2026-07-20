@@ -118,75 +118,6 @@ describe('validateConfigLogic', () => {
     });
   });
 
-  // --- pathPrefix slash checks ---
-  describe('pathPrefix slash validation', () => {
-    it('returns WARNING when pathPrefix starts with /', () => {
-      const config: UserConfig = {
-        ...validSwaggerUserConfig,
-        pathPrefix: '/api',
-      };
-      const errors = validateConfigLogic(config);
-
-      const prefixError = errors.find(
-        (e) => e.code === 'INVALID_PATH_PREFIX' && e.message.includes('开头'),
-      );
-      expect(prefixError).toBeDefined();
-      expect(prefixError!.severity).toBe(ValidationSeverity.WARNING);
-    });
-
-    it('returns WARNING when pathPrefix ends with /', () => {
-      const config: UserConfig = {
-        ...validSwaggerUserConfig,
-        pathPrefix: 'api/',
-      };
-      const errors = validateConfigLogic(config);
-
-      const prefixError = errors.find(
-        (e) => e.code === 'INVALID_PATH_PREFIX' && e.message.includes('结尾'),
-      );
-      expect(prefixError).toBeDefined();
-      expect(prefixError!.severity).toBe(ValidationSeverity.WARNING);
-    });
-
-    it('returns two warnings when pathPrefix both starts and ends with /', () => {
-      const config: UserConfig = {
-        ...validSwaggerUserConfig,
-        pathPrefix: '/api/',
-      };
-      const errors = validateConfigLogic(config);
-
-      const prefixErrors = errors.filter((e) => e.code === 'INVALID_PATH_PREFIX');
-      expect(prefixErrors).toHaveLength(2);
-    });
-
-    it('returns no warning for pathPrefix without leading or trailing slash', () => {
-      const config: UserConfig = {
-        ...validSwaggerUserConfig,
-        pathPrefix: 'api',
-      };
-      const errors = validateConfigLogic(config);
-
-      expect(errors.filter((e) => e.code === 'INVALID_PATH_PREFIX')).toHaveLength(0);
-    });
-
-    it('returns no warning when pathPrefix is undefined', () => {
-      const config: UserConfig = { ...validSwaggerUserConfig };
-      const errors = validateConfigLogic(config);
-
-      expect(errors.filter((e) => e.code === 'INVALID_PATH_PREFIX')).toHaveLength(0);
-    });
-
-    it('returns no warning when pathPrefix is empty string', () => {
-      const config: UserConfig = {
-        ...validSwaggerUserConfig,
-        pathPrefix: '',
-      };
-      const errors = validateConfigLogic(config);
-
-      expect(errors.filter((e) => e.code === 'INVALID_PATH_PREFIX')).toHaveLength(0);
-    });
-  });
-
   // --- Naming conflict ---
   describe('requestFunctionName and requestMethodsObjectName conflict', () => {
     it('returns ERROR when requestFunctionName equals requestMethodsObjectName', () => {
@@ -357,17 +288,13 @@ describe('validateConfigLogic', () => {
         ...validSwaggerUserConfig,
         generateApi: false,
         generateTypes: false,
-        pathPrefix: '/api/',
         requestFunctionName: 'same',
         requestMethodsObjectName: 'same',
       } as UserConfig;
       const errors = validateConfigLogic(config);
 
-      expect(errors.length).toBeGreaterThanOrEqual(3);
+      expect(errors.length).toBeGreaterThanOrEqual(2);
       expect(errors.some((e) => e.code === 'NO_GENERATION_MODE')).toBe(true);
-      expect(errors.filter((e) => e.code === 'INVALID_PATH_PREFIX').length).toBeGreaterThanOrEqual(
-        2,
-      );
       expect(errors.some((e) => e.code === 'NAMING_CONFLICT')).toBe(true);
     });
   });
