@@ -92,7 +92,7 @@ export enum ErrorCode {
 
   /**
    * @description 路径转换失败
-   * @example 当 pathPrefix 函数抛错或返回非字符串时抛出此错误
+   * @example 当 transformPath 函数抛错或返回非字符串时抛出此错误
    */
   GENERATE_PATH_TRANSFORM_ERROR = 'E3005',
 }

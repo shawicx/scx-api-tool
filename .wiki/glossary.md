@@ -159,14 +159,14 @@ OpenAPI 规范使用 `$ref`（如 `#/components/schemas/User`）引用共享 Sch
 - 数组包装
 - 嵌套对象
 
-### pathPrefix（路径转换函数）
+### transformPath（路径转换函数）
 
 一个接收原始 path 并返回转换后 path 的函数（类型：`(path: string) => string`，默认：`(p) => p` 恒等函数）。可用于添加前缀、去除前缀、正则替换等任意路径变换。当前端使用的路径与 API 定义不同时非常有用。
 
 示例：
 
-- 去除前缀：`pathPrefix: (p) => p.startsWith('/api') ? p.slice(4) : p`
-- 添加前缀：`pathPrefix: (p) => '/api/v1' + p`
+- 去除前缀：`transformPath: (p) => p.startsWith('/api') ? p.slice(4) : p`
+- 添加前缀：`transformPath: (p) => '/api/v1' + p`
 
 > ⚠️ 字符串形式已在 0.6.0 版本废弃，必须使用函数形式。
 

@@ -589,7 +589,7 @@ describe('ErrorFactory.pathTransformError', () => {
     expect(error.message).toContain('处理失败');
     expect(error.code).toBe(ErrorCode.GENERATE_PATH_TRANSFORM_ERROR);
     expect(error.solutions).toHaveLength(1);
-    expect(error.solutions[0].title).toBe('检查 pathPrefix 函数实现');
+    expect(error.solutions[0].title).toBe('检查 transformPath 函数实现');
     expect(error.originalError).toBeUndefined();
   });
 

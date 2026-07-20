@@ -31,8 +31,6 @@ const PATH_PATTERNS = {
   removeParams: /\{[^}]+\}/g,
   /** 移除开头的斜杠 */
   leadingSlash: /^\//,
-  /** 移除 api 前缀 */
-  apiPrefix: /^api-?/i,
   /** 斜杠转短横线 */
   slashToDash: /\//g,
   /** 移除前导/尾随短横线 */
@@ -44,12 +42,12 @@ const PATH_PATTERNS = {
 /**
  * @description 路径信息提取器
  * 将原始路径解析为结构化信息，供命名策略使用
- * @param path 原始路径（如 /api/users/{id}）
+ * @param path 原始路径（如 /users/{id}）
  * @returns 处理后的路径信息
  *
  * @example
  * ```typescript
- * const info = extractPathInfo('/api/users/{id}');
+ * const info = extractPathInfo('/users/{id}');
  * // {
  * //   pascalCasePathName: 'Users',
  * //   paramsPart: 'ById',
@@ -65,7 +63,6 @@ function extractPathInfo(path: string): ProcessedPathInfo {
   let pathName = path.replace(PATH_PATTERNS.removeParams, '');
   pathName = pathName
     .replace(PATH_PATTERNS.leadingSlash, '') // 移除开头的 /
-    .replace(PATH_PATTERNS.apiPrefix, '') // 移除开头的 api- 或 api/
     .replace(PATH_PATTERNS.slashToDash, '-') // / → -
     .replace(PATH_PATTERNS.trailingDashes, ''); // 移除前导/尾随 -
 
@@ -107,7 +104,7 @@ export const defaultNamingStrategy: Required<NamingStrategy> = {
   /**
    * @description 默认接口名称生成
    * 格式：Method + Path + Parameters
-   * 例如：GET /users/{id} → GetUsersById
+   * 例如：GET /api/users/{id} → GetApiUsersById
    */
   interfaceName: (ctx: NamingContext): string => {
     const { path, method } = ctx;
@@ -124,8 +121,8 @@ export const defaultNamingStrategy: Required<NamingStrategy> = {
 
   /**
    * @description 默认函数名称生成
-   * 格式：method + Path + Parameters + Api
-   * 例如：GET /api/users/{id} → getUsersByIdApi
+   * 格式：method + Path + Parameters + Func
+   * 例如：GET /api/users/{id} → getApiUsersByIdFunc
    */
   functionName: (ctx: NamingContext): string => {
     const { path, method } = ctx;

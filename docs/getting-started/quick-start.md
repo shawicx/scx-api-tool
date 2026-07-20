@@ -315,14 +315,14 @@ export default defineConfig({
 });
 ```
 
-### 自定义路径前缀
+### 自定义路径转换
 
 ```typescript
 export default defineConfig({
   source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
   token: 'APS-YourAccessTokenHere',
 
-  pathPrefix: (p) => '/api/v1' + p,
+  transformPath: (p) => '/api/v1' + p,
 });
 ```
 

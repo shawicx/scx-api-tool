@@ -27,28 +27,28 @@ describe('defaultNamingStrategy', () => {
       const ctx = createNamingContext({ path: '/api/users', method: 'GET' });
       const result = defaultNamingStrategy.interfaceName(ctx);
 
-      expect(result).toBe('GetUsers');
+      expect(result).toBe('GetApiUsers');
     });
 
     it('should generate interface name with path parameter', () => {
       const ctx = createNamingContext({ path: '/api/users/{id}', method: 'GET' });
       const result = defaultNamingStrategy.interfaceName(ctx);
 
-      expect(result).toBe('GetUsersById');
+      expect(result).toBe('GetApiUsersById');
     });
 
     it('should generate interface name for POST method', () => {
       const ctx = createNamingContext({ path: '/api/users', method: 'POST' });
       const result = defaultNamingStrategy.interfaceName(ctx);
 
-      expect(result).toBe('PostUsers');
+      expect(result).toBe('PostApiUsers');
     });
 
     it('should generate interface name for DELETE method', () => {
       const ctx = createNamingContext({ path: '/api/users/{id}', method: 'DELETE' });
       const result = defaultNamingStrategy.interfaceName(ctx);
 
-      expect(result).toBe('DeleteUsersById');
+      expect(result).toBe('DeleteApiUsersById');
     });
 
     it('should handle nested paths', () => {
@@ -58,15 +58,7 @@ describe('defaultNamingStrategy', () => {
       });
       const result = defaultNamingStrategy.interfaceName(ctx);
 
-      expect(result).toBe('GetUsersPostsByUserIdByPostId');
-    });
-
-    it('should strip api prefix from path', () => {
-      const ctx = createNamingContext({ path: '/api/v1/products', method: 'GET' });
-      const result = defaultNamingStrategy.interfaceName(ctx);
-
-      // api prefix is stripped, leaving v1/products
-      expect(result).toBe('GetV1Products');
+      expect(result).toBe('GetApiUsersPostsByUserIdByPostId');
     });
   });
 
@@ -75,7 +67,7 @@ describe('defaultNamingStrategy', () => {
       const ctx = createNamingContext({ path: '/api/users', method: 'GET' });
       const result = defaultNamingStrategy.functionName(ctx);
 
-      expect(result).toBe('getUsersFunc');
+      expect(result).toBe('getApiUsersFunc');
     });
 
     it('should generate function name with path parameter', () => {
@@ -83,14 +75,14 @@ describe('defaultNamingStrategy', () => {
       const result = defaultNamingStrategy.functionName(ctx);
 
       // 正确提取参数名 "id" 并生成 "ById"
-      expect(result).toBe('getUsersByIdFunc');
+      expect(result).toBe('getApiUsersByIdFunc');
     });
 
     it('should generate function name for POST method', () => {
       const ctx = createNamingContext({ path: '/api/users', method: 'POST' });
       const result = defaultNamingStrategy.functionName(ctx);
 
-      expect(result).toBe('postUsersFunc');
+      expect(result).toBe('postApiUsersFunc');
     });
 
     it('should generate function name for DELETE with parameter', () => {
@@ -98,7 +90,7 @@ describe('defaultNamingStrategy', () => {
       const result = defaultNamingStrategy.functionName(ctx);
 
       // 正确提取参数名 "id" 并生成 "ById"
-      expect(result).toBe('deleteUsersByIdFunc');
+      expect(result).toBe('deleteApiUsersByIdFunc');
     });
   });
 
@@ -107,14 +99,14 @@ describe('defaultNamingStrategy', () => {
       const ctx = createNamingContext({ path: '/api/users', method: 'GET' });
       const result = defaultNamingStrategy.requestTypeName(ctx);
 
-      expect(result).toBe('GetUsersRequestType');
+      expect(result).toBe('GetApiUsersRequestType');
     });
 
     it('should append RequestType to interface name with parameter', () => {
       const ctx = createNamingContext({ path: '/api/users/{id}', method: 'GET' });
       const result = defaultNamingStrategy.requestTypeName(ctx);
 
-      expect(result).toBe('GetUsersByIdRequestType');
+      expect(result).toBe('GetApiUsersByIdRequestType');
     });
   });
 
@@ -140,9 +132,9 @@ describe('applyNamingStrategy', () => {
     const ctx = createNamingContext({ path: '/api/users', method: 'GET' });
     const result = applyNamingStrategy(ctx);
 
-    expect(result.interfaceName).toBe('GetUsers');
-    expect(result.functionName).toBe('getUsersFunc');
-    expect(result.requestTypeName).toBe('GetUsersRequestType');
+    expect(result.interfaceName).toBe('GetApiUsers');
+    expect(result.functionName).toBe('getApiUsersFunc');
+    expect(result.requestTypeName).toBe('GetApiUsersRequestType');
     expect(result.responseTypeName).toBe('GetUsersResult');
   });
 
@@ -156,7 +148,7 @@ describe('applyNamingStrategy', () => {
 
     expect(result.interfaceName).toBe('CustomInterface');
     // Other fields still use defaults
-    expect(result.functionName).toBe('getUsersFunc');
+    expect(result.functionName).toBe('getApiUsersFunc');
   });
 
   it('should override functionName with custom strategy', () => {
@@ -168,7 +160,7 @@ describe('applyNamingStrategy', () => {
     const result = applyNamingStrategy(ctx, customStrategy);
 
     expect(result.functionName).toBe('customApiCall');
-    expect(result.interfaceName).toBe('GetUsers');
+    expect(result.interfaceName).toBe('GetApiUsers');
   });
 
   it('should override requestTypeName with custom strategy', () => {
@@ -192,7 +184,7 @@ describe('applyNamingStrategy', () => {
     const result = applyNamingStrategy(ctx, customStrategy);
 
     expect(result.responseTypeName).toBe('CustomResponse');
-    expect(result.interfaceName).toBe('GetUsers');
+    expect(result.interfaceName).toBe('GetApiUsers');
   });
 
   it('should allow overriding all strategies at once', () => {

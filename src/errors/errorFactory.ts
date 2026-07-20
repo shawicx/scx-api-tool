@@ -474,7 +474,7 @@ export const ErrorFactory = {
    * @example
    * ```typescript
    * try {
-   *   const result = config.pathPrefix(path);
+   *   const result = config.transformPath(path);
    * } catch (e) {
    *   throw ErrorFactory.pathTransformError(path, '处理失败', e);
    * }
@@ -485,9 +485,9 @@ export const ErrorFactory = {
       `路径转换失败 [${path}]: ${message}`,
       [
         {
-          title: '检查 pathPrefix 函数实现',
+          title: '检查 transformPath 函数实现',
           steps: [
-            '确认 pathPrefix 函数对任意 path 都返回 string',
+            '确认 transformPath 函数对任意 path 都返回 string',
             '检查函数内是否有运行时异常（如正则错误、未定义属性访问）',
             '使用 `npx api-power debug` 查看触发异常的具体 path',
           ],

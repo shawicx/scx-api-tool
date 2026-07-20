@@ -2,21 +2,11 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-### [0.6.1](https://github.com/shawicx/scx-api-tool/compare/v0.5.4...v0.6.1) (2026-07-20)
-
-### Features
-
-- pathPrefix 配置项改为函数形式以支持自定义路径变换 ([ac72948](https://github.com/shawicx/scx-api-tool/commit/ac72948156982cdd08aa9d2e22e4f534e23b8a82))
-
-### Bug Fixes
-
-- 依赖 ([a986c53](https://github.com/shawicx/scx-api-tool/commit/a986c5388f9fc0a29c0d949d019dbe8f1d5d1c06))
-
 ## [0.6.0] - 2026-07-20
 
 ### ⚠️ Breaking Changes
 
-- **`pathPrefix` 配置项函数化**：`pathPrefix` 不再接受字符串形式，改为只接受函数 `(path: string) => string`。
+- **`transformPath` 配置项函数化**：`transformPath`（原 `pathPrefix`）不再接受字符串形式，改为只接受函数 `(path: string) => string`。同时配置项由 `pathPrefix` 重命名为 `transformPath`，以更准确反映其"路径转换函数"的语义。
 
   **迁移指南**：
 
@@ -25,20 +15,22 @@ All notable changes to this project will be documented in this file. See [standa
   pathPrefix: '/api',
 
   // 0.6.0 - 去除前缀
-  pathPrefix: (p) => (p.startsWith('/api') ? p.slice(4) : p),
+  transformPath: (p) => (p.startsWith('/api') ? p.slice(4) : p),
 
   // 0.6.0 - 添加前缀
-  pathPrefix: (p) => '/api/v1' + p,
+  transformPath: (p) => '/api/v1' + p,
 
   // 0.6.0 - 不做修改（删除配置项即可，默认为恒等函数）
   ```
 
   当传入字符串时会抛出 `E1002 CONFIG_INVALID` 错误，错误消息包含迁移示例。
 
+- **命名策略不再隐式剥离 `api` 前缀**：移除了 `extractPathInfo` 中自动剥离路径开头的 `api`/`api-` 前缀的逻辑。此前逻辑会让 `/api/users` 和 `/users` 生成相同的函数名（如 `getUsersFunc`），但与 URL 字符串不一致。移除后，路径中的所有段都会参与命名（`/api/users` → `getApiUsersFunc`），URL 与命名保持一致。如需保持旧行为，请显式配置 `transformPath: (p) => p.replace(/^\/api/, '')`。
+
 ### Features
 
-- `pathPrefix` 支持任意路径变换函数，可同时实现"加前缀"和"去前缀"以及更复杂的正则替换、条件分支等。
-- 新增错误码 `E3005 GENERATE_PATH_TRANSFORM_ERROR`：当 `pathPrefix` 函数抛错或返回非字符串时抛出。
+- `transformPath` 支持任意路径变换函数，可同时实现"加前缀"和"去前缀"以及更复杂的正则替换、条件分支等。
+- 新增错误码 `E3005 GENERATE_PATH_TRANSFORM_ERROR`：当 `transformPath` 函数抛错或返回非字符串时抛出。
 - 新增 `ErrorFactory.pathTransformError(path, message, originalError?)` 工厂方法。
 
 ### Bug Fixes
@@ -48,8 +40,8 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Documentation
 
-- 重写所有 `pathPrefix` 相关文档（configuration.md / quick-start.md / README.md / glossary.md），统一为函数式描述，补充三个示例（去除前缀/添加前缀/正则替换）。
-- 文档中新增"函数命名副作用"和"硬编码 baseURL"的注意事项。
+- 重写所有 `transformPath` 相关文档（configuration.md / quick-start.md / README.md / glossary.md），统一为函数式描述，补充三个示例（去除前缀/添加前缀/正则替换）。
+- 文档中新增"硬编码 baseURL"的注意事项。
 
 ### [0.5.4](https://github.com/shawicx/scx-api-tool/compare/v0.5.3...v0.5.4) (2026-07-12)
 

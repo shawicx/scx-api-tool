@@ -120,11 +120,11 @@ describe('processOpenApiData', () => {
     });
   });
 
-  describe('with pathPrefix (function form)', () => {
+  describe('with transformPath (function form)', () => {
     it('恒等函数应保留原始路径', () => {
       const configWithIdentity = {
         ...minimalApiConfig,
-        pathPrefix: (p: string) => p,
+        transformPath: (p: string) => p,
       };
       const result = processOpenApiData(mockOpenApiDocument, configWithIdentity);
 
@@ -136,7 +136,7 @@ describe('processOpenApiData', () => {
     it('去除前缀函数应剥掉匹配的前缀', () => {
       const configWithStrip = {
         ...minimalApiConfig,
-        pathPrefix: (p: string) => (p.startsWith('/api') ? p.slice(4) : p),
+        transformPath: (p: string) => (p.startsWith('/api') ? p.slice(4) : p),
       };
       const result = processOpenApiData(mockOpenApiDocument, configWithStrip);
 
@@ -149,7 +149,7 @@ describe('processOpenApiData', () => {
     it('添加前缀函数应给所有路径加上前缀', () => {
       const configWithAdd = {
         ...minimalApiConfig,
-        pathPrefix: (p: string) => `/v2${p}`,
+        transformPath: (p: string) => `/v2${p}`,
       };
       const result = processOpenApiData(mockOpenApiDocument, configWithAdd);
 
@@ -161,7 +161,7 @@ describe('processOpenApiData', () => {
     it('正则替换函数应正确替换路径', () => {
       const configWithRegex = {
         ...minimalApiConfig,
-        pathPrefix: (p: string) => p.replace(/^\/api/, '/v1'),
+        transformPath: (p: string) => p.replace(/^\/api/, '/v1'),
       };
       const result = processOpenApiData(mockOpenApiDocument, configWithRegex);
 
@@ -173,7 +173,7 @@ describe('processOpenApiData', () => {
     it('函数抛错时应抛 E3005 GenerateError', () => {
       const configWithThrow = {
         ...minimalApiConfig,
-        pathPrefix: () => {
+        transformPath: () => {
           throw new Error('boom');
         },
       };
@@ -191,7 +191,7 @@ describe('processOpenApiData', () => {
     it('函数返回非字符串时应抛 E3005 GenerateError', () => {
       const configWithBadReturn = {
         ...minimalApiConfig,
-        pathPrefix: (() => 123) as any,
+        transformPath: (() => 123) as any,
       };
       expect(() => processOpenApiData(mockOpenApiDocument, configWithBadReturn)).toThrow(
         /必须返回 string|返回类型/,
@@ -206,7 +206,7 @@ describe('processOpenApiData', () => {
     it('函数返回空字符串应是合法的', () => {
       const configWithEmpty = {
         ...minimalApiConfig,
-        pathPrefix: () => '',
+        transformPath: () => '',
       };
       const result = processOpenApiData(mockOpenApiDocument, configWithEmpty);
 
@@ -218,7 +218,7 @@ describe('processOpenApiData', () => {
       const original = new TypeError('regex failed');
       const configWithTypedErr = {
         ...minimalApiConfig,
-        pathPrefix: () => {
+        transformPath: () => {
           throw original;
         },
       };

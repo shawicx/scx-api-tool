@@ -25,8 +25,8 @@ export default defineConfig({
   // 目标语言
   target: 'typescript',
   // 路径转换函数（可选，默认恒等函数）
-  // pathPrefix: (p) => p.startsWith('/api') ? p.slice(4) : p,  // 去除前缀
-  // pathPrefix: (p) => '/api/v1' + p,  // 添加前缀
+  // transformPath: (p) => p.startsWith('/api') ? p.slice(4) : p,  // 去除前缀
+  // transformPath: (p) => '/api/v1' + p,  // 添加前缀
   // 输出目录
   outputDir: 'src/service',
   // 缩进大小

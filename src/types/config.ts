@@ -131,16 +131,16 @@ export interface UserConfig {
    * @example
    * ```typescript
    * // 去除前缀
-   * pathPrefix: (p) => p.startsWith('/api') ? p.slice(4) : p
+   * transformPath: (p) => p.startsWith('/api') ? p.slice(4) : p
    *
    * // 添加前缀
-   * pathPrefix: (p) => '/api/v1' + p
+   * transformPath: (p) => '/api/v1' + p
    *
    * // 正则替换
-   * pathPrefix: (p) => p.replace(/^\/v\d+/, '')
+   * transformPath: (p) => p.replace(/^\/v\d+/, '')
    * ```
    */
-  pathPrefix?: (path: string) => string;
+  transformPath?: (path: string) => string;
   /** 输出目录 */
   outputDir?: string;
   /** 缩进大小 */
@@ -198,7 +198,7 @@ export interface ApiConfig {
    * @description 路径转换函数（已规范化，恒为函数）。
    * 接收原始 path，返回转换后的 path。
    */
-  pathPrefix: (path: string) => string;
+  transformPath: (path: string) => string;
   /** 输出目录 */
   outputDir: string;
   /** 缩进大小 */

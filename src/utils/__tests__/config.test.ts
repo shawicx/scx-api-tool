@@ -327,7 +327,7 @@ describe('PRESETS', () => {
   });
 });
 
-describe('defineConfig - pathPrefix normalization', () => {
+describe('defineConfig - transformPath normalization', () => {
   const baseConfig = {
     source: 'https://petstore.swagger.io/v2/swagger.json',
     token: 'x',
@@ -335,62 +335,62 @@ describe('defineConfig - pathPrefix normalization', () => {
 
   it('undefined 时注入恒等函数', () => {
     const config = defineConfig(baseConfig);
-    expect(typeof config.pathPrefix).toBe('function');
-    expect(config.pathPrefix('/users')).toBe('/users');
-    expect(config.pathPrefix('/api/users')).toBe('/api/users');
+    expect(typeof config.transformPath).toBe('function');
+    expect(config.transformPath('/users')).toBe('/users');
+    expect(config.transformPath('/api/users')).toBe('/api/users');
   });
 
   it('null 时注入恒等函数', () => {
-    const config = defineConfig({ ...baseConfig, pathPrefix: null as any });
-    expect(typeof config.pathPrefix).toBe('function');
-    expect(config.pathPrefix('/users')).toBe('/users');
+    const config = defineConfig({ ...baseConfig, transformPath: null as any });
+    expect(typeof config.transformPath).toBe('function');
+    expect(config.transformPath('/users')).toBe('/users');
   });
 
   it('function 时透传', () => {
     const fn = (p: string) => `/api${p}`;
-    const config = defineConfig({ ...baseConfig, pathPrefix: fn });
-    expect(config.pathPrefix).toBe(fn);
-    expect(config.pathPrefix('/users')).toBe('/api/users');
+    const config = defineConfig({ ...baseConfig, transformPath: fn });
+    expect(config.transformPath).toBe(fn);
+    expect(config.transformPath('/users')).toBe('/api/users');
   });
 
   it('string 时抛 ConfigError (E1002)', () => {
-    expect(() => defineConfig({ ...baseConfig, pathPrefix: '/api' as any })).toThrow(
-      /pathPrefix|函数|实际类型为 string/,
+    expect(() => defineConfig({ ...baseConfig, transformPath: '/api' as any })).toThrow(
+      /transformPath|函数|实际类型为 string/,
     );
     try {
-      defineConfig({ ...baseConfig, pathPrefix: '/api' as any });
+      defineConfig({ ...baseConfig, transformPath: '/api' as any });
     } catch (e: any) {
       expect(e.code).toBe('E1002');
     }
   });
 
   it('number 时抛 ConfigError (E1002)', () => {
-    expect(() => defineConfig({ ...baseConfig, pathPrefix: 123 as any })).toThrow(
-      /pathPrefix|函数|实际类型为 number/,
+    expect(() => defineConfig({ ...baseConfig, transformPath: 123 as any })).toThrow(
+      /transformPath|函数|实际类型为 number/,
     );
   });
 
   it('对象时抛 ConfigError (E1002)', () => {
-    expect(() => defineConfig({ ...baseConfig, pathPrefix: { x: 1 } as any })).toThrow(
-      /pathPrefix|函数|实际类型为 object/,
+    expect(() => defineConfig({ ...baseConfig, transformPath: { x: 1 } as any })).toThrow(
+      /transformPath|函数|实际类型为 object/,
     );
   });
 
   it('数组时抛 ConfigError (E1002)', () => {
-    expect(() => defineConfig({ ...baseConfig, pathPrefix: [] as any })).toThrow(
-      /pathPrefix|函数|实际类型为 array|实际类型为 object/,
+    expect(() => defineConfig({ ...baseConfig, transformPath: [] as any })).toThrow(
+      /transformPath|函数|实际类型为 array|实际类型为 object/,
     );
   });
 
   it('错误消息包含迁移示例', () => {
     try {
-      defineConfig({ ...baseConfig, pathPrefix: '/api' as any });
+      defineConfig({ ...baseConfig, transformPath: '/api' as any });
       throw new Error('should have thrown');
     } catch (e: any) {
       expect(e.message).toMatch(/字符串形式.*废弃|string.*废弃|已废弃/);
       // solutions 字段应包含迁移示例
       const steps = (e.solutions || []).flatMap((s: any) => s.steps || []);
-      expect(steps.some((s: string) => s.includes('pathPrefix:'))).toBe(true);
+      expect(steps.some((s: string) => s.includes('transformPath:'))).toBe(true);
     }
   });
 });

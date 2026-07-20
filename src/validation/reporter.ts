@@ -110,7 +110,7 @@ function displayError(error: ValidationError, index: number): void {
  * @example
  * ```typescript
  * displayWarning(warning, 1);
- * // 输出：1. source: 路径前缀不应该以 / 开头
+ * // 输出：1. source: 配置项不应该以 / 开头
  * ```
  */
 function displayWarning(warning: ValidationError, index: number): void {

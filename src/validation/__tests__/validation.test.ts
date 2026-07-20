@@ -66,14 +66,14 @@ describe('createValidationError', () => {
 
   it('creates a warning-level error', () => {
     const error = createValidationError(
-      'pathPrefix',
+      'transformPath',
       'INVALID_PATH_PREFIX',
-      'pathPrefix 不应该以 / 开头',
+      'transformPath 不应该以 / 开头',
       ValidationSeverity.WARNING,
     );
 
     expect(error.severity).toBe(ValidationSeverity.WARNING);
-    expect(error.field).toBe('pathPrefix');
+    expect(error.field).toBe('transformPath');
     expect(error.code).toBe('INVALID_PATH_PREFIX');
   });
 

@@ -136,7 +136,7 @@ export const minimalApiConfig: ApiConfig = {
   generateTypes: true,
   typesFormat: 'typescript',
   target: 'typescript',
-  pathPrefix: (p: string) => p,
+  transformPath: (p: string) => p,
   outputDir: 'src/service',
   indentSize: 2,
   comment: true,

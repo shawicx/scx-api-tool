@@ -71,13 +71,13 @@ export default defineConfig({
 
 ### 代码生成选项
 
-| 配置项        | 类型                       | 默认值         | 说明                                        |
-| ------------- | -------------------------- | -------------- | ------------------------------------------- |
-| `indentSize`  | `number`                   | `2`            | 代码缩进大小                                |
-| `comment`     | `boolean`                  | `true`         | 是否生成注释                                |
-| `pathPrefix`  | `(path: string) => string` | `(p) => p`     | 路径转换函数（接收 path 返回转换后的 path） |
-| `prodEnvName` | `string`                   | `'production'` | 生产环境名称                                |
-| `typesFormat` | `'typescript' \| 'zod'`    | `'typescript'` | 类型生成格式                                |
+| 配置项          | 类型                       | 默认值         | 说明                                        |
+| --------------- | -------------------------- | -------------- | ------------------------------------------- |
+| `indentSize`    | `number`                   | `2`            | 代码缩进大小                                |
+| `comment`       | `boolean`                  | `true`         | 是否生成注释                                |
+| `transformPath` | `(path: string) => string` | `(p) => p`     | 路径转换函数（接收 path 返回转换后的 path） |
+| `prodEnvName`   | `string`                   | `'production'` | 生产环境名称                                |
+| `typesFormat`   | `'typescript' \| 'zod'`    | `'typescript'` | 类型生成格式                                |
 
 ### 请求函数配置
 
@@ -168,7 +168,7 @@ export default defineConfig({
   // 代码生成选项
   indentSize: 2,
   comment: true,
-  pathPrefix: (p) => '/api/v1' + p,
+  transformPath: (p) => '/api/v1' + p,
   prodEnvName: 'production',
 
   // 请求函数配置
@@ -243,9 +243,9 @@ export default defineConfig({
 });
 ```
 
-### 自定义路径转换（pathPrefix）
+### 自定义路径转换（transformPath）
 
-`pathPrefix` 是一个**函数**，接收原始 path，返回转换后的 path。可用于添加前缀、去除前缀、正则替换等任意路径变换。
+`transformPath` 是一个**函数**，接收原始 path，返回转换后的 path。可用于添加前缀、去除前缀、正则替换等任意路径变换。
 
 **类型**：`(path: string) => string`
 **默认值**：`(p) => p`（恒等函数，不做任何修改）
@@ -258,25 +258,25 @@ export default defineConfig({
   token: 'APS-YourAccessTokenHere',
 
   // 示例 1：去除前缀（文档是 /api/users，生成代码里是 /users）
-  pathPrefix: (p) => (p.startsWith('/api') ? p.slice(4) : p),
+  transformPath: (p) => (p.startsWith('/api') ? p.slice(4) : p),
 
   // 示例 2：添加前缀（文档是 /users，生成代码里调用 /api/v1/users）
-  // pathPrefix: (p) => '/api/v1' + p,
+  // transformPath: (p) => '/api/v1' + p,
 
   // 示例 3：正则替换（去除版本号前缀）
-  // pathPrefix: (p) => p.replace(/^\/v\d+/, ''),
+  // transformPath: (p) => p.replace(/^\/v\d+/, ''),
 });
 ```
 
 #### ⚠️ 注意事项
 
-1. **函数命名副作用**：path 也参与生成的函数命名。修改 path 会连带改变生成的函数名（例如 `/api/users` 去除前缀后，函数名从 `getApiUsers` 变为 `getUsers`）。
-2. **关于 baseURL**：本工具生成的 `request.ts` 中硬编码了 axios `baseURL: '/api'`，与 `pathPrefix` 独立工作。如果同时配置了"加前缀"pathPrefix 和硬编码 baseURL，运行时 URL 会双重叠加（如 `/api/api/users`）。如需修改 baseURL，请直接编辑生成的 `request.ts`。
+1. **函数命名副作用**：path 会完整地参与生成的函数命名（路径中的所有段都会出现在函数名里）。修改 path 会连带改变生成的函数名，例如 `/api/users` 会生成 `getApiUsersFunc`，而配置 `transformPath: (p) => p.replace(/^\/api/, '')` 后会生成 `getUsersFunc`。
+2. **关于 baseURL**：本工具生成的 `request.ts` 中硬编码了 axios `baseURL: '/api'`，与 `transformPath` 独立工作。如果同时配置了"加前缀"transformPath 和硬编码 baseURL，运行时 URL 会双重叠加（如 `/api/api/users`）。如需修改 baseURL，请直接编辑生成的 `request.ts`。
 3. **函数必须是纯函数**：不要在函数内部进行副作用操作（如修改全局状态、发起请求）。
 
 #### 错误处理
 
-如果 `pathPrefix` 函数抛出异常或返回非字符串值，生成阶段会抛出 `E3005 GENERATE_PATH_TRANSFORM_ERROR` 错误，包含触发异常的具体 path。
+如果 `transformPath` 函数抛出异常或返回非字符串值，生成阶段会抛出 `E3005 GENERATE_PATH_TRANSFORM_ERROR` 错误，包含触发异常的具体 path。
 
 ### 环境变量配置
 

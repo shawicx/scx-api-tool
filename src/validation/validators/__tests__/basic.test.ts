@@ -230,7 +230,7 @@ describe('validateStringFields', () => {
     const config = {
       ...validSwaggerUserConfig,
       outputDir: 'src/service',
-      pathPrefix: (p: string) => p,
+      transformPath: (p: string) => p,
       prodEnvName: 'production',
       requestFunctionFilePath: 'src/service/request.ts',
       requestFunctionName: 'request',
@@ -266,45 +266,45 @@ describe('validateStringFields', () => {
     expect(errors[0]!.field).toBe('outputDir');
   });
 
-  // pathPrefix
-  it('returns no error when pathPrefix is undefined', () => {
+  // transformPath
+  it('returns no error when transformPath is undefined', () => {
     const config = { ...validSwaggerUserConfig };
     const errors = validateStringFields(config);
-    const pathPrefixErrors = errors.filter((e) => e.field === 'pathPrefix');
-    expect(pathPrefixErrors).toHaveLength(0);
+    const transformPathErrors = errors.filter((e) => e.field === 'transformPath');
+    expect(transformPathErrors).toHaveLength(0);
   });
 
-  it('returns no error when pathPrefix is a function', () => {
-    const config = { ...validSwaggerUserConfig, pathPrefix: (p: string) => p };
+  it('returns no error when transformPath is a function', () => {
+    const config = { ...validSwaggerUserConfig, transformPath: (p: string) => p };
     const errors = validateStringFields(config);
-    const pathPrefixErrors = errors.filter((e) => e.field === 'pathPrefix');
-    expect(pathPrefixErrors).toHaveLength(0);
+    const transformPathErrors = errors.filter((e) => e.field === 'transformPath');
+    expect(transformPathErrors).toHaveLength(0);
   });
 
-  it('returns ERROR for string pathPrefix (deprecated in 0.6.0)', () => {
-    const config = { ...validSwaggerUserConfig, pathPrefix: '/api' as any };
+  it('returns ERROR for string transformPath (deprecated in 0.6.0)', () => {
+    const config = { ...validSwaggerUserConfig, transformPath: '/api' as any };
     const errors = validateStringFields(config);
-    const pathPrefixError = errors.find((e) => e.field === 'pathPrefix');
-    expect(pathPrefixError).toBeDefined();
-    expect(pathPrefixError!.severity).toBe('error');
-    expect(pathPrefixError!.code).toBe('INVALID_PATH_PREFIX_TYPE');
-    expect(pathPrefixError!.message).toMatch(/函数/);
+    const transformPathError = errors.find((e) => e.field === 'transformPath');
+    expect(transformPathError).toBeDefined();
+    expect(transformPathError!.severity).toBe('error');
+    expect(transformPathError!.code).toBe('INVALID_TRANSFORM_PATH_TYPE');
+    expect(transformPathError!.message).toMatch(/函数/);
   });
 
-  it('returns ERROR for number pathPrefix', () => {
-    const config = { ...validSwaggerUserConfig, pathPrefix: 123 as any };
+  it('returns ERROR for number transformPath', () => {
+    const config = { ...validSwaggerUserConfig, transformPath: 123 as any };
     const errors = validateStringFields(config);
-    const pathPrefixError = errors.find((e) => e.field === 'pathPrefix');
-    expect(pathPrefixError).toBeDefined();
-    expect(pathPrefixError!.code).toBe('INVALID_PATH_PREFIX_TYPE');
+    const transformPathError = errors.find((e) => e.field === 'transformPath');
+    expect(transformPathError).toBeDefined();
+    expect(transformPathError!.code).toBe('INVALID_TRANSFORM_PATH_TYPE');
   });
 
-  it('returns ERROR for object pathPrefix', () => {
-    const config = { ...validSwaggerUserConfig, pathPrefix: { x: 1 } as any };
+  it('returns ERROR for object transformPath', () => {
+    const config = { ...validSwaggerUserConfig, transformPath: { x: 1 } as any };
     const errors = validateStringFields(config);
-    const pathPrefixError = errors.find((e) => e.field === 'pathPrefix');
-    expect(pathPrefixError).toBeDefined();
-    expect(pathPrefixError!.code).toBe('INVALID_PATH_PREFIX_TYPE');
+    const transformPathError = errors.find((e) => e.field === 'transformPath');
+    expect(transformPathError).toBeDefined();
+    expect(transformPathError!.code).toBe('INVALID_TRANSFORM_PATH_TYPE');
   });
 
   // prodEnvName

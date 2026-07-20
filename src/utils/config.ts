@@ -28,7 +28,7 @@ const DEFAULT_CONFIG_VALUES: Omit<
   generateTypes: true, // 默认生成类型定义
   typesFormat: 'typescript' as TypesFormat, // 默认使用 TypeScript 格式
   target: 'typescript',
-  pathPrefix: ((p: string) => p) as (path: string) => string,
+  transformPath: ((p: string) => p) as (path: string) => string,
   outputDir: 'src/service',
   indentSize: 2,
   comment: true, // 默认生成注释
@@ -124,22 +124,22 @@ export function parseSourceUrl(source: string): {
 }
 
 /**
- * @description 规范化 pathPrefix：统一为函数形式。
+ * @description 规范化 transformPath：统一为函数形式。
  * - function：透传
  * - undefined/null：注入恒等函数
  * - 其他类型（含 string）：抛 E1002 配置错误（0.6.0 起硬废弃 string 形式）
- * @param value 用户配置的 pathPrefix 值
+ * @param value 用户配置的 transformPath 值
  * @returns 规范化后的函数
  * @throws {ConfigError} 当值为非函数非 undefined/null 时
  *
  * @example
  * ```typescript
- * normalizePathPrefix(undefined)        // 返回恒等函数
- * normalizePathPrefix((p) => '/api'+p)  // 透传
- * normalizePathPrefix('/api')           // 抛 E1002
+ * normalizeTransformPath(undefined)        // 返回恒等函数
+ * normalizeTransformPath((p) => '/api'+p)  // 透传
+ * normalizeTransformPath('/api')           // 抛 E1002
  * ```
  */
-function normalizePathPrefix(value: unknown): (path: string) => string {
+function normalizeTransformPath(value: unknown): (path: string) => string {
   if (value === undefined || value === null) {
     return (p: string) => p;
   }
@@ -148,15 +148,15 @@ function normalizePathPrefix(value: unknown): (path: string) => string {
   }
   const actualType = Array.isArray(value) ? 'array' : typeof value;
   throw ErrorFactory.configInvalid(
-    `pathPrefix 配置无效：期望类型为函数，实际类型为 ${actualType}` +
+    `transformPath 配置无效：期望类型为函数，实际类型为 ${actualType}` +
       `（字符串形式已在 0.6.0 版本废弃）`,
     [
       {
         title: '迁移到函数形式',
         steps: [
-          '去除前缀：pathPrefix: (p) => p.startsWith("/api") ? p.slice(4) : p',
-          '添加前缀：pathPrefix: (p) => "/api/v1" + p',
-          '不做修改：删除 pathPrefix 配置项即可',
+          '去除前缀：transformPath: (p) => p.startsWith("/api") ? p.slice(4) : p',
+          '添加前缀：transformPath: (p) => "/api/v1" + p',
+          '不做修改：删除 transformPath 配置项即可',
         ],
       },
     ],
@@ -215,8 +215,8 @@ export function defineConfig(config: UserConfig): ApiConfig {
     );
   }
 
-  // 规范化 pathPrefix：统一为函数形式（0.6.0 起 string 已硬废弃）
-  finalConfig.pathPrefix = normalizePathPrefix(finalConfig.pathPrefix);
+  // 规范化 transformPath：统一为函数形式（0.6.0 起 string 已硬废弃）
+  finalConfig.transformPath = normalizeTransformPath(finalConfig.transformPath);
 
   return finalConfig;
 }
