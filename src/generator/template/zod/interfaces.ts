@@ -5,7 +5,7 @@
 
 import { compileTemplate } from '../index';
 import { sanitizeTypeName, sanitizePropertyName } from '@/naming';
-import { getRequestBodySchema } from '../../extractor';
+import { getRequestBodySchema, getResponseSchema } from '../../extractor';
 import { generateZodSchemaFromOpenApiSchema, openApiPropertyToZodType } from './types';
 import { escapeJsDocComment } from '@/utils/escape';
 import type { ApiConfig, OpenApiOperation, OpenApiSchema } from '@/types';
@@ -158,9 +158,9 @@ export function generateZodSchemaFromOperation(
       }
     }
   } else {
-    const successResponse = operation.responses?.['200'] || operation.responses?.['201'];
-    if (successResponse?.content?.['application/json']?.schema) {
-      schema = successResponse.content['application/json'].schema;
+    const responseSchema = getResponseSchema(operation);
+    if (responseSchema) {
+      schema = responseSchema.schema;
     }
   }
 

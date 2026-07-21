@@ -9,6 +9,7 @@ import {
   extractResponseProperties,
   extractTypeProperties,
   getPropertyType,
+  getResponseSchema,
   hasRequestBody,
 } from '../extractor';
 import type { OpenApiOperation, OpenApiSchema, ApiProperty } from '@/types';
@@ -484,6 +485,222 @@ describe('extractResponseProperties', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].type).toBe('boolean');
+  });
+
+  // ===== content-type fallback 用例（修复 springdoc 默认输出通配符的 bug）=====
+
+  it('should extract properties when content-type is wildcard (application/json absent)', () => {
+    const processedData = createProcessedApiData();
+    const responses: OpenApiOperation['responses'] = {
+      '200': {
+        description: '成功',
+        content: {
+          '*/*': {
+            schema: { $ref: '#/components/schemas/User' },
+          },
+        },
+      },
+    };
+
+    const result = extractResponseProperties(responses, processedData);
+
+    expect(result).toHaveLength(3);
+    expect(result[0].name).toBe('id');
+    expect(result[1].name).toBe('name');
+    expect(result[2].name).toBe('email');
+  });
+
+  it('should extract properties when content-type is application/xml (fallback to first available)', () => {
+    const processedData = createProcessedApiData();
+    const responses: OpenApiOperation['responses'] = {
+      '200': {
+        description: '成功',
+        content: {
+          'application/xml': {
+            schema: { $ref: '#/components/schemas/User' },
+          },
+        },
+      },
+    };
+
+    const result = extractResponseProperties(responses, processedData);
+
+    expect(result).toHaveLength(3);
+    expect(result[0].name).toBe('id');
+  });
+
+  it('should prefer application/json over wildcard when both exist', () => {
+    const processedData = createProcessedApiData();
+    const responses: OpenApiOperation['responses'] = {
+      '200': {
+        description: '成功',
+        content: {
+          // application/json 指向 User（3 个属性），通配符指向 CreateUserRequest（3 个属性但不同名）
+          'application/json': {
+            schema: { $ref: '#/components/schemas/User' },
+          },
+          '*/*': {
+            schema: { $ref: '#/components/schemas/CreateUserRequest' },
+          },
+        },
+      },
+    };
+
+    const result = extractResponseProperties(responses, processedData);
+
+    // 应取 application/json 的 User（id/name/email），而非通配符的 CreateUserRequest（name/email/age）
+    expect(result.map((p) => p.name)).toEqual(['id', 'name', 'email']);
+  });
+
+  it('should return empty array when success response has empty content', () => {
+    const processedData = createProcessedApiData();
+    const responses: OpenApiOperation['responses'] = {
+      '200': {
+        description: '成功',
+        content: {},
+      },
+    };
+
+    const result = extractResponseProperties(responses, processedData);
+
+    expect(result).toEqual([]);
+  });
+});
+
+// ==================== getResponseSchema ====================
+
+describe('getResponseSchema', () => {
+  it('should return application/json schema when present', () => {
+    const operation: OpenApiOperation = {
+      responses: {
+        '200': {
+          description: '成功',
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/User' } },
+          },
+        },
+      },
+    };
+
+    const result = getResponseSchema(operation);
+
+    expect(result).not.toBeNull();
+    expect(result!.schema).toEqual({ $ref: '#/components/schemas/User' });
+  });
+
+  it('should fall back to wildcard content-type when application/json absent', () => {
+    const operation: OpenApiOperation = {
+      responses: {
+        '200': {
+          description: '成功',
+          content: {
+            '*/*': { schema: { $ref: '#/components/schemas/User' } },
+          },
+        },
+      },
+    };
+
+    const result = getResponseSchema(operation);
+
+    expect(result).not.toBeNull();
+    expect(result!.schema).toEqual({ $ref: '#/components/schemas/User' });
+  });
+
+  it('should fall back to first available content-type when neither json nor wildcard present', () => {
+    const operation: OpenApiOperation = {
+      responses: {
+        '200': {
+          description: '成功',
+          content: {
+            'application/xml': { schema: { type: 'string' } },
+          },
+        },
+      },
+    };
+
+    const result = getResponseSchema(operation);
+
+    expect(result).not.toBeNull();
+    expect(result!.schema).toEqual({ type: 'string' });
+  });
+
+  it('should prefer 200 over 201', () => {
+    const operation: OpenApiOperation = {
+      responses: {
+        '200': {
+          description: 'OK',
+          content: { 'application/json': { schema: { type: 'string' } } },
+        },
+        '201': {
+          description: 'Created',
+          content: { 'application/json': { schema: { type: 'number' } } },
+        },
+      },
+    };
+
+    const result = getResponseSchema(operation);
+
+    expect(result!.schema).toEqual({ type: 'string' });
+  });
+
+  it('should check 201 response when 200 is absent', () => {
+    const operation: OpenApiOperation = {
+      responses: {
+        '201': {
+          description: 'Created',
+          content: { 'application/json': { schema: { type: 'number' } } },
+        },
+      },
+    };
+
+    const result = getResponseSchema(operation);
+
+    expect(result!.schema).toEqual({ type: 'number' });
+  });
+
+  it('should return null when responses is undefined', () => {
+    const operation: OpenApiOperation = {};
+
+    expect(getResponseSchema(operation)).toBeNull();
+  });
+
+  it('should return null when no success response (200/201)', () => {
+    const operation: OpenApiOperation = {
+      responses: {
+        '400': {
+          description: 'Bad Request',
+          content: { 'application/json': { schema: { type: 'string' } } },
+        },
+      },
+    };
+
+    expect(getResponseSchema(operation)).toBeNull();
+  });
+
+  it('should return null when success response has no content', () => {
+    const operation: OpenApiOperation = {
+      responses: {
+        '200': { description: 'OK' },
+      },
+    };
+
+    expect(getResponseSchema(operation)).toBeNull();
+  });
+
+  it('should return null when no media type has a schema', () => {
+    const operation: OpenApiOperation = {
+      responses: {
+        '200': {
+          description: 'OK',
+          content: {
+            'application/json': {},
+            '*/*': {},
+          },
+        },
+      },
+    };
+
+    expect(getResponseSchema(operation)).toBeNull();
   });
 });
 

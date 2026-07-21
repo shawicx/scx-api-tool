@@ -116,6 +116,36 @@ describe('zod/interfaces', () => {
       const result = generateZodSchemaFromOperation(operation, 'response');
       expect(result.code).toBe('z.object({})');
     });
+
+    it('response 200 含通配符 content-type 应返回 {Name}Schema（兼容 springdoc 默认）', () => {
+      const operation: OpenApiOperation = {
+        responses: {
+          '200': {
+            description: 'ok',
+            content: { '*/*': { schema: { $ref: '#/components/schemas/User' } } },
+          },
+        },
+      } as any;
+      const result = generateZodSchemaFromOperation(operation, 'response');
+      expect(result.code).toBe('UserSchema');
+      expect(result.imports).toEqual(['UserSchema']);
+    });
+
+    it('response 同时含 application/json 与通配符应优先取 application/json', () => {
+      const operation: OpenApiOperation = {
+        responses: {
+          '200': {
+            description: 'ok',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/User' } },
+              '*/*': { schema: { $ref: '#/components/schemas/Order' } },
+            },
+          },
+        },
+      } as any;
+      const result = generateZodSchemaFromOperation(operation, 'response');
+      expect(result.code).toBe('UserSchema');
+    });
   });
 
   describe('generateZodInterfaceSchemaFile', () => {

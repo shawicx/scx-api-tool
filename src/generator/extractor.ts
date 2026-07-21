@@ -111,72 +111,71 @@ export function extractResponseProperties(
 
   const properties: ApiProperty[] = [];
 
-  // 从200响应中提取属性
-  const successResponse = responses['200'] || responses['201'];
-  if (successResponse && successResponse.content) {
-    const jsonContent = successResponse.content['application/json'];
-    if (jsonContent && jsonContent.schema) {
-      const { schema } = jsonContent;
-      // allOf 展平（顶层合并）
-      const resolved = resolveComposedSchema(schema, processedData);
+  // 从成功响应（200/201）中提取 schema，按 content-type 优先级查找
+  // （application/json → 通配符 → 第一个可用），兼容 springdoc 默认输出通配符 content-type
+  const operation: OpenApiOperation = { responses };
+  const responseSchema = getResponseSchema(operation);
+  if (responseSchema) {
+    const { schema } = responseSchema;
+    // allOf 展平（顶层合并）
+    const resolved = resolveComposedSchema(schema, processedData);
 
-      // 处理引用模式
-      if (resolved.$ref) {
-        const refName = sanitizeTypeName(resolved.$ref.split('/').pop()!);
-        const refSchema = processedData.types.find((t) => t.name === refName)?.schema;
-        if (refSchema && refSchema.properties) {
-          for (const [name, property] of Object.entries(refSchema.properties)) {
-            properties.push({
-              name: sanitizePropertyName(name),
-              type: getPropertyType(property),
-              description: escapeJsDocComment(property.description || ''),
-              required: refSchema.required?.includes(name) || false,
-            });
-          }
-        } else {
-          // 引用模式没有属性或找不到引用，添加通用响应
-          properties.push({
-            name: 'data',
-            type: refName,
-            description: '响应数据',
-            required: true,
-          });
-        }
-      } else if (resolved.properties) {
-        // 处理内联模式（含 allOf 展平后的 properties）
-        for (const [name, property] of Object.entries(resolved.properties)) {
+    // 处理引用模式
+    if (resolved.$ref) {
+      const refName = sanitizeTypeName(resolved.$ref.split('/').pop()!);
+      const refSchema = processedData.types.find((t) => t.name === refName)?.schema;
+      if (refSchema && refSchema.properties) {
+        for (const [name, property] of Object.entries(refSchema.properties)) {
           properties.push({
             name: sanitizePropertyName(name),
             type: getPropertyType(property),
             description: escapeJsDocComment(property.description || ''),
-            required: resolved.required?.includes(name) || false,
+            required: refSchema.required?.includes(name) || false,
           });
         }
-      } else if (resolved.type === 'array' && resolved.items) {
-        // 处理数组响应
-        properties.push({
-          name: 'data',
-          type: `${getPropertyType(resolved.items)}[]`,
-          description: '响应数据数组',
-          required: true,
-        });
-      } else if (resolved.type) {
-        // 处理基本类型
-        properties.push({
-          name: 'data',
-          type: getPropertyType(resolved),
-          description: '响应数据',
-          required: true,
-        });
       } else {
-        // 处理通用对象响应
+        // 引用模式没有属性或找不到引用，添加通用响应
         properties.push({
           name: 'data',
-          type: 'any',
+          type: refName,
           description: '响应数据',
           required: true,
         });
       }
+    } else if (resolved.properties) {
+      // 处理内联模式（含 allOf 展平后的 properties）
+      for (const [name, property] of Object.entries(resolved.properties)) {
+        properties.push({
+          name: sanitizePropertyName(name),
+          type: getPropertyType(property),
+          description: escapeJsDocComment(property.description || ''),
+          required: resolved.required?.includes(name) || false,
+        });
+      }
+    } else if (resolved.type === 'array' && resolved.items) {
+      // 处理数组响应
+      properties.push({
+        name: 'data',
+        type: `${getPropertyType(resolved.items)}[]`,
+        description: '响应数据数组',
+        required: true,
+      });
+    } else if (resolved.type) {
+      // 处理基本类型
+      properties.push({
+        name: 'data',
+        type: getPropertyType(resolved),
+        description: '响应数据',
+        required: true,
+      });
+    } else {
+      // 处理通用对象响应
+      properties.push({
+        name: 'data',
+        type: 'any',
+        description: '响应数据',
+        required: true,
+      });
     }
   }
 
@@ -263,6 +262,52 @@ export function getRequestBodySchema(
   // 其次查找 application/json
   if (content['application/json']?.schema) {
     return { schema: content['application/json'].schema };
+  }
+
+  // fallback：取第一个可用的 content-type
+  for (const mediaType of Object.values(content)) {
+    if (mediaType.schema) {
+      return { schema: mediaType.schema };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * @description 获取成功响应（200/201）的 schema
+ * 按优先级查找 content-type：application/json → 通配符 → 第一个可用。
+ * 兼容 springdoc 在 controller 未显式声明 produces 时默认输出通配符 content-type 的场景，
+ * 此前硬编码 application/json 会导致响应 schema 取不到，
+ * 进而使生成的响应类型退化为 any 或 z.object({})。
+ * @param operation OpenAPI 操作对象
+ * @returns 包含 schema 的对象，或 null
+ *
+ * @example
+ * ```typescript
+ * const resp = getResponseSchema(operation);
+ * if (resp) {
+ *   const { schema } = resp; // 可能为 $ref、inline object、array 等
+ * }
+ * ```
+ */
+export function getResponseSchema(operation: OpenApiOperation): { schema: OpenApiSchema } | null {
+  if (!operation.responses) return null;
+
+  // 优先取 200，其次 201
+  const successResponse = operation.responses['200'] || operation.responses['201'];
+  if (!successResponse?.content) return null;
+
+  const { content } = successResponse;
+
+  // 优先 application/json
+  if (content['application/json']?.schema) {
+    return { schema: content['application/json'].schema };
+  }
+
+  // 其次通配符 content-type（springdoc 默认输出）
+  if (content['*/*']?.schema) {
+    return { schema: content['*/*'].schema };
   }
 
   // fallback：取第一个可用的 content-type

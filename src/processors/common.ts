@@ -5,6 +5,7 @@
 
 import type { ApiInterface, ApiProperty } from '../types';
 import { ProcessedApiData } from './openapi';
+import { getRequestBodySchema, getResponseSchema } from '../generator/extractor';
 import { isDepthExceeded, CircularRefGuard } from '@/utils/schemaSafety';
 
 /**
@@ -104,21 +105,18 @@ export function extractUsedTypeNames(
       }
     }
 
-    // 从请求体中提取类型
-    if (operation.requestBody?.content?.['application/json']?.schema) {
-      const { schema } = operation.requestBody.content['application/json'];
-      const extracted = extractTypesFromSchema(schema, processedData);
+    // 从请求体中提取类型（走 getRequestBodySchema 以兼容 */* 等 content-type）
+    const requestBodySchema = getRequestBodySchema(operation);
+    if (requestBodySchema) {
+      const extracted = extractTypesFromSchema(requestBodySchema.schema, processedData);
       extracted.forEach((type) => usedTypes.add(type));
     }
 
-    // 从响应中提取类型
-    if (operation.responses) {
-      const successResponse = operation.responses['200'] || operation.responses['201'];
-      if (successResponse?.content?.['application/json']?.schema) {
-        const { schema } = successResponse.content['application/json'];
-        const extracted = extractTypesFromSchema(schema, processedData);
-        extracted.forEach((type) => usedTypes.add(type));
-      }
+    // 从响应中提取类型（走 getResponseSchema 以兼容 */* 等 content-type）
+    const responseSchema = getResponseSchema(operation);
+    if (responseSchema) {
+      const extracted = extractTypesFromSchema(responseSchema.schema, processedData);
+      extracted.forEach((type) => usedTypes.add(type));
     }
   }
 

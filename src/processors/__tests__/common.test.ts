@@ -490,6 +490,56 @@ describe('extractUsedTypeNames', () => {
     expect(result.has('User')).toBe(true);
     expect(result.has('Order')).toBe(true);
   });
+
+  // ===== content-type fallback 用例（修复 springdoc 默认输出通配符的 bug）=====
+
+  it('should extract types from response with wildcard content-type', () => {
+    const processedData = createProcessedApiData();
+    const interfaces: ApiInterface[] = [
+      {
+        path: '/users/{id}',
+        method: 'get',
+        operation: {
+          responses: {
+            '200': {
+              content: {
+                '*/*': {
+                  schema: { $ref: '#/components/schemas/User' },
+                },
+              },
+            },
+          },
+        },
+      },
+    ];
+
+    const result = extractUsedTypeNames(interfaces, processedData);
+
+    expect(result.has('User')).toBe(true);
+  });
+
+  it('should extract types from requestBody with wildcard content-type', () => {
+    const processedData = createProcessedApiData();
+    const interfaces: ApiInterface[] = [
+      {
+        path: '/users',
+        method: 'post',
+        operation: {
+          requestBody: {
+            content: {
+              '*/*': {
+                schema: { $ref: '#/components/schemas/CreateUserRequest' },
+              },
+            },
+          },
+        },
+      },
+    ];
+
+    const result = extractUsedTypeNames(interfaces, processedData);
+
+    expect(result.has('CreateUserRequest')).toBe(true);
+  });
 });
 
 // ==================== collectUsedTypesFromProperties ====================
