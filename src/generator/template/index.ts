@@ -38,6 +38,15 @@ export {
   getTypeTemplateByConfig,
 } from './templateDefinitions';
 
+export {
+  getJsonValueTemplateWithComment,
+  getJsonValueTemplateWithoutComment,
+  getJsonValueTemplateByConfig,
+  getTypeAliasTemplateWithComment,
+  getTypeAliasTemplateWithoutComment,
+  getTypeAliasTemplateByConfig,
+} from './jsonValueTemplates';
+
 export { generateRequestFile } from './requestFileGenerator';
 
 export { generateInterfaceFunction } from './interfaceFunctionGenerator';

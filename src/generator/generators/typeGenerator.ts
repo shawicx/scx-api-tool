@@ -11,7 +11,12 @@ import type { ApiTypeDefinition } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
 import { getNormalizedPathWithAlias } from '@/utils/pathUtils';
 import { sanitizeTypeName } from '@/naming';
-import { compileTemplate, getTypeTemplateByConfig } from '../template';
+import {
+  compileTemplate,
+  getTypeTemplateByConfig,
+  getJsonValueTemplateByConfig,
+  getTypeAliasTemplateByConfig,
+} from '../template';
 import { extractTypeProperties } from '../extractor';
 import { executeWithConcurrency } from '../../utils/concurrency';
 import { writeGeneratedFile } from '../fileWriter';
@@ -84,17 +89,39 @@ async function generateTypeFile(
   const cleanTypeName = sanitizeTypeName(type.name);
   const cleanFileName = cleanTypeName.replace(/[^a-zA-Z0-9$_]/g, '_');
 
-  const template = compileTemplate(getTypeTemplateByConfig(config.comment !== false));
+  // 根据 kind 选择模板：jsonValue（递归）/ jsonValueAlias（别名）/ 普通 interface
+  let code: string;
+  let dependencies: Set<string>;
 
-  const templateData = {
-    typeName: cleanTypeName,
-    description: escapeJsDocComment(type.schema.description || type.name),
-    properties: extractTypeProperties(type.schema, processedData),
-  };
-
-  let code = template(templateData);
-
-  const dependencies = collectUsedTypesFromProperties(templateData.properties, processedData);
+  if (type.kind === 'jsonValue') {
+    // 内置递归 JsonValue 类型：type JsonValue = string | number | ... | JsonValue[]
+    const template = compileTemplate(getJsonValueTemplateByConfig(config.comment !== false));
+    code = template({
+      typeName: cleanTypeName,
+      description: escapeJsDocComment(type.schema.description || '任意 JSON 值'),
+    });
+    dependencies = new Set<string>();
+  } else if (type.kind === 'jsonValueAlias') {
+    // Jackson 动态类型别名：type JsonNode = JsonValue
+    const template = compileTemplate(getTypeAliasTemplateByConfig(config.comment !== false));
+    code = template({
+      typeName: cleanTypeName,
+      description: escapeJsDocComment(type.schema.description || type.name),
+      aliasType: 'JsonValue',
+    });
+    // 别名引用 JsonValue，需要 import（除非自身就是 JsonValue）
+    dependencies = cleanTypeName === 'JsonValue' ? new Set<string>() : new Set(['JsonValue']);
+  } else {
+    // 普通 interface 类型（原有逻辑）
+    const template = compileTemplate(getTypeTemplateByConfig(config.comment !== false));
+    const properties = extractTypeProperties(type.schema, processedData);
+    code = template({
+      typeName: cleanTypeName,
+      description: escapeJsDocComment(type.schema.description || type.name),
+      properties,
+    });
+    dependencies = collectUsedTypesFromProperties(properties, processedData);
+  }
 
   if (dependencies.size > 0) {
     const importPath = getNormalizedPathWithAlias(

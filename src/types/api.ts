@@ -25,8 +25,8 @@ export interface OpenApiSchema {
   required?: string[];
   /** 数组项 Schema */
   items?: OpenApiSchema;
-  /** 对象额外属性 Schema */
-  additionalProperties?: OpenApiSchema;
+  /** 对象额外属性 Schema（OpenAPI 规范允许 boolean: true 表示任意值） */
+  additionalProperties?: OpenApiSchema | boolean;
   /** 枚举值 */
   enum?: string[];
   /** 只读 */
@@ -170,6 +170,13 @@ export interface ApiTypeDefinition {
   originalName?: string;
   /** OpenAPI Schema */
   schema: OpenApiSchema;
+  /**
+   * 类型种类标记，用于生成器区分渲染方式：
+   * - `jsonValue`：内置的递归 JsonValue 类型（任意 JSON 值）
+   * - `jsonValueAlias`：Jackson 动态类型（JsonNode 等），渲染为 `type X = JsonValue`
+   * - 缺省：普通 interface 类型
+   */
+  kind?: 'jsonValue' | 'jsonValueAlias';
 }
 
 /**

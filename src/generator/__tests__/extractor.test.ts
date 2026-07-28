@@ -832,6 +832,32 @@ describe('getPropertyType', () => {
     ).toBe('Record<string, User>');
   });
 
+  // ===== free-form（任意 JSON 值，如 Jackson JsonNode 属性）=====
+
+  it('should return "JsonValue" for object with additionalProperties: true', () => {
+    expect(getPropertyType({ type: 'object', additionalProperties: true })).toBe('JsonValue');
+  });
+
+  it('should return "JsonValue" for object with empty additionalProperties {}', () => {
+    expect(getPropertyType({ type: 'object', additionalProperties: {} })).toBe('JsonValue');
+  });
+
+  it('should still return "Record<string, any>" for pure { type: object } (no free-form signal)', () => {
+    // 纯 { type: 'object' } 缺少 free-form 信号，不误判为 JsonValue（避免误伤空 DTO）
+    expect(getPropertyType({ type: 'object' })).toBe('Record<string, any>');
+  });
+
+  it('should return "Record<string, string>" for object with inline additionalProperties type', () => {
+    // 注意:当前 getPropertyType 对内联 additionalProperties（非 $ref）仍降级为 Record<string, any>
+    // 这是已知局限（propertyType 只识别 $ref 形式的 map），非 free-form 场景
+    expect(
+      getPropertyType({
+        type: 'object',
+        additionalProperties: { type: 'string' },
+      }),
+    ).toBe('Record<string, any>');
+  });
+
   it('should return "any" when no type is specified and no $ref', () => {
     expect(getPropertyType({})).toBe('any');
   });

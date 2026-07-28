@@ -8,6 +8,7 @@ import { sanitizeTypeName, sanitizePropertyName } from '@/naming';
 import { isDepthExceeded, CircularRefGuard } from '@/utils/schemaSafety';
 import { escapeStringLiteral, escapeJsDocComment } from '@/utils/escape';
 import type { ApiConfig, OpenApiSchema } from '@/types';
+import { isFreeFormSchema } from '../../freeForm';
 import { logger } from '@/utils/logger';
 
 /**
@@ -16,6 +17,8 @@ import { logger } from '@/utils/logger';
 export interface ZodTypeInfo {
   name: string;
   schema: OpenApiSchema;
+  /** 类型种类：jsonValue（递归）/ jsonValueAlias（别名）/ 缺省（普通） */
+  kind?: 'jsonValue' | 'jsonValueAlias';
 }
 
 /**
@@ -78,6 +81,49 @@ export function getZodImportStatement(): string {
 export function generateZodTypeSchema(typeInfo: ZodTypeInfo, config: ApiConfig): string {
   const template = compileTemplate(getZodTypeTemplateByConfig(config.comment !== false));
 
+  // 内置递归 JsonValue：自包含的 z.lazy 定义（不依赖外部 import）
+  // schemaContent 会拼到 `export const XSchema: z.ZodType<X> = {{{schemaContent}}};`
+  // 类型 X 在 const 声明时被前向引用，TS 编译期解析允许（与运行时 const 初始化无关）
+  if (typeInfo.kind === 'jsonValue') {
+    logger.debug(`Generating recursive JsonValue schema: ${typeInfo.name}`);
+    const schemaName = `${typeInfo.name}Schema`;
+    const typeName = typeInfo.name;
+    // 注意：模板里 const 声明需带类型标注 z.ZodType<X>，否则 z.lazy 无法推断递归类型
+    // 现有模板（getZodTypeTemplateByConfig）不含类型标注，这里用 schemaContent 自带 `as` 无法满足，
+    // 故对 jsonValue 走专用渲染（绕过通用模板，直接拼字符串）
+    const comment = config.comment !== false;
+    const desc = escapeJsDocComment(typeInfo.schema.description || '任意 JSON 值');
+    const header = comment
+      ? `import { z } from 'zod';\n\n/**\n * @description ${desc}\n */\n`
+      : `import { z } from 'zod';\n\n`;
+    return (
+      `${header}export const ${schemaName}: z.ZodType<${typeName}> = z.lazy(() =>\n` +
+      `  z.union([\n` +
+      `    z.string(),\n` +
+      `    z.number(),\n` +
+      `    z.boolean(),\n` +
+      `    z.null(),\n` +
+      `    z.array(${schemaName}),\n` +
+      `    z.record(${schemaName}),\n` +
+      `  ]),\n` +
+      `);\n\n` +
+      `// 推导类型\n` +
+      `export type ${typeName} = z.infer<typeof ${schemaName}>;\n`
+    );
+  }
+
+  // Jackson 别名：JsonNodeSchema = JsonValueSchema（引用已定义的递归 schema）
+  // 注意：当前 zod 类型生成不拼装 import 语句，别名文件需手动补 `import { JsonValueSchema } from './JsonValueSchema'`
+  if (typeInfo.kind === 'jsonValueAlias') {
+    logger.debug(`Generating JsonValue alias schema: ${typeInfo.name}`);
+    return template({
+      schemaName: `${typeInfo.name}Schema`,
+      typeName: typeInfo.name,
+      description: escapeJsDocComment(typeInfo.schema.description || typeInfo.name),
+      schemaContent: 'JsonValueSchema',
+    });
+  }
+
   const result = generateZodSchemaFromOpenApiSchema(typeInfo.schema);
 
   logger.debug(
@@ -124,8 +170,13 @@ export function generateZodSchemaFromOpenApiSchema(
     return { code: result.type, imports: result.imports };
   }
 
-  // 无 properties 且无组合关键字 → 短路（保持既有 z.object({}) 行为）
+  // 无 properties 且无组合关键字 → 短路
+  // free-form（additionalProperties: true / {}，如 Jackson JsonNode）→ z.unknown()
+  // 运行时接受任意 JSON 值（对象/数组/标量/null），匹配 JsonNode 语义
   if (!schema.properties) {
+    if (isFreeFormSchema(schema)) {
+      return { code: 'z.unknown()', imports: [] };
+    }
     return { code: 'z.object({})', imports: [] };
   }
 
@@ -209,16 +260,22 @@ function composeObject(
   depth: number,
   guard: CircularRefGuard,
 ): { type: string; imports: string[] } {
-  if (property.additionalProperties) {
-    if (property.additionalProperties.$ref) {
-      const refName = property.additionalProperties.$ref.split('/').pop()!;
+  // free-form（任意 JSON 值，如 JsonNode 属性）→ z.unknown()
+  if (isFreeFormSchema(property)) {
+    return { type: 'z.unknown()', imports: [] };
+  }
+  const ap = property.additionalProperties;
+  // additionalProperties 为具名 schema（非 boolean）时按 map 处理
+  if (ap && typeof ap === 'object') {
+    if (ap.$ref) {
+      const refName = ap.$ref.split('/').pop()!;
       const sanitizedRefName = sanitizeTypeName(refName);
       return {
         type: `z.record(${sanitizedRefName}Schema)`,
         imports: [`${sanitizedRefName}Schema`],
       };
     }
-    const inner = openApiPropertyToZodType(property.additionalProperties, depth + 1, guard);
+    const inner = openApiPropertyToZodType(ap, depth + 1, guard);
     return { type: `z.record(${inner.type})`, imports: inner.imports };
   }
   if (property.properties) {

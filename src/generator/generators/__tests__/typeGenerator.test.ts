@@ -104,4 +104,77 @@ describe('generateTypeFiles', () => {
 
     expect(writes.length).toBe(0);
   });
+
+  // ===== JsonValue 递归类型 + Jackson 别名 =====
+
+  it('应为 kind=jsonValue 生成递归联合类型 type X = string | number | ... | X[]', async () => {
+    const config: ApiConfig = { ...minimalApiConfig, generateApi: true, generateTypes: true };
+    const data: ProcessedApiData = {
+      interfaces: [],
+      types: [
+        {
+          name: 'JsonValue',
+          schema: { type: 'object', description: '任意 JSON 值' },
+          kind: 'jsonValue',
+        },
+      ],
+      categories: [],
+    } as ProcessedApiData;
+    await generateTypeFiles(data, config);
+
+    const jsonValueWrite = writes.find((w) => w.path.endsWith('JsonValue.ts'));
+    expect(jsonValueWrite).toBeDefined();
+    // 递归联合类型核心特征：自身引用 + 标量 + null + 数组 + record
+    expect(jsonValueWrite!.content).toContain('export type JsonValue =');
+    expect(jsonValueWrite!.content).toContain('string | number | boolean | null');
+    expect(jsonValueWrite!.content).toContain('JsonValue[]');
+    expect(jsonValueWrite!.content).toContain('{ [key: string]: JsonValue }');
+    // 递归类型不应有 import 语句（自包含）
+    expect(jsonValueWrite!.content).not.toContain('import ');
+  });
+
+  it('应为 kind=jsonValueAlias 生成别名 type JsonNode = JsonValue，并 import JsonValue', async () => {
+    const config: ApiConfig = { ...minimalApiConfig, generateApi: true, generateTypes: true };
+    const data: ProcessedApiData = {
+      interfaces: [],
+      types: [
+        {
+          name: 'JsonValue',
+          schema: { type: 'object' },
+          kind: 'jsonValue',
+        },
+        {
+          name: 'JsonNode',
+          schema: { type: 'object', description: 'Jackson JsonNode' },
+          kind: 'jsonValueAlias',
+        },
+      ],
+      categories: [],
+    } as ProcessedApiData;
+    await generateTypeFiles(data, config);
+
+    const aliasWrite = writes.find((w) => w.path.endsWith('JsonNode.ts'));
+    expect(aliasWrite).toBeDefined();
+    expect(aliasWrite!.content).toContain('export type JsonNode = JsonValue');
+    // 别名引用 JsonValue，需 import
+    expect(aliasWrite!.content).toContain('import type { JsonValue }');
+  });
+
+  it('索引文件应包含 JsonValue 与别名的导出', async () => {
+    const config: ApiConfig = { ...minimalApiConfig, generateApi: true, generateTypes: true };
+    const data: ProcessedApiData = {
+      interfaces: [],
+      types: [
+        { name: 'JsonValue', schema: { type: 'object' }, kind: 'jsonValue' },
+        { name: 'JsonNode', schema: { type: 'object' }, kind: 'jsonValueAlias' },
+      ],
+      categories: [],
+    } as ProcessedApiData;
+    await generateTypeFiles(data, config);
+
+    const indexWrite = writes.find((w) => w.path.endsWith('index.ts'));
+    expect(indexWrite).toBeDefined();
+    expect(indexWrite!.content).toContain("export type { JsonValue } from './JsonValue'");
+    expect(indexWrite!.content).toContain("export type { JsonNode } from './JsonNode'");
+  });
 });

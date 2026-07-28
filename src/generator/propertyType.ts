@@ -8,6 +8,7 @@
 import type { OpenApiSchema } from '../types';
 import { sanitizeTypeName } from '@/naming';
 import { isDepthExceeded } from '@/utils/schemaSafety';
+import { isFreeFormSchema } from './freeForm';
 
 /**
  * @description 将基础类型字符串映射（处理 string 的 binary format 等）
@@ -103,9 +104,15 @@ export function getPropertyType(property: OpenApiSchema, depth = 0): string {
 
   // 处理对象类型
   if (property.type === 'object') {
-    // 检查是否为引用对象
-    if (property.additionalProperties && property.additionalProperties.$ref) {
-      const refName = property.additionalProperties.$ref.split('/').pop()!;
+    // free-form（任意 JSON 值，如 Jackson JsonNode 属性、additionalProperties: true）
+    // 映射为内置的 JsonValue 递归联合类型，而非 Record<string, any>
+    if (isFreeFormSchema(property)) {
+      return wrapNullable('JsonValue', property);
+    }
+    // 检查是否为 map（additionalProperties 含 $ref）
+    const ap = property.additionalProperties;
+    if (ap && typeof ap === 'object' && ap.$ref) {
+      const refName = ap.$ref.split('/').pop()!;
       return wrapNullable(`Record<string, ${sanitizeTypeName(refName)}>`, property);
     }
     return wrapNullable('Record<string, any>', property);

@@ -287,6 +287,121 @@ describe('processOpenApiData', () => {
       ).toBe(true);
     });
   });
+
+  // ===== JsonValue 注入与 Jackson 动态类型别名 =====
+
+  describe('JsonValue injection for free-form schemas', () => {
+    it('Jackson 命名 schema（JsonNode）+ free-form 应标记为 jsonValueAlias 并注入 JsonValue', () => {
+      const doc = {
+        openapi: '3.0.0',
+        paths: {},
+        components: {
+          schemas: {
+            JsonNode: { type: 'object', additionalProperties: true },
+          },
+        },
+      } as any;
+
+      const result = processOpenApiData(doc, minimalApiConfig as any);
+
+      const jsonNode = result.types.find((t) => t.name === 'JsonNode');
+      expect(jsonNode).toBeDefined();
+      expect(jsonNode!.kind).toBe('jsonValueAlias');
+
+      const jsonValue = result.types.find((t) => t.name === 'JsonValue');
+      expect(jsonValue).toBeDefined();
+      expect(jsonValue!.kind).toBe('jsonValue');
+    });
+
+    it('属性级 free-form（additionalProperties: true）应触发 JsonValue 注入', () => {
+      const doc = {
+        openapi: '3.0.0',
+        paths: {},
+        components: {
+          schemas: {
+            Config: {
+              type: 'object',
+              properties: {
+                data: { type: 'object', additionalProperties: true },
+              },
+            },
+          },
+        },
+      } as any;
+
+      const result = processOpenApiData(doc, minimalApiConfig as any);
+
+      // Config 本身是普通类型（无 kind）
+      const config = result.types.find((t) => t.name === 'Config');
+      expect(config).toBeDefined();
+      expect(config!.kind).toBeUndefined();
+
+      // 但因属性含 free-form，应注入 JsonValue
+      const jsonValue = result.types.find((t) => t.name === 'JsonValue');
+      expect(jsonValue).toBeDefined();
+      expect(jsonValue!.kind).toBe('jsonValue');
+    });
+
+    it('无 free-form 时不应注入 JsonValue', () => {
+      const doc = {
+        openapi: '3.0.0',
+        paths: {},
+        components: {
+          schemas: {
+            User: {
+              type: 'object',
+              properties: { id: { type: 'number' } },
+            },
+          },
+        },
+      } as any;
+
+      const result = processOpenApiData(doc, minimalApiConfig as any);
+
+      expect(result.types.some((t) => t.name === 'JsonValue')).toBe(false);
+    });
+
+    it('纯 { type: object }（无 additionalProperties）不应触发 JsonValue 注入', () => {
+      // 避免误伤真正的空 DTO（无 free-form 信号）
+      const doc = {
+        openapi: '3.0.0',
+        paths: {},
+        components: {
+          schemas: {
+            EmptyDto: { type: 'object' },
+          },
+        },
+      } as any;
+
+      const result = processOpenApiData(doc, minimalApiConfig as any);
+
+      expect(result.types.some((t) => t.name === 'JsonValue')).toBe(false);
+      const emptyDto = result.types.find((t) => t.name === 'EmptyDto');
+      expect(emptyDto!.kind).toBeUndefined();
+    });
+
+    it('用户自定义 JsonValue schema 时不覆盖（命名碰撞保护）', () => {
+      const doc = {
+        openapi: '3.0.0',
+        paths: {},
+        components: {
+          schemas: {
+            JsonNode: { type: 'object', additionalProperties: true },
+            // 用户自定义的 JsonValue
+            JsonValue: { type: 'object', properties: { custom: { type: 'string' } } },
+          },
+        },
+      } as any;
+
+      const result = processOpenApiData(doc, minimalApiConfig as any);
+
+      const jsonValue = result.types.find((t) => t.name === 'JsonValue');
+      // 应保留用户的 JsonValue 定义（有 properties），不注入内置递归版本
+      expect(jsonValue).toBeDefined();
+      expect(jsonValue!.kind).toBeUndefined(); // 非内置 kind
+      expect(jsonValue!.schema.properties).toBeDefined();
+    });
+  });
 });
 
 // ==================== Re-exports from common.ts ====================

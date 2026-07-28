@@ -96,6 +96,7 @@ async function generateTypeSchemasFiles(
         {
           name: sanitizeTypeName(type.name),
           schema: type.schema,
+          kind: type.kind,
         },
         config,
       );
