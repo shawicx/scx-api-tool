@@ -115,14 +115,14 @@ describe('defaultNamingStrategy', () => {
       const ctx = createNamingContext({ path: '/api/users', method: 'GET' });
       const result = defaultNamingStrategy.responseTypeName(ctx);
 
-      expect(result).toBe('GetUsersResult');
+      expect(result).toBe('GetApiUsersResultType');
     });
 
     it('should append Result to interface name with parameter', () => {
       const ctx = createNamingContext({ path: '/api/users/{id}', method: 'GET' });
       const result = defaultNamingStrategy.responseTypeName(ctx);
 
-      expect(result).toBe('GetUsersByIdResult');
+      expect(result).toBe('GetApiUsersByIdResultType');
     });
   });
 });
@@ -135,7 +135,7 @@ describe('applyNamingStrategy', () => {
     expect(result.interfaceName).toBe('GetApiUsers');
     expect(result.functionName).toBe('getApiUsersFunc');
     expect(result.requestTypeName).toBe('GetApiUsersRequestType');
-    expect(result.responseTypeName).toBe('GetUsersResult');
+    expect(result.responseTypeName).toBe('GetApiUsersResultType');
   });
 
   it('should override interfaceName with custom strategy', () => {
@@ -172,7 +172,7 @@ describe('applyNamingStrategy', () => {
     const result = applyNamingStrategy(ctx, customStrategy);
 
     expect(result.requestTypeName).toBe('CustomRequest');
-    expect(result.responseTypeName).toBe('GetUsersResult');
+    expect(result.responseTypeName).toBe('GetApiUsersResultType');
   });
 
   it('should override responseTypeName with custom strategy', () => {

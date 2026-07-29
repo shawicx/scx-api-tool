@@ -2,7 +2,8 @@ import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
   // source: 'https://api.apifox.com/v1/projects/6997172/export-openapi',
-  source: 'https://api.apifox.com/v1/projects/8601324/export-openapi',
+  // source: 'https://api.apifox.com/v1/projects/8601324/export-openapi',
+  source: 'https://api.apifox.com/v1/projects/8629864/export-openapi',
   token: 'APS-bEl8yPD58wfRzsXXkx4psEekqm4k2YhD',
   typesFormat: 'typescript',
   // transformPath 已改为函数形式（0.6.0 起）

@@ -104,7 +104,7 @@ export async function {{functionName}}(
    {{requestParamName}}
 ) {
    const config = {
-     url: '{{path}}',
+     url: {{{path}}},
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
@@ -129,7 +129,7 @@ export function getApiOnlyTemplateWithoutComment(): string {
    {{requestParamName}}
 ) {
    const config = {
-     url: '{{path}}',
+     url: {{{path}}},
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
@@ -161,7 +161,7 @@ export async function {{functionName}}(
    {{requestParamName}}: {{requestTypeName}}
 ): Promise<{{responseTypeName}}> {
    const config = {
-     url: '{{path}}',
+     url: {{{path}}},
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
@@ -186,7 +186,7 @@ export function getZodInterfaceTemplateWithoutComment(): string {
    {{requestParamName}}: {{requestTypeName}}
 ): Promise<{{responseTypeName}}> {
    const config = {
-     url: '{{path}}',
+     url: {{{path}}},
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
@@ -216,7 +216,7 @@ export async function {{functionName}}(
    {{requestParamName}}
 ) {
    const config = {
-     url: '{{path}}',
+     url: {{{path}}},
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
@@ -241,7 +241,7 @@ export function getZodApiOnlyTemplateWithoutComment(): string {
    {{requestParamName}}
 ) {
    const config = {
-     url: '{{path}}',
+     url: {{{path}}},
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}

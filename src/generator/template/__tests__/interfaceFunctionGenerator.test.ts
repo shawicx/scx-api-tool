@@ -7,6 +7,7 @@ import type { InterfaceTemplateData, ApiConfig } from '../../../types';
 import { RequestMethodStyle } from '../../../types';
 import { minimalApiConfig } from '../../../../tests/fixtures/mockData';
 import { generateInterfaceFunction } from '../interfaceFunctionGenerator';
+import { interpolatePathParams } from '@/utils/escape';
 import { templateCache } from '../templateCache';
 
 // Mock logger
@@ -265,6 +266,145 @@ describe('generateInterfaceFunction', () => {
 
       // The output should contain the custom object name in the function body
       expect(result).toContain('api');
+    });
+  });
+
+  // ==================== 路径参数插值 ====================
+
+  describe('path parameter interpolation', () => {
+    it('无 path 参数时应生成单引号字面量 url', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        generateApi: true,
+        generateTypes: false,
+        typesFormat: 'typescript',
+      };
+      // 模拟 interfaceGenerator.ts 的预处理：无 path 参数时返回单引号字面量
+      const interpolated = interpolatePathParams('/api/users', 'params', []);
+      const data: InterfaceTemplateData = {
+        ...minimalInterfaceData,
+        path: interpolated.value,
+      };
+
+      const result = generateInterfaceFunction(data, config);
+
+      // 应生成单引号字面量（非模板字符串）
+      expect(result).toContain("url: '/api/users',");
+      expect(result).not.toContain('url: `/api/users`');
+    });
+
+    it('单个 path 参数应插值为模板字符串', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        generateApi: true,
+        generateTypes: true,
+        typesFormat: 'typescript',
+        requestMethodStyle: RequestMethodStyle.CONFIG,
+      };
+      // 模拟 interfaceGenerator.ts 的预处理：把 /api/users/{id} 转为模板字符串字面量
+      const interpolated = interpolatePathParams('/api/users/{id}', 'params', ['id']);
+      const data: InterfaceTemplateData = {
+        ...minimalInterfaceData,
+        path: interpolated.value,
+      };
+
+      const result = generateInterfaceFunction(data, config);
+
+      // 应生成反引号模板字符串，{id} 被替换为 ${params.id}
+      expect(result).toContain('url: `/api/users/${params.id}`,');
+      // 不应残留 OpenAPI 风格的 {id}
+      expect(result).not.toContain('{id}');
+    });
+
+    it('JavaScript target 下单个 path 参数也应插值', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'javascript',
+        generateApi: true,
+        generateTypes: false,
+        typesFormat: 'typescript',
+      };
+      const interpolated = interpolatePathParams('/api/users/{id}', 'params', ['id']);
+      const data: InterfaceTemplateData = {
+        ...minimalInterfaceData,
+        path: interpolated.value,
+      };
+
+      const result = generateInterfaceFunction(data, config);
+
+      expect(result).toContain('url: `/api/users/${params.id}`,');
+    });
+
+    it('Zod 模式下单个 path 参数也应插值', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        generateApi: true,
+        generateTypes: true,
+        typesFormat: 'zod',
+      };
+      const interpolated = interpolatePathParams('/api/users/{id}', 'params', ['id']);
+      const data: InterfaceTemplateData = {
+        ...minimalInterfaceData,
+        path: interpolated.value,
+        requestSchema: 'z.object({ id: z.number() })',
+        responseSchema: 'z.object({ id: z.number() })',
+      };
+
+      const result = generateInterfaceFunction(data, config);
+
+      expect(result).toContain('url: `/api/users/${params.id}`,');
+    });
+
+    it('多个 path 参数应全部插值', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        generateApi: true,
+        generateTypes: false,
+        typesFormat: 'typescript',
+      };
+      const interpolated = interpolatePathParams('/users/{userId}/posts/{postId}', 'params', [
+        'userId',
+        'postId',
+      ]);
+      const data: InterfaceTemplateData = {
+        ...minimalInterfaceData,
+        path: interpolated.value,
+        parameters: [
+          { name: 'userId', type: 'number', description: '用户ID', required: true },
+          { name: 'postId', type: 'string', description: '文章ID', required: true },
+        ],
+      };
+
+      const result = generateInterfaceFunction(data, config);
+
+      expect(result).toContain('url: `/users/${params.userId}/posts/${params.postId}`,');
+      expect(result).not.toContain('{userId}');
+      expect(result).not.toContain('{postId}');
+    });
+
+    it('method-specific 模式下 path 参数也应插值', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        generateApi: true,
+        generateTypes: true,
+        typesFormat: 'typescript',
+        requestMethodStyle: RequestMethodStyle.METHOD_SPECIFIC,
+      };
+      const interpolated = interpolatePathParams('/api/users/{id}', 'params', ['id']);
+      const data: InterfaceTemplateData = {
+        ...minimalInterfaceData,
+        path: interpolated.value,
+      };
+
+      const result = generateInterfaceFunction(data, config);
+
+      // method-specific 模式生成 requestMethods.get<...>(`/api/users/${params.id}`, params)
+      expect(result).toContain('`/api/users/${params.id}`');
     });
   });
 });

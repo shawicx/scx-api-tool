@@ -21,23 +21,23 @@ export function registerTemplatePartials(): void {
 {{#if (eq requestMethodStyle 'method-specific')}}
   {{#if (eq method 'GET')}}
     {{#if hasParameters}}
-  return {{requestMethodsObjectName}}.get<{{responseTypeName}}>('{{path}}', {{requestParamName}});
+  return {{requestMethodsObjectName}}.get<{{responseTypeName}}>({{{path}}}, {{requestParamName}});
     {{else}}
-  return {{requestMethodsObjectName}}.get<{{responseTypeName}}>('{{path}}');
+  return {{requestMethodsObjectName}}.get<{{responseTypeName}}>({{{path}}});
     {{/if}}
   {{/if}}
   {{#if (eq method 'DELETE')}}
     {{#if hasParameters}}
-  return {{requestMethodsObjectName}}.delete<{{responseTypeName}}>('{{path}}', {{requestParamName}});
+  return {{requestMethodsObjectName}}.delete<{{responseTypeName}}>({{{path}}}, {{requestParamName}});
     {{else}}
-  return {{requestMethodsObjectName}}.delete<{{responseTypeName}}>('{{path}}');
+  return {{requestMethodsObjectName}}.delete<{{responseTypeName}}>({{{path}}});
     {{/if}}
   {{/if}}
   {{#if (eq method 'HEAD')}}
-  return {{requestMethodsObjectName}}.head<{{responseTypeName}}>('{{path}}'{{#if hasParameters}}, {{requestParamName}}{{/if}});
+  return {{requestMethodsObjectName}}.head<{{responseTypeName}}>({{{path}}}{{#if hasParameters}}, {{requestParamName}}{{/if}});
   {{/if}}
   {{#if (eq method 'OPTIONS')}}
-  return {{requestMethodsObjectName}}.options<{{responseTypeName}}>('{{path}}'{{#if hasParameters}}, {{requestParamName}}{{/if}});
+  return {{requestMethodsObjectName}}.options<{{responseTypeName}}>({{{path}}}{{#if hasParameters}}, {{requestParamName}}{{/if}});
   {{/if}}
   {{#if (eq method 'POST')}}
     {{#if isFormData}}
@@ -49,11 +49,11 @@ export function registerTemplatePartials(): void {
       formData.append(key, String(value));
     }
   });
-  return {{requestMethodsObjectName}}.post<{{responseTypeName}}>('{{path}}', formData);
+  return {{requestMethodsObjectName}}.post<{{responseTypeName}}>({{{path}}}, formData);
     {{else if hasParameters}}
-  return {{requestMethodsObjectName}}.post<{{responseTypeName}}>('{{path}}', {{requestParamName}});
+  return {{requestMethodsObjectName}}.post<{{responseTypeName}}>({{{path}}}, {{requestParamName}});
     {{else}}
-  return {{requestMethodsObjectName}}.post<{{responseTypeName}}>('{{path}}');
+  return {{requestMethodsObjectName}}.post<{{responseTypeName}}>({{{path}}});
     {{/if}}
   {{/if}}
   {{#if (eq method 'PUT')}}
@@ -66,11 +66,11 @@ export function registerTemplatePartials(): void {
       formData.append(key, String(value));
     }
   });
-  return {{requestMethodsObjectName}}.put<{{responseTypeName}}>('{{path}}', formData);
+  return {{requestMethodsObjectName}}.put<{{responseTypeName}}>({{{path}}}, formData);
     {{else if hasParameters}}
-  return {{requestMethodsObjectName}}.put<{{responseTypeName}}>('{{path}}', {{requestParamName}});
+  return {{requestMethodsObjectName}}.put<{{responseTypeName}}>({{{path}}}, {{requestParamName}});
     {{else}}
-  return {{requestMethodsObjectName}}.put<{{responseTypeName}}>('{{path}}');
+  return {{requestMethodsObjectName}}.put<{{responseTypeName}}>({{{path}}});
     {{/if}}
   {{/if}}
   {{#if (eq method 'PATCH')}}
@@ -83,16 +83,16 @@ export function registerTemplatePartials(): void {
       formData.append(key, String(value));
     }
   });
-  return {{requestMethodsObjectName}}.patch<{{responseTypeName}}>('{{path}}', formData);
+  return {{requestMethodsObjectName}}.patch<{{responseTypeName}}>({{{path}}}, formData);
     {{else if hasParameters}}
-  return {{requestMethodsObjectName}}.patch<{{responseTypeName}}>('{{path}}', {{requestParamName}});
+  return {{requestMethodsObjectName}}.patch<{{responseTypeName}}>({{{path}}}, {{requestParamName}});
     {{else}}
-  return {{requestMethodsObjectName}}.patch<{{responseTypeName}}>('{{path}}');
+  return {{requestMethodsObjectName}}.patch<{{responseTypeName}}>({{{path}}});
     {{/if}}
   {{/if}}
  {{else}}
    const config: RequestConfig = {
-     url: '{{path}}',
+     url: {{{path}}},
      method: '{{method}}',
      {{#if isFormData}}
      data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),

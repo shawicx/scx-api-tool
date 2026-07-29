@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { escapeJsDocComment, escapeStringLiteral } from '../escape';
+import { escapeJsDocComment, escapeStringLiteral, interpolatePathParams } from '../escape';
 
 describe('escapeJsDocComment', () => {
   it('应原样返回空值', () => {
@@ -73,5 +73,83 @@ describe('escapeStringLiteral', () => {
     // 验证所有单引号都被转义
     const withoutEscaped = escaped.replace(/\\'/g, '');
     expect(withoutEscaped).not.toContain("'");
+  });
+});
+
+describe('interpolatePathParams', () => {
+  it('无 path 参数时应返回单引号字面量', () => {
+    const result = interpolatePathParams('/api/users', 'params', []);
+    expect(result.literal).toBe(true);
+    expect(result.value).toBe("'/api/users'");
+  });
+
+  it('应原样处理空路径', () => {
+    const result = interpolatePathParams('', 'params', []);
+    expect(result.literal).toBe(true);
+    expect(result.value).toBe("''");
+  });
+
+  it('应将单个 path 参数插值为模板字符串', () => {
+    const result = interpolatePathParams('/api/v1/stock/{code}', 'params', ['code']);
+    expect(result.literal).toBe(false);
+    expect(result.value).toBe('`/api/v1/stock/${params.code}`');
+  });
+
+  it('应将多个 path 参数插值为模板字符串', () => {
+    const result = interpolatePathParams('/users/{userId}/posts/{postId}', 'params', [
+      'userId',
+      'postId',
+    ]);
+    expect(result.literal).toBe(false);
+    expect(result.value).toBe('`/users/${params.userId}/posts/${params.postId}`');
+  });
+
+  it('应支持自定义 requestParamName', () => {
+    const result = interpolatePathParams('/api/stock/{code}', 'data', ['code']);
+    expect(result.literal).toBe(false);
+    expect(result.value).toBe('`/api/stock/${data.code}`');
+  });
+
+  it('应对非法标识符的参数名使用方括号访问', () => {
+    const result = interpolatePathParams('/users/{user-id}', 'params', ['user-id']);
+    expect(result.literal).toBe(false);
+    expect(result.value).toBe("`/users/${params['user-id']}`");
+  });
+
+  it('应转义静态部分的反引号防止模板字符串逃逸', () => {
+    // PoC: 静态部分含反引号会终止模板字符串
+    const maliciousPath = '/api/`+require("fs")+`/{id}';
+    const result = interpolatePathParams(maliciousPath, 'params', ['id']);
+    expect(result.literal).toBe(false);
+    // 反引号应被转义，不能存在未转义的反引号
+    const inner = result.value.slice(1, -1); // 去除外层反引号
+    expect(inner).not.toMatch(/(?<!\\)`/);
+  });
+
+  it('应转义静态部分的 ${ 序列防止插值逃逸', () => {
+    // PoC: 静态部分含 ${...}（非 {...} 形式）会触发非预期插值
+    // 用不含 } 的形式，确保不被当作 path 参数占位符
+    const maliciousPath = '/api/users?page=$%7Bevil%7D'; // URL 编码的 ${evil}
+    const result = interpolatePathParams(maliciousPath, 'params', []);
+    expect(result.literal).toBe(true);
+  });
+
+  it('应转义模板字符串中的静态反引号和 ${ 序列', () => {
+    // 构造一个在 path 参数前有恶意静态文本的路径
+    // 静态部分 /api/`end`/ 中的反引号应被转义
+    const path = '/api/`end`/{id}';
+    const result = interpolatePathParams(path, 'params', ['id']);
+    expect(result.literal).toBe(false);
+    const inner = result.value.slice(1, -1);
+    // 反引号应被转义为 \`
+    expect(inner).not.toMatch(/(?<!\\)`/);
+    expect(inner).toContain('\\`end\\`');
+  });
+
+  it('无占位符时应转义静态部分的单引号', () => {
+    const result = interpolatePathParams("/api/users', injected", 'params', []);
+    expect(result.literal).toBe(true);
+    // 单引号应被转义
+    expect(result.value).toContain("\\'");
   });
 });

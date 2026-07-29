@@ -18,8 +18,32 @@ import { getPropertyType } from './propertyType';
 export { getPropertyType };
 
 /**
+ * @description 提取路径参数名列表
+ * 从 OpenAPI 操作的 parameters 中筛出 `in === 'path'` 的参数名。
+ * 返回的名称为原始参数名（未经 sanitize），用于与路径中的 `{paramName}` 占位符匹配。
+ * @param operation OpenAPI 操作对象
+ * @returns 路径参数名数组（如 `['userId', 'postId']`）；无 path 参数时返回空数组
+ *
+ * @example
+ * ```typescript
+ * const operation = {
+ *   parameters: [
+ *     { name: 'userId', in: 'path', type: 'number' },
+ *     { name: 'page', in: 'query', type: 'number' },
+ *     { name: 'postId', in: 'path', type: 'string' },
+ *   ],
+ * };
+ * extractPathParameterNames(operation); // → ['userId', 'postId']
+ * ```
+ */
+export function extractPathParameterNames(operation: OpenApiOperation): string[] {
+  if (!operation.parameters || !Array.isArray(operation.parameters)) return [];
+  return operation.parameters.filter((p) => p.in === 'path').map((p) => p.name);
+}
+
+/**
  * @description 提取请求属性
- * 从操作中提取请求参数和请求体属性
+ * 从 OpenAPI 操作中提取请求参数和请求体属性
  * @param operation OpenAPI 操作对象
  * @param processedData 处理后的 API 数据
  * @returns 请求属性数组

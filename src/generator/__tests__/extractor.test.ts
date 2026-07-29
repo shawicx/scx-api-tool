@@ -5,6 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import {
+  extractPathParameterNames,
   extractRequestProperties,
   extractResponseProperties,
   extractTypeProperties,
@@ -69,6 +70,51 @@ function createProcessedApiData(overrides?: Partial<ProcessedApiData>): Processe
     ...overrides,
   };
 }
+
+// ==================== extractPathParameterNames ====================
+
+describe('extractPathParameterNames', () => {
+  it('应仅返回 path 类型的参数名', () => {
+    const operation: OpenApiOperation = {
+      parameters: [
+        { name: 'userId', in: 'path', type: 'number', required: true },
+        { name: 'page', in: 'query', type: 'number', required: false },
+        { name: 'postId', in: 'path', type: 'string', required: true },
+        { name: 'X-Token', in: 'header', type: 'string', required: true },
+      ],
+    };
+
+    expect(extractPathParameterNames(operation)).toEqual(['userId', 'postId']);
+  });
+
+  it('无 parameters 时应返回空数组', () => {
+    expect(extractPathParameterNames({})).toEqual([]);
+    expect(extractPathParameterNames({ parameters: [] })).toEqual([]);
+  });
+
+  it('无 path 参数时应返回空数组', () => {
+    const operation: OpenApiOperation = {
+      parameters: [
+        { name: 'page', in: 'query', type: 'number' },
+        { name: 'X-Token', in: 'header', type: 'string' },
+      ],
+    };
+
+    expect(extractPathParameterNames(operation)).toEqual([]);
+  });
+
+  it('应支持多个 path 参数（保持顺序）', () => {
+    const operation: OpenApiOperation = {
+      parameters: [
+        { name: 'userId', in: 'path', type: 'number' },
+        { name: 'postId', in: 'path', type: 'string' },
+        { name: 'commentId', in: 'path', type: 'string' },
+      ],
+    };
+
+    expect(extractPathParameterNames(operation)).toEqual(['userId', 'postId', 'commentId']);
+  });
+});
 
 // ==================== extractRequestProperties ====================
 

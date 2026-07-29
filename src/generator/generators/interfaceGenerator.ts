@@ -10,11 +10,12 @@ import { ApiConfig, CliHooks } from '../../types';
 import type { ApiInterface, InterfaceTemplateData, OpenApiOperation } from '../../types';
 import { ensureDir } from '../../utils/file';
 import { chineseToPinyinCamelCase } from '../../utils/path';
-import { escapeJsDocComment, escapeStringLiteral } from '@/utils/escape';
+import { escapeJsDocComment, interpolatePathParams } from '@/utils/escape';
 import { writeGeneratedFile } from '../fileWriter';
 import { generateZodTypesOnlySchemaFile } from './zodTypesOnlyGenerator';
 import { generateRootIndexFile } from './rootIndexGenerator';
 import {
+  extractPathParameterNames,
   extractRequestProperties,
   extractResponseProperties,
   hasRequestBody,
@@ -189,6 +190,16 @@ export async function generateInterfaceFileForTag(
       config,
     );
 
+    // 提取路径参数名，将 {param} 占位符插值为模板字符串 ${requestParamName.param}
+    // 无 path 参数时退化为单引号字面量（保持旧行为）
+    const pathParamNames = extractPathParameterNames(apiInterface.operation);
+    const requestParamName = config.requestParamName || 'params';
+    const interpolatedPath = interpolatePathParams(
+      apiInterface.path,
+      requestParamName,
+      pathParamNames,
+    );
+
     const templateData: InterfaceTemplateData = {
       interfaceName: namingResult.interfaceName,
       requestTypeName: namingResult.requestTypeName,
@@ -196,7 +207,8 @@ export async function generateInterfaceFileForTag(
       requestSchemaName: `${namingResult.requestTypeName}Schema`,
       responseSchemaName: `${namingResult.responseTypeName}Schema`,
       functionName: namingResult.functionName,
-      path: escapeStringLiteral(apiInterface.path),
+      // path 已含外层引号/反引号，模板须用三花括号 {{{path}}} 渲染（禁用 HTML 转义）
+      path: interpolatedPath.value,
       method: apiInterface.method.toUpperCase(),
       description: escapeJsDocComment(
         apiInterface.operation.summary || apiInterface.operation.description || '',
