@@ -14,19 +14,22 @@
 
 ## 开发依赖
 
-| 包名                               | 版本              | 用途                      |
-| ---------------------------------- | ----------------- | ------------------------- |
-| `typescript`                       | ^5.9.3            | 类型检查与编译            |
-| `tsdown`                           | ^0.13.5           | 构建打包（基于 rolldown） |
-| `tsx`                              | ^4.21.0           | 开发模式直接运行 TS       |
-| `eslint` + `eslint-config-ali`     | ^9.39.2 / ^16.6.0 | 代码检查（阿里规则）      |
-| `prettier` + `prettier-config-ali` | ^3.7.4 / ^1.5.0   | 代码格式化                |
-| `standard-version`                 | ^9.5.0            | 语义化版本 + 变更日志     |
-| `husky` + `lint-staged`            | ^9.1.7 / ^16.2.7  | Git 提交前质量检查        |
-| `vitest`                           | ^3.1.4            | 单元测试框架              |
-| `@vitest/coverage-v8`              | ^3.1.4            | 测试覆盖率（v8 引擎）     |
-| `vitepress`                        | 2.0.0-alpha.15    | 文档网站                  |
-| `@commitlint/cli`                  | ^19.8.1           | Commit 消息规范检查       |
+| 包名                               | 版本              | 用途                             |
+| ---------------------------------- | ----------------- | -------------------------------- |
+| `typescript`                       | ^5.9.3            | 类型检查与编译                   |
+| `@types/node`                      | ^25.0.3           | Node.js 类型定义                 |
+| `tsdown`                           | ^0.13.5           | 构建打包（基于 rolldown）        |
+| `tsx`                              | ^4.21.0           | 开发模式直接运行 TS              |
+| `eslint` + `eslint-config-ali`     | ^9.39.2 / ^16.6.0 | 代码检查（阿里规则）             |
+| `eslint-config-prettier`           | ^10.1.8           | 关闭与 Prettier 冲突的规则       |
+| `eslint-plugin-prettier`           | ^5.5.4            | 将 Prettier 作为 ESLint 规则运行 |
+| `prettier` + `prettier-config-ali` | ^3.7.4 / ^1.5.0   | 代码格式化                       |
+| `standard-version`                 | ^9.5.0            | 语义化版本 + 变更日志            |
+| `husky` + `lint-staged`            | ^9.1.7 / ^16.2.7  | Git 提交前质量检查               |
+| `vitest`                           | ^4.1.2            | 单元测试框架                     |
+| `@vitest/coverage-v8`              | ^4.1.2            | 测试覆盖率（v8 引擎）            |
+| `vitepress`                        | 2.0.0-alpha.15    | 文档网站                         |
+| `@commitlint/cli`                  | ^19.8.1           | Commit 消息规范检查              |
 
 ## 运行环境
 

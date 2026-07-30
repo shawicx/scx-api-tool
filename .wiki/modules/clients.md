@@ -14,7 +14,9 @@
 
 ## 服务类型检测
 
-URL 中包含 `apifox.com` → `ServerType.Apifox`，否则 → `ServerType.Swagger`。
+通过 URL **主机名**匹配：主机名包含 `apifox.com` → `ServerType.Apifox`，否则 → `ServerType.Swagger`。
+
+对于 Apifox 源，`parseSourceUrl()` 还会从 URL 路径中通过正则 `/v1/projects/(\d+)/export-openapi` 提取 `apifoxProjectId`，用于 Apifox 客户端的导出请求。
 
 由 `src/utils/config.ts` 中的 `parseSourceUrl()` 执行。
 

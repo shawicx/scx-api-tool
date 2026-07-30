@@ -6,6 +6,7 @@
 
 - **多数据源**：支持 Swagger/OpenAPI 3.0 和 Apifox，通过 URL 自动检测服务类型
 - **多输出格式**：TypeScript 类型定义、Zod 运行时验证 Schema、JavaScript 纯代码
+- **路径参数插值**：自动将 OpenAPI 路径中的 `{param}` 占位符插值为模板字符串（如 `` `/api/stock/${params.code}` ``），支持多参数与安全转义
 - **可配置预设**：`minimal` / `standard` / `verbose` 三种预设，配合分层配置合并
 - **可插拔命名**：通过 `NamingStrategy` 接口自定义所有生成代码的命名
 - **生命周期钩子**：`beforeGenerate` / `afterGenerate` / `beforeWriteFile` / `afterWriteFile`
@@ -51,6 +52,6 @@ pnpm run build  # 生产构建
 
 ## 当前版本
 
-- **包名**: `@scxfe/api-tool@0.5.2`
+- **包名**: `@scxfe/api-tool@0.6.2`
 - **Node.js**: >= 20.0.0
 - **许可证**: MIT

@@ -133,8 +133,10 @@ graph TD
 
 将原始 OpenAPI 文档转换为内部数据结构：
 
-- **`openapi.ts`**：主处理器 —— 解析路径、提取 Schema、解析 `$ref` 引用、标准化响应。
+- **`openapi.ts`**：主处理器 —— 解析路径、提取 Schema、解析 `$ref` 引用、标准化响应，应用 `transformPath` 转换路径。
 - **`common.ts`**：公共工具 —— 类型收集、按标签分组 API。
+
+生成层会进一步将路径中的 `{param}` 占位符插值为模板字符串（见 `generator/extractor.ts` 的 `extractPathParameterNames` + `utils/escape.ts` 的 `interpolatePathParams`）。
 
 输出：`ProcessedApiData`，包含分类后的 `ApiInterface[]` 和 `ApiTypeDefinition[]`。
 
@@ -154,17 +156,18 @@ graph TD
 
 ### 横切关注点
 
-| 关注点   | 位置                     | 说明                                                                               |
-| -------- | ------------------------ | ---------------------------------------------------------------------------------- |
-| 类型定义 | `src/types/`             | 所有层的中心类型系统                                                               |
-| 命名策略 | `src/generator/naming/`  | 通过 `NamingStrategy` 接口实现可插拔命名                                           |
-| 错误系统 | `src/errors/`            | 分层错误类（ConfigError/FetchError/GenerateError）+ ErrorFactory                   |
-| 路径工具 | `src/utils/path.ts`      | 中文标签 → 拼音目录名（基于 `pinyin-pro`）                                         |
-| 文件工具 | `src/utils/file.ts`      | 文件 I/O、目录清理                                                                 |
-| 格式化   | `src/utils/formatter.ts` | 使用 Prettier 格式化生成代码                                                       |
-| 钩子     | `src/types/hooks.ts`     | `CliHooks`：`beforeGenerate`、`afterGenerate`、`beforeWriteFile`、`afterWriteFile` |
-| 进度条   | `src/utils/progress.ts`  | 基于 `consola` 的进度指示器                                                        |
-| 日志     | `consola`                | 全局结构化日志                                                                     |
+| 关注点     | 位置                     | 说明                                                                               |
+| ---------- | ------------------------ | ---------------------------------------------------------------------------------- |
+| 类型定义   | `src/types/`             | 所有层的中心类型系统                                                               |
+| 命名策略   | `src/generator/naming/`  | 通过 `NamingStrategy` 接口实现可插拔命名                                           |
+| 错误系统   | `src/errors/`            | 分层错误类（ConfigError/FetchError/GenerateError）+ ErrorFactory                   |
+| 路径工具   | `src/utils/path.ts`      | 中文标签 → 拼音目录名（基于 `pinyin-pro`）                                         |
+| 转义与插值 | `src/utils/escape.ts`    | JSDoc/字符串字面量/模板字符串转义 + 路径参数插值（`interpolatePathParams`）        |
+| 文件工具   | `src/utils/file.ts`      | 文件 I/O、目录清理                                                                 |
+| 格式化     | `src/utils/formatter.ts` | 使用 Prettier 格式化生成代码                                                       |
+| 钩子       | `src/types/hooks.ts`     | `CliHooks`：`beforeGenerate`、`afterGenerate`、`beforeWriteFile`、`afterWriteFile` |
+| 进度条     | `src/utils/progress.ts`  | 基于 `consola` 的进度指示器                                                        |
+| 日志       | `consola`                | 全局结构化日志                                                                     |
 
 ## 测试体系
 

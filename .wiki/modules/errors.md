@@ -24,20 +24,23 @@ BaseError (abstract)
 
 ## 错误码分段
 
-| 范围  | 类            | 典型场景         |
-| ----- | ------------- | ---------------- |
-| E1001 | ConfigError   | 配置文件不存在   |
-| E1002 | ConfigError   | 配置文件语法错误 |
-| E1003 | ConfigError   | 缺少必填字段     |
-| E1004 | ConfigError   | URL 格式无效     |
-| E2001 | FetchError    | 请求失败         |
-| E2002 | FetchError    | 认证失败（401）  |
-| E2003 | FetchError    | 请求超时         |
-| E2004 | FetchError    | 网络错误         |
-| E3001 | GenerateError | 模板编译错误     |
-| E3002 | GenerateError | 文件写入错误     |
-| E3003 | GenerateError | 类型生成错误     |
-| E3004 | GenerateError | Schema 生成错误  |
+| 范围  | 类            | 典型场景                                         |
+| ----- | ------------- | ------------------------------------------------ |
+| E1001 | ConfigError   | 配置文件未找到                                   |
+| E1002 | ConfigError   | 配置无效（非法值或不满足验证规则）               |
+| E1003 | ConfigError   | 配置文件解析失败（TS 编译失败）                  |
+| E1004 | ConfigError   | 缺少必需字段                                     |
+| E1005 | ConfigError   | URL 格式无效                                     |
+| E2001 | FetchError    | 请求失败                                         |
+| E2002 | FetchError    | 认证失败（401）                                  |
+| E2003 | FetchError    | 请求超时                                         |
+| E2004 | FetchError    | 响应格式无效（非预期 OpenAPI）                   |
+| E2005 | FetchError    | 网络错误（连接中断/DNS 失败）                    |
+| E3001 | GenerateError | 模板编译错误                                     |
+| E3002 | GenerateError | 文件写入错误                                     |
+| E3003 | GenerateError | 类型生成错误                                     |
+| E3004 | GenerateError | Schema 生成错误                                  |
+| E3005 | GenerateError | 路径转换失败（transformPath 抛错或返回非字符串） |
 
 ## 使用模式
 

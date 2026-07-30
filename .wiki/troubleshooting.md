@@ -67,6 +67,16 @@
 2. 检查是否在 Docker/VM 环境中（文件系统事件可能不传递）
 3. 手动重新运行 `generate` 命令
 
+### 生成的 URL 是反引号模板字符串而非单引号
+
+**原因**：当 OpenAPI 路径含 `{param}` 占位符（如 `/api/users/{id}`）时，生成器会自动将其插值为模板字符串（如 `` `/api/users/${params.id}` ``），而非单引号字面量。这是预期行为，确保运行时正确填充路径参数。
+
+**说明**：
+
+- 路径参数从 `operation.parameters` 中匹配 `in === 'path'` 的项
+- 无路径参数的接口仍使用单引号字面量（如 `'/api/users'`），与旧行为一致
+- path 参数同时保留在 `RequestType` 接口中作为字段，便于类型校验
+
 ## 调试方法
 
 1. **`--verbose` 参数**：获取详细日志输出
@@ -95,7 +105,7 @@
      beforeWriteFile: (filePath, content) => {
        console.log('Writing:', filePath);
        return content;
-     };
+     },
    }
    ```
 

@@ -44,10 +44,13 @@ pnpm run dev
 
 ### 发布
 
-| 脚本         | 命令                                                    | 说明                                  |
-| ------------ | ------------------------------------------------------- | ------------------------------------- |
-| `release`    | `prepublish && versioning && postaction && npm publish` | 完整发布：构建 → 版本号 → 推送 → 发布 |
-| `versioning` | `standard-version`                                      | 版本号递增并生成变更日志              |
+| 脚本         | 命令                                                                                | 说明                                  |
+| ------------ | ----------------------------------------------------------------------------------- | ------------------------------------- |
+| `prepublish` | `pnpm run build`                                                                    | 发布前构建                            |
+| `versioning` | `standard-version`                                                                  | 版本号递增并生成变更日志              |
+| `postaction` | `git push origin main --tags`                                                       | 推送提交与标签到远程                  |
+| `release`    | `pnpm run prepublish && pnpm run versioning && pnpm run postaction && pnpm publish` | 完整发布：构建 → 版本号 → 推送 → 发布 |
+| `prepare`    | `husky`                                                                             | 安装时初始化 Git 钩子                 |
 
 ### 文档
 
@@ -56,6 +59,14 @@ pnpm run dev
 | `docs:dev`     | `vitepress dev`     | 启动文档开发服务器 |
 | `docs:build`   | `vitepress build`   | 构建文档站点       |
 | `docs:preview` | `vitepress preview` | 预览已构建的文档   |
+
+### 测试
+
+| 脚本            | 命令                    | 说明                                |
+| --------------- | ----------------------- | ----------------------------------- |
+| `test`          | `vitest run`            | 运行单元测试                        |
+| `test:watch`    | `vitest`                | 监听模式运行测试                    |
+| `test:coverage` | `vitest run --coverage` | 运行测试并生成覆盖率报告（v8 引擎） |
 
 ### CI
 

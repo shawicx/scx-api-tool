@@ -9,7 +9,7 @@
 - **Swagger/OpenAPI 3.0**：标准 OpenAPI JSON 端点（如 `https://petstore.swagger.io/v2/swagger.json`）。服务类型自动检测。
 - **Apifox**：Apifox 的导出端点（如 `https://api.apifox.com/v1/projects/{id}/export-openapi`）。需要 API Token（`APS-...` 格式）。
 
-服务类型检测在 `src/clients/index.ts` 中通过 URL 模式匹配实现。
+服务类型检测在 `src/utils/config.ts` 的 `parseSourceUrl()` 中通过 URL 主机名匹配实现（`apifox.com` → Apifox，否则 → Swagger），同时从 Apifox URL 路径中正则提取 `apifoxProjectId`。
 
 ### ServerType（服务类型）
 
@@ -159,6 +159,18 @@ OpenAPI 规范使用 `$ref`（如 `#/components/schemas/User`）引用共享 Sch
 - 数组包装
 - 嵌套对象
 
+### 路径参数插值（Path Parameter Interpolation）
+
+OpenAPI 路径中的 `{param}` 占位符会被自动插值为 JavaScript 模板字符串，确保生成的请求 URL 在运行时正确填充路径参数。
+
+- 由 `extractPathParameterNames()`（筛出 `in === 'path'` 的参数名）与 `interpolatePathParams()`（执行替换）协作完成
+- 单参数：`/api/v1/stock/{code}` → `` `/api/v1/stock/${params.code}` ``
+- 多参数：`/users/{userId}/posts/{postId}` → `` `/users/${params.userId}/posts/${params.postId}` ``
+- 无路径参数时：退化为单引号字面量（如 `'/api/users'`），与旧行为完全一致
+- 安全保障：静态文本转义反引号/`${`/反斜杠；参数名经 `sanitizePropertyName` 清理，非法标识符用方括号访问（如 `params['user-id']`）
+
+> path 参数仍作为字段保留在 `RequestType` 接口中（便于类型校验），同时被插值到 URL。
+
 ### transformPath（路径转换函数）
 
 一个接收原始 path 并返回转换后 path 的函数（类型：`(path: string) => string`，默认：`(p) => p` 恒等函数）。可用于添加前缀、去除前缀、正则替换等任意路径变换。当前端使用的路径与 API 定义不同时非常有用。
@@ -168,7 +180,7 @@ OpenAPI 规范使用 `$ref`（如 `#/components/schemas/User`）引用共享 Sch
 - 去除前缀：`transformPath: (p) => p.startsWith('/api') ? p.slice(4) : p`
 - 添加前缀：`transformPath: (p) => '/api/v1' + p`
 
-> ⚠️ 字符串形式已在 0.6.0 版本废弃，必须使用函数形式。
+> ⚠️ 字符串形式已在 0.6.0 版本**硬移除**：传字符串会在配置校验阶段抛出 `ConfigValidationError`，必须使用函数形式。
 
 ## 错误系统
 
