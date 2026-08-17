@@ -14,15 +14,13 @@ Zod 模式提供运行时验证能力，适合需要数据校验的项目。
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  // API 数据源
-  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: 'APS-YourAccessTokenHere',
+  // 公共输出根目录
+  baseOutputDir: 'src/service',
 
   // 类型生成格式：使用 Zod Schema（运行时验证）
   typesFormat: 'zod',
 
   // 输出配置
-  outputDir: 'src/service',
   generateApi: true,
   generateTypes: true,
 
@@ -32,6 +30,16 @@ export default defineConfig({
 
   // 代码生成选项
   comment: true,
+
+  // 服务声明（单服务）
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: 'APS-YourAccessTokenHere',
+    },
+  ],
 });
 ```
 
@@ -150,15 +158,13 @@ TypeScript 模式只生成类型定义，适合只需要编译时类型检查的
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  // API 数据源
-  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: 'APS-YourAccessTokenHere',
+  // 公共输出根目录
+  baseOutputDir: 'src/service',
 
   // 类型生成格式：使用 TypeScript 类型定义
   typesFormat: 'typescript',
 
   // 输出配置
-  outputDir: 'src/service',
   generateApi: true,
   generateTypes: true,
 
@@ -168,6 +174,16 @@ export default defineConfig({
 
   // 代码生成选项
   comment: true,
+
+  // 服务声明（单服务）
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: 'APS-YourAccessTokenHere',
+    },
+  ],
 });
 ```
 
@@ -219,8 +235,7 @@ const response = await request({
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  source: 'YOUR_API_SOURCE',
-  token: 'YOUR_TOKEN',
+  baseOutputDir: 'src/service',
 
   // 只生成类型，不生成 API 函数
   generateApi: false,
@@ -228,6 +243,15 @@ export default defineConfig({
 
   // 选择类型格式
   typesFormat: 'typescript',
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'YOUR_API_SOURCE',
+      token: 'YOUR_TOKEN',
+    },
+  ],
 });
 ```
 
@@ -256,12 +280,20 @@ const user: User = {
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  source: 'YOUR_API_SOURCE',
-  token: 'YOUR_TOKEN',
+  baseOutputDir: 'src/service',
 
   // 只生成 API 函数，不生成类型
   generateApi: true,
   generateTypes: false,
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'YOUR_API_SOURCE',
+      token: 'YOUR_TOKEN',
+    },
+  ],
 });
 ```
 
@@ -289,8 +321,7 @@ const result = await postAiCompletionApi({
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  source: 'YOUR_API_SOURCE',
-  token: 'YOUR_TOKEN',
+  baseOutputDir: 'src/service',
   typesFormat: 'zod',
 
   // 自定义命名策略
@@ -329,6 +360,15 @@ export default defineConfig({
       return `${interfaceName}ResponseType`;
     },
   },
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'YOUR_API_SOURCE',
+      token: 'YOUR_TOKEN',
+    },
+  ],
 });
 ```
 
@@ -342,11 +382,19 @@ export default defineConfig({
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  source:
-    process.env.API_SOURCE || 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: process.env.API_TOKEN || 'default-token',
-  outputDir: process.env.OUTPUT_DIR || 'src/service',
+  baseOutputDir: process.env.OUTPUT_DIR || 'src/service',
   typesFormat: (process.env.TYPES_FORMAT as 'typescript' | 'zod') || 'typescript',
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source:
+        process.env.API_SOURCE ||
+        'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: process.env.API_TOKEN || 'default-token',
+    },
+  ],
 });
 ```
 
@@ -374,47 +422,93 @@ TYPES_FORMAT=zod
 
 ## 推荐配置
 
-### 推荐配置 1: 标准项目（Zod 模式）
+### 推荐配置 1: 标准项目（单服务 - Zod 模式）
 
-适合需要运行时验证的 Web 应用。
+适合需要运行时验证的 Web 应用。只有一个数据源时，使用 `services` 数组长度为 1 的配置，并设置 `folder: '.'` 让输出直接落在 `baseOutputDir`。
 
 ```typescript
 export default defineConfig({
-  source: process.env.API_SOURCE!,
-  token: process.env.API_TOKEN!,
-  outputDir: 'src/service',
+  baseOutputDir: 'src/service',
   typesFormat: 'zod',
   generateApi: true,
   generateTypes: true,
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: process.env.API_SOURCE!,
+      token: process.env.API_TOKEN!,
+    },
+  ],
 });
 ```
 
-### 推荐配置 2: 简化项目（TypeScript 模式）
+### 推荐配置 2: 简化项目（单服务 - TypeScript 模式）
 
 适合只需要类型检查的项目。
 
 ```typescript
 export default defineConfig({
-  source: process.env.API_SOURCE!,
-  token: process.env.API_TOKEN!,
-  outputDir: 'src/service',
+  baseOutputDir: 'src/service',
   typesFormat: 'typescript',
   generateApi: true,
   generateTypes: true,
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: process.env.API_SOURCE!,
+      token: process.env.API_TOKEN!,
+    },
+  ],
 });
 ```
 
-### 推荐配置 3: 微服务
+### 推荐配置 3: 微服务（多服务）
+
+多服务是本工具的核心能力。同时对接多个后端服务时，声明多个 `services` 元素：每个服务有独立的数据源、token 与输出子目录（`folder`），共享 `baseOutputDir` 下的 `request.ts`。各服务还可以通过服务级字段覆盖公共配置（如下方 order 服务的 `generateTypes: false`）。
 
 ```typescript
 export default defineConfig({
-  source: process.env.API_SOURCE!,
-  token: process.env.API_TOKEN!,
-  outputDir: 'src/service',
+  baseOutputDir: 'src/service', // request.ts 生成于此层级并被共享
   generateApi: true,
-  generateTypes: false,
+  generateTypes: true,
+  typesFormat: 'typescript',
+
+  services: [
+    {
+      name: 'user', // folder 默认取 name → 输出 src/service/user
+      source: process.env.USER_API_SOURCE!,
+      token: process.env.USER_API_TOKEN!,
+    },
+    {
+      name: 'order',
+      source: process.env.ORDER_API_SOURCE!,
+      token: process.env.ORDER_API_TOKEN!,
+      folder: 'trade/order', // 多段 folder → 输出 src/service/trade/order
+      generateTypes: false, // 服务级覆盖：order 服务不生成类型
+    },
+  ],
 });
 ```
+
+对应输出结构：
+
+```
+src/service/                    # baseOutputDir
+├── request.ts                  # 共享请求函数（仅生成一次）
+├── user/                       # src/service/user
+│   ├── index.ts
+│   ├── <tag拼音>/index.ts
+│   └── types/
+└── trade/order/                # src/service/trade/order
+    ├── index.ts
+    └── <tag拼音>/index.ts      # order 服务未生成 types/
+```
+
+> 注意：各服务计算后的 `outputDir` 不能相同或互相嵌套，否则会抛 `E1002`。`name` 也不能重复。详见[配置指南 - 多服务配置](./configuration.md#多服务--微服务配置)。
 
 ## 下一步
 

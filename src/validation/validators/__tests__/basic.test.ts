@@ -27,7 +27,7 @@ import {
 } from '../basic';
 import { ValidationSeverity } from '../../errors';
 import { validSwaggerUserConfig, validApifoxUserConfig } from '../../../../tests/fixtures/mockData';
-import type { UserConfig } from '@/types';
+import type { ServiceConfig, CommonServiceConfig } from '@/types';
 import { RequestMethodStyle } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -62,22 +62,41 @@ describe('validateRequiredFields', () => {
     expect(errors[0]!.field).toBe('source');
   });
 
-  it('throws when source is not a string (calls .includes on non-string)', () => {
+  it('throws when source is not a string (token branch calls .includes on truthy non-string)', () => {
     const config = { ...validSwaggerUserConfig, source: 123 as any };
-    // basic.ts calls config.source.includes('apifox.com') unconditionally at line 44,
-    // which throws for non-string source values
+    // 当 source 为非字符串的 truthy 值时，校验逻辑会短路报错 REQUIRED_FIELD，
+    // 但随后 token 分支调用 config.source.includes('apifox.com') 会对非字符串抛 TypeError
     expect(() => validateRequiredFields(config)).toThrow();
   });
 
-  it('throws when source is undefined (calls .includes on undefined)', () => {
-    const config: UserConfig = { source: undefined as any, token: '' };
-    // basic.ts calls config.source.includes('apifox.com') unconditionally at line 44,
-    // which throws for undefined source
-    expect(() => validateRequiredFields(config)).toThrow();
+  it('returns name error when name is undefined', () => {
+    const { name: _name, ...rest } = validSwaggerUserConfig;
+    const config = { ...rest } as Partial<ServiceConfig> as ServiceConfig;
+    const errors = validateRequiredFields(config);
+
+    const nameError = errors.find((e) => e.field === 'name');
+    expect(nameError).toBeDefined();
+    expect(nameError!.code).toBe('REQUIRED_FIELD');
+    expect(nameError!.severity).toBe(ValidationSeverity.ERROR);
+  });
+
+  it('returns name error when name is empty string', () => {
+    const config = { ...validSwaggerUserConfig, name: '' };
+    const errors = validateRequiredFields(config);
+
+    expect(errors.some((e) => e.field === 'name')).toBe(true);
+  });
+
+  it('returns name error when name is whitespace-only', () => {
+    const config = { ...validSwaggerUserConfig, name: '   ' };
+    const errors = validateRequiredFields(config);
+
+    expect(errors.some((e) => e.field === 'name')).toBe(true);
   });
 
   it('returns error for Apifox source without token', () => {
-    const config: UserConfig = {
+    const config: ServiceConfig = {
+      name: 'apifox-demo',
       source: 'https://api.apifox.com/v1/projects/123456/export-openapi',
       token: '',
     };
@@ -89,7 +108,8 @@ describe('validateRequiredFields', () => {
   });
 
   it('returns error for Apifox source with whitespace-only token', () => {
-    const config: UserConfig = {
+    const config: ServiceConfig = {
+      name: 'apifox-demo',
       source: 'https://api.apifox.com/v1/projects/123456/export-openapi',
       token: '   ',
     };
@@ -100,7 +120,8 @@ describe('validateRequiredFields', () => {
   });
 
   it('does not require token for non-Apifox sources', () => {
-    const config: UserConfig = {
+    const config: ServiceConfig = {
+      name: 'demo',
       source: 'https://example.com/swagger.json',
       token: '',
     };
@@ -109,16 +130,12 @@ describe('validateRequiredFields', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it('returns both source and token errors for Apifox with empty source and no token', () => {
-    const config: UserConfig = {
-      source: '',
-      token: '',
-    };
-    // Note: token validation checks config.source.includes('apifox.com'),
-    // so with empty source it won't require token
+  it('returns both name and source errors when both are missing', () => {
+    const config = { source: '', token: '' } as Partial<ServiceConfig> as ServiceConfig;
+    // source 为空字符串时不会进入 Apifox token 分支
     const errors = validateRequiredFields(config);
 
-    expect(errors.length).toBeGreaterThanOrEqual(1);
+    expect(errors.some((e) => e.field === 'name')).toBe(true);
     expect(errors.some((e) => e.field === 'source')).toBe(true);
   });
 });
@@ -229,7 +246,7 @@ describe('validateStringFields', () => {
   it('returns no errors when all string fields are valid', () => {
     const config = {
       ...validSwaggerUserConfig,
-      outputDir: 'src/service',
+      folder: 'petstore',
       transformPath: (p: string) => p,
       prodEnvName: 'production',
       requestFunctionFilePath: 'src/service/request.ts',
@@ -248,22 +265,37 @@ describe('validateStringFields', () => {
     expect(errors).toHaveLength(0);
   });
 
-  // outputDir
-  it('returns error for empty outputDir', () => {
-    const config = { ...validSwaggerUserConfig, outputDir: '' };
+  // folder（相对 baseOutputDir 的子文件夹；空字符串报错）
+  it('returns error for empty folder', () => {
+    const config = { ...validSwaggerUserConfig, folder: '' };
     const errors = validateStringFields(config);
 
     expect(errors).toHaveLength(1);
-    expect(errors[0]!.field).toBe('outputDir');
+    expect(errors[0]!.field).toBe('folder');
     expect(errors[0]!.code).toBe('INVALID_STRING');
   });
 
-  it('returns error for non-string outputDir', () => {
-    const config = { ...validSwaggerUserConfig, outputDir: 123 as any };
+  it('returns error for whitespace-only folder', () => {
+    const config = { ...validSwaggerUserConfig, folder: '   ' };
     const errors = validateStringFields(config);
 
     expect(errors).toHaveLength(1);
-    expect(errors[0]!.field).toBe('outputDir');
+    expect(errors[0]!.field).toBe('folder');
+  });
+
+  it('returns error for non-string folder', () => {
+    const config = { ...validSwaggerUserConfig, folder: 123 as any };
+    const errors = validateStringFields(config);
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.field).toBe('folder');
+  });
+
+  it('accepts multi-segment folder path', () => {
+    const config = { ...validSwaggerUserConfig, folder: 'trade/order' };
+    const errors = validateStringFields(config);
+
+    expect(errors).toHaveLength(0);
   });
 
   // transformPath
@@ -346,7 +378,7 @@ describe('validateStringFields', () => {
   it('returns multiple errors when multiple string fields are invalid', () => {
     const config = {
       ...validSwaggerUserConfig,
-      outputDir: '',
+      folder: '',
       prodEnvName: '',
       requestFunctionName: '',
     };

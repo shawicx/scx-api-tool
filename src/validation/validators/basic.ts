@@ -4,26 +4,39 @@
  */
 
 import { ValidationError, ValidationSeverity, createValidationError } from '../errors';
-import type { UserConfig } from '@/types';
+import type { CommonServiceConfig, ServiceConfig } from '@/types';
 import { RequestMethodStyle } from '@/types';
-import { isWithinCwd } from '@/utils/pathSafety';
 
 /**
  * @description 验证必需字段
- * 检查配置中所有必需的字段是否存在且有效
- * @param config 用户配置对象
+ * 检查服务配置中所有必需的字段是否存在且有效
+ * @param config 服务配置对象
  * @returns 验证错误数组
  *
  * @example
  * ```typescript
- * const errors = validateRequiredFields(config);
+ * const errors = validateRequiredFields(service);
  * // errors = [
  * //   { field: 'source', code: 'REQUIRED_FIELD', message: '...' }
  * // ]
  * ```
  */
-export function validateRequiredFields(config: UserConfig): ValidationError[] {
+export function validateRequiredFields(config: ServiceConfig): ValidationError[] {
   const errors: ValidationError[] = [];
+
+  // 验证 name 字段
+  if (!config.name || typeof config.name !== 'string' || config.name.trim() === '') {
+    errors.push(
+      createValidationError(
+        'name',
+        'REQUIRED_FIELD',
+        '服务 name 是必需的，必须是非空字符串',
+        ValidationSeverity.ERROR,
+        '请提供唯一的服务名称，用于日志标识与默认 folder，例如：\'name: "user"\'',
+        config.name,
+      ),
+    );
+  }
 
   // 验证 source 字段
   if (!config.source || typeof config.source !== 'string' || config.source.trim() === '') {
@@ -42,7 +55,7 @@ export function validateRequiredFields(config: UserConfig): ValidationError[] {
   }
 
   // 验证 token 字段（仅对 Apifox 必需）
-  if (config.source.includes('apifox.com')) {
+  if (config.source && config.source.includes('apifox.com')) {
     if (!config.token || typeof config.token !== 'string' || config.token.trim() === '') {
       errors.push(
         createValidationError(
@@ -74,7 +87,7 @@ export function validateRequiredFields(config: UserConfig): ValidationError[] {
  * // ]
  * ```
  */
-export function validateEnumValues(config: UserConfig): ValidationError[] {
+export function validateEnumValues(config: CommonServiceConfig): ValidationError[] {
   const errors: ValidationError[] = [];
 
   // 验证 target 枚举值
@@ -140,32 +153,23 @@ export function validateEnumValues(config: UserConfig): ValidationError[] {
  * // ]
  * ```
  */
-export function validateStringFields(config: UserConfig): ValidationError[] {
+export function validateStringFields(config: ServiceConfig): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  // 验证 outputDir
-  if (config.outputDir !== undefined) {
-    if (typeof config.outputDir !== 'string' || config.outputDir.trim() === '') {
+  // outputDir 不在用户配置层（由 baseOutputDir + folder 计算得出），
+  // 其隔离校验在 resolveServiceConfigs 阶段执行（见 src/utils/config.ts validateServiceConfigs）。
+
+  // 验证 folder（非空字符串，允许相对路径段）
+  if (config.folder !== undefined) {
+    if (typeof config.folder !== 'string' || config.folder.trim() === '') {
       errors.push(
         createValidationError(
-          'outputDir',
+          'folder',
           'INVALID_STRING',
-          'outputDir 必须是非空字符串',
+          'folder 必须是非空字符串',
           ValidationSeverity.ERROR,
-          '请提供有效的输出目录路径，例如: "src/service"',
-          config.outputDir,
-        ),
-      );
-    } else if (!isWithinCwd(config.outputDir)) {
-      // 安全护栏：禁止指向项目根目录之外，避免 cleanOutputDir 误删
-      errors.push(
-        createValidationError(
-          'outputDir',
-          'PATH_TRAVERSAL',
-          'outputDir 不能指向项目根目录之外',
-          ValidationSeverity.ERROR,
-          '请使用项目内的相对路径（如 src/service），避免使用 .. 或绝对路径',
-          config.outputDir,
+          '请提供有效的子文件夹名称（相对 baseOutputDir），例如: "user" 或 "trade/order"',
+          config.folder,
         ),
       );
     }
@@ -281,7 +285,7 @@ export function validateStringFields(config: UserConfig): ValidationError[] {
  * // ]
  * ```
  */
-export function validateBooleanFields(config: UserConfig): ValidationError[] {
+export function validateBooleanFields(config: CommonServiceConfig): ValidationError[] {
   const errors: ValidationError[] = [];
 
   const booleanFields = ['typesOnly', 'apiOnly', 'comment'] as const;
@@ -319,7 +323,7 @@ export function validateBooleanFields(config: UserConfig): ValidationError[] {
  * // ]
  * ```
  */
-export function validateNumberFields(config: UserConfig): ValidationError[] {
+export function validateNumberFields(config: CommonServiceConfig): ValidationError[] {
   const errors: ValidationError[] = [];
 
   // 验证 indentSize

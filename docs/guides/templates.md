@@ -31,12 +31,20 @@ src/templates/
 在配置中指定模板目录：
 
 ```typescript
-export default defineConfig([
-  {
-    // ... 其他配置
-    templateDir: './my-templates', // 自定义模板目录
-  },
-]);
+export default defineConfig({
+  baseOutputDir: 'src/service',
+  // ... 其他配置
+  templateDir: './my-templates', // 自定义模板目录（公共配置，所有服务共享）
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'YOUR_API_SOURCE',
+      token: 'YOUR_TOKEN',
+    },
+  ],
+});
 ```
 
 ### 2. 覆盖特定模板
@@ -57,9 +65,9 @@ my-templates/
 
 ```typescript
 interface TemplateData {
-  // 项目配置
+  // 项目配置（运行时的 ApiConfig，即合并后的单个服务配置）
   config: {
-    outputDir: string;
+    outputDir: string; // 该服务的完整输出目录 = join(baseOutputDir, folder ?? name)
     target: 'typescript' | 'javascript';
     indentSize: number;
   };

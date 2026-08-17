@@ -31,10 +31,8 @@ npx api-power init
 import { defineConfig } from '@scx/api-tool';
 
 export default defineConfig({
-  // API 数据源 URL（Apifox 或 Swagger/OpenAPI）
-  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  // 认证令牌
-  token: 'YOUR_TOKEN_HERE',
+  // 公共输出根目录（原 outputDir 改名）
+  baseOutputDir: 'src/service',
 
   // 是否生成 API 请求方法
   generateApi: true,
@@ -43,8 +41,15 @@ export default defineConfig({
   // 类型生成格式：'typescript' | 'zod'
   typesFormat: 'typescript',
 
-  // 输出目录
-  outputDir: 'src/service',
+  // 服务声明（单服务：数组长度为 1）
+  services: [
+    {
+      name: 'main', // 服务名（唯一）
+      folder: '.', // 输出直接落在 baseOutputDir（等价于旧的单源配置）
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: 'YOUR_TOKEN_HERE',
+    },
+  ],
 });
 ```
 
@@ -173,19 +178,20 @@ npx api-power viz -p 8080 --host 0.0.0.0
 
 以下是最常用的配置选项：
 
-| 选项                  | 类型                           | 默认值          | 描述                                        |
-| --------------------- | ------------------------------ | --------------- | ------------------------------------------- |
-| `source`              | `string`                       | -               | API 数据源 URL（Apifox 或 Swagger/OpenAPI） |
-| `token`               | `string`                       | -               | 认证令牌                                    |
-| `generateApi`         | `boolean`                      | `true`          | 是否生成 API 请求方法                       |
-| `generateTypes`       | `boolean`                      | `true`          | 是否生成类型定义                            |
-| `typesFormat`         | `'typescript' \| 'zod'`        | `'typescript'`  | 类型生成格式                                |
-| `target`              | `'javascript' \| 'typescript'` | `'typescript'`  | 目标语言                                    |
-| `outputDir`           | `string`                       | `'src/service'` | 输出目录                                    |
-| `indentSize`          | `number`                       | `2`             | 缩进大小                                    |
-| `comment`             | `boolean`                      | `true`          | 是否生成注释                                |
-| `requestFunctionName` | `string`                       | `'request'`     | 自定义请求函数名                            |
-| `prodEnvName`         | `string`                       | `'production'`  | 生产环境名称                                |
+| 选项                  | 类型                           | 默认值          | 描述                                                              |
+| --------------------- | ------------------------------ | --------------- | ----------------------------------------------------------------- |
+| `services`            | `ServiceConfig[]`              | -               | 服务声明数组（每个服务独立的数据源、token、folder）               |
+| `baseOutputDir`       | `string`                       | `'src/service'` | 公共根输出目录（原 `outputDir` 改名，共享 `request.ts` 所在层级） |
+| `generateApi`         | `boolean`                      | `true`          | 是否生成 API 请求方法（公共配置，可被服务覆盖）                   |
+| `generateTypes`       | `boolean`                      | `true`          | 是否生成类型定义（公共配置，可被服务覆盖）                        |
+| `typesFormat`         | `'typescript' \| 'zod'`        | `'typescript'`  | 类型生成格式（公共配置，可被服务覆盖）                            |
+| `target`              | `'javascript' \| 'typescript'` | `'typescript'`  | 目标语言                                                          |
+| `indentSize`          | `number`                       | `2`             | 缩进大小                                                          |
+| `comment`             | `boolean`                      | `true`          | 是否生成注释                                                      |
+| `requestFunctionName` | `string`                       | `'request'`     | 自定义请求函数名                                                  |
+| `prodEnvName`         | `string`                       | `'production'`  | 生产环境名称                                                      |
+
+> `services` 数组中每个服务（`ServiceConfig`）的必填/重要字段：`name`（唯一）、`source`、`token`（Swagger 可省）、`folder`（可选，默认取 `name`，可多段如 `'trade/order'`）。完整字段说明见[配置指南](../guides/configuration.md)。
 
 ### 高级配置选项
 

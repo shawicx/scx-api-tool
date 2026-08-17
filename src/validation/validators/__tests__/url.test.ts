@@ -20,7 +20,7 @@ vi.mock('@/utils/logger', () => ({
 import { validateUrlFormat, validateSourceUrl } from '../url';
 import { ValidationSeverity } from '../../errors';
 import { validSwaggerUserConfig, validApifoxUserConfig } from '../../../../tests/fixtures/mockData';
-import type { UserConfig } from '@/types';
+import type { ServiceConfig } from '@/types';
 
 // ---------------------------------------------------------------------------
 // validateUrlFormat
@@ -108,7 +108,7 @@ describe('validateUrlFormat', () => {
 describe('validateSourceUrl', () => {
   // --- No source ---
   it('returns empty array when source is empty', () => {
-    const config: UserConfig = { source: '', token: '' };
+    const config: ServiceConfig = { name: 'test', source: '', token: '' };
     const errors = validateSourceUrl(config);
 
     expect(errors).toEqual([]);
@@ -116,7 +116,7 @@ describe('validateSourceUrl', () => {
 
   // --- Invalid base URL format ---
   it('returns error for invalid URL format and stops further validation', () => {
-    const config: UserConfig = { source: 'not-a-url', token: '' };
+    const config: ServiceConfig = { name: 'test', source: 'not-a-url', token: '' };
     const errors = validateSourceUrl(config);
 
     expect(errors.length).toBeGreaterThanOrEqual(1);
@@ -132,7 +132,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('returns error for Apifox URL with invalid path format', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.apifox.com/v1/invalid-path',
         token: 'test-token',
       };
@@ -144,7 +145,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('returns error for Apifox URL with missing project ID', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.apifox.com/v1/projects//export-openapi',
         token: 'test-token',
       };
@@ -156,7 +158,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('accepts Apifox URL with trailing slash', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.apifox.com/v1/projects/123456/export-openapi/',
         token: 'test-token',
       };
@@ -166,7 +169,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('accepts Apifox URL with numeric project ID', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.apifox.com/v1/projects/987654321/export-openapi',
         token: 'test-token',
       };
@@ -176,7 +180,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('returns error for Apifox URL without export-openapi in path', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.apifox.com/v1/projects/123456/api',
         token: 'test-token',
       };
@@ -190,7 +195,8 @@ describe('validateSourceUrl', () => {
   // --- Swagger URLs ---
   describe('Swagger URL validation', () => {
     it('returns no errors for valid Swagger URL with /swagger.json', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://petstore.swagger.io/v2/swagger.json',
         token: '',
       };
@@ -200,7 +206,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('returns no errors for valid Swagger URL with /openapi.json', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.example.com/openapi.json',
         token: '',
       };
@@ -210,7 +217,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('returns no errors for valid Swagger URL with /openapi.yaml', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.example.com/openapi.yaml',
         token: '',
       };
@@ -220,7 +228,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('returns no errors for /api-docs path', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.example.com/api-docs',
         token: '',
       };
@@ -230,7 +239,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('returns warning for unrecognized Swagger path pattern', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.example.com/custom-endpoint',
         token: '',
       };
@@ -242,7 +252,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('returns warning for Swagger URL without known file extension', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.example.com/v1/something.xml',
         token: '',
       };
@@ -253,7 +264,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('accepts /v1/swagger.json pattern', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.example.com/v1/swagger.json',
         token: '',
       };
@@ -263,7 +275,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('accepts /v3/swagger.json pattern', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.example.com/v3/swagger.json',
         token: '',
       };
@@ -273,7 +286,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('accepts /swagger.yaml pattern', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.example.com/swagger.yaml',
         token: '',
       };
@@ -283,7 +297,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('accepts /swagger.yml pattern', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.example.com/swagger.yml',
         token: '',
       };
@@ -293,7 +308,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('accepts /openapi.yml pattern', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.example.com/openapi.yml',
         token: '',
       };
@@ -303,7 +319,8 @@ describe('validateSourceUrl', () => {
     });
 
     it('accepts /v2/swagger.json pattern', () => {
-      const config: UserConfig = {
+      const config: ServiceConfig = {
+        name: 'test',
         source: 'https://api.example.com/v2/swagger.json',
         token: '',
       };

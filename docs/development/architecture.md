@@ -370,12 +370,19 @@ export class ConfigLoader {
 ```typescript
 export class ConfigValidator {
   validate(config: any): ApiConfig[] {
-    // 使用 Joi 或类似库进行验证
+    // 使用 Joi 或类似库进行验证（多服务 MultiServiceConfig）
+    const serviceSchema = Joi.object({
+      name: Joi.string().required(), // 服务名（唯一）
+      source: Joi.string().required(), // 数据源（下沉到服务级）
+      token: Joi.string().optional(), // 令牌（下沉到服务级）
+      folder: Joi.string().optional(), // 相对 baseOutputDir，默认取 name
+      // ... 其他可覆盖公共字段
+    });
+
     const schema = Joi.object({
-      serverUrl: Joi.string().uri().required(),
-      serverType: Joi.string().valid('apifox', 'swagger').required(),
-      outputDir: Joi.string().default('src/service'),
-      // ... 其他字段
+      baseOutputDir: Joi.string().default('src/service'), // 公共根输出目录（原 outputDir 改名）
+      services: Joi.array().items(serviceSchema).min(1).required(),
+      // ... 其他公共字段
     });
 
     const { error, value } = schema.validate(config);
@@ -383,6 +390,7 @@ export class ConfigValidator {
       throw new Error(`配置验证失败: ${error.message}`);
     }
 
+    // 合并后另需校验：name 唯一、各服务计算后的 outputDir 不相同/不嵌套（否则抛 E1002）
     return value;
   }
 }
@@ -513,15 +521,22 @@ export function createClient(config: ApiConfig): ApiClient {
 用户可以通过配置使用自定义模板：
 
 ```typescript
-export default defineConfig([
-  {
-    templateDir: './my-templates',
-    templateConfig: {
-      typeTemplate: 'my-types.hbs',
-      requestTemplate: 'my-request.hbs',
-    },
+export default defineConfig({
+  baseOutputDir: 'src/service',
+  templateDir: './my-templates',
+  templateConfig: {
+    typeTemplate: 'my-types.hbs',
+    requestTemplate: 'my-request.hbs',
   },
-]);
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'YOUR_API_SOURCE',
+      token: 'YOUR_TOKEN',
+    },
+  ],
+});
 ```
 
 ### 3. 自定义处理器
@@ -529,16 +544,23 @@ export default defineConfig([
 可以通过钩子扩展数据处理逻辑：
 
 ```typescript
-export default defineConfig([
-  {
-    hooks: {
-      afterFetch: async (data) => {
-        // 自定义数据处理
-        return processedData;
-      },
+export default defineConfig({
+  baseOutputDir: 'src/service',
+  hooks: {
+    afterFetch: async (data) => {
+      // 自定义数据处理
+      return processedData;
     },
   },
-]);
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'YOUR_API_SOURCE',
+      token: 'YOUR_TOKEN',
+    },
+  ],
+});
 ```
 
 ## 性能考虑

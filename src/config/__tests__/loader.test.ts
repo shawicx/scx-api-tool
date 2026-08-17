@@ -1,5 +1,9 @@
 /**
  * @description config/loader.ts 单元测试
+ *
+ * 新 loader 职责：加载配置文件 → isProcessedConfig 类型守卫（确保是合法 ApiConfig[]）→ 返回 ApiConfig[]。
+ * loader 不再调用 defineConfig / validateConfiguration，因此本测试不再 mock `@/validation` 与 `@/utils/config`。
+ * 仅保留对 `@/utils/logger`（ErrorFactory 间接依赖）与 `@/errors`（ErrorFactory.configNotFound / configParseError）的 mock。
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -36,29 +40,7 @@ vi.mock('fs', async (importOriginal) => {
   };
 });
 
-// Mock validation module
-vi.mock('@/validation', async (importOriginal) => {
-  const actual = (await importOriginal()) as typeof import('@/validation');
-  return {
-    ...actual,
-    validateConfiguration: vi.fn(),
-    ConfigValidationError: class extends Error {
-      validationReport: any;
-      constructor(report: any) {
-        super('validation');
-        this.name = 'ConfigValidationError';
-        this.validationReport = report;
-      }
-    },
-  };
-});
-
-// Mock defineConfig
-vi.mock('@/utils/config', () => ({
-  defineConfig: vi.fn(),
-}));
-
-// Mock errors module
+// Mock errors module（loader 仍依赖 ErrorFactory.configNotFound / configParseError）
 vi.mock('@/errors', () => {
   return {
     ErrorFactory: {
@@ -87,25 +69,62 @@ vi.mock('@/errors', () => {
 
 import { existsSync } from 'fs';
 import { loadConfig } from '../loader';
-import { validateConfiguration, ConfigValidationError, ValidationSeverity } from '@/validation';
-import { defineConfig } from '@/utils/config';
-import { ErrorFactory, BaseError } from '@/errors';
+import { ErrorFactory } from '@/errors';
 
 const mockExistsSync = vi.mocked(existsSync);
-const mockValidateConfiguration = vi.mocked(validateConfiguration);
-const mockDefineConfig = vi.mocked(defineConfig);
 const mockConfigNotFound = vi.mocked(ErrorFactory.configNotFound);
 const mockConfigParseError = vi.mocked(ErrorFactory.configParseError);
 
 /**
+ * 完整的 ApiConfig 字面量（含全部必填字段）。
+ * 用于构造「已是 ApiConfig[]」的 fixture，模拟 defineConfig 处理后的产物。
+ */
+function makeApiConfig(overrides: Record<string, any> = {}): Record<string, any> {
+  return {
+    serverUrl: 'https://petstore.swagger.io',
+    serverType: 'swagger',
+    source: 'https://petstore.swagger.io/v2/swagger.json',
+    token: '',
+    outputDir: 'src/service',
+    generateApi: true,
+    generateTypes: true,
+    typesFormat: 'typescript',
+    target: 'typescript',
+    transformPath: '(p) => p',
+    indentSize: 2,
+    comment: true,
+    prodEnvName: 'production',
+    requestFunctionFilePath: 'src/service/request.ts',
+    requestMethodStyle: 'config',
+    requestFunctionName: 'request',
+    requestMethodsObjectName: 'requestMethods',
+    requestParamName: 'params',
+    responseTypeName: 'Response',
+    concurrency: 50,
+    ...overrides,
+  };
+}
+
+/**
  * Creates a temporary config fixture file that the dynamic import() can resolve.
  * Uses .mjs extension for direct ESM compatibility without needing tsx compilation.
+ *
+ * @param filename fixture 文件名（须以 .mjs 结尾）
+ * @param defaultExport default 导出的源码片段（字符串，会被原样写入 `export default <source>;`）
  */
-function createTempConfigFile(filename: string, content: Record<string, any>): string {
+function createTempConfigFile(filename: string, defaultExport: string): string {
   const filePath = join(tempDir, filename);
-  // Write a JS module that exports the config object as default
-  const fileContent = `export default ${JSON.stringify(content)};\n`;
+  const fileContent = `export default ${defaultExport};\n`;
   writeFileSync(filePath, fileContent, 'utf-8');
+  return filePath;
+}
+
+/**
+ * Writes raw content to a fixture file（用于制造语法错误等场景）。
+ */
+function writeRawConfigFile(filename: string, content: string): string {
+  const filePath = join(tempDir, filename);
+  writeFileSync(filePath, content, 'utf-8');
   return filePath;
 }
 
@@ -139,89 +158,55 @@ describe('loadConfig', () => {
   });
 
   it('should return processed config on successful load', async () => {
-    const userConfig = {
-      source: 'https://petstore.swagger.io/v2/swagger.json',
-      token: '',
-    };
-
-    const processedConfig = {
-      ...userConfig,
-      serverUrl: 'https://petstore.swagger.io',
-      serverType: 'swagger',
-      generateApi: true,
-      generateTypes: true,
-      typesFormat: 'typescript',
-      target: 'typescript',
-      transformPath: '',
-      outputDir: 'src/service',
-      indentSize: 2,
-      comment: true,
-      prodEnvName: 'production',
-      requestFunctionFilePath: 'src/service/request.ts',
-      requestMethodStyle: 'config',
-      requestFunctionName: 'request',
-      requestMethodsObjectName: 'requestMethods',
-      requestParamName: 'params',
-      responseTypeName: 'Response',
-      concurrency: 50,
-    };
-
-    const configPath = createTempConfigFile('valid-config.mjs', userConfig);
+    // 夹具直接导出完整的 ApiConfig[] 字面量（defineConfig 处理后的产物）
+    const processedConfig = makeApiConfig();
+    const configPath = createTempConfigFile(
+      'valid-config.mjs',
+      JSON.stringify([processedConfig], null, 2),
+    );
     mockExistsSync.mockReturnValue(true);
-    mockValidateConfiguration.mockReturnValue(undefined);
-    mockDefineConfig.mockReturnValue(processedConfig as any);
 
     const result = await loadConfig(configPath);
 
-    expect(result).toEqual(processedConfig);
-    expect(mockValidateConfiguration).toHaveBeenCalledWith(userConfig);
-    expect(mockDefineConfig).toHaveBeenCalledWith(userConfig);
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject(processedConfig);
+    // loader 不再调用 defineConfig / validateConfiguration，仅做类型守卫后原样返回
+    expect(mockConfigParseError).not.toHaveBeenCalled();
   });
 
-  it('should throw ConfigValidationError when validation fails', async () => {
-    const userConfig = {
-      source: 'invalid-url',
-      token: '',
-    };
-
-    const configPath = createTempConfigFile('invalid-config.mjs', userConfig);
+  it('should return config directly if already processed (multi-service ApiConfig[])', async () => {
+    // 多服务场景：已是 ApiConfig[]，loader 直接返回，不再触发 defineConfig 合并
+    const serviceA = makeApiConfig({
+      source: 'https://a.example.com/v2/swagger.json',
+      serverUrl: 'https://a.example.com',
+      outputDir: 'src/service/a',
+    });
+    const serviceB = makeApiConfig({
+      source: 'https://b.example.com/v2/swagger.json',
+      serverUrl: 'https://b.example.com',
+      serverType: 'swagger',
+      outputDir: 'src/service/b',
+    });
+    const configPath = createTempConfigFile(
+      'processed-config.mjs',
+      JSON.stringify([serviceA, serviceB], null, 2),
+    );
     mockExistsSync.mockReturnValue(true);
 
-    const validationReport = {
-      errors: [
-        {
-          field: 'source',
-          code: 'INVALID_URL',
-          message: 'Invalid URL',
-          severity: ValidationSeverity.ERROR,
-        },
-      ],
-      summary: { total: 1, errors: 1, warnings: 0, infos: 0 },
-      hasBlockingErrors: true,
-      hasErrors: true,
-    };
+    const result = await loadConfig(configPath);
 
-    const validationError = new ConfigValidationError(validationReport);
-    mockValidateConfiguration.mockImplementation(() => {
-      throw validationError;
-    });
-
-    try {
-      await loadConfig(configPath);
-      expect.unreachable('Should have thrown');
-    } catch (error: any) {
-      expect(error).toBeInstanceOf(ConfigValidationError);
-      expect(error.name).toBe('ConfigValidationError');
-    }
+    expect(result).toHaveLength(2);
+    expect(result[0]).toMatchObject(serviceA);
+    expect(result[1]).toMatchObject(serviceB);
+    expect(mockConfigParseError).not.toHaveBeenCalled();
   });
 
-  it('should wrap unexpected errors in configParseError', async () => {
-    // Create a config file with invalid JS syntax so dynamic import throws
-    const configPath = join(tempDir, 'broken-config.mjs');
-    writeFileSync(
-      configPath,
+  it('should wrap unexpected errors (syntax error) in configParseError', async () => {
+    // 配置文件存在语法错误，dynamic import 抛出原生错误，loader 包装为 configParseError
+    const configPath = writeRawConfigFile(
+      'broken-config.mjs',
       'export default { source: "https://example.com" this is broken };\n',
-      'utf-8',
     );
 
     mockExistsSync.mockReturnValue(true);
@@ -237,66 +222,49 @@ describe('loadConfig', () => {
     );
   });
 
-  it('should return config directly if already processed (has all ApiConfig fields)', async () => {
-    // A config that already has all ApiConfig fields (isProcessedConfig returns true)
-    const alreadyProcessedConfig = {
-      source: 'https://petstore.swagger.io/v2/swagger.json',
-      token: '',
-      serverUrl: 'https://petstore.swagger.io',
-      serverType: 'swagger',
-      generateApi: true,
-      generateTypes: true,
-      typesFormat: 'typescript',
-      target: 'typescript',
-      transformPath: '',
-      outputDir: 'src/service',
-      indentSize: 2,
-      comment: true,
-      prodEnvName: 'production',
-      requestFunctionFilePath: 'src/service/request.ts',
-      requestMethodStyle: 'config',
-      requestFunctionName: 'request',
-      requestMethodsObjectName: 'requestMethods',
-      requestParamName: 'params',
-      responseTypeName: 'Response',
-      concurrency: 50,
-    };
-
-    const configPath = createTempConfigFile('processed-config.mjs', alreadyProcessedConfig);
+  it('should throw configParseError when export is not a valid ApiConfig[] (plain object)', async () => {
+    // 夹具导出一个普通对象（未用 defineConfig 包裹的原始 UserConfig），不满足 isProcessedConfig 类型守卫
+    const configPath = createTempConfigFile(
+      'invalid-export-object.mjs',
+      JSON.stringify({ foo: 1, bar: 'not-an-api-config' }, null, 2),
+    );
     mockExistsSync.mockReturnValue(true);
-    mockValidateConfiguration.mockReturnValue(undefined);
 
-    const result = await loadConfig(configPath);
+    const wrappedError = new Error('配置文件解析失败');
+    mockConfigParseError.mockReturnValue(wrappedError);
 
-    expect(result).toEqual(alreadyProcessedConfig);
-    // defineConfig should NOT be called because config is already processed
-    expect(mockDefineConfig).not.toHaveBeenCalled();
+    await expect(loadConfig(configPath)).rejects.toThrow('配置文件解析失败');
+
+    expect(mockConfigParseError).toHaveBeenCalledWith(
+      expect.stringContaining('invalid-export-object.mjs'),
+      expect.any(Error),
+    );
   });
 
-  it('should re-throw BaseError as-is without wrapping', async () => {
-    // Create a config that triggers a BaseError in validateConfiguration
-    const userConfig = {
-      source: 'https://petstore.swagger.io/v2/swagger.json',
-      token: '',
-    };
-
-    const configPath = createTempConfigFile('base-error-config.mjs', userConfig);
+  it('should throw configParseError when export is a raw (un-defineConfig-wrapped) config object', async () => {
+    // 夹具导出的是「未经 defineConfig 处理」的原始单服务配置对象：
+    // 缺少 serverUrl/serverType/outputDir 等 ApiConfig 必填字段，不满足 isApiConfig → 不满足 isProcessedConfig
+    const configPath = createTempConfigFile(
+      'raw-user-config.mjs',
+      JSON.stringify(
+        {
+          source: 'https://petstore.swagger.io/v2/swagger.json',
+          token: '',
+        },
+        null,
+        2,
+      ),
+    );
     mockExistsSync.mockReturnValue(true);
 
-    const baseError = new (BaseError as any)('Base error message');
-    mockValidateConfiguration.mockImplementation(() => {
-      throw baseError;
-    });
+    const wrappedError = new Error('配置文件解析失败');
+    mockConfigParseError.mockReturnValue(wrappedError);
 
-    try {
-      await loadConfig(configPath);
-      expect.unreachable('Should have thrown');
-    } catch (error: any) {
-      expect(error).toBeInstanceOf(BaseError);
-      expect(error.message).toBe('Base error message');
-    }
+    await expect(loadConfig(configPath)).rejects.toThrow('配置文件解析失败');
 
-    // configParseError should NOT have been called since BaseError is re-thrown directly
-    expect(mockConfigParseError).not.toHaveBeenCalled();
+    expect(mockConfigParseError).toHaveBeenCalledWith(
+      expect.stringContaining('raw-user-config.mjs'),
+      expect.any(Error),
+    );
   });
 });

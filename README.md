@@ -49,41 +49,80 @@ npx api-power
 
 ## 配置示例
 
-### Zod 模式（运行时验证）
+`defineConfig` 采用多服务（microservice）配置：所有服务共享公共配置（如 `typesFormat`、`baseOutputDir`、`namingStrategy`），每个服务在 `services` 数组中声明自己的数据源和输出位置。返回值为 `ApiConfig[]`，单源即数组长度为 1。
+
+### 单服务 - Zod 模式（运行时验证）
 
 ```typescript
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: 'YOUR_ACCESS_TOKEN',
-
-  // 使用 Zod Schema 进行类型定义和运行时验证
-  typesFormat: 'zod',
-
-  // 输出配置
-  outputDir: 'src/service',
+  // 公共配置：所有服务继承
+  baseOutputDir: 'src/service', // 公共根输出目录（原 outputDir 改名）
+  typesFormat: 'zod', // 使用 Zod Schema 进行类型定义和运行时验证
   generateApi: true,
   generateTypes: true,
+
+  services: [
+    {
+      name: 'main', // 服务名（唯一），默认 folder 取 name
+      folder: '.', // 输出直接落在 baseOutputDir，等价于单源旧配置
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: 'YOUR_ACCESS_TOKEN',
+    },
+  ],
 });
 ```
 
-### TypeScript 模式（编译时类型检查）
+### 单服务 - TypeScript 模式（编译时类型检查）
 
 ```typescript
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: 'YOUR_ACCESS_TOKEN',
-
-  // 使用 TypeScript 接口进行类型定义
-  typesFormat: 'typescript',
-
-  // 输出配置
-  outputDir: 'src/service',
+  baseOutputDir: 'src/service',
+  typesFormat: 'typescript', // 使用 TypeScript 接口进行类型定义
   generateApi: true,
   generateTypes: true,
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: 'YOUR_ACCESS_TOKEN',
+    },
+  ],
+});
+```
+
+### 多服务（微服务）
+
+适合需要同时对接多个后端服务（用户服务、订单服务等）的项目。每个服务有独立的数据源、token 和输出子目录，共享 `baseOutputDir` 下的 `request.ts`。
+
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
+
+export default defineConfig({
+  baseOutputDir: 'src/service', // 公共根目录：request.ts 在此层级共享
+  typesFormat: 'typescript',
+  generateApi: true,
+  generateTypes: true,
+
+  services: [
+    {
+      name: 'user',
+      source: 'https://user-svc.example.com/v3/api-docs',
+      token: 'APS-user-token',
+      // folder 省略 → 默认 'user' → 输出 src/service/user
+    },
+    {
+      name: 'order',
+      source: 'https://order-svc.example.com/swagger.json',
+      token: 'APS-order-token',
+      folder: 'trade/order', // 多段 folder → 输出 src/service/trade/order
+    },
+  ],
 });
 ```
 
@@ -93,17 +132,15 @@ export default defineConfig({
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  // API 数据源
-  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: 'YOUR_ACCESS_TOKEN',
-
-  // 输出配置
-  outputDir: 'src/service',
-  generateApi: true,
-  generateTypes: true,
+  // 公共输出根目录
+  baseOutputDir: 'src/service',
 
   // 类型生成格式
   typesFormat: 'zod', // 或 'typescript'
+
+  // 输出配置
+  generateApi: true,
+  generateTypes: true,
 
   // 代码生成选项
   target: 'typescript',
@@ -138,43 +175,72 @@ export default defineConfig({
       console.log('代码生成完成');
     },
   },
+
+  // 服务声明
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: 'YOUR_ACCESS_TOKEN',
+    },
+  ],
 });
 ```
 
 ## 项目结构
 
-### Zod 模式输出结构
+输出结构遵循 `baseOutputDir/<folder或name>/...`。`request.ts` 位于 `baseOutputDir` 层级并被各服务共享；每个服务的输出（分类目录、types/schemas、index.ts）落在 `join(baseOutputDir, folder ?? name)` 下。
+
+### 单服务输出结构（folder: '.'，输出直接落在 baseOutputDir）
+
+#### Zod 模式
 
 ```
-src/service/
-├── request.ts                      # 请求函数
-├── index.ts                        # 根导出文件
-├── AIFuWu/                        # 分类目录
-│   ├── index.ts                    # API 函数（从 schema 导入类型）
-│   └── schema.ts                   # 合并的 Schema 文件（包含所有接口的 Schema + 推导类型）
-├── YongHuGuanLi/                  # 分类目录
+src/service/                      # baseOutputDir
+├── request.ts                    # 共享请求函数（baseOutputDir 层级，永不被 clean）
+├── index.ts                      # 根导出文件
+├── AIFuWu/                       # 分类目录
+│   ├── index.ts                  # API 函数（从 schema 导入类型）
+│   └── schema.ts                 # 合并的 Schema 文件（包含所有接口的 Schema + 推导类型）
+├── YongHuGuanLi/                 # 分类目录
 │   ├── index.ts
 │   └── schema.ts
-└── schemas/                       # 类型 Schema 目录
-    ├── UserSchema.ts               # 类型 Schema（包含 Schema + 推导类型）
+└── schemas/                      # 类型 Schema 目录
+    ├── UserSchema.ts             # 类型 Schema（包含 Schema + 推导类型）
     ├── RoleSchema.ts
-    └── index.ts                   # Schema 索引文件
+    └── index.ts                  # Schema 索引文件
 ```
 
-### TypeScript 模式输出结构
+#### TypeScript 模式
 
 ```
-src/service/
-├── request.ts                      # 请求函数
-├── index.ts                        # 根导出文件
-├── AIFuWu/                        # 分类目录
-│   └── index.ts                    # API 函数
-├── YongHuGuanLi/                  # 分类目录
+src/service/                      # baseOutputDir
+├── request.ts                    # 共享请求函数
+├── index.ts                      # 根导出文件
+├── AIFuWu/                       # 分类目录
+│   └── index.ts                  # API 函数
+├── YongHuGuanLi/                 # 分类目录
 │   └── index.ts
-└── types/                         # 类型定义目录
-    ├── index.ts                   # 类型索引文件
+└── types/                        # 类型定义目录
+    ├── index.ts                  # 类型索引文件
     ├── User.ts
     └── Role.ts
+```
+
+### 多服务输出结构（微服务）
+
+```
+src/service/                      # baseOutputDir
+├── request.ts                    # 共享请求函数（仅生成一次，所有服务共用）
+├── user/                         # join(base, 'user')（folder 默认取 name）
+│   ├── index.ts
+│   ├── <tag拼音>/index.ts
+│   └── types/
+└── trade/order/                  # join(base, 'trade/order')（多段 folder）
+    ├── index.ts
+    ├── <tag拼音>/index.ts
+    └── types/
 ```
 
 ## 开发

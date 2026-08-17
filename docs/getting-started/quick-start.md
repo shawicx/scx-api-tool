@@ -38,15 +38,23 @@ npx api-power init
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  // API 数据源 (必需)
-  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: 'APS-YourAccessTokenHere',
+  // 公共输出根目录（原 outputDir 改名）
+  baseOutputDir: 'src/service',
 
   // 输出配置 (可选)
-  outputDir: 'src/service',
   generateApi: true,
   generateTypes: true,
   target: 'typescript',
+
+  // 服务声明（单服务：数组长度为 1）
+  services: [
+    {
+      name: 'main',
+      folder: '.', // 输出直接落在 baseOutputDir（等价于旧的单源配置）
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi', // API 数据源 (必需)
+      token: 'APS-YourAccessTokenHere', // 认证令牌 (Apifox 必需，Swagger 可省)
+    },
+  ],
 });
 ```
 
@@ -307,11 +315,19 @@ onMounted(() => {
 
 ```typescript
 export default defineConfig({
-  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: 'APS-YourAccessTokenHere',
+  baseOutputDir: 'src/service',
 
   generateApi: false,
   generateTypes: true,
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: 'APS-YourAccessTokenHere',
+    },
+  ],
 });
 ```
 
@@ -319,10 +335,18 @@ export default defineConfig({
 
 ```typescript
 export default defineConfig({
-  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: 'APS-YourAccessTokenHere',
+  baseOutputDir: 'src/service',
 
   transformPath: (p) => '/api/v1' + p,
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: 'APS-YourAccessTokenHere',
+    },
+  ],
 });
 ```
 
@@ -330,14 +354,20 @@ export default defineConfig({
 
 ```typescript
 export default defineConfig({
-  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: 'APS-YourAccessTokenHere',
-
   // 使用 verbose 预设
   preset: 'verbose',
 
   // 覆盖预设中的某些选项
-  outputDir: 'src/api',
+  baseOutputDir: 'src/api',
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: 'APS-YourAccessTokenHere',
+    },
+  ],
 });
 ```
 
@@ -395,8 +425,15 @@ src/service/*
 
 ```typescript
 export default defineConfig({
-  source: process.env.API_SOURCE!,
-  token: process.env.API_TOKEN!,
+  baseOutputDir: 'src/service',
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: process.env.API_SOURCE!,
+      token: process.env.API_TOKEN!,
+    },
+  ],
 });
 ```
 

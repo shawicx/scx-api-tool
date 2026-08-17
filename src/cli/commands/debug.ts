@@ -26,52 +26,59 @@ export const debugCommand = new Command('debug')
     const { verbose = true } = options;
 
     try {
-      // 步骤 1: 加载配置
-      const config = await loadConfig(options.config);
-      logger.info(`服务器: ${config.serverUrl} (${config.serverType})`);
-      logger.info(`输出目录: ${config.outputDir}（dry-run 模式，不写入文件）`);
+      // 步骤 1: 加载配置（多服务）
+      const configs = await loadConfig(options.config);
+      logger.info(`检测到 ${configs.length} 个服务`);
 
-      // 步骤 2: 获取 API 数据
-      const rawData = await fetchData(config);
-      logger.info('API 数据获取成功');
+      // 逐服务诊断
+      for (let idx = 0; idx < configs.length; idx++) {
+        const config = configs[idx];
+        logger.info(`\n========== 服务 (${idx + 1}/${configs.length}) ==========`);
+        logger.info(`服务器: ${config.serverUrl} (${config.serverType})`);
+        logger.info(`输出目录: ${config.outputDir}（dry-run 模式，不写入文件）`);
 
-      // 步骤 3: 处理数据结构（到此为止，不进入文件生成阶段）
-      const processedData = processOpenApiData(rawData, config);
+        // 步骤 2: 获取 API 数据
+        const rawData = await fetchData(config);
+        logger.info('API 数据获取成功');
 
-      // 打印诊断报告
-      logger.success(`接口数: ${processedData.interfaces.length}`);
-      logger.success(`类型数: ${processedData.types.length}`);
-      logger.success(`分类数: ${processedData.categories.length}`);
+        // 步骤 3: 处理数据结构（到此为止，不进入文件生成阶段）
+        const processedData = processOpenApiData(rawData, config);
 
-      // 接口摘要
-      if (processedData.interfaces.length > 0) {
-        logger.info(`--- 接口摘要（前 ${SUMMARY_LIMIT} 个）---`);
-        processedData.interfaces.slice(0, SUMMARY_LIMIT).forEach((iface) => {
-          logger.info(`  ${iface.method.toUpperCase()} ${iface.path}`);
-        });
+        // 打印诊断报告
+        logger.success(`接口数: ${processedData.interfaces.length}`);
+        logger.success(`类型数: ${processedData.types.length}`);
+        logger.success(`分类数: ${processedData.categories.length}`);
+
+        // 接口摘要
+        if (processedData.interfaces.length > 0) {
+          logger.info(`--- 接口摘要（前 ${SUMMARY_LIMIT} 个）---`);
+          processedData.interfaces.slice(0, SUMMARY_LIMIT).forEach((iface) => {
+            logger.info(`  ${iface.method.toUpperCase()} ${iface.path}`);
+          });
+        }
+
+        // 类型摘要
+        if (processedData.types.length > 0) {
+          logger.info(`--- 类型摘要（前 ${SUMMARY_LIMIT} 个）---`);
+          processedData.types.slice(0, SUMMARY_LIMIT).forEach((type) => {
+            const suffix =
+              type.originalName && type.originalName !== type.name
+                ? ` (原: ${type.originalName})`
+                : '';
+            logger.info(`  ${type.name}${suffix}`);
+          });
+        }
+
+        // 分类摘要
+        if (processedData.categories.length > 0) {
+          logger.info(`--- 分类（共 ${processedData.categories.length} 个）---`);
+          processedData.categories.slice(0, SUMMARY_LIMIT).forEach((cat) => {
+            logger.info(`  ${cat.name}${cat.description ? ` - ${cat.description}` : ''}`);
+          });
+        }
       }
 
-      // 类型摘要
-      if (processedData.types.length > 0) {
-        logger.info(`--- 类型摘要（前 ${SUMMARY_LIMIT} 个）---`);
-        processedData.types.slice(0, SUMMARY_LIMIT).forEach((type) => {
-          const suffix =
-            type.originalName && type.originalName !== type.name
-              ? ` (原: ${type.originalName})`
-              : '';
-          logger.info(`  ${type.name}${suffix}`);
-        });
-      }
-
-      // 分类摘要
-      if (processedData.categories.length > 0) {
-        logger.info(`--- 分类（共 ${processedData.categories.length} 个）---`);
-        processedData.categories.slice(0, SUMMARY_LIMIT).forEach((cat) => {
-          logger.info(`  ${cat.name}${cat.description ? ` - ${cat.description}` : ''}`);
-        });
-      }
-
-      logger.success('诊断完成，未写入任何文件');
+      logger.success('\n诊断完成，未写入任何文件');
     } catch (error: unknown) {
       handleError(error, verbose);
     }

@@ -4,7 +4,63 @@
 
 ## 破坏性变更
 
-### 1. 移除 `validation` 配置项
+### 1. `defineConfig` 改为多服务配置（不向后兼容）
+
+这是最重要的一次破坏式重构：`defineConfig` 从单源配置改为多服务配置，返回值由 `ApiConfig` 变为 `ApiConfig[]`。旧的顶层 `source`/`token`/`outputDir` 已不再支持，必须迁移到新格式。
+
+**核心变化：**
+
+| 维度          | 旧（单源）              | 新（多服务）                                                  |
+| ------------- | ----------------------- | ------------------------------------------------------------- |
+| 顶层输出目录  | `outputDir`             | `baseOutputDir`（公共根目录）                                 |
+| 数据源 / 令牌 | 顶层 `source` / `token` | 下沉到 `services[]` 每个服务级                                |
+| 服务声明      | 无（隐含单源）          | `services: ServiceConfig[]`（必填，数组长度 ≥ 1）             |
+| 服务输出目录  | 即 `outputDir`          | `join(baseOutputDir, folder ?? name)`                         |
+| 返回值        | `ApiConfig`             | `ApiConfig[]`                                                 |
+| 类型          | `UserConfig`            | `MultiServiceConfig` / `ServiceConfig`（`UserConfig` 已删除） |
+
+**旧配置：**
+
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
+
+export default defineConfig({
+  source: 'https://api.apifox.com/v1/projects/123/export-openapi',
+  token: 'APS-YourToken',
+  outputDir: 'src/service',
+  typesFormat: 'typescript',
+}); // 返回 ApiConfig
+```
+
+**新配置（单服务，输出位置保持不变）：**
+
+```typescript
+import { defineConfig } from '@scxfe/api-tool';
+
+export default defineConfig({
+  baseOutputDir: 'src/service', // 原 outputDir
+  typesFormat: 'typescript',
+
+  services: [
+    {
+      name: 'main',
+      folder: '.', // 输出直接落在 baseOutputDir，等价于旧的单源配置
+      source: 'https://api.apifox.com/v1/projects/123/export-openapi',
+      token: 'APS-YourToken',
+    },
+  ],
+}); // 返回 ApiConfig[]
+```
+
+> **迁移要点**：
+>
+> 1. 把顶层 `source`/`token` 移入 `services[0]`，并补一个 `name`（如 `'main'`）。
+> 2. 顶层 `outputDir` 改名为 `baseOutputDir`。
+> 3. 单源保持输出位置不变：`baseOutputDir` 设为原 `outputDir`，`folder` 设为 `'.'`。
+> 4. 如果原本同时对接多个后端，可直接声明多个 `services` 元素（详见 [配置指南 - 多服务配置](./configuration.md#多服务--微服务配置)）。
+> 5. 注意 `defineConfig` 现在返回数组；若有代码直接消费其返回值，需适配。
+
+### 2. 移除 `validation` 配置项
 
 **旧配置：**
 
@@ -35,15 +91,23 @@ export default defineConfig({
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  source: 'YOUR_API_SOURCE',
-  token: 'YOUR_TOKEN',
+  baseOutputDir: 'src/service',
 
   // 只需设置 typesFormat
   typesFormat: 'zod',
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'YOUR_API_SOURCE',
+      token: 'YOUR_TOKEN',
+    },
+  ],
 });
 ```
 
-### 2. 文件结构变更
+### 3. 文件结构变更
 
 #### 旧结构（validation.enabled = true）
 
@@ -88,7 +152,7 @@ src/service/
 │   └── PostAiCompletion.ts   # 类型定义
 ```
 
-### 3. 导入路径变更
+### 4. 导入路径变更
 
 #### Zod 模式
 
@@ -235,11 +299,19 @@ export default defineConfig({
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  source: 'https://api.apifox.com/v1/projects/123/export-openapi',
-  token: 'APS-YourToken',
+  baseOutputDir: 'src/service',
 
   // 新配置：只需设置 typesFormat
   typesFormat: 'zod',
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/123/export-openapi',
+      token: 'APS-YourToken',
+    },
+  ],
 });
 ```
 
@@ -263,9 +335,17 @@ export default defineConfig({
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  source: 'https://api.apifox.com/v1/projects/123/export-openapi',
-  token: 'APS-YourToken',
+  baseOutputDir: 'src/service',
   typesFormat: 'typescript', // 配置不变，无需修改
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/123/export-openapi',
+      token: 'APS-YourToken',
+    },
+  ],
 });
 ```
 

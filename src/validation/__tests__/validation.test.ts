@@ -30,7 +30,11 @@ import {
 } from '../index';
 import { ValidationSeverity } from '../errors';
 import type { ValidationReport, ValidationError } from '../errors';
-import { validSwaggerUserConfig, validApifoxUserConfig } from '../../../tests/fixtures/mockData';
+import {
+  validSwaggerMultiServiceConfig,
+  validApifoxMultiServiceConfig,
+  validSwaggerServiceConfig,
+} from '../../../tests/fixtures/mockData';
 
 // ---------------------------------------------------------------------------
 // createValidationError
@@ -392,30 +396,34 @@ describe('validateConfiguration', () => {
   });
 
   it('passes without throwing for a valid Swagger config', () => {
-    const config = { ...validSwaggerUserConfig, generateApi: true, generateTypes: true };
+    const config = { ...validSwaggerMultiServiceConfig, generateApi: true, generateTypes: true };
     expect(() => validateConfiguration(config)).not.toThrow();
   });
 
   it('passes without throwing for a valid Apifox config', () => {
-    const config = { ...validApifoxUserConfig, generateApi: true, generateTypes: true };
+    const config = { ...validApifoxMultiServiceConfig, generateApi: true, generateTypes: true };
     expect(() => validateConfiguration(config)).not.toThrow();
   });
 
   it('calls logger.success for a valid config', () => {
-    const config = { ...validSwaggerUserConfig, generateApi: true, generateTypes: true };
+    const config = { ...validSwaggerMultiServiceConfig, generateApi: true, generateTypes: true };
     validateConfiguration(config);
 
     expect(logger.success).toHaveBeenCalledWith('配置验证通过');
   });
 
   it('throws ConfigValidationError for missing source', () => {
-    const config = { source: '', token: '' };
+    const config = {
+      services: [{ name: 'x', source: '' }],
+    };
 
     expect(() => validateConfiguration(config as any)).toThrow(ConfigValidationError);
   });
 
   it('throws ConfigValidationError with validationReport property', () => {
-    const config = { source: '', token: '' };
+    const config = {
+      services: [{ name: 'x', source: '' }],
+    };
 
     try {
       validateConfiguration(config as any);
@@ -427,36 +435,49 @@ describe('validateConfiguration', () => {
   });
 
   it('throws for invalid target enum value', () => {
-    const config = { ...validSwaggerUserConfig, generateApi: true, target: 'python' as any };
+    const config = {
+      ...validSwaggerMultiServiceConfig,
+      generateApi: true,
+      target: 'python' as any,
+    };
 
     expect(() => validateConfiguration(config)).toThrow(ConfigValidationError);
   });
 
   it('throws for Apifox source without token', () => {
     const config = {
-      source: 'https://api.apifox.com/v1/projects/123456/export-openapi',
-      token: '',
+      services: [
+        {
+          name: 'a',
+          source: 'https://api.apifox.com/v1/projects/123456/export-openapi',
+          token: '',
+        },
+      ],
       generateApi: true,
     };
 
-    expect(() => validateConfiguration(config)).toThrow(ConfigValidationError);
+    expect(() => validateConfiguration(config as any)).toThrow(ConfigValidationError);
   });
 
   it('throws when both generateApi and generateTypes are false', () => {
-    const config = { ...validSwaggerUserConfig, generateApi: false, generateTypes: false };
+    const config = {
+      ...validSwaggerMultiServiceConfig,
+      generateApi: false,
+      generateTypes: false,
+    };
 
     expect(() => validateConfiguration(config)).toThrow(ConfigValidationError);
   });
 
   it('does not throw for warnings-only config (non-blocking)', () => {
-    // target: javascript + generateTypes: true produces a warning but not an error
+    // target: javascript + generateTypes: true 产生 warning 但不阻断
     const config = {
-      ...validSwaggerUserConfig,
       generateApi: true,
-      target: 'javascript' as const,
       generateTypes: true,
+      target: 'javascript' as const,
+      services: [validSwaggerServiceConfig],
     };
 
-    expect(() => validateConfiguration(config)).not.toThrow();
+    expect(() => validateConfiguration(config as any)).not.toThrow();
   });
 });

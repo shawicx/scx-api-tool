@@ -4,7 +4,7 @@
  */
 
 import { ValidationError, ValidationSeverity, createValidationError } from '../errors';
-import type { UserConfig } from '@/types';
+import type { ServiceConfig } from '@/types';
 
 /**
  * @description 验证 URL 格式
@@ -88,7 +88,7 @@ export function validateUrlFormat(url: string, field: string): ValidationError |
  * // ]
  * ```
  */
-export function validateSourceUrl(config: UserConfig): ValidationError[] {
+export function validateSourceUrl(config: ServiceConfig): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (!config.source) {

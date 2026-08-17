@@ -303,14 +303,17 @@ When generating code from Apifox project, the tool crashes with "TypeError: Cann
 ### Configuration
 
 ```typescript
-export default defineConfig([
-  {
-    serverUrl: 'https://api.apifox.com',
-    serverType: 'apifox',
-    apifoxProjectId: '123456789',
-    outputDir: 'src/service',
-  },
-]);
+export default defineConfig({
+  baseOutputDir: 'src/service',
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/123456789/export-openapi',
+      token: 'APS-YourAccessTokenHere',
+    },
+  ],
+});
 ```
 ````
 

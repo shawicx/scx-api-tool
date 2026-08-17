@@ -9,7 +9,8 @@ import type {
   ApiInterface,
   ApiTypeDefinition,
   ApiCategory,
-  UserConfig,
+  MultiServiceConfig,
+  ServiceConfig,
   ApiConfig,
 } from '@/types';
 import { ServerType, RequestMethodStyle } from '@/types';
@@ -159,16 +160,34 @@ export const apifoxApiConfig: ApiConfig = {
   apifoxProjectId: '123456',
 };
 
-// ==================== UserConfig mock ====================
+// ==================== ServiceConfig / MultiServiceConfig mock ====================
 
-export const validSwaggerUserConfig: UserConfig = {
+export const validSwaggerServiceConfig: ServiceConfig = {
+  name: 'petstore',
   source: 'https://petstore.swagger.io/v2/swagger.json',
   token: '',
 };
 
-export const validApifoxUserConfig: UserConfig = {
+export const validApifoxServiceConfig: ServiceConfig = {
+  name: 'apifox-demo',
   source: 'https://api.apifox.com/v1/projects/123456/export-openapi',
   token: 'test-token-123',
+};
+
+// 向后兼容别名（旧测试可能引用）
+export const validSwaggerUserConfig = validSwaggerServiceConfig;
+export const validApifoxUserConfig = validApifoxServiceConfig;
+
+/** 单服务多服务配置（Swagger 源） */
+export const validSwaggerMultiServiceConfig: MultiServiceConfig = {
+  baseOutputDir: 'src/api',
+  services: [validSwaggerServiceConfig],
+};
+
+/** 单服务多服务配置（Apifox 源） */
+export const validApifoxMultiServiceConfig: MultiServiceConfig = {
+  baseOutputDir: 'src/api',
+  services: [validApifoxServiceConfig],
 };
 
 // ==================== ProcessedApiData mock ====================

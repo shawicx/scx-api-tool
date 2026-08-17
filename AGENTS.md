@@ -136,6 +136,14 @@ logger.debug('调试信息:', data);
 
 ## 核心配置
 
+`defineConfig` 采用**多服务（microservice）配置**：顶层是所有服务共享的公共配置，`services: ServiceConfig[]` 数组声明每个服务独立的数据源与输出位置。`defineConfig` 返回 `ApiConfig[]`（单源即数组长度 1）。关键变化（破坏式、不向后兼容）：
+
+- 顶层 `outputDir` → `baseOutputDir`（公共根输出目录）
+- `source` / `token` 下沉到 `services[]` 每个服务级（必填 `name`，可选 `folder`，默认取 `name`，可多段如 `'trade/order'`）
+- 共享 `request.ts` 位于 `baseOutputDir` 层级；各服务输出至 `join(baseOutputDir, folder ?? name)`
+- 校验：`name` 唯一、各服务计算后的 `outputDir` 不相同/不嵌套，否则抛 `E1002`
+- 单源场景用 `services: [{ name: 'main', folder: '.', source, token }]`，输出直接落在 `baseOutputDir`
+
 ### typesFormat 配置
 
 控制类型生成格式，影响文件结构和导入路径：
@@ -145,7 +153,9 @@ logger.debug('调试信息:', data);
 
 ```typescript
 export default defineConfig({
+  baseOutputDir: 'src/service',
   typesFormat: 'zod', // 或 'typescript'
+  services: [{ name: 'main', folder: '.', source: 'YOUR_API_SOURCE', token: 'YOUR_TOKEN' }],
 });
 ```
 

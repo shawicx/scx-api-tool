@@ -20,7 +20,7 @@ vi.mock('@/utils/logger', () => ({
 import { validateConfigLogic } from '../logic';
 import { ValidationSeverity } from '../../errors';
 import { validSwaggerUserConfig, validApifoxUserConfig } from '../../../../tests/fixtures/mockData';
-import type { UserConfig } from '@/types';
+import type { CommonServiceConfig } from '@/types';
 
 // ---------------------------------------------------------------------------
 // validateConfigLogic
@@ -29,7 +29,7 @@ describe('validateConfigLogic', () => {
   // --- No generation mode ---
   describe('no generation mode enabled', () => {
     it('returns ERROR when both generateApi and generateTypes are false', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         generateApi: false,
         generateTypes: false,
@@ -42,19 +42,17 @@ describe('validateConfigLogic', () => {
       expect(noGenError!.field).toBe('generateApi & generateTypes');
     });
 
-    it('returns ERROR when both generateApi and generateTypes are undefined', () => {
-      const config: UserConfig = { ...validSwaggerUserConfig };
+    it('returns no NO_GENERATION_MODE error when both are undefined (uses defaults)', () => {
+      const config: CommonServiceConfig = { ...validSwaggerUserConfig };
       delete (config as any).generateApi;
       delete (config as any).generateTypes;
       const errors = validateConfigLogic(config);
 
-      const noGenError = errors.find((e) => e.code === 'NO_GENERATION_MODE');
-      expect(noGenError).toBeDefined();
-      expect(noGenError!.severity).toBe(ValidationSeverity.ERROR);
+      expect(errors.find((e) => e.code === 'NO_GENERATION_MODE')).toBeUndefined();
     });
 
     it('returns no NO_GENERATION_MODE error when generateApi is true', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         generateApi: true,
         generateTypes: false,
@@ -65,7 +63,7 @@ describe('validateConfigLogic', () => {
     });
 
     it('returns no NO_GENERATION_MODE error when generateTypes is true', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         generateApi: false,
         generateTypes: true,
@@ -79,7 +77,7 @@ describe('validateConfigLogic', () => {
   // --- Types-only mode with non-default requestMethodStyle ---
   describe('types-only mode with requestMethodStyle', () => {
     it('returns WARNING when types-only mode has non-default requestMethodStyle', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         generateApi: false,
         generateTypes: true,
@@ -94,7 +92,7 @@ describe('validateConfigLogic', () => {
     });
 
     it('returns no warning when types-only mode uses default requestMethodStyle (config)', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         generateApi: false,
         generateTypes: true,
@@ -106,7 +104,7 @@ describe('validateConfigLogic', () => {
     });
 
     it('returns no warning when both api and types are generated', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         generateApi: true,
         generateTypes: true,
@@ -121,7 +119,7 @@ describe('validateConfigLogic', () => {
   // --- Naming conflict ---
   describe('requestFunctionName and requestMethodsObjectName conflict', () => {
     it('returns ERROR when requestFunctionName equals requestMethodsObjectName', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         requestFunctionName: 'request',
         requestMethodsObjectName: 'request',
@@ -135,7 +133,7 @@ describe('validateConfigLogic', () => {
     });
 
     it('returns no error when requestFunctionName differs from requestMethodsObjectName', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         requestFunctionName: 'request',
         requestMethodsObjectName: 'requestMethods',
@@ -146,7 +144,7 @@ describe('validateConfigLogic', () => {
     });
 
     it('returns no error when only requestFunctionName is set', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         requestFunctionName: 'request',
       };
@@ -156,7 +154,7 @@ describe('validateConfigLogic', () => {
     });
 
     it('returns no error when only requestMethodsObjectName is set', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         requestMethodsObjectName: 'requestMethods',
       };
@@ -166,7 +164,7 @@ describe('validateConfigLogic', () => {
     });
 
     it('returns no error when neither is set', () => {
-      const config: UserConfig = { ...validSwaggerUserConfig };
+      const config: CommonServiceConfig = { ...validSwaggerUserConfig };
       const errors = validateConfigLogic(config);
 
       expect(errors.find((e) => e.code === 'NAMING_CONFLICT')).toBeUndefined();
@@ -176,7 +174,7 @@ describe('validateConfigLogic', () => {
   // --- JavaScript target warnings ---
   describe('JavaScript target warnings', () => {
     it('returns WARNING when target=javascript and generateTypes=true', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         target: 'javascript',
         generateTypes: true,
@@ -189,7 +187,7 @@ describe('validateConfigLogic', () => {
     });
 
     it('returns no JS_TARGET_IGNORES_TYPES warning when target=javascript and generateTypes=false', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         target: 'javascript',
         generateTypes: false,
@@ -200,7 +198,7 @@ describe('validateConfigLogic', () => {
     });
 
     it('returns no JS_TARGET_IGNORES_TYPES warning when target=typescript and generateTypes=true', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         target: 'typescript',
         generateTypes: true,
@@ -211,7 +209,7 @@ describe('validateConfigLogic', () => {
     });
 
     it('returns WARNING when target=javascript and typesFormat=zod', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         target: 'javascript',
         typesFormat: 'zod',
@@ -224,7 +222,7 @@ describe('validateConfigLogic', () => {
     });
 
     it('returns no JS_TARGET_IGNORES_ZOD warning when target=typescript and typesFormat=zod', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         target: 'typescript',
         typesFormat: 'zod',
@@ -235,7 +233,7 @@ describe('validateConfigLogic', () => {
     });
 
     it('returns no JS_TARGET_IGNORES_ZOD warning when target=javascript and typesFormat=typescript', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         target: 'javascript',
         typesFormat: 'typescript',
@@ -246,7 +244,7 @@ describe('validateConfigLogic', () => {
     });
 
     it('returns both JS warnings when target=javascript with generateTypes=true and typesFormat=zod', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         target: 'javascript',
         generateTypes: true,
@@ -262,7 +260,7 @@ describe('validateConfigLogic', () => {
   // --- Multiple combined scenarios ---
   describe('combined scenarios', () => {
     it('returns no errors for a fully valid Swagger config', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         generateApi: true,
         generateTypes: true,
@@ -273,7 +271,7 @@ describe('validateConfigLogic', () => {
     });
 
     it('returns no errors for a fully valid Apifox config', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validApifoxUserConfig,
         generateApi: true,
         generateTypes: true,
@@ -284,13 +282,13 @@ describe('validateConfigLogic', () => {
     });
 
     it('accumulates multiple errors from different checks', () => {
-      const config: UserConfig = {
+      const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         generateApi: false,
         generateTypes: false,
         requestFunctionName: 'same',
         requestMethodsObjectName: 'same',
-      } as UserConfig;
+      } as CommonServiceConfig;
       const errors = validateConfigLogic(config);
 
       expect(errors.length).toBeGreaterThanOrEqual(2);

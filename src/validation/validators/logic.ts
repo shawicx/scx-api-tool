@@ -4,12 +4,12 @@
  */
 
 import { ValidationError, ValidationSeverity, createValidationError } from '../errors';
-import type { UserConfig } from '@/types';
+import type { CommonServiceConfig } from '@/types';
 
 /**
  * @description 验证配置项之间的逻辑关系
  * 检查配置项之间是否存在逻辑冲突或不合理的使用
- * @param config 用户配置对象
+ * @param config 配置对象（公共 + 服务级合并）
  * @returns 验证错误数组
  *
  * @example
@@ -20,11 +20,13 @@ import type { UserConfig } from '@/types';
  * // ]
  * ```
  */
-export function validateConfigLogic(config: UserConfig): ValidationError[] {
+export function validateConfigLogic(config: CommonServiceConfig): ValidationError[] {
   const errors: ValidationError[] = [];
 
   // 验证至少有一种生成模式被启用
-  if (!config.generateApi && !config.generateTypes) {
+  // 注意：校验在应用默认值之前执行（generateApi/generateTypes 默认值为 true），
+  // 因此仅当两者被「显式设为 false」时才视为错误；undefined 表示使用默认值（启用）。
+  if (config.generateApi === false && config.generateTypes === false) {
     errors.push(
       createValidationError(
         'generateApi & generateTypes',

@@ -12,8 +12,7 @@
 import { defineConfig, type NamingContext } from '@scxfe/api-tool';
 
 export default defineConfig({
-  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: 'YOUR_TOKEN',
+  baseOutputDir: 'src/service',
 
   // 自定义命名策略
   namingStrategy: {
@@ -61,6 +60,15 @@ export default defineConfig({
       return `${info.operationId || info.path.replace(/\//g, '_')}ResponseType`;
     },
   },
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: 'YOUR_TOKEN',
+    },
+  ],
 });
 ```
 
@@ -94,8 +102,7 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 export default defineConfig({
-  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: 'YOUR_TOKEN',
+  baseOutputDir: 'src/service',
 
   hooks: {
     // 开始生成前的钩子
@@ -119,6 +126,15 @@ export default defineConfig({
       console.log(`文件已生成: ${filePath}`);
     },
   },
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: 'YOUR_TOKEN',
+    },
+  ],
 });
 ```
 
@@ -128,8 +144,7 @@ export default defineConfig({
 
 ```typescript
 export default defineConfig({
-  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: 'YOUR_TOKEN',
+  baseOutputDir: 'src/service',
 
   hooks: {
     afterGenerate: async () => {
@@ -154,6 +169,15 @@ export default defineConfig({
       }
     },
   },
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: 'YOUR_TOKEN',
+    },
+  ],
 });
 ```
 
@@ -161,8 +185,7 @@ export default defineConfig({
 
 ```typescript
 export default defineConfig({
-  source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: 'YOUR_TOKEN',
+  baseOutputDir: 'src/service',
 
   hooks: {
     afterGenerate: async () => {
@@ -199,6 +222,15 @@ export default defineConfig({
       console.log(`   - 大小: ${(stats.size / 1024).toFixed(2)} KB`);
     },
   },
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: 'YOUR_TOKEN',
+    },
+  ],
 });
 ```
 
@@ -245,14 +277,21 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 const isTest = process.env.NODE_ENV === 'test';
 
 export default defineConfig({
-  source:
-    process.env.API_SOURCE || 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-  token: process.env.API_TOKEN || 'YOUR_TOKEN',
-
-  outputDir: process.env.OUTPUT_DIR || 'src/service',
+  baseOutputDir: process.env.OUTPUT_DIR || 'src/service',
   generateApi: true,
   generateTypes: true,
   target: 'typescript',
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source:
+        process.env.API_SOURCE ||
+        'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: process.env.API_TOKEN || 'YOUR_TOKEN',
+    },
+  ],
 
   // 开发环境额外配置
   ...(isDevelopment && {
@@ -287,11 +326,18 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export default defineConfig({
-  source: process.env.API_SOURCE,
-  token: process.env.API_TOKEN,
-  outputDir: process.env.OUTPUT_DIR || 'src/service',
+  baseOutputDir: process.env.OUTPUT_DIR || 'src/service',
   generateApi: true,
   generateTypes: true,
+
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: process.env.API_SOURCE,
+      token: process.env.API_TOKEN,
+    },
+  ],
 });
 ```
 

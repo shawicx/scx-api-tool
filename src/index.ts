@@ -7,6 +7,7 @@
 
 import { program } from './cli/program';
 import { defineConfig } from './utils/config';
+import { resolveServiceConfigs } from './utils/multiService';
 import {
   ServerType,
   RequestMethod,
@@ -23,7 +24,9 @@ import type {
   OutputFileList,
   RequestFunctionConfig,
   ApiConfig,
-  UserConfig,
+  MultiServiceConfig,
+  ServiceConfig,
+  CommonServiceConfig,
   CategoryInfo,
   ProjectInfo,
   CliHooks,
@@ -38,7 +41,9 @@ export type {
   OutputFileList,
   RequestFunctionConfig,
   ApiConfig,
-  UserConfig,
+  MultiServiceConfig,
+  ServiceConfig,
+  CommonServiceConfig,
   CategoryInfo,
   ProjectInfo,
   CliHooks,
@@ -50,6 +55,7 @@ export type {
 // 导出常量和函数
 export {
   defineConfig,
+  resolveServiceConfigs,
   PRESETS,
   ServerType,
   RequestMethod,

@@ -74,11 +74,11 @@ export interface NamingStrategy {
 
 /**
  * 预设配置
+ *
+ * 仅作用于「公共配置」部分，随后被各 service 配置覆盖。
+ * 不包含 source/token（已下沉到 service 级），也不包含 baseOutputDir（公共根目录）。
  */
-export const PRESETS: Record<
-  PresetType,
-  Partial<Omit<ApiConfig, 'source' | 'token' | 'serverUrl' | 'serverType' | 'apifoxProjectId'>>
-> = {
+export const PRESETS: Record<PresetType, Partial<CommonServiceConfig>> = {
   minimal: {
     generateApi: false,
     generateTypes: true,
@@ -104,16 +104,15 @@ export const PRESETS: Record<
 };
 
 /**
- * 用户配置接口 (用户提供的配置)
+ * 公共服务配置（公共根配置 + 单个服务均可使用）
+ *
+ * 这些字段既可出现在 MultiServiceConfig 的顶层（作为所有 service 的默认值），
+ * 也可出现在单个 ServiceConfig 中（覆盖公共默认值）。
+ * 不包含 source/token（数据源信息，下沉到 service 级）、baseOutputDir（公共根）、services。
  */
-export interface UserConfig {
+export interface CommonServiceConfig {
   /** 预设类型 */
   preset?: PresetType;
-
-  /** API 数据源 URL (包含完整的服务器信息) */
-  source: string;
-  /** 认证令牌 */
-  token: string;
 
   /** 是否生成 API 请求方法 */
   generateApi?: boolean;
@@ -141,8 +140,6 @@ export interface UserConfig {
    * ```
    */
   transformPath?: (path: string) => string;
-  /** 输出目录 */
-  outputDir?: string;
   /** 缩进大小 */
   indentSize?: number;
   /** 是否生成注释 */
@@ -170,7 +167,45 @@ export interface UserConfig {
 }
 
 /**
- * 完整的 API 配置接口
+ * 单个服务配置
+ *
+ * source / token 是数据源信息，必须在服务级声明。
+ * folder 为相对 baseOutputDir 的子文件夹，省略时默认取 name。
+ * 其余字段均可覆盖公共默认值。
+ */
+export interface ServiceConfig extends CommonServiceConfig {
+  /** 服务名称（必填，唯一，用于日志/错误标识/默认 folder） */
+  name: string;
+  /** API 数据源 URL (包含完整的服务器信息) */
+  source: string;
+  /** 认证令牌（Swagger 不需要） */
+  token?: string;
+  /**
+   * @description 服务输出子文件夹（相对 baseOutputDir）。
+   * 省略时默认取服务 name，即输出到 `join(baseOutputDir, name)`。
+   * 支持多段路径（如 'trade/order'）。
+   */
+  folder?: string;
+}
+
+/**
+ * 多服务用户配置（用户提供的配置）
+ *
+ * 顶层为公共配置（所有 service 默认继承），source/token 下沉到 services 数组。
+ * 单源场景即 services 数组长度为 1。
+ */
+export interface MultiServiceConfig extends CommonServiceConfig {
+  /**
+   * @description 公共根输出目录，所有服务的输出都位于其下的子文件夹中。
+   * 默认 'src/service'。
+   */
+  baseOutputDir?: string;
+  /** 服务列表，每个服务独立生成到各自子文件夹 */
+  services: ServiceConfig[];
+}
+
+/**
+ * 完整的 API 配置接口（单个服务运行时配置，defineConfig 返回 ApiConfig[]）
  */
 export interface ApiConfig {
   /** 服务器地址 (从 source 解析) */

@@ -6,18 +6,16 @@
 import { existsSync } from 'fs';
 import { resolve } from 'path';
 import { pathToFileURL } from 'url';
-import type { ApiConfig, UserConfig } from '@/types';
-import { defineConfig } from '@/utils/config';
+import type { ApiConfig } from '@/types';
 import { logger } from '@/utils/logger';
-import { validateConfiguration, ConfigValidationError } from '@/validation';
 import { ErrorFactory, BaseError } from '@/errors';
 
 /**
  * @description 配置缓存条目
  */
 interface ConfigCacheEntry {
-  /** 配置对象 */
-  config: ApiConfig;
+  /** 配置对象（多服务配置解析后的数组） */
+  config: ApiConfig[];
   /** 缓存时间戳 */
   timestamp: number;
 }
@@ -35,7 +33,7 @@ class ConfigCacheManager {
    * @param ttl 缓存有效期（毫秒）
    * @returns 缓存的配置或 null
    */
-  get(configPath: string, ttl: number = this.defaultTTL): ApiConfig | null {
+  get(configPath: string, ttl: number = this.defaultTTL): ApiConfig[] | null {
     const entry = this.cache.get(configPath);
     if (!entry) {
       return null;
@@ -56,7 +54,7 @@ class ConfigCacheManager {
    * @param configPath 配置文件路径
    * @param config 配置对象
    */
-  set(configPath: string, config: ApiConfig): void {
+  set(configPath: string, config: ApiConfig[]): void {
     this.cache.set(configPath, {
       config,
       timestamp: Date.now(),
@@ -90,41 +88,39 @@ class ConfigCacheManager {
 const configCache = new ConfigCacheManager();
 
 /**
- * 检查配置是否已经被 defineConfig 处理过
+ * 检查单个配置对象是否为已处理的 ApiConfig
  */
-function isProcessedConfig(config: unknown): config is ApiConfig {
-  // 检查是否有所有必需的 ApiConfig 属性
+function isApiConfig(config: unknown): config is ApiConfig {
   return (config &&
     typeof config === 'object' &&
     'serverUrl' in config &&
     'serverType' in config &&
     'source' in config &&
-    'token' in config &&
+    'outputDir' in config &&
     'generateApi' in config &&
     'generateTypes' in config &&
     'typesFormat' in config) as boolean;
 }
 
 /**
- * 合并默认配置和用户配置
+ * 检查配置是否已经被 defineConfig 处理过（即已是 ApiConfig 数组）
  */
-function mergeWithDefaults(userConfig: Partial<ApiConfig>): ApiConfig {
-  // 如果配置已经被 defineConfig 处理过，直接返回
-  if (isProcessedConfig(userConfig)) {
-    return userConfig as ApiConfig;
-  }
-
-  // 否则使用 defineConfig 函数来合并默认配置
-  return defineConfig(userConfig as unknown as UserConfig);
+function isProcessedConfig(config: unknown): config is ApiConfig[] {
+  return Array.isArray(config) && config.length > 0 && config.every(isApiConfig);
 }
 
 /**
  * @description 加载配置文件的内部实现
+ *
+ * 配置文件约定为 `export default defineConfig({...})`，导出的已是经校验+合并处理的 ApiConfig[]。
+ * loader 只负责加载文件，不重复调用 defineConfig / validateConfiguration；
+ * isProcessedConfig 在此作为类型守卫，防御配置文件未用 defineConfig 包裹等误用情形。
+ *
  * @param absolutePath 配置文件的绝对路径
- * @returns 完整的配置对象
- * @throws {BaseError} 如果配置文件不存在或解析失败
+ * @returns 多服务运行时配置数组
+ * @throws {BaseError} 如果配置文件不存在或解析失败，或导出格式不符合预期
  */
-async function loadConfigImpl(absolutePath: string): Promise<ApiConfig> {
+async function loadConfigImpl(absolutePath: string): Promise<ApiConfig[]> {
   // 为 ESM 兼容性将文件路径转换为文件 URL
   const fileUrl = pathToFileURL(absolutePath).href;
 
@@ -134,13 +130,18 @@ async function loadConfigImpl(absolutePath: string): Promise<ApiConfig> {
   // 处理默认导出和命名导出
   const userConfig = configModule.default || configModule;
 
-  // 验证配置
-  validateConfiguration(userConfig);
+  // 类型守卫：确保导出的是 defineConfig 处理过的 ApiConfig[]
+  if (!isProcessedConfig(userConfig)) {
+    throw ErrorFactory.configParseError(
+      absolutePath,
+      new Error(
+        '配置文件导出格式无效：期望 `export default defineConfig({...})` 返回的 ApiConfig[]，' +
+          '请确认配置文件已用 defineConfig 包裹',
+      ),
+    );
+  }
 
-  // 合并默认配置和用户配置
-  const finalConfig = mergeWithDefaults(userConfig);
-
-  return finalConfig;
+  return userConfig;
 }
 
 /**
@@ -168,7 +169,7 @@ export async function loadConfig(
   configPath: string,
   useCache = true,
   cacheTTL = 5000,
-): Promise<ApiConfig> {
+): Promise<ApiConfig[]> {
   const absolutePath = resolve(configPath);
 
   if (!existsSync(absolutePath)) {
@@ -197,7 +198,7 @@ export async function loadConfig(
     return config;
   } catch (error: unknown) {
     // 如果是我们自定义的错误，直接抛出
-    if (error instanceof BaseError || error instanceof ConfigValidationError) {
+    if (error instanceof BaseError) {
       throw error;
     }
     // 否则包装为配置解析错误

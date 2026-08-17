@@ -27,12 +27,14 @@ export const visualizeCommand = new Command('visualize')
     const serverPort = parseInt(port, 10);
 
     try {
-      // 加载配置
+      // 加载配置（多服务，返回 ApiConfig[]）
       logger.info('加载配置文件...');
-      const config = await loadConfig(configPath);
+      const configs = await loadConfig(configPath);
+      // visualize 命令针对首个服务展示（多服务场景下可分别启动多个实例）
+      const config = configs[0];
 
       // 获取 OpenAPI Schema
-      logger.info('获取 OpenAPI Schema...');
+      logger.info(`获取 OpenAPI Schema (服务: ${config.source})...`);
       const schema = await fetchData(config);
 
       // 创建 HTTP 服务器

@@ -5,7 +5,8 @@
 
 import {
   ApiConfig,
-  UserConfig,
+  MultiServiceConfig,
+  CommonServiceConfig,
   PRESETS,
   ServerType,
   RequestMethodStyle,
@@ -15,21 +16,21 @@ import {
 } from '@/types';
 import { logger } from '@/utils/logger';
 import { ErrorFactory } from '@/errors';
+import { resolveServiceConfigs } from './multiService';
 
 /**
- * 默认配置值
+ * 默认配置值（公共部分，不含 source/token/server 信息与 outputDir）
  */
 
 const DEFAULT_CONFIG_VALUES: Omit<
   ApiConfig,
-  'source' | 'token' | 'serverUrl' | 'serverType' | 'apifoxProjectId'
+  'source' | 'token' | 'serverUrl' | 'serverType' | 'apifoxProjectId' | 'outputDir'
 > = {
   generateApi: true, // 默认生成 API 请求方法
   generateTypes: true, // 默认生成类型定义
   typesFormat: 'typescript' as TypesFormat, // 默认使用 TypeScript 格式
   target: 'typescript',
   transformPath: ((p: string) => p) as (path: string) => string,
-  outputDir: 'src/service',
   indentSize: 2,
   comment: true, // 默认生成注释
   prodEnvName: 'production',
@@ -139,7 +140,7 @@ export function parseSourceUrl(source: string): {
  * normalizeTransformPath('/api')           // 抛 E1002
  * ```
  */
-function normalizeTransformPath(value: unknown): (path: string) => string {
+export function normalizeTransformPath(value: unknown): (path: string) => string {
   if (value === undefined || value === null) {
     return (p: string) => p;
   }
@@ -164,13 +165,12 @@ function normalizeTransformPath(value: unknown): (path: string) => string {
 }
 
 /**
- * 应用预设配置
- * @param config 用户配置
- * @returns 应用预设后的配置
+ * @description 应用预设配置（作用于公共配置部分）
+ * 合并优先级：默认值 < 预设值 < 用户自定义值
+ * @param config 公共配置对象
+ * @returns 应用预设后的公共配置（不含 source/token/outputDir 等服务级字段）
  */
-function applyPreset(
-  config: UserConfig,
-): Omit<ApiConfig, 'serverUrl' | 'serverType' | 'apifoxProjectId' | 'source' | 'token'> {
+export function applyPreset(config: CommonServiceConfig): CommonServiceConfig {
   // 获取预设配置
   const presetConfig = config.preset ? PRESETS[config.preset] : {};
 
@@ -183,42 +183,34 @@ function applyPreset(
 }
 
 /**
- * 定义配置
- * @param config 配置对象
- * @returns 配置对象
+ * @description 定义配置（多服务配置入口）
+ *
+ * 不向后兼容：统一使用多服务配置方式，单源即 services 数组长度为 1。
+ * 多服务解析逻辑（公共配置合并、outputDir 计算与隔离校验）见 `./multiService`。
+ *
+ * @param config 多服务用户配置
+ * @returns ApiConfig[] 每个元素为单服务运行时配置
+ *
+ * @example
+ * ```typescript
+ * // 多服务：公共配置继承 + 服务级覆盖
+ * const configs = defineConfig({
+ *   baseOutputDir: 'src/api',
+ *   typesFormat: 'typescript',
+ *   services: [
+ *     { name: 'user', source: 'https://user-svc/v3/api-docs', token: 'APS-xxx' },
+ *     { name: 'order', source: 'https://order-svc/swagger.json', token: 'APS-yyy' },
+ *   ],
+ * });
+ *
+ * // 单源：services 数组长度为 1
+ * const [config] = defineConfig({
+ *   services: [{ name: 'main', source: 'https://petstore.swagger.io/v2/swagger.json' }],
+ * });
+ * ```
  */
-export function defineConfig(config: UserConfig): ApiConfig {
-  // 从 source 解析服务器信息
-  const { serverUrl, serverType, apifoxProjectId } = parseSourceUrl(config.source);
-
-  // 应用预设和用户配置
-  const mergedConfig = applyPreset(config);
-
-  // 创建最终配置，确保解析的服务器信息不被覆盖
-  const finalConfig: ApiConfig = {
-    ...mergedConfig,
-    serverUrl,
-    serverType,
-    apifoxProjectId,
-    source: config.source,
-    token: config.token,
-    // 确保 namingStrategy 和 hooks 被正确传递
-    ...(config.namingStrategy && { namingStrategy: config.namingStrategy }),
-    ...(config.hooks && { hooks: config.hooks }),
-  };
-
-  // 当 target 为 javascript 时，自动调整默认的 requestFunctionFilePath 扩展名
-  if (finalConfig.target === 'javascript' && !config.requestFunctionFilePath) {
-    finalConfig.requestFunctionFilePath = finalConfig.requestFunctionFilePath.replace(
-      /\.ts$/,
-      '.js',
-    );
-  }
-
-  // 规范化 transformPath：统一为函数形式（0.6.0 起 string 已硬废弃）
-  finalConfig.transformPath = normalizeTransformPath(finalConfig.transformPath);
-
-  return finalConfig;
+export function defineConfig(config: MultiServiceConfig): ApiConfig[] {
+  return resolveServiceConfigs(config);
 }
 
 /**

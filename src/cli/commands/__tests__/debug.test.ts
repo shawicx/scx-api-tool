@@ -55,7 +55,8 @@ const mockSetDebugEnabled = vi.mocked(setDebugEnabled);
 describe('debug command', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockLoadConfig.mockResolvedValue(minimalApiConfig);
+    // loadConfig 现返回 ApiConfig[]（多服务），单服务场景即数组长度为 1
+    mockLoadConfig.mockResolvedValue([minimalApiConfig]);
     mockFetchData.mockResolvedValue(mockOpenApiDocument);
     mockProcessOpenApiData.mockReturnValue({
       interfaces: [
