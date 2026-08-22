@@ -7,9 +7,10 @@ import { defineConfig } from 'tsdown';
 const isProd = process.env.NODE_ENV === 'production';
 
 export default defineConfig([
-  // 主构建：生成所有 JS 文件和类型声明
+  // 双入口构建：库入口（纯导出，无 CLI 副作用）+ CLI 可执行入口（bin）
+  // 分离确保外部 import 包时不触发 program.parse
   {
-    entry: 'src/index.ts',
+    entry: { index: 'src/index.ts', cli: 'src/cli/main.ts' },
     format: 'esm',
     target: 'ESNext',
     outDir: 'dist',

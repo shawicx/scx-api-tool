@@ -6,7 +6,7 @@
 
 | 目录                        | 职责                                                | 关键文件                                                                                                                                                                                                                                                                                                                    |
 | --------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/cli/`                  | CLI 命令与程序入口                                  | `program.ts`、`commands/{generate,init,debug,visualize}.ts`、`constants.ts`（默认配置模板）                                                                                                                                                                                                                                 |
+| `src/cli/`                  | CLI 命令与程序入口                                  | `main.ts`（bin 入口）、`program.ts`、`commands/{generate,init,debug,visualize}.ts`、`constants.ts`（默认配置模板）                                                                                                                                                                                                          |
 | `src/clients/`              | 插件化 API 数据获取                                 | `base/registry.ts`（注册器）、`base/BaseClient.ts`、`implementations/{SwaggerClient,ApifoxClient}.ts`                                                                                                                                                                                                                       |
 | `src/config/`               | 配置文件加载（动态 import + 5s TTL 缓存）           | `loader.ts`                                                                                                                                                                                                                                                                                                                 |
 | `src/errors/`               | 分层错误系统                                        | `errorClasses.ts`、`errorCodes.ts`、`errorFactory.ts`                                                                                                                                                                                                                                                                       |
@@ -23,15 +23,16 @@
 
 ## 关键入口点
 
-| 入口           | 路径                        | 说明                                              |
-| -------------- | --------------------------- | ------------------------------------------------- |
-| CLI 入口       | `src/index.ts`              | `program.parse()` + 公共导出（`defineConfig` 等） |
-| CLI 程序       | `src/cli/program.ts`        | 命令注册                                          |
-| 生成主入口     | `src/generator/index.ts`    | `generateCode(configPath)`                        |
-| 生成协调器     | `src/generator/codegen.ts`  | `generateFiles(processedData, config)`            |
-| OpenAPI 处理器 | `src/processors/openapi.ts` | `processOpenApiData(rawData, config)`             |
-| 配置解析       | `src/utils/multiService.ts` | `resolveServiceConfigs(MultiServiceConfig)`       |
-| 数据获取       | `src/clients/index.ts`      | `fetchData(config)`                               |
+| 入口            | 路径                        | 说明                                                  |
+| --------------- | --------------------------- | ----------------------------------------------------- |
+| CLI 入口（bin） | `src/cli/main.ts`           | 可执行入口，`program.parse()`（构建为 `dist/cli.js`） |
+| 库入口          | `src/index.ts`              | 纯公共导出（`defineConfig` 等，无 CLI 副作用）        |
+| CLI 程序        | `src/cli/program.ts`        | 命令注册                                              |
+| 生成主入口      | `src/generator/index.ts`    | `generateCode(configPath)`                            |
+| 生成协调器      | `src/generator/codegen.ts`  | `generateFiles(processedData, config)`                |
+| OpenAPI 处理器  | `src/processors/openapi.ts` | `processOpenApiData(rawData, config)`                 |
+| 配置解析        | `src/utils/multiService.ts` | `resolveServiceConfigs(MultiServiceConfig)`           |
+| 数据获取        | `src/clients/index.ts`      | `fetchData(config)`                                   |
 
 ## 注意：容易误认的路径
 

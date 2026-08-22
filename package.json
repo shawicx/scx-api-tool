@@ -32,7 +32,7 @@
   "sideEffects": false,
   "types": "dist/index.d.ts",
   "bin": {
-    "api-power": "./dist/index.js"
+    "api-power": "./dist/cli.js"
   },
   "main": "./dist/index.js",
   "exports": {
@@ -46,7 +46,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "tsx src/index.ts generate --config api-power.config.ts",
+    "dev": "tsx src/cli/main.ts generate --config api-power.config.ts",
     "build": "NODE_ENV=production tsdown",
     "analyze:deps": "node scripts/analyze-deps.js",
     "ci:eslint": "eslint -f json src -o ./.ci/eslint.json",
@@ -103,32 +103,32 @@
   "prettier": "prettier-config-ali",
   "dependencies": {
     "@clack/prompts": "^0.11.0",
-    "axios": "^1.13.2",
-    "commander": "^14.0.2",
+    "axios": "^1.19.0",
+    "commander": "^14.0.3",
     "consola": "^3.4.2",
-    "dayjs": "^1.11.19",
-    "handlebars": "^4.7.8",
-    "pinyin-pro": "^3.27.0"
+    "dayjs": "^1.11.23",
+    "handlebars": "^4.7.9",
+    "pinyin-pro": "^3.29.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
-    "@types/node": "^25.0.3",
-    "@vitest/coverage-v8": "^4.1.2",
-    "eslint": "^9.39.2",
+    "@types/node": "^25.9.5",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^9.39.5",
     "eslint-config-ali": "^16.6.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-prettier": "^5.5.6",
     "husky": "^9.1.7",
-    "lint-staged": "^16.2.7",
-    "prettier": "^3.7.4",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.9.6",
     "prettier-config-ali": "^1.5.0",
     "standard-version": "^9.5.0",
     "tsdown": "^0.13.5",
-    "tsx": "^4.21.0",
+    "tsx": "^4.23.12",
     "typescript": "^5.9.3",
     "vitepress": "2.0.0-alpha.15",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=20.0.0"

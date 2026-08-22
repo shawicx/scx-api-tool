@@ -1,11 +1,9 @@
-#!/usr/bin/env node
-
 /**
- * @description 主入口文件
- * 导出所有公共 API 和类型
+ * @description 库主入口文件
+ * 仅导出公共 API 和类型，不包含任何 CLI 副作用；
+ * CLI 可执行入口见 src/cli/main.ts（bin: dist/cli.js）
  */
 
-import { program } from './cli/program';
 import { defineConfig } from './utils/config';
 import { resolveServiceConfigs } from './utils/multiService';
 import {
@@ -68,6 +66,3 @@ export {
   QueryStringArrayFormat,
   Required,
 };
-
-// 执行 CLI 程序
-program.parse(process.argv);

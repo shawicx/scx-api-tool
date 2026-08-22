@@ -16,7 +16,7 @@
 
 ## CLI 命令
 
-入口：`src/index.ts` → `src/cli/program.ts`（Commander.js）
+入口：`src/cli/main.ts`（bin 可执行入口，构建为 `dist/cli.js`）→ `src/cli/program.ts`（Commander.js）。库入口为 `src/index.ts`（纯公共导出，与 CLI 分离，import 无副作用）。
 
 | 命令        | 别名  | 说明                                      | 实现                            |
 | ----------- | ----- | ----------------------------------------- | ------------------------------- |

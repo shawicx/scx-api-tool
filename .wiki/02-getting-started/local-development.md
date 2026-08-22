@@ -20,37 +20,38 @@ pnpm run build        # 生产构建（输出 dist/）
 pnpm run dev          # 开发模式生成（需要根目录 api-power.config.ts）
 ```
 
-> `pnpm run dev` 实际执行 `tsx src/index.ts generate --config api-power.config.ts`。仓库不含真实 token，需自建配置文件（参考 [配置体系](./configuration.md)）。
+> `pnpm run dev` 实际执行 `tsx src/cli/main.ts generate --config api-power.config.ts`。仓库不含真实 token，需自建配置文件（参考 [配置体系](./configuration.md)）。
 
 ## 脚本命令
 
-| 脚本             | 命令                                                     | 说明                         |
-| ---------------- | -------------------------------------------------------- | ---------------------------- |
-| `dev`            | `tsx src/index.ts generate --config api-power.config.ts` | 直接运行生成（无需构建）     |
-| `build`          | `NODE_ENV=production tsdown`                             | 生产构建到 `dist/`           |
-| `test`           | `vitest run`                                             | 运行单元测试                 |
-| `test:watch`     | `vitest --watch`                                         | 监听模式                     |
-| `test:coverage`  | `vitest run --coverage`                                  | 覆盖率报告（v8，阈值 ≥ 75%） |
-| `lint`           | `eslint .`                                               | 代码检查                     |
-| `lint:fix`       | `prettier --write . && eslint --fix .`                   | 自动格式化与修复             |
-| `check:linesize` | `find src -name '*.ts' -exec wc -l {} + \| awk ...`      | 检查超过 360 行的文件        |
-| `docs:dev`       | `vitepress dev`                                          | 文档站开发服务器             |
-| `release`        | 构建 → `standard-version` → push → `pnpm publish`        | 完整发布流程                 |
-| `analyze:deps`   | `node scripts/analyze-deps.js`                           | 依赖结构分析                 |
+| 脚本             | 命令                                                        | 说明                         |
+| ---------------- | ----------------------------------------------------------- | ---------------------------- |
+| `dev`            | `tsx src/cli/main.ts generate --config api-power.config.ts` | 直接运行生成（无需构建）     |
+| `build`          | `NODE_ENV=production tsdown`                                | 生产构建到 `dist/`           |
+| `test`           | `vitest run`                                                | 运行单元测试                 |
+| `test:watch`     | `vitest --watch`                                            | 监听模式                     |
+| `test:coverage`  | `vitest run --coverage`                                     | 覆盖率报告（v8，阈值 ≥ 75%） |
+| `lint`           | `eslint .`                                                  | 代码检查                     |
+| `lint:fix`       | `prettier --write . && eslint --fix .`                      | 自动格式化与修复             |
+| `check:linesize` | `find src -name '*.ts' -exec wc -l {} + \| awk ...`         | 检查超过 360 行的文件        |
+| `docs:dev`       | `vitepress dev`                                             | 文档站开发服务器             |
+| `release`        | 构建 → `standard-version` → push → `pnpm publish`           | 完整发布流程                 |
+| `analyze:deps`   | `node scripts/analyze-deps.js`                              | 依赖结构分析                 |
 
 完整脚本见 `package.json`。
 
 ## 关键入口点
 
-| 入口           | 路径                        | 用途                                         |
-| -------------- | --------------------------- | -------------------------------------------- |
-| CLI 入口       | `src/index.ts`              | 程序启动 + 公共导出                          |
-| CLI 程序       | `src/cli/program.ts`        | 命令注册                                     |
-| 生成主入口     | `src/generator/index.ts`    | `generateCode()`：并发拉取 + 串行生成        |
-| 生成协调器     | `src/generator/codegen.ts`  | `generateFiles()`                            |
-| OpenAPI 处理器 | `src/processors/openapi.ts` | `processOpenApiData()`                       |
-| 配置解析       | `src/utils/multiService.ts` | `resolveServiceConfigs()`                    |
-| 配置类型       | `src/types/config.ts`       | `MultiServiceConfig`、`ApiConfig`、`PRESETS` |
+| 入口            | 路径                        | 用途                                           |
+| --------------- | --------------------------- | ---------------------------------------------- |
+| CLI 入口（bin） | `src/cli/main.ts`           | 可执行入口（构建为 `dist/cli.js`）             |
+| 库入口          | `src/index.ts`              | 纯公共导出（`defineConfig` 等，无 CLI 副作用） |
+| CLI 程序        | `src/cli/program.ts`        | 命令注册                                       |
+| 生成主入口      | `src/generator/index.ts`    | `generateCode()`：并发拉取 + 串行生成          |
+| 生成协调器      | `src/generator/codegen.ts`  | `generateFiles()`                              |
+| OpenAPI 处理器  | `src/processors/openapi.ts` | `processOpenApiData()`                         |
+| 配置解析        | `src/utils/multiService.ts` | `resolveServiceConfigs()`                      |
+| 配置类型        | `src/types/config.ts`       | `MultiServiceConfig`、`ApiConfig`、`PRESETS`   |
 
 ## 调试技巧
 
