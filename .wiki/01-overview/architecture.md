@@ -70,7 +70,7 @@ Commander.js 入口，注册 4 个子命令（generate/init/debug/visualize）�
 
 1. 用户在 `api-power.config.ts` 中 `export default defineConfig({...})`
 2. `defineConfig()` → `resolveServiceConfigs()`（`src/utils/multiService.ts`）：先完整校验（`validateConfiguration`），再对每个 service 以公共配置为基础浅合并，计算 `outputDir = join(baseOutputDir, folder ?? name)`，产出 `ApiConfig[]`
-3. CLI 运行时 `loadConfig()`（`src/config/loader.ts`）只负责动态 import 配置文件 + 5 秒 TTL 缓存，并用类型守卫确保导出的是 `ApiConfig[]`
+3. CLI 运行时 `loadConfig()`（`src/config/loader.ts`）只负责动态 import 配置文件 + 5 秒 TTL 缓存，并用类型守卫确保导出的是 `ApiConfig[]`；import 时附加唯一查询参数**穿透 ESM 模块缓存**（同一 URL 的动态 import 永远返回首次求值结果，不穿透则配置变更永远不生效）
 
 详见 [配置加载与校验](../03-codebase/config-and-validation.md)。
 
@@ -80,7 +80,7 @@ Commander.js 入口，注册 4 个子命令（generate/init/debug/visualize）�
 
 ### 处理层（`src/processors/`）
 
-`processOpenApiData(rawData, config)` 将原始 OpenAPI 文档转换为 `ProcessedApiData`：解析路径、提取 Schema、解析 `$ref`、应用 `transformPath`、检测自由格式类型（`src/generator/freeForm.ts`，如 JsonNode → 递归 JsonValue）。详见 [OpenAPI 处理器](../03-codebase/processors.md)。
+`processOpenApiData(rawData, config)` 将原始 OpenAPI 文档转换为 `ProcessedApiData`：解析路径、提取 Schema、解析 `$ref`、应用 `transformPath`、检测自由格式类型（`src/schema/freeForm.ts`，如 JsonNode → 递归 JsonValue）。详见 [OpenAPI 处理器](../03-codebase/processors.md)。
 
 ### 生成层（`src/generator/`）
 
@@ -119,7 +119,7 @@ sequenceDiagram
     CLI-->>User: 生成成功（N 个服务，耗时）
 ```
 
-关键设计：**并发拉取**（`Promise.all`）节省多服务总耗时；**串行生成**防止各服务清理输出目录时相互覆盖（校验层也会提前拦截 outputDir 相同/嵌套的配置）。
+关键设计：**并发拉取**（`Promise.all`）节省多服务总耗时；**失败隔离**——单个服务获取失败只跳过该服务并逐个报告，其余服务照常生成，最后抛出聚合错误（进程非零退出）；**串行生成**防止各服务清理输出目录时相互覆盖（校验层也会提前拦截 outputDir 相同/嵌套的配置）。
 
 ## 模块依赖关系
 
@@ -131,6 +131,7 @@ graph LR
     CLIENTS[clients/]
     PROC[processors/]
     GEN[generator/]
+    SCHEMA[schema/]
     NAMING[naming/]
     TYPES[types/]
     ERRORS[errors/]
@@ -140,13 +141,14 @@ graph LR
     CONFIG --> VALIDATE
     VALIDATE --> TYPES & UTILS
     CLIENTS --> ERRORS & UTILS
-    PROC --> GEN & NAMING
-    GEN --> NAMING & UTILS & ERRORS
+    PROC --> SCHEMA & NAMING
+    GEN --> SCHEMA & NAMING & UTILS & ERRORS
 ```
 
 要点：
 
 - `utils/` 是被依赖最多的基础层（logger、file、escape、path、concurrency 等）
+- `schema/` 是中立层（free-form 检测、操作内容提取），processors 与 generator 共同依赖，**方向单向**：processor ← generator 允许，反向禁止（避免循环依赖）
 - `naming/` 独立于 generator 之外，processors 与 generator 共同使用
 - `types/` 是所有层的中心类型系统（`ApiConfig`、`MultiServiceConfig`、`ApiInterface` 等）
 - `errors/` 被所有业务层使用（E1xxx 配置 / E2xxx 网络 / E3xxx 生成）

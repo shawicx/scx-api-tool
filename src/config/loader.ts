@@ -109,6 +109,9 @@ function isProcessedConfig(config: unknown): config is ApiConfig[] {
   return Array.isArray(config) && config.length > 0 && config.every(isApiConfig);
 }
 
+/** 配置模块导入的穿透计数器：保证每次重新导入的 URL 唯一（Date.now() 同毫秒会重复） */
+let importBustCounter = 0;
+
 /**
  * @description 加载配置文件的内部实现
  *
@@ -121,8 +124,10 @@ function isProcessedConfig(config: unknown): config is ApiConfig[] {
  * @throws {BaseError} 如果配置文件不存在或解析失败，或导出格式不符合预期
  */
 async function loadConfigImpl(absolutePath: string): Promise<ApiConfig[]> {
-  // 为 ESM 兼容性将文件路径转换为文件 URL
-  const fileUrl = pathToFileURL(absolutePath).href;
+  // 为 ESM 兼容性将文件路径转换为文件 URL。
+  // 追加唯一查询参数穿透 ESM 模块缓存：同一 URL 的动态 import 永远返回首次求值的结果，
+  // 若不加穿透，watch 模式下配置文件变更将永远不生效（上层 TTL 缓存未命中时也拿到旧模块）。
+  const fileUrl = `${pathToFileURL(absolutePath).href}?t=${++importBustCounter}`;
 
   // 动态导入配置
   const configModule = await import(fileUrl);

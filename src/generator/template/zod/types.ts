@@ -8,7 +8,7 @@ import { sanitizeTypeName, sanitizePropertyName } from '@/naming';
 import { isDepthExceeded, CircularRefGuard } from '@/utils/schemaSafety';
 import { escapeStringLiteral, escapeJsDocComment } from '@/utils/escape';
 import type { ApiConfig, OpenApiSchema } from '@/types';
-import { isFreeFormSchema } from '../../freeForm';
+import { isFreeFormSchema } from '@/schema';
 import { logger } from '@/utils/logger';
 
 /**

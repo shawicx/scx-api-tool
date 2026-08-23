@@ -4,13 +4,15 @@
  */
 
 import type { ApiConfig } from '@/types';
-import type { ApiCategory, ApiInterface, ApiTypeDefinition, OpenApiDocument } from '@/types';
+import type {
+  ApiCategory,
+  ApiInterface,
+  ApiTypeDefinition,
+  OpenApiDocument,
+  OpenApiSchema,
+} from '@/types';
 import { sanitizeTypeName } from '@/naming';
-import {
-  isFreeFormSchema,
-  isJacksonDynamicType,
-  createJsonValueDefinition,
-} from '../generator/freeForm';
+import { isFreeFormSchema, isJacksonDynamicType, createJsonValueDefinition } from '@/schema';
 import { logger } from '@/utils/logger';
 import { ErrorFactory } from '@/errors';
 
@@ -123,8 +125,7 @@ function collectSchemasFromPaths(paths: NonNullable<OpenApiDocument['paths']>): 
       }
       // responses.*.content.*.schema
       const responses = op.responses as
-        | Record<string, { content?: Record<string, unknown> }>
-        | undefined;
+        Record<string, { content?: Record<string, unknown> }> | undefined;
       if (responses) {
         for (const resp of Object.values(responses)) {
           if (!resp?.content) continue;

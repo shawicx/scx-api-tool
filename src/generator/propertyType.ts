@@ -8,7 +8,7 @@
 import type { OpenApiSchema } from '../types';
 import { sanitizeTypeName } from '@/naming';
 import { isDepthExceeded } from '@/utils/schemaSafety';
-import { isFreeFormSchema } from './freeForm';
+import { isFreeFormSchema } from '@/schema';
 
 /**
  * @description 将基础类型字符串映射（处理 string 的 binary format 等）

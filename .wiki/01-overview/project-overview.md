@@ -4,7 +4,7 @@
 
 ## 核心能力
 
-- **多服务配置（microservice）**：一份配置声明多个后端服务，公共配置顶层共享，各服务独立数据源与输出目录；数据**并发拉取**、代码**串行生成**（见 [架构](./architecture.md)）
+- **多服务配置（microservice）**：一份配置声明多个后端服务，公共配置顶层共享，各服务独立数据源与输出目录；数据**并发拉取**（单服务失败自动隔离，不影响其他服务）、代码**串行生成**（见 [架构](./architecture.md)）
 - **多数据源**：Swagger/OpenAPI 3.0 与 Apifox，基于 URL 主机名自动检测服务类型，客户端插件化可扩展
 - **多输出格式**：TypeScript 类型定义、Zod 运行时验证 Schema、JavaScript 纯代码（`target: 'javascript'`）
 - **路径参数插值**：OpenAPI 路径中的 `{param}` 自动插值为模板字符串（如 `` `/api/stock/${params.code}` ``），支持多参数与安全转义

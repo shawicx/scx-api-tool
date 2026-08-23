@@ -31,7 +31,7 @@ export interface ProcessedApiData {
 
 ### 自由格式类型（free-form → JsonValue）
 
-`src/generator/freeForm.ts` 提供检测与生成：
+`src/schema/freeForm.ts`（中立层，processors 与 generator 共用）提供检测与生成：
 
 - `isFreeFormSchema()`：检测 `additionalProperties: true / {}` 的自由格式对象
 - `isJacksonDynamicType()`：检测 Jackson 动态类型（如 `JsonNode`）

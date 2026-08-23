@@ -1,13 +1,22 @@
 /**
  * @description 代码生成命令 支持单次生成和监视模式
+ *
+ * watch 模式设计：
+ * - 防抖：一次保存常触发多个文件系统事件，合并为一次重新生成
+ * - 互斥：上一次生成未结束时只排队一次重跑，避免并发 cleanOutputDir 竞争
+ * - 缓存清理：重新生成前清除配置加载缓存，确保拿到配置文件的新内容
  */
 
 import { Command } from 'commander';
 import { watch } from 'fs';
-import { join } from 'path';
+import { resolve } from 'path';
 import { generateCode } from '@/generator';
 import { getProgressManager, createMultiStepProgress } from '@/utils/progress';
+import { clearConfigCache } from '@/config/loader';
 import { handleError } from '@/errors';
+
+/** watch 模式防抖间隔（毫秒） */
+const WATCH_DEBOUNCE_MS = 300;
 
 export const generateCommand = new Command('generate')
   .alias('gen')
@@ -36,7 +45,8 @@ export const generateCommand = new Command('generate')
 
         try {
           progress.startStep(0);
-          const configPath = join(process.cwd(), options.config);
+          // resolve 而非 join：--config 传入绝对路径时 join(cwd, abs) 会拼出错误路径
+          const configPath = resolve(process.cwd(), options.config);
           progress.completeCurrentStep('配置文件加载完成');
 
           progress.startStep(1);
@@ -45,16 +55,42 @@ export const generateCommand = new Command('generate')
 
           progress.startStep(2);
 
-          // 监视配置文件更改
-          watch(configPath, async () => {
-            progressManager.info('检测到配置文件更改，开始重新生成...');
+          // 监视配置文件更改（防抖 + 互斥）
+          let generating = false;
+          let pendingRerun = false;
+          let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
+          /**
+           * @description 执行一次重新生成（互斥：进行中时仅排队一次重跑）
+           */
+          const regenerate = async (): Promise<void> => {
+            if (generating) {
+              pendingRerun = true;
+              return;
+            }
+            generating = true;
             try {
+              // 配置文件已变更：清除其加载缓存，确保重新求值拿到新内容
+              clearConfigCache(configPath);
+              progressManager.info('检测到配置文件更改，开始重新生成...');
               await generateCode(options.config);
               progressManager.success('配置更新已应用，继续监视文件更改...');
             } catch {
               progressManager.error('重新生成失败，请检查配置文件');
             }
+            generating = false;
+            // 生成期间又有变更：接力执行一次（保持互斥，避免并发 cleanOutputDir 竞争）
+            if (pendingRerun) {
+              pendingRerun = false;
+              await regenerate();
+            }
+          };
+
+          watch(configPath, () => {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(async () => {
+              await regenerate();
+            }, WATCH_DEBOUNCE_MS);
           });
 
           progress.completeCurrentStep('文件监视已启动');

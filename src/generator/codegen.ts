@@ -3,7 +3,7 @@
  */
 
 import { resolve } from 'path';
-import { ProcessedApiData } from '../processors/openapi';
+import type { ProcessedApiData } from '../processors/openapi';
 import { ApiConfig } from '../types';
 import {
   generateInterfaceFiles,

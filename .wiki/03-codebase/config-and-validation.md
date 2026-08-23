@@ -8,7 +8,7 @@
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/utils/config.ts`       | `defineConfig()`（= `resolveServiceConfigs`）、`applyPreset`、`parseSourceUrl`、`normalizeTransformPath`、`getFileExtension`、`DEFAULT_CONFIG_VALUES` |
 | `src/utils/multiService.ts` | `resolveServiceConfigs()`：校验 → 公共配置应用 preset → 逐服务合并展开为 `ApiConfig[]`                                                                |
-| `src/config/loader.ts`      | `loadConfig()`：动态 import 配置文件 + 5s TTL 缓存 + 导出格式类型守卫                                                                                 |
+| `src/config/loader.ts`      | `loadConfig()`：动态 import 配置文件（穿透 ESM 模块缓存）+ 5s TTL 缓存 + 导出格式类型守卫                                                             |
 | `src/validation/`           | `validateConfiguration()`：多层校验，失败抛 `ConfigValidationError`                                                                                   |
 
 ## 解析顺序（关键设计：校验先于合并）
@@ -30,7 +30,7 @@ defineConfig(MultiServiceConfig)
 
 `loadConfigImpl()` 动态 import 配置文件后，用 `isProcessedConfig()` 检查导出值是否为非空 `ApiConfig[]`（检查 `serverUrl`/`serverType`/`source`/`outputDir`/`generateApi` 等特征字段）。**配置文件必须 `export default defineConfig({...})`**——直接导出普通对象会抛 `E1003`，错误信息会提示用 `defineConfig` 包裹。
 
-缓存：`ConfigCacheManager` 以绝对路径为键，默认 TTL 5000ms；`clearConfigCache()` / `getCacheStats()` 可管理。
+缓存：`ConfigCacheManager` 以绝对路径为键，默认 TTL 5000ms；`clearConfigCache()` / `getCacheStats()` 可管理。**模块缓存穿透**：动态 import 的 URL 附加唯一查询参数（`?t=<递增序号>`）——同一 URL 的 ESM 动态 import 永远返回首次求值结果，不穿透则配置文件修改后（含 watch 模式）永远拿到旧配置。watch 模式重新生成前会先调用 `clearConfigCache(configPath)`（见 `src/cli/commands/generate.ts`）。
 
 ## 校验流程（`validation/index.ts`）
 

@@ -5,7 +5,7 @@
 
 import type { ApiInterface, ApiProperty } from '../types';
 import { ProcessedApiData } from './openapi';
-import { getRequestBodySchema, getResponseSchema } from '../generator/extractor';
+import { getRequestBodySchema, getResponseSchema } from '@/schema';
 import { isDepthExceeded, CircularRefGuard } from '@/utils/schemaSafety';
 
 /**

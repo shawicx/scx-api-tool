@@ -8,11 +8,12 @@
 generateCode(configPath)                          src/generator/index.ts
   ├─ loadConfig(configPath) → ApiConfig[]          并发拉取前先加载多服务配置
   ├─ beforeGenerate 钩子（整体一次，取首个服务的 hooks）
-  ├─ 阶段1：Promise.all 并发 fetchData 各服务
+  ├─ 阶段1：并发 fetchData 各服务（失败隔离：单服务失败仅跳过并报告）
   ├─ 阶段2：串行 processService（避免目录清理竞争）
   │    ├─ processOpenApiData(rawData, config)      src/processors/openapi.ts
   │    └─ generateFiles(processedData, config)     src/generator/codegen.ts
-  └─ afterGenerate 钩子（整体一次）
+  ├─ afterGenerate 钩子（整体一次）
+  └─ 若有失败服务：成功服务生成完毕后抛出聚合错误（进程非零退出）
 ```
 
 `generateFiles()` 单服务生成顺序（`codegen.ts`）：
@@ -26,21 +27,21 @@ generateCode(configPath)                          src/generator/index.ts
 
 ## 目录结构
 
-| 文件/目录                             | 职责                                                                                                        |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `index.ts`                            | `generateCode()` 主入口（多服务编排）                                                                       |
-| `codegen.ts`                          | `generateFiles()` 协调器                                                                                    |
-| `extractor.ts`                        | 从 OpenAPI 操作中提取请求/响应属性、路径参数名                                                              |
-| `fileGenerator.ts`                    | 生成步骤的门面（接口/请求/类型/Schema 文件生成）                                                            |
-| `fileWriter.ts`                       | 文件写入                                                                                                    |
-| `freeForm.ts`                         | 自由格式 schema 检测（`isFreeFormSchema`/`isJacksonDynamicType`）与递归 `JsonValue` 类型生成（JsonNode 等） |
-| `propertyType.ts`                     | 属性类型映射                                                                                                |
-| `generators/interfaceGenerator.ts`    | 按标签生成接口文件                                                                                          |
-| `generators/rootIndexGenerator.ts`    | 生成根 `index.ts` 导出                                                                                      |
-| `generators/typeGenerator.ts`         | TypeScript 类型文件（`outputDir/types/`）                                                                   |
-| `generators/schemaGenerator.ts`       | Zod Schema 文件（`outputDir/schemas/`）                                                                     |
-| `generators/zodTypesOnlyGenerator.ts` | Zod 仅类型 Schema 生成                                                                                      |
-| `template/`                           | Handlebars 引擎（见下）                                                                                     |
+| 文件/目录                             | 职责                                                          |
+| ------------------------------------- | ------------------------------------------------------------- |
+| `index.ts`                            | `generateCode()` 主入口（多服务编排）                         |
+| `codegen.ts`                          | `generateFiles()` 协调器                                      |
+| `extractor.ts`                        | 从 OpenAPI 操作中提取请求/响应属性、路径参数名                |
+| `fileGenerator.ts`                    | 生成步骤的门面（接口/请求/类型/Schema 文件生成）              |
+| `fileWriter.ts`                       | 文件写入                                                      |
+| `freeForm.ts`                         | 兼容 re-export（实现已下沉至中立层 `src/schema/freeForm.ts`） |
+| `propertyType.ts`                     | 属性类型映射                                                  |
+| `generators/interfaceGenerator.ts`    | 按标签生成接口文件                                            |
+| `generators/rootIndexGenerator.ts`    | 生成根 `index.ts` 导出                                        |
+| `generators/typeGenerator.ts`         | TypeScript 类型文件（`outputDir/types/`）                     |
+| `generators/schemaGenerator.ts`       | Zod Schema 文件（`outputDir/schemas/`）                       |
+| `generators/zodTypesOnlyGenerator.ts` | Zod 仅类型 Schema 生成                                        |
+| `template/`                           | Handlebars 引擎（见下）                                       |
 
 ### `template/` 子目录
 

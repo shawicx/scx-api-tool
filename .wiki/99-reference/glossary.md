@@ -88,7 +88,7 @@ OpenAPI 路径 `{param}` → 模板字符串（`/api/v1/stock/{code}` → `` `/a
 
 ### JsonValue（递归自由格式类型）
 
-对 `additionalProperties: true` / Jackson 动态类型（如 `JsonNode`）的 schema 生成的递归类型，替代 `any`。检测与生成在 `src/generator/freeForm.ts`。
+对 `additionalProperties: true` / Jackson 动态类型（如 `JsonNode`）的 schema 生成的递归类型，替代 `any`。检测与生成在 `src/schema/freeForm.ts`（中立层）。
 
 ## 架构概念
 
