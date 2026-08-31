@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.6.3](https://github.com/shawicx/scx-api-tool/compare/v0.6.2...v0.6.3) (2026-08-31)
+
+### Features
+
+- 为 JsonNode 等自由格式类型生成递归 JsonValue 类型 ([229166e](https://github.com/shawicx/scx-api-tool/commit/229166e7be9293e8a2cb2c0461e782fcb68fc8f4))
+- 新增 tech-stack/decisions 等页面生成并重构项目 Wiki ([e1fe64f](https://github.com/shawicx/scx-api-tool/commit/e1fe64fe33f31bc62d9297eb6ba218cd8d0c9ef8))
+
+### Bug Fixes
+
+- 修复响应 schema 在非 application/json content-type 下生成为 any 的问题 ([3a47322](https://github.com/shawicx/scx-api-tool/commit/3a473224419cdf26b602f2f21f046df2965572c7))
+- 修复路径参数未插值导致生成的请求 URL 不正确的问题 ([09f901e](https://github.com/shawicx/scx-api-tool/commit/09f901ec030368ec8569567cb0f73d9f9733730b))
+- 拆分 CLI 与库入口并更新相关依赖 ([49e1f14](https://github.com/shawicx/scx-api-tool/commit/49e1f14ade1baf5b268471bd4f851a2e2ec91c9f))
+
+### Documentation
+
+- 同步项目文档 ([1844612](https://github.com/shawicx/scx-api-tool/commit/18446129267aa917f56877371b0b38a36539b675))
+- 重新生成项目 Wiki 并同步多服务架构等最新变更 ([4a6dfeb](https://github.com/shawicx/scx-api-tool/commit/4a6dfebe1367672fe02c0732054a8a62007edf93))
+
+### Refactors
+
+- 拆解循环依赖并加固 watch 模式与多服务失败隔离 ([4465253](https://github.com/shawicx/scx-api-tool/commit/4465253da2162e3c9cddc1580e80a34a05a97934))
+
 ### [0.6.2](https://github.com/shawicx/scx-api-tool/compare/v0.6.1...v0.6.2) (2026-07-20)
 
 ### Refactors

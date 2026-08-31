@@ -1,6 +1,6 @@
 {
   "name": "@scxfe/api-tool",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -103,6 +103,7 @@
   "prettier": "prettier-config-ali",
   "dependencies": {
     "@clack/prompts": "^0.11.0",
+    "@scxfe/api-tool": "link:",
     "axios": "^1.19.0",
     "commander": "^14.0.3",
     "consola": "^3.4.2",
