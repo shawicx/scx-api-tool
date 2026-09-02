@@ -461,7 +461,7 @@ describe('extractResponseProperties', () => {
     });
   });
 
-  it('should handle response with no schema type as any', () => {
+  it('should output data: unknown for empty schema (no structure defined)', () => {
     const processedData = createProcessedApiData();
     const responses: OpenApiOperation['responses'] = {
       '200': {
@@ -479,8 +479,8 @@ describe('extractResponseProperties', () => {
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
       name: 'data',
-      type: 'any',
-      description: '响应数据',
+      type: 'unknown',
+      description: '响应数据（文档未定义响应结构）',
       required: true,
     });
   });
@@ -894,14 +894,13 @@ describe('getPropertyType', () => {
   });
 
   it('should return "Record<string, string>" for object with inline additionalProperties type', () => {
-    // 注意:当前 getPropertyType 对内联 additionalProperties（非 $ref）仍降级为 Record<string, any>
-    // 这是已知局限（propertyType 只识别 $ref 形式的 map），非 free-form 场景
+    // additionalProperties 为具体 schema 时递归取值类型（$ref 与内联类型均可）
     expect(
       getPropertyType({
         type: 'object',
         additionalProperties: { type: 'string' },
       }),
-    ).toBe('Record<string, any>');
+    ).toBe('Record<string, string>');
   });
 
   it('should return "any" when no type is specified and no $ref', () => {
@@ -938,5 +937,107 @@ describe('hasRequestBody', () => {
     };
 
     expect(hasRequestBody(operation)).toBe(false);
+  });
+});
+
+// ==================== 响应 schema 兜底质量（空 schema / 空 properties） ====================
+
+describe('extractResponseProperties - 兜底质量', () => {
+  it('空 schema（无任何结构定义）应输出 data: unknown 而非 any', () => {
+    const processedData = createProcessedApiData();
+    const responses: OpenApiOperation['responses'] = {
+      '200': {
+        description: 'OK',
+        content: { 'application/json': { schema: {} } },
+      },
+    };
+
+    const result = extractResponseProperties(responses, processedData);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('data');
+    expect(result[0].type).toBe('unknown');
+  });
+
+  it('空 properties + additionalProperties(map) 应输出 data: Record<string, boolean> 而非空', () => {
+    const processedData = createProcessedApiData();
+    const responses: OpenApiOperation['responses'] = {
+      '200': {
+        description: 'OK',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {},
+              additionalProperties: { type: 'boolean' },
+            },
+          },
+        },
+      },
+    };
+
+    const result = extractResponseProperties(responses, processedData);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].type).toBe('Record<string, boolean>');
+  });
+
+  it('空 properties + additionalProperties:{}(free-form) 应输出 data: JsonValue', () => {
+    const processedData = createProcessedApiData();
+    const responses: OpenApiOperation['responses'] = {
+      '200': {
+        description: 'OK',
+        content: {
+          'application/json': {
+            schema: { type: 'object', properties: {}, additionalProperties: {} },
+          },
+        },
+      },
+    };
+
+    const result = extractResponseProperties(responses, processedData);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].type).toBe('JsonValue');
+  });
+
+  it('仅有空 properties（无 additionalProperties）应输出 data: Record<string, any>', () => {
+    const processedData = createProcessedApiData();
+    const responses: OpenApiOperation['responses'] = {
+      '200': {
+        description: 'OK',
+        content: {
+          'application/json': {
+            schema: { type: 'object', properties: {} },
+          },
+        },
+      },
+    };
+
+    const result = extractResponseProperties(responses, processedData);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].type).toBe('Record<string, any>');
+  });
+
+  it('顶层 oneOf 响应应输出 union 类型而非 any', () => {
+    const processedData = createProcessedApiData();
+    const responses: OpenApiOperation['responses'] = {
+      '200': {
+        description: 'OK',
+        content: {
+          'application/json': {
+            schema: {
+              oneOf: [{ $ref: '#/components/schemas/User' }, { type: 'string' }],
+            },
+          },
+        },
+      },
+    };
+
+    const result = extractResponseProperties(responses, processedData);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].type).toBe('User | string');
   });
 });

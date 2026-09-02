@@ -13,6 +13,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { join } from 'path';
 import type { ProcessedApiData } from '@/processors/openapi';
 import type { ApiConfig } from '@/types';
+import { logger } from '@/utils/logger';
 
 vi.mock('@/utils/logger', () => ({
   logger: {
@@ -382,5 +383,90 @@ describe('generateInterfaceFileForTag', () => {
     expect(captured.content).toContain('UserPreferences | null');
     // 嵌套可空类型必须出现在 type import 中（修复前缺失）
     expect(captured.content).toMatch(/import type \{ [^}]*UserPreferences \} from/);
+  });
+
+  it('GET 带 requestBody 应输出告警（不符合 HTTP 语义）', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateApi: true,
+      generateTypes: true,
+      typesFormat: 'typescript',
+    };
+    const data: ProcessedApiData = {
+      interfaces: [
+        {
+          path: '/api/ai/stream',
+          method: 'get',
+          operation: {
+            summary: 'AI 流式对话',
+            tags: ['AI'],
+            requestBody: {
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: { prompt: { type: 'string' } },
+                  },
+                },
+              },
+            },
+            responses: {
+              '200': { description: 'ok', content: { 'application/json': { schema: {} } } },
+            },
+          },
+        },
+      ],
+      types: [],
+      categories: [],
+    } as unknown as ProcessedApiData;
+    await generateInterfaceFileForTag(
+      'ai',
+      data.interfaces,
+      data,
+      config,
+      join(config.outputDir, 'ai'),
+    );
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringMatching(/GET \/api\/ai\/stream.*requestBody/),
+    );
+  });
+
+  it('响应 schema 为空对象时应生成 data: unknown 并输出告警', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateApi: true,
+      generateTypes: true,
+      typesFormat: 'typescript',
+    };
+    const data: ProcessedApiData = {
+      interfaces: [
+        {
+          path: '/api/mail/send',
+          method: 'post',
+          operation: {
+            summary: '发送邮件',
+            tags: ['邮件'],
+            responses: {
+              '200': { description: 'ok', content: { 'application/json': { schema: {} } } },
+            },
+          },
+        },
+      ],
+      types: [],
+      categories: [],
+    } as unknown as ProcessedApiData;
+    await generateInterfaceFileForTag(
+      'mail',
+      data.interfaces,
+      data,
+      config,
+      join(config.outputDir, 'mail'),
+    );
+
+    expect(captured.content).toContain('data: unknown');
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringMatching(/POST \/api\/mail\/send.*响应|响应.*POST \/api\/mail\/send/),
+    );
   });
 });

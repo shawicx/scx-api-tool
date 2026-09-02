@@ -69,7 +69,14 @@ generateCode(configPath)                          src/generator/index.ts
 
 ### 类型 import 收集
 
-接口文件与类型文件的 `import type { ... }` 由 `collectUsedTypesFromProperties()`（`src/processors/common.ts`）计算：将属性类型串按分隔符拆分为标识符后对自定义类型名集合做命中检查，因此 `X | null`（可空引用）、`Record<string, X>`、`A | B`、`A & B`、嵌套数组等复合形态中的自定义类型都会进入 import。
+接口文件与类型文件的 `import type { ... }` 由 `collectUsedTypesFromProperties()`（`src/processors/common.ts`）计算：将属性类型串按分隔符拆分为标识符后对自定义类型名集合做命中检查，因此 `X | null`（可空引用）、`Record<string, X>`、`A | B`、`A & B`、嵌套数组等复合形态中的自定义类型都会进入 import。递归自引用（如树形 `children: Self[]`）会在 typeGenerator 中跳过自身 import，避免与自身声明冲突。
+
+### 类型映射与响应兜底（propertyType / extractor）
+
+- **OAS 3.1 type 数组归一化**：`getPropertyType()` 入口将 `["array","null"]`、`["object","null"]` 等 type 数组归一化为第一个非 null 项，使数组/对象分支正常命中 `items`/`additionalProperties`（否则类型静默退化为 `any`，树形递归 schema 是典型受害者）
+- **typed map**：`additionalProperties` 为具体 schema 时递归取值类型——`{ additionalProperties: { type: 'boolean' } }` → `Record<string, boolean>`（free-form 的 `true`/`{}` 仍映射为递归 `JsonValue`）
+- **响应兜底分级**（`extractResponseProperties`）：空 `properties` 不抢占内联分支，`additionalProperties` 走对象分支；顶层 `oneOf`/`anyOf` 交给 `getPropertyType` 产出 union；完全空的 schema（文档缺响应体）产出 `data: unknown` 强制调用方收窄
+- **文档质量告警**：生成时对「GET 定义 requestBody」（不符合 HTTP 语义）与「200 响应缺 schema」（已生成 `data: unknown`）输出 `logger.warn`，指向应在 API 文档侧修数据
 
 ## 命名策略（`src/naming/`，顶层模块）
 

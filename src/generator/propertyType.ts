@@ -97,37 +97,40 @@ export function getPropertyType(property: OpenApiSchema, depth = 0): string {
     return wrapNullable(baseType || 'any', property);
   }
 
+  // 归一化 OAS 3.1 type 数组：["array","null"] / ["object","null"] 取第一个非 null 项，
+  // 使数组/对象分支正常命中（否则 items/additionalProperties 被跳过，类型退化为 any）。
+  // nullable 语义统一由 wrapNullable 处理（isNullable 兼容两种写法）。
+  let { type } = property;
+  if (Array.isArray(type)) {
+    const nonNull = type.filter((t) => t !== 'null');
+    if (nonNull.length === 0) return 'null';
+    type = nonNull[0];
+  }
+
   // 处理数组类型
-  if (property.type === 'array' && property.items) {
+  if (type === 'array' && property.items) {
     return wrapNullable(`${getPropertyType(property.items, depth + 1)}[]`, property);
   }
 
   // 处理对象类型
-  if (property.type === 'object') {
+  if (type === 'object') {
     // free-form（任意 JSON 值，如 Jackson JsonNode 属性、additionalProperties: true）
     // 映射为内置的 JsonValue 递归联合类型，而非 Record<string, any>
     if (isFreeFormSchema(property)) {
       return wrapNullable('JsonValue', property);
     }
-    // 检查是否为 map（additionalProperties 含 $ref）
+    // 检查是否为 map（additionalProperties 为 schema：$ref 取引用名，其余递归取值类型，
+    // 如 { additionalProperties: { type: 'boolean' } } → Record<string, boolean>）
     const ap = property.additionalProperties;
-    if (ap && typeof ap === 'object' && ap.$ref) {
-      const refName = ap.$ref.split('/').pop()!;
-      return wrapNullable(`Record<string, ${sanitizeTypeName(refName)}>`, property);
+    if (ap && typeof ap === 'object' && Object.keys(ap).length > 0) {
+      const valueType = ap.$ref
+        ? sanitizeTypeName(ap.$ref.split('/').pop()!)
+        : getPropertyType(ap, depth + 1);
+      return wrapNullable(`Record<string, ${valueType}>`, property);
     }
     return wrapNullable('Record<string, any>', property);
   }
 
-  // 处理 3.1 风格 type 数组（含 null 之外的类型取第一个非 null 项）
-  if (Array.isArray(property.type)) {
-    const nonNull = property.type.filter((t) => t !== 'null');
-    if (nonNull.length) {
-      const mapped = mapBasicType(nonNull[0] as string, property);
-      return wrapNullable(mapped, property);
-    }
-    return 'null';
-  }
-
-  // 映射基本类型
-  return wrapNullable(mapBasicType(property.type, property), property);
+  // 映射基本类型（含 3.1 type 数组归一化后的第一非 null 项）
+  return wrapNullable(mapBasicType(type, property), property);
 }

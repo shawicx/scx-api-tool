@@ -167,8 +167,9 @@ export function extractResponseProperties(
           required: true,
         });
       }
-    } else if (resolved.properties) {
-      // 处理内联模式（含 allOf 展平后的 properties）
+    } else if (resolved.properties && Object.keys(resolved.properties).length > 0) {
+      // 处理内联模式（含 allOf 展平后的 properties；空 properties 不抢占分支，
+      // 让 additionalProperties（map/free-form）在 getPropertyType 的对象分支中被正确处理）
       for (const [name, property] of Object.entries(resolved.properties)) {
         properties.push({
           name: sanitizePropertyName(name),
@@ -186,7 +187,15 @@ export function extractResponseProperties(
         required: true,
       });
     } else if (resolved.type) {
-      // 处理基本类型
+      // 处理基本类型（含空 properties 的对象：Record<string, X> / JsonValue）
+      properties.push({
+        name: 'data',
+        type: getPropertyType(resolved),
+        description: '响应数据',
+        required: true,
+      });
+    } else if (resolved.oneOf || resolved.anyOf) {
+      // 处理顶层组合 schema（union），交给 getPropertyType 处理
       properties.push({
         name: 'data',
         type: getPropertyType(resolved),
@@ -194,11 +203,11 @@ export function extractResponseProperties(
         required: true,
       });
     } else {
-      // 处理通用对象响应
+      // 空 schema（无任何结构定义）：文档缺少响应体，生成 unknown 强制调用方收窄
       properties.push({
         name: 'data',
-        type: 'any',
-        description: '响应数据',
+        type: 'unknown',
+        description: '响应数据（文档未定义响应结构）',
         required: true,
       });
     }

@@ -282,3 +282,49 @@ describe('extractResponseProperties - allOf 顶层展平', () => {
     expect(names).toEqual(['baseId', 'score']);
   });
 });
+
+// ==================== OAS 3.1 type 数组归一化 ====================
+
+describe('getPropertyType - 3.1 type 数组归一化（array/object）', () => {
+  it('type:[array,null] + items.$ref 应输出 RefType[] | null（递归树形不再退化为 any）', () => {
+    const schema = {
+      type: ['array', 'null'],
+      items: { $ref: '#/components/schemas/Animal' },
+    } as unknown as OpenApiSchema;
+    expect(getPropertyType(schema)).toBe('Animal[] | null');
+  });
+
+  it('type:[array,null] + items:string 应输出 string[] | null', () => {
+    const schema = {
+      type: ['array', 'null'],
+      items: { type: 'string' },
+    } as unknown as OpenApiSchema;
+    expect(getPropertyType(schema)).toBe('string[] | null');
+  });
+
+  it('type:[array,null] 且非 nullable 数组（含 null 单元素之外的多种写法）不应丢失 items', () => {
+    const schema = {
+      type: ['array', 'null'],
+      items: { type: 'integer' },
+    } as unknown as OpenApiSchema;
+    expect(getPropertyType(schema)).toBe('number[] | null');
+  });
+
+  it('type:[object,null] + additionalProperties.$ref 应输出 Record<string, Ref> | null', () => {
+    const schema = {
+      type: ['object', 'null'],
+      additionalProperties: { $ref: '#/components/schemas/Animal' },
+    } as unknown as OpenApiSchema;
+    expect(getPropertyType(schema)).toBe('Record<string, Animal> | null');
+  });
+
+  it('type:[null] 应输出 null（回归不变）', () => {
+    expect(getPropertyType({ type: ['null'] } as unknown as OpenApiSchema)).toBe('null');
+  });
+
+  it('type:[integer,null] 应输出 number | null（回归不变）', () => {
+    expect(getPropertyType({ type: ['integer', 'null'] } as unknown as OpenApiSchema)).toBe(
+      'number | null',
+    );
+  });
+});

@@ -214,4 +214,37 @@ describe('generateTypeFiles', () => {
     // 可空引用必须出现在 import 中（修复前缺失）
     expect(postWrite!.content).toMatch(/import type \{ [^}]*User \} from/);
   });
+
+  it('递归自引用类型不应生成指向自身的 import（children: Self[] 场景）', async () => {
+    const config: ApiConfig = { ...minimalApiConfig, generateApi: true, generateTypes: true };
+    const data: ProcessedApiData = {
+      interfaces: [],
+      types: [
+        {
+          name: 'TreeNode',
+          originalName: 'TreeNode',
+          schema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              children: {
+                type: ['array', 'null'],
+                items: { $ref: '#/components/schemas/TreeNode' },
+              } as never,
+            },
+            required: ['name'],
+          },
+        },
+      ],
+      categories: [],
+    } as ProcessedApiData;
+    await generateTypeFiles(data, config);
+
+    const nodeWrite = writes.find((w) => w.path.endsWith('TreeNode.ts'));
+    expect(nodeWrite).toBeDefined();
+    // 递归引用正常渲染为自身类型数组（依赖 3.1 type 数组归一化）
+    expect(nodeWrite!.content).toContain('TreeNode[] | null');
+    // 但不得生成指向自身的 import（会与自身声明冲突 TS2300）
+    expect(nodeWrite!.content).not.toMatch(/import type \{ [^}]*\bTreeNode\b[^}]* \} from/);
+  });
 });

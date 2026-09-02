@@ -200,6 +200,23 @@ export async function generateInterfaceFileForTag(
       pathParamNames,
     );
 
+    const responseProperties = extractResponseProperties(
+      apiInterface.operation.responses,
+      processedData,
+    );
+
+    // 文档质量告警：帮助定位「生成结果退化」的源头（均在 API 文档侧修数据）
+    if (apiInterface.method.toLowerCase() === 'get' && hasRequestBody(apiInterface.operation)) {
+      logger.warn(
+        `接口 GET ${apiInterface.path} 定义了 requestBody，不符合 HTTP 语义（多数客户端会丢弃 GET 请求体），建议改为 POST 或使用 query 参数`,
+      );
+    }
+    if (responseProperties.some((p) => p.type === 'unknown')) {
+      logger.warn(
+        `接口 ${apiInterface.method.toUpperCase()} ${apiInterface.path} 缺少 200 响应体定义，已生成 data: unknown，建议在 API 文档中补充响应 schema`,
+      );
+    }
+
     const templateData: InterfaceTemplateData = {
       interfaceName: namingResult.interfaceName,
       requestTypeName: namingResult.requestTypeName,
@@ -216,10 +233,7 @@ export async function generateInterfaceFileForTag(
       hasParameters: !!(apiInterface.operation.parameters || apiInterface.operation.requestBody),
       parameters: extractRequestProperties(apiInterface.operation, processedData),
       hasResponse: !!apiInterface.operation.responses,
-      responseProperties: extractResponseProperties(
-        apiInterface.operation.responses,
-        processedData,
-      ),
+      responseProperties,
       hasBody: hasRequestBody(apiInterface.operation),
       isFormData: isFormDataRequest(apiInterface.operation),
       requestMethodStyle: config.requestMethodStyle,

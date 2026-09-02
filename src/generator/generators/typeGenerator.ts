@@ -121,6 +121,10 @@ async function generateTypeFile(
       properties,
     });
     dependencies = collectUsedTypesFromProperties(properties, processedData);
+    // 递归自引用（如树形结构 children: Self[]）不得生成指向自身的 import，
+    // 否则与自身声明冲突（TS2300 duplicate identifier）
+    dependencies.delete(cleanTypeName);
+    dependencies.delete(type.name);
   }
 
   if (dependencies.size > 0) {
