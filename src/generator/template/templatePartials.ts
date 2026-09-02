@@ -1,4 +1,5 @@
 import Handlebars from 'handlebars';
+import { getFormDataInlineExpression, getFormDataStatements } from './formDataBody';
 
 /**
  * @description 注册 Handlebars partials
@@ -41,14 +42,7 @@ export function registerTemplatePartials(): void {
   {{/if}}
   {{#if (eq method 'POST')}}
     {{#if isFormData}}
-  const formData = new FormData();
-  Object.entries({{requestParamName}}).forEach(([key, value]) => {
-    if (value instanceof File || value instanceof Blob) {
-      formData.append(key, value);
-    } else {
-      formData.append(key, String(value));
-    }
-  });
+${getFormDataStatements('{{requestParamName}}')}
   return {{requestMethodsObjectName}}.post<{{responseTypeName}}>({{{path}}}, formData);
     {{else if hasParameters}}
   return {{requestMethodsObjectName}}.post<{{responseTypeName}}>({{{path}}}, {{requestParamName}});
@@ -58,14 +52,7 @@ export function registerTemplatePartials(): void {
   {{/if}}
   {{#if (eq method 'PUT')}}
     {{#if isFormData}}
-  const formData = new FormData();
-  Object.entries({{requestParamName}}).forEach(([key, value]) => {
-    if (value instanceof File || value instanceof Blob) {
-      formData.append(key, value);
-    } else {
-      formData.append(key, String(value));
-    }
-  });
+${getFormDataStatements('{{requestParamName}}')}
   return {{requestMethodsObjectName}}.put<{{responseTypeName}}>({{{path}}}, formData);
     {{else if hasParameters}}
   return {{requestMethodsObjectName}}.put<{{responseTypeName}}>({{{path}}}, {{requestParamName}});
@@ -75,14 +62,7 @@ export function registerTemplatePartials(): void {
   {{/if}}
   {{#if (eq method 'PATCH')}}
     {{#if isFormData}}
-  const formData = new FormData();
-  Object.entries({{requestParamName}}).forEach(([key, value]) => {
-    if (value instanceof File || value instanceof Blob) {
-      formData.append(key, value);
-    } else {
-      formData.append(key, String(value));
-    }
-  });
+${getFormDataStatements('{{requestParamName}}')}
   return {{requestMethodsObjectName}}.patch<{{responseTypeName}}>({{{path}}}, formData);
     {{else if hasParameters}}
   return {{requestMethodsObjectName}}.patch<{{responseTypeName}}>({{{path}}}, {{requestParamName}});
@@ -95,7 +75,7 @@ export function registerTemplatePartials(): void {
      url: {{{path}}},
      method: '{{method}}',
      {{#if isFormData}}
-     data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),
+     data: ${getFormDataInlineExpression('{{requestParamName}}')},
      {{else}}
      {{#if hasBody}}data: {{requestParamName}},{{/if}}{{#unless hasBody}}{{#if hasParameters}}{{requestParamName}},{{/if}}{{/unless}}
      {{/if}}

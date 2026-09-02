@@ -45,17 +45,31 @@ generateCode(configPath)                          src/generator/index.ts
 
 ### `template/` 子目录
 
-| 文件                                                 | 职责                                                       |
-| ---------------------------------------------------- | ---------------------------------------------------------- |
-| `compiler.ts`                                        | Handlebars 编译（行数豁免于 360 行限制，主要含模板字符串） |
-| `templateCache.ts`                                   | Map 缓存                                                   |
-| `templateHelpers.ts`                                 | 自定义辅助函数                                             |
-| `templatePartials.ts`                                | 自定义分部模板                                             |
-| `templateDefinitions.ts`                             | 模板字符串定义                                             |
-| `interfaceFunctionGenerator.ts`                      | 接口函数代码生成                                           |
-| `requestFileGenerator.ts`                            | `request.ts` 文件生成                                      |
-| `jsonValueTemplates.ts`                              | JsonValue 递归类型模板                                     |
-| `zod/interfaces.ts`、`zod/merged.ts`、`zod/types.ts` | Zod 模板（接口/合并/类型）                                 |
+| 文件                                                 | 职责                                                                  |
+| ---------------------------------------------------- | --------------------------------------------------------------------- |
+| `compiler.ts`                                        | Handlebars 编译（行数豁免于 360 行限制，主要含模板字符串）            |
+| `templateCache.ts`                                   | Map 缓存                                                              |
+| `templateHelpers.ts`                                 | 自定义辅助函数                                                        |
+| `templatePartials.ts`                                | 自定义分部模板                                                        |
+| `templateDefinitions.ts`                             | 模板字符串定义                                                        |
+| `formDataBody.ts`                                    | FormData 请求体序列化片段（config 内联/method-specific 两种风格共用） |
+| `interfaceFunctionGenerator.ts`                      | 接口函数代码生成                                                      |
+| `requestFileGenerator.ts`                            | `request.ts` 文件生成                                                 |
+| `jsonValueTemplates.ts`                              | JsonValue 递归类型模板                                                |
+| `zod/interfaces.ts`、`zod/merged.ts`、`zod/types.ts` | Zod 模板（接口/合并/类型）                                            |
+
+### FormData 请求体序列化（`formDataBody.ts`）
+
+`isFormDataRequest()`（`src/schema/operation.ts`，按 multipart → json → 其余的优先级取 content-type）判定为 `multipart/form-data` 的接口，模板会生成「参数对象 → FormData」的转换代码，片段统一由 `formDataBody.ts` 提供（`templateDefinitions.ts` 内联表达式与 `templatePartials.ts` 语句块两种风格共用，防止漂移）。转换规则：
+
+- `File`/`Blob` 单值原样 `append`（统一用 `instanceof Blob` 判断，`File` 是其子类型）
+- `File[]` 等数组逐个 `append`（同名键重复，符合 multipart 数组惯例，避免 `String([file])` 产出 `"[object File]"`）
+- 普通对象 `JSON.stringify` 后 `append`
+- `null`/`undefined` 可选字段直接跳过
+
+### 类型 import 收集
+
+接口文件与类型文件的 `import type { ... }` 由 `collectUsedTypesFromProperties()`（`src/processors/common.ts`）计算：将属性类型串按分隔符拆分为标识符后对自定义类型名集合做命中检查，因此 `X | null`（可空引用）、`Record<string, X>`、`A | B`、`A & B`、嵌套数组等复合形态中的自定义类型都会进入 import。
 
 ## 命名策略（`src/naming/`，顶层模块）
 
@@ -97,7 +111,7 @@ join(baseOutputDir, folder ?? name)/
 └── request.ts             # 请求工具文件（位于 baseOutputDir 层共享）
 ```
 
-> `src/service/` 是本仓库的开发示例输出（`backend` 服务，按拼音分目录），属于生成文件，不要手工修改。
+> `src/service/` 是本仓库的开发示例输出（notification/rbac/identity/file 四个服务，按拼音分目录），属于生成文件，不要手工修改。
 
 ## Related
 

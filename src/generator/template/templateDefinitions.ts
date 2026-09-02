@@ -3,6 +3,11 @@
  * 提供所有 Handlebars 模板的纯字符串定义
  */
 
+import { getFormDataInlineExpression } from './formDataBody';
+
+/** FormData 内联序列化表达式（config 风格模板的 data: 赋值共用，防漂移） */
+const FORM_DATA_INLINE = getFormDataInlineExpression('{{requestParamName}}');
+
 /**
  * @description 预编译方法映射 - 性能优化
  * 生成 METHOD_MAP 常量，避免运行时字符串操作
@@ -109,7 +114,7 @@ export async function {{functionName}}(
  {{#if hasParameters}}
  {{#if hasBody}}
  {{#if isFormData}}
-     data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),
+     data: ${FORM_DATA_INLINE},
  {{else}}
      data: {{requestParamName}},
  {{/if}}
@@ -134,7 +139,7 @@ export function getApiOnlyTemplateWithoutComment(): string {
  {{#if hasParameters}}
  {{#if hasBody}}
  {{#if isFormData}}
-     data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),
+     data: ${FORM_DATA_INLINE},
  {{else}}
      data: {{requestParamName}},
  {{/if}}
@@ -166,7 +171,7 @@ export async function {{functionName}}(
  {{#if hasParameters}}
  {{#if hasBody}}
  {{#if isFormData}}
-     data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),
+     data: ${FORM_DATA_INLINE},
  {{else}}
      data: {{requestParamName}},
  {{/if}}
@@ -191,7 +196,7 @@ export function getZodInterfaceTemplateWithoutComment(): string {
  {{#if hasParameters}}
  {{#if hasBody}}
  {{#if isFormData}}
-     data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),
+     data: ${FORM_DATA_INLINE},
  {{else}}
      data: {{requestParamName}},
  {{/if}}
@@ -221,7 +226,7 @@ export async function {{functionName}}(
  {{#if hasParameters}}
  {{#if hasBody}}
  {{#if isFormData}}
-     data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),
+     data: ${FORM_DATA_INLINE},
  {{else}}
      data: {{requestParamName}},
  {{/if}}
@@ -246,7 +251,7 @@ export function getZodApiOnlyTemplateWithoutComment(): string {
  {{#if hasParameters}}
  {{#if hasBody}}
  {{#if isFormData}}
-     data: (() => { const fd = new FormData(); Object.entries({{requestParamName}}).forEach(([k, v]) => { fd.append(k, v instanceof File || v instanceof Blob ? v : String(v)); }); return fd; })(),
+     data: ${FORM_DATA_INLINE},
  {{else}}
      data: {{requestParamName}},
  {{/if}}

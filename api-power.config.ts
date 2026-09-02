@@ -1,37 +1,54 @@
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  // 公共根输出目录（原 outputDir）
+  // ========== 公共配置（所有服务默认继承）==========
+  // 公共根输出目录（所有服务的输出都位于其下的子文件夹中）
   baseOutputDir: 'src/service',
+  // 类型生成格式：'typescript' | 'zod'
+  // - 'typescript': 生成 TypeScript 类型定义（编译时类型检查）
+  // - 'zod': 生成 Zod Schema（运行时验证）
   typesFormat: 'typescript',
-  // transformPath 已改为函数形式（0.6.0 起）
-  // 默认恒等函数：不修改路径（运行时 baseURL 已硬编码 /api）
-  // 如需添加前缀：transformPath: (p) => '/api' + p,
-  // 如需去除前缀：transformPath: (p) => p.startsWith('/api') ? p.slice(4) : p,
+  // 是否生成 API 请求方法
+  generateApi: true,
+  // 是否生成类型定义（在接口文件中）
+  generateTypes: true,
+  // 目标语言
+  target: 'typescript',
+  // 缩进大小
+  indentSize: 2,
+  // 是否生成注释
+  comment: true,
+  // 并发写入数量（用于文件生成的并发控制）
   concurrency: 5,
-  hooks: {
-    // beforeGenerate: () => {
-    //   console.log('Generating start');
-    // },
-    // beforeWriteFile: (filePath, content) => {
-    //   console.log('Generating file', filePath);
-    //   return content;
-    // },
-    // afterWriteFile: (filePath) => {
-    //   console.log('Generated file:', filePath);
-    // },
-    // afterGenerate: () => {},
-  },
+  transformPath: (path) => `/api${path}`,
 
-  // 服务列表（单服务场景即数组长度为 1）
+  // ========== 服务列表 ==========
+  // 每个服务独立生成到各自的子文件夹（默认 folder = name），互不干扰
+  // source/token 下沉到服务级；其余字段可在此覆盖公共配置
   services: [
     {
-      // 输出到 src/service（folder='.' 表示直接使用 baseOutputDir 自身）
-      name: 'apifox-demo',
-      folder: 'backend',
-      // source: 'https://api.apifox.com/v1/projects/6997172/export-openapi',
-      source: 'https://api.apifox.com/v1/projects/8601324/export-openapi',
-      // source: 'https://api.apifox.com/v1/projects/8629864/export-openapi',
+      name: 'notification',
+      // folder 省略时默认取 name（输出到 src/service/apifox-demo）
+      source: 'https://api.apifox.com/v1/projects/8779774/export-openapi',
+      token: 'APS-bEl8yPD58wfRzsXXkx4psEekqm4k2YhD',
+    },
+    // 多服务示例：微服务场景
+    {
+      name: 'rbac',
+      // folder 省略时默认取 name（输出到 src/service/apifox-demo）
+      source: 'https://api.apifox.com/v1/projects/8779779/export-openapi',
+      token: 'APS-bEl8yPD58wfRzsXXkx4psEekqm4k2YhD',
+    },
+    {
+      name: 'identity',
+      // folder 省略时默认取 name（输出到 src/service/apifox-demo）
+      source: 'https://api.apifox.com/v1/projects/8779801/export-openapi',
+      token: 'APS-bEl8yPD58wfRzsXXkx4psEekqm4k2YhD',
+    },
+    {
+      name: 'file',
+      // folder 省略时默认取 name（输出到 src/service/apifox-demo）
+      source: 'https://api.apifox.com/v1/projects/8779787/export-openapi',
       token: 'APS-bEl8yPD58wfRzsXXkx4psEekqm4k2YhD',
     },
   ],

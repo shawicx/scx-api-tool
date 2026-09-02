@@ -82,15 +82,15 @@ export enum ResponseBodyType {
 /** 查询字符串数组格式化方式 */
 export enum QueryStringArrayFormat {
   /** 示例: `a[]=b&a[]=c` */
-  'brackets' = 'brackets',
+  brackets = 'brackets',
   /** 示例: `a[0]=b&a[1]=c` */
-  'indices' = 'indices',
+  indices = 'indices',
   /** 示例: `a=b&a=c` */
-  'repeat' = 'repeat',
+  repeat = 'repeat',
   /** 示例: `a=b,c` */
-  'comma' = 'comma',
+  comma = 'comma',
   /** 示例: `a=["b","c"]` */
-  'json' = 'json',
+  json = 'json',
 }
 
 /** 服务类型枚举 */

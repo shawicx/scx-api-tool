@@ -52,20 +52,36 @@ export function groupInterfacesByTag(interfaces: ApiInterface[]): Record<string,
 
 /**
  * @description 从属性列表中收集使用的自定义类型名称
- * 遍历属性的类型，检查是否为自定义类型，支持数组后缀
+ * 将属性类型串按分隔符（联合 |、交叉 &、泛型 <>、数组 []、逗号与空白）
+ * 拆分为标识符 token 后，对自定义类型名集合做命中检查。
+ * 因此可空联合（X | null）、Record<string, X>、A | B、A & B、嵌套数组
+ * 等复合类型串中的自定义类型都能被收集，避免生成的文件缺少 import。
  * @param properties 属性数组
  * @param processedData 处理后的 API 数据
  * @returns 类型名称集合
+ *
+ * @example
+ * ```typescript
+ * const used = collectUsedTypesFromProperties(
+ *   [{ name: 'preferences', type: 'UserPreferences | null', description: '', required: false }],
+ *   processedData,
+ * );
+ * // used = Set(['UserPreferences'])
+ * ```
  */
 export function collectUsedTypesFromProperties(
   properties: ApiProperty[],
   processedData: ProcessedApiData,
 ): Set<string> {
   const usedTypes = new Set<string>();
+  const knownTypeNames = new Set(processedData.types.map((t) => t.name));
+  // 分隔符涵盖：联合 |、交叉 &、泛型 <>、数组 []、Record 逗号与空白
+  const SEPARATOR_RE = /[|&<>[\],\s]+/;
   for (const prop of properties) {
-    const baseType = prop.type.endsWith('[]') ? prop.type.slice(0, -2) : prop.type;
-    if (processedData.types.some((t) => t.name === baseType)) {
-      usedTypes.add(baseType);
+    for (const token of prop.type.split(SEPARATOR_RE)) {
+      if (token && knownTypeNames.has(token)) {
+        usedTypes.add(token);
+      }
     }
   }
   return usedTypes;

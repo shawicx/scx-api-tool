@@ -18,10 +18,10 @@ export interface ProcessedApiData {
 
 ## 文件结构
 
-| 文件         | 职责                                                                                                                                   |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `openapi.ts` | 主处理器 `processOpenApiData(rawData, config)`：解析路径、提取 Schema、解析 `$ref`、标准化响应、应用 `transformPath`、检测自由格式类型 |
-| `common.ts`  | `groupInterfacesByTag()` 按标签分组、`extractUsedTypeNames()` 提取被引用类型                                                           |
+| 文件         | 职责                                                                                                                                                                                                               |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `openapi.ts` | 主处理器 `processOpenApiData(rawData, config)`：解析路径、提取 Schema、解析 `$ref`、标准化响应、应用 `transformPath`、检测自由格式类型                                                                             |
+| `common.ts`  | `groupInterfacesByTag()` 按标签分组、`extractUsedTypeNames()` 提取被引用类型、`collectUsedTypesFromProperties()` 从属性类型串收集 import 类型（支持 `\| null`、`Record<string, X>`、联合/交叉/嵌套数组等复合形态） |
 
 ## 关键逻辑
 

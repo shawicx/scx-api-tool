@@ -200,9 +200,7 @@ export default defineConfig({
   concurrency: 5,
 
   // 公共命名策略
-  namingStrategy: {
-    /* ... */
-  },
+  namingStrategy: {/* ... */},
 
   services: [
     {

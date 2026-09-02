@@ -91,13 +91,18 @@ export function getResponseSchema(operation: OpenApiOperation): { schema: OpenAp
 
 /**
  * @description 获取请求体的 content-type
+ * 按优先级查找：multipart/form-data → application/json → 第一个可用，
+ * 与 getRequestBodySchema 的优先级保持一致，
+ * 避免导出数据中 content-type 排序不稳定导致 multipart 接口误判为 JSON。
  * @param operation OpenAPI 操作对象
  * @returns content-type 字符串，如 'multipart/form-data'、'application/json'，或 null
  */
 export function getRequestContentType(operation: OpenApiOperation): string | null {
   if (!operation.requestBody?.content) return null;
-  const contentTypes = Object.keys(operation.requestBody.content);
-  return contentTypes[0] || null;
+  const { content } = operation.requestBody;
+  if (content['multipart/form-data']) return 'multipart/form-data';
+  if (content['application/json']) return 'application/json';
+  return Object.keys(content)[0] || null;
 }
 
 /**

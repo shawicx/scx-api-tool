@@ -607,4 +607,90 @@ describe('collectUsedTypesFromProperties', () => {
     expect(result.size).toBe(1);
     expect(result.has('User')).toBe(true);
   });
+
+  it('should collect types from nullable union (X | null)', () => {
+    const processedData = createProcessedApiData();
+    const properties: ApiProperty[] = [
+      { name: 'preferences', type: 'User | null', description: '可空引用', required: false },
+    ];
+
+    const result = collectUsedTypesFromProperties(properties, processedData);
+
+    expect(result.has('User')).toBe(true);
+  });
+
+  it('should collect types from nullable array union (X[] | null)', () => {
+    const processedData = createProcessedApiData();
+    const properties: ApiProperty[] = [
+      { name: 'items', type: 'User[] | null', description: '可空数组', required: false },
+    ];
+
+    const result = collectUsedTypesFromProperties(properties, processedData);
+
+    expect(result.has('User')).toBe(true);
+  });
+
+  it('should collect types from Record value types', () => {
+    const processedData = createProcessedApiData();
+    const properties: ApiProperty[] = [
+      {
+        name: 'metadata',
+        type: 'Record<string, Product>',
+        description: 'map 引用',
+        required: false,
+      },
+    ];
+
+    const result = collectUsedTypesFromProperties(properties, processedData);
+
+    expect(result.has('Product')).toBe(true);
+  });
+
+  it('should collect types from union of custom types (A | B)', () => {
+    const processedData = createProcessedApiData();
+    const properties: ApiProperty[] = [
+      { name: 'target', type: 'User | Product', description: '联合类型', required: false },
+    ];
+
+    const result = collectUsedTypesFromProperties(properties, processedData);
+
+    expect(result.has('User')).toBe(true);
+    expect(result.has('Product')).toBe(true);
+  });
+
+  it('should collect types from intersection of custom types (A & B)', () => {
+    const processedData = createProcessedApiData();
+    const properties: ApiProperty[] = [
+      { name: 'combined', type: 'User & Product', description: '交叉类型', required: false },
+    ];
+
+    const result = collectUsedTypesFromProperties(properties, processedData);
+
+    expect(result.has('User')).toBe(true);
+    expect(result.has('Product')).toBe(true);
+  });
+
+  it('should collect types from nested arrays (X[][])', () => {
+    const processedData = createProcessedApiData();
+    const properties: ApiProperty[] = [
+      { name: 'matrix', type: 'User[][]', description: '二维数组', required: false },
+    ];
+
+    const result = collectUsedTypesFromProperties(properties, processedData);
+
+    expect(result.has('User')).toBe(true);
+  });
+
+  it('should ignore builtin keywords in composite types', () => {
+    const processedData = createProcessedApiData();
+    const properties: ApiProperty[] = [
+      { name: 'name', type: 'string | null', description: '可空字符串', required: false },
+      { name: 'extra', type: 'Record<string, any>', description: '任意 map', required: false },
+      { name: 'flag', type: 'boolean | null', description: '可空布尔', required: false },
+    ];
+
+    const result = collectUsedTypesFromProperties(properties, processedData);
+
+    expect(result.size).toBe(0);
+  });
 });

@@ -177,4 +177,41 @@ describe('generateTypeFiles', () => {
     expect(indexWrite!.content).toContain("export type { JsonValue } from './JsonValue'");
     expect(indexWrite!.content).toContain("export type { JsonNode } from './JsonNode'");
   });
+
+  it('类型属性引用可空类型时应生成 import（Post.author: User | null 场景）', async () => {
+    const config: ApiConfig = { ...minimalApiConfig, generateApi: true, generateTypes: true };
+    const data: ProcessedApiData = {
+      interfaces: [],
+      types: [
+        {
+          name: 'User',
+          originalName: 'User',
+          schema: {
+            type: 'object',
+            properties: { id: { type: 'number' } },
+          },
+        },
+        {
+          name: 'Post',
+          originalName: 'Post',
+          schema: {
+            type: 'object',
+            properties: {
+              title: { type: 'string' },
+              author: { $ref: '#/components/schemas/User', nullable: true },
+            },
+          },
+        },
+      ],
+      categories: [],
+    } as ProcessedApiData;
+    await generateTypeFiles(data, config);
+
+    const postWrite = writes.find((w) => w.path.endsWith('Post.ts'));
+    expect(postWrite).toBeDefined();
+    // 复现路径成立：可空引用类型串
+    expect(postWrite!.content).toContain('User | null');
+    // 可空引用必须出现在 import 中（修复前缺失）
+    expect(postWrite!.content).toMatch(/import type \{ [^}]*User \} from/);
+  });
 });

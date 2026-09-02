@@ -134,6 +134,48 @@ describe('WithoutComment templates', () => {
   });
 });
 
+// ==================== FormData 序列化片段 ====================
+
+describe('FormData 序列化片段（isFormData 分支）', () => {
+  // 6 个含内联 FormData 片段的模板（ApiOnly × 2、ZodInterface × 2、ZodApiOnly × 2）
+  const templatesWithFormDataBranch: Array<[string, () => string]> = [
+    ['getApiOnlyTemplateWithComment', getApiOnlyTemplateWithComment],
+    ['getApiOnlyTemplateWithoutComment', getApiOnlyTemplateWithoutComment],
+    ['getZodInterfaceTemplateWithComment', getZodInterfaceTemplateWithComment],
+    ['getZodInterfaceTemplateWithoutComment', getZodInterfaceTemplateWithoutComment],
+    ['getZodApiOnlyTemplateWithComment', getZodApiOnlyTemplateWithComment],
+    ['getZodApiOnlyTemplateWithoutComment', getZodApiOnlyTemplateWithoutComment],
+  ];
+
+  it('所有 isFormData 分支都应处理数组（File[] 逐个 append）', () => {
+    for (const [name, getTemplate] of templatesWithFormDataBranch) {
+      expect(getTemplate(), `${name} 缺少数组处理`).toContain('Array.isArray');
+    }
+  });
+
+  it('所有 isFormData 分支都应跳过 null/undefined 可选字段', () => {
+    for (const [name, getTemplate] of templatesWithFormDataBranch) {
+      const template = getTemplate();
+      expect(template, `${name} 缺少 null 判断`).toContain('=== null');
+      expect(template, `${name} 缺少 undefined 判断`).toContain('=== undefined');
+    }
+  });
+
+  it('所有 isFormData 分支都应 JSON.stringify 普通对象', () => {
+    for (const [name, getTemplate] of templatesWithFormDataBranch) {
+      expect(getTemplate(), `${name} 缺少对象序列化`).toContain('JSON.stringify');
+    }
+  });
+
+  it('所有 isFormData 分支都不应再用裸 String() 强转兜底（"[object File]" 根因）', () => {
+    for (const [name, getTemplate] of templatesWithFormDataBranch) {
+      expect(getTemplate(), `${name} 仍含旧的三元强转`).not.toContain(
+        'v instanceof File || v instanceof Blob ? v : String(v)',
+      );
+    }
+  });
+});
+
 // ==================== ByConfig functions ====================
 
 describe('ByConfig functions', () => {
