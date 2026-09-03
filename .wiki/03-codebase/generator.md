@@ -38,7 +38,7 @@ generateCode(configPath)                          src/generator/index.ts
 | `freeForm.ts`                         | 兼容 re-export（实现已下沉至中立层 `src/schema/freeForm.ts`）                       |
 | `propertyType.ts`                     | 属性类型映射                                                                        |
 | `generators/interfaceGenerator.ts`    | 按标签生成接口文件                                                                  |
-| `generators/rootIndexGenerator.ts`    | 生成根 `index.ts` 导出                                                              |
+| `generators/rootIndexGenerator.ts`    | 生成根 `index.ts`（导出各 tag 目录与 types 索引；不 re-export 共享 request）        |
 | `generators/typeGenerator.ts`         | TypeScript 类型文件（`outputDir/types/`）                                           |
 | `generators/schemaGenerator.ts`       | Zod Schema 文件（`outputDir/schemas/`）                                             |
 | `generators/zodTypesOnlyGenerator.ts` | Zod 仅类型 Schema 生成                                                              |

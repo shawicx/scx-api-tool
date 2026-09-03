@@ -49,8 +49,8 @@ describe('generateRootIndexFile', () => {
     await generateRootIndexFile(baseProcessedData, config);
 
     const { content } = captured;
-    // request import
-    expect(content).toMatch(/export \* from '.*request';/);
+    // 根 index 不再 re-export 共享 request（服务桶只暴露本服务 API 面）
+    expect(content).not.toMatch(/export \* from '.*request';/);
     // 每个 tag 的 schema
     expect(content).toContain("export * from './YongHuGuanLi/schema';");
     expect(content).toContain("export * from './DingDanGuanLi/schema';");
@@ -126,19 +126,21 @@ describe('generateRootIndexFile', () => {
     expect(content).not.toContain('/schema');
   });
 
-  it('Zod types-only（无 api）不应导出 request import', async () => {
-    const config: ApiConfig = {
-      ...minimalApiConfig,
-      typesFormat: 'zod',
-      generateApi: false,
-      generateTypes: true,
-    };
+  it('所有模式均不应 re-export 共享的 request 模块', async () => {
+    const modes: ApiConfig[] = [
+      { ...minimalApiConfig, typesFormat: 'typescript', generateApi: true, generateTypes: true },
+      { ...minimalApiConfig, typesFormat: 'typescript', generateApi: true, generateTypes: false },
+      { ...minimalApiConfig, typesFormat: 'zod', generateApi: true, generateTypes: true },
+      { ...minimalApiConfig, typesFormat: 'zod', generateApi: false, generateTypes: true },
+    ];
 
-    await generateRootIndexFile(baseProcessedData, config);
-
-    const { content } = captured;
-    // isZodTypesOnly 时跳过 request import
-    expect(content).not.toMatch(/export \* from '.*request';/);
+    for (const config of modes) {
+      await generateRootIndexFile(baseProcessedData, config);
+      // request 是 baseOutputDir 层的共享基础设施，由消费方直接从其模块导入
+      expect(captured.content, `模式 ${config.typesFormat}/${config.generateApi}`).not.toMatch(
+        /export \* from '.*request';/,
+      );
+    }
   });
 
   it('应写入到 outputDir/index.ts', async () => {

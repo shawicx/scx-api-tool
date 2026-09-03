@@ -8,13 +8,14 @@ import type { ApiConfig, CliHooks } from '@/types';
 import type { ProcessedApiData } from '@/processors/openapi';
 import { writeFormattedFile } from '@/utils/file';
 import { chineseToPinyinCamelCase } from '@/utils/path';
-import { getNormalizedPathWithAlias } from '@/utils/pathUtils';
 import { getFileExtension } from '@/utils/config';
 import { logger } from '@/utils/logger';
 
 /**
  * @description 生成根目录 index.ts 文件
- * 导出所有标签目录和请求函数
+ * 导出所有标签目录与类型索引。共享的 request 模块位于 baseOutputDir 层、
+ * 不属于任何单个服务的 API 面，因此不做 re-export（消费方直接从其模块导入），
+ * 避免多个服务桶重复导出同名 `request` 造成歧义。
  * @param processedData 处理后的 API 数据
  * @param config API 配置
  * @param hooks 钩子函数
@@ -31,14 +32,6 @@ export async function generateRootIndexFile(
   const isJS = config.target === 'javascript';
   const effectiveGenerateTypes = isJS ? false : config.generateTypes;
   const isZodMode = !isJS && config.typesFormat === 'zod';
-  const isZodTypesOnly = isZodMode && effectiveGenerateTypes && !config.generateApi;
-
-  if (!isZodTypesOnly) {
-    const relativePath = getNormalizedPathWithAlias(outputDir, config.requestFunctionFilePath);
-    const ext = getFileExtension(config.target);
-    const cleanRelativePath = relativePath.replace(new RegExp(`\\${ext}$`), '');
-    rootIndexContent += `export * from '${cleanRelativePath}';\n\n`;
-  }
 
   const tagDirs: string[] = [];
 
