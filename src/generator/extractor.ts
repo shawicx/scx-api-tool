@@ -1,6 +1,8 @@
 /**
  * @description 数据提取模块
- * 从 OpenAPI 操作中提取请求和响应属性
+ * 从 OpenAPI 操作中提取响应和路径参数；请求参数提取已下沉至
+ * requestParameters.ts（含 body/query/path 分组与 @ParameterObject 展开），
+ * 此处 re-export 以保持既有 `from '../extractor'` 的导入兼容性。
  */
 
 import type { ProcessedApiData } from '../processors/openapi';
@@ -9,7 +11,7 @@ import { sanitizePropertyName, sanitizeTypeName } from '@/naming';
 import { escapeJsDocComment } from '@/utils/escape';
 import { resolveComposedSchema } from '@/utils/refResolver';
 import { getPropertyType } from './propertyType';
-import { getRequestBodySchema, getResponseSchema } from '@/schema/operation';
+import { getResponseSchema } from '@/schema/operation';
 
 /**
  * @description 属性类型映射（getPropertyType 等）
@@ -17,6 +19,10 @@ import { getRequestBodySchema, getResponseSchema } from '@/schema/operation';
  * 此处重新导出以保持既有 `from '../extractor'` 的导入兼容性。
  */
 export { getPropertyType };
+
+// 请求参数提取（打平 + 分组 + @ParameterObject 展开）位于 requestParameters.ts
+export { extractRequestProperties, extractRequestParameterGroups } from './requestParameters';
+export type { RequestParameterGroups } from './requestParameters';
 
 /**
  * @description 提取路径参数名列表
@@ -40,77 +46,6 @@ export { getPropertyType };
 export function extractPathParameterNames(operation: OpenApiOperation): string[] {
   if (!operation.parameters || !Array.isArray(operation.parameters)) return [];
   return operation.parameters.filter((p) => p.in === 'path').map((p) => p.name);
-}
-
-/**
- * @description 提取请求属性
- * 从 OpenAPI 操作中提取请求参数和请求体属性
- * @param operation OpenAPI 操作对象
- * @param processedData 处理后的 API 数据
- * @returns 请求属性数组
- *
- * @example
- * ```typescript
- * const properties = extractRequestProperties(operation, processedData);
- * // properties = [
- * //   { name: 'userId', type: 'number', description: '用户ID', required: true },
- * //   { name: 'userName', type: 'string', description: '用户名', required: false }
- * // ]
- * ```
- */
-export function extractRequestProperties(
-  operation: OpenApiOperation,
-  processedData: ProcessedApiData,
-): ApiProperty[] {
-  const properties: ApiProperty[] = [];
-
-  // 处理请求体
-  const requestBodySchema = getRequestBodySchema(operation);
-  if (requestBodySchema) {
-    const { schema } = requestBodySchema;
-    // allOf 展平（顶层合并）
-    const resolved = resolveComposedSchema(schema, processedData);
-
-    // 处理引用模式
-    if (resolved.$ref) {
-      const refName = sanitizeTypeName(resolved.$ref.split('/').pop()!);
-      const refSchema = processedData.types.find((t) => t.name === refName)?.schema;
-      if (refSchema && refSchema.properties) {
-        for (const [name, property] of Object.entries(refSchema.properties)) {
-          properties.push({
-            name: sanitizePropertyName(name),
-            type: getPropertyType(property),
-            description: escapeJsDocComment(property.description || ''),
-            required: refSchema.required?.includes(name) || false,
-          });
-        }
-      }
-    } else if (resolved.properties) {
-      // 处理内联模式（含 allOf 展平后的 properties）
-      for (const [name, property] of Object.entries(resolved.properties)) {
-        properties.push({
-          name: sanitizePropertyName(name),
-          type: getPropertyType(property),
-          description: escapeJsDocComment(property.description || ''),
-          required: resolved.required?.includes(name) || false,
-        });
-      }
-    }
-  }
-
-  // 处理查询/路径参数
-  if (operation.parameters && Array.isArray(operation.parameters)) {
-    for (const param of operation.parameters) {
-      properties.push({
-        name: sanitizePropertyName(param.name),
-        type: getPropertyType({ type: param.type || 'string' }),
-        description: escapeJsDocComment(param.description || ''),
-        required: !!param.required,
-      });
-    }
-  }
-
-  return properties;
 }
 
 /**

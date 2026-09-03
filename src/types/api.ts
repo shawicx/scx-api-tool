@@ -242,6 +242,14 @@ export interface InterfaceTemplateData {
   hasBody: boolean;
   /** 是否为 multipart/form-data 请求 */
   isFormData?: boolean;
+  /** 与请求体并存的 query 参数名列表（用于生成解构拆分，其他场景为空数组） */
+  queryParameterNames?: string[];
+  /** 是否存在与请求体并存的 query 参数（需要生成静态解构拆分） */
+  hasQueryParams?: boolean;
+  /** 请求体数据源变量名（拆分时为解构 rest 变量名，否则与 requestParamName 相同） */
+  requestBodyVarName?: string;
+  /** 查询参数名逗号列表（模板插值用，如 "page, limit"） */
+  queryParamsList?: string;
   /** 请求方法调用风格 */
   requestMethodStyle?: string;
   /** 请求函数名称 */

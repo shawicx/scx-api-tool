@@ -5,8 +5,9 @@
 
 import { getFormDataInlineExpression } from './formDataBody';
 
-/** FormData 内联序列化表达式（config 风格模板的 data: 赋值共用，防漂移） */
-const FORM_DATA_INLINE = getFormDataInlineExpression('{{requestParamName}}');
+/** FormData 内联序列化表达式（config 风格模板的 data: 赋值共用，防漂移；
+ *  使用 requestBodyVarName：body+query 拆分时为解构 rest 变量，否则等于 requestParamName） */
+const FORM_DATA_INLINE = getFormDataInlineExpression('{{requestBodyVarName}}');
 
 /**
  * @description 预编译方法映射 - 性能优化
@@ -108,15 +109,18 @@ export function getApiOnlyTemplateWithComment(): string {
 export async function {{functionName}}(
    {{requestParamName}}
 ) {
+{{#if hasQueryParams}}
+ const { {{{queryParamsList}}}, ...{{requestBodyVarName}} } = {{requestParamName}};
+{{/if}}
    const config = {
      url: {{{path}}},
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
  {{#if isFormData}}
-     data: ${FORM_DATA_INLINE},
+     data: ${FORM_DATA_INLINE},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
  {{else}}
-     data: {{requestParamName}},
+     data: {{requestBodyVarName}},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
  {{/if}}
  {{else}}
      {{requestParamName}},
@@ -133,15 +137,18 @@ export function getApiOnlyTemplateWithoutComment(): string {
   return `export async function {{functionName}}(
    {{requestParamName}}
 ) {
+{{#if hasQueryParams}}
+ const { {{{queryParamsList}}}, ...{{requestBodyVarName}} } = {{requestParamName}};
+{{/if}}
    const config = {
      url: {{{path}}},
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
  {{#if isFormData}}
-     data: ${FORM_DATA_INLINE},
+     data: ${FORM_DATA_INLINE},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
  {{else}}
-     data: {{requestParamName}},
+     data: {{requestBodyVarName}},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
  {{/if}}
  {{else}}
      {{requestParamName}},
@@ -165,15 +172,18 @@ export function getZodInterfaceTemplateWithComment(): string {
 export async function {{functionName}}(
    {{requestParamName}}: {{requestTypeName}}
 ): Promise<{{responseTypeName}}> {
+{{#if hasQueryParams}}
+ const { {{{queryParamsList}}}, ...{{requestBodyVarName}} } = {{requestParamName}};
+{{/if}}
    const config = {
      url: {{{path}}},
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
  {{#if isFormData}}
-     data: ${FORM_DATA_INLINE},
+     data: ${FORM_DATA_INLINE},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
  {{else}}
-     data: {{requestParamName}},
+     data: {{requestBodyVarName}},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
  {{/if}}
  {{else}}
      params: {{requestParamName}},
@@ -190,15 +200,18 @@ export function getZodInterfaceTemplateWithoutComment(): string {
   return `export async function {{functionName}}(
    {{requestParamName}}: {{requestTypeName}}
 ): Promise<{{responseTypeName}}> {
+{{#if hasQueryParams}}
+ const { {{{queryParamsList}}}, ...{{requestBodyVarName}} } = {{requestParamName}};
+{{/if}}
    const config = {
      url: {{{path}}},
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
  {{#if isFormData}}
-     data: ${FORM_DATA_INLINE},
+     data: ${FORM_DATA_INLINE},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
  {{else}}
-     data: {{requestParamName}},
+     data: {{requestBodyVarName}},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
  {{/if}}
  {{else}}
      params: {{requestParamName}},
@@ -220,15 +233,18 @@ export function getZodApiOnlyTemplateWithComment(): string {
 export async function {{functionName}}(
    {{requestParamName}}
 ) {
+{{#if hasQueryParams}}
+ const { {{{queryParamsList}}}, ...{{requestBodyVarName}} } = {{requestParamName}};
+{{/if}}
    const config = {
      url: {{{path}}},
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
  {{#if isFormData}}
-     data: ${FORM_DATA_INLINE},
+     data: ${FORM_DATA_INLINE},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
  {{else}}
-     data: {{requestParamName}},
+     data: {{requestBodyVarName}},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
  {{/if}}
  {{else}}
      params: {{requestParamName}},
@@ -245,15 +261,18 @@ export function getZodApiOnlyTemplateWithoutComment(): string {
   return `export async function {{functionName}}(
    {{requestParamName}}
 ) {
+{{#if hasQueryParams}}
+ const { {{{queryParamsList}}}, ...{{requestBodyVarName}} } = {{requestParamName}};
+{{/if}}
    const config = {
      url: {{{path}}},
      method: '{{method}}',
  {{#if hasParameters}}
  {{#if hasBody}}
  {{#if isFormData}}
-     data: ${FORM_DATA_INLINE},
+     data: ${FORM_DATA_INLINE},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
  {{else}}
-     data: {{requestParamName}},
+     data: {{requestBodyVarName}},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
  {{/if}}
  {{else}}
      params: {{requestParamName}},

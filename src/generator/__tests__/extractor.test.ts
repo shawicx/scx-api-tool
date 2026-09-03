@@ -6,6 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   extractPathParameterNames,
+  extractRequestParameterGroups,
   extractRequestProperties,
   extractResponseProperties,
   extractTypeProperties,
@@ -1039,5 +1040,136 @@ describe('extractResponseProperties - 兜底质量', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].type).toBe('User | string');
+  });
+});
+
+// ==================== 参数 schema 解析与 body/query/path 分组 ====================
+
+describe('extractRequestProperties - 参数 schema 解析', () => {
+  it('param.schema 为具体 schema 时应按 schema 取类型（而非恒 string）', () => {
+    const processedData = createProcessedApiData();
+    const operation: OpenApiOperation = {
+      parameters: [{ name: 'enabled', in: 'query', required: true, schema: { type: 'boolean' } }],
+    };
+
+    const result = extractRequestProperties(operation, processedData);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('enabled');
+    expect(result[0].type).toBe('boolean');
+  });
+
+  it('旧式 param.type（无 schema）应保持 string/number 映射（回归）', () => {
+    const processedData = createProcessedApiData();
+    const operation: OpenApiOperation = {
+      parameters: [{ name: 'page', in: 'query', type: 'integer', required: true }],
+    };
+
+    const result = extractRequestProperties(operation, processedData);
+
+    expect(result[0].type).toBe('number');
+  });
+
+  it('@ParameterObject 风格（param.schema.$ref 指向 DTO）应展开为独立 query 参数', () => {
+    const processedData = createProcessedApiData();
+    (processedData.types as any).push({
+      name: 'QueryUsersDto',
+      originalName: 'QueryUsersDto',
+      schema: {
+        type: 'object',
+        properties: {
+          page: { type: 'integer', description: '页码' },
+          search: { type: 'string', description: '搜索词' },
+        },
+        required: ['page'],
+      },
+    });
+    const operation: OpenApiOperation = {
+      parameters: [
+        {
+          name: 'dto',
+          in: 'query',
+          required: true,
+          schema: { $ref: '#/components/schemas/QueryUsersDto' },
+        },
+      ],
+    };
+
+    const result = extractRequestProperties(operation, processedData);
+
+    // dto 本身不再作为参数，取而代之的是展开后的字段
+    expect(result.map((p) => p.name)).toEqual(['page', 'search']);
+    expect(result[0].type).toBe('number');
+    expect(result[0].required).toBe(true);
+    expect(result[1].required).toBe(false);
+  });
+});
+
+describe('extractRequestParameterGroups - body/query/path 分组', () => {
+  it('应按来源分组：body 来自 requestBody、query/path 按 in 划分', () => {
+    const processedData = createProcessedApiData();
+    const operation: OpenApiOperation = {
+      requestBody: {
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: { title: { type: 'string' } },
+              required: ['title'],
+            },
+          },
+        },
+      },
+      parameters: [
+        { name: 'page', in: 'query', type: 'integer', required: false },
+        { name: 'userId', in: 'path', required: true, schema: { type: 'string' } },
+      ],
+    };
+
+    const groups = extractRequestParameterGroups(operation, processedData);
+
+    expect(groups.bodyProperties.map((p) => p.name)).toEqual(['title']);
+    expect(groups.queryProperties.map((p) => p.name)).toEqual(['page']);
+    expect(groups.pathProperties.map((p) => p.name)).toEqual(['userId']);
+  });
+
+  it('header/cookie 参数应归入 query 组（保持现有行为不回归）', () => {
+    const processedData = createProcessedApiData();
+    const operation: OpenApiOperation = {
+      parameters: [{ name: 'X-Trace', in: 'header', required: false, schema: { type: 'string' } }],
+    };
+
+    const groups = extractRequestParameterGroups(operation, processedData);
+
+    // sanitizePropertyName 对非法标识符（含连字符）会加引号，属预期行为；
+    // 模板层的解构别名绑定在 interfaceGenerator 中处理
+    expect(groups.queryProperties.map((p) => p.name)).toEqual(["'X-Trace'"]);
+    expect(groups.pathProperties).toEqual([]);
+  });
+
+  it('@ParameterObject 展开的字段应归入 query 组', () => {
+    const processedData = createProcessedApiData();
+    (processedData.types as any).push({
+      name: 'QueryLogsDto',
+      originalName: 'QueryLogsDto',
+      schema: {
+        type: 'object',
+        properties: { page: { type: 'integer' }, userId: { type: 'string' } },
+      },
+    });
+    const operation: OpenApiOperation = {
+      parameters: [
+        {
+          name: 'dto',
+          in: 'query',
+          required: true,
+          schema: { $ref: '#/components/schemas/QueryLogsDto' },
+        },
+      ],
+    };
+
+    const groups = extractRequestParameterGroups(operation, processedData);
+
+    expect(groups.queryProperties.map((p) => p.name)).toEqual(['page', 'userId']);
   });
 });

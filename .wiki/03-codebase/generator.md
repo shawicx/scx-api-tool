@@ -27,21 +27,22 @@ generateCode(configPath)                          src/generator/index.ts
 
 ## 目录结构
 
-| 文件/目录                             | 职责                                                          |
-| ------------------------------------- | ------------------------------------------------------------- |
-| `index.ts`                            | `generateCode()` 主入口（多服务编排）                         |
-| `codegen.ts`                          | `generateFiles()` 协调器                                      |
-| `extractor.ts`                        | 从 OpenAPI 操作中提取请求/响应属性、路径参数名                |
-| `fileGenerator.ts`                    | 生成步骤的门面（接口/请求/类型/Schema 文件生成）              |
-| `fileWriter.ts`                       | 文件写入                                                      |
-| `freeForm.ts`                         | 兼容 re-export（实现已下沉至中立层 `src/schema/freeForm.ts`） |
-| `propertyType.ts`                     | 属性类型映射                                                  |
-| `generators/interfaceGenerator.ts`    | 按标签生成接口文件                                            |
-| `generators/rootIndexGenerator.ts`    | 生成根 `index.ts` 导出                                        |
-| `generators/typeGenerator.ts`         | TypeScript 类型文件（`outputDir/types/`）                     |
-| `generators/schemaGenerator.ts`       | Zod Schema 文件（`outputDir/schemas/`）                       |
-| `generators/zodTypesOnlyGenerator.ts` | Zod 仅类型 Schema 生成                                        |
-| `template/`                           | Handlebars 引擎（见下）                                       |
+| 文件/目录                             | 职责                                                                                |
+| ------------------------------------- | ----------------------------------------------------------------------------------- |
+| `index.ts`                            | `generateCode()` 主入口（多服务编排）                                               |
+| `codegen.ts`                          | `generateFiles()` 协调器                                                            |
+| `extractor.ts`                        | 响应/路径参数提取；请求参数提取 re-export（见 requestParameters.ts）                |
+| `requestParameters.ts`                | 请求参数提取：body/query/path 分组、@ParameterObject（`param.schema.$ref`）DTO 展开 |
+| `fileGenerator.ts`                    | 生成步骤的门面（接口/请求/类型/Schema 文件生成）                                    |
+| `fileWriter.ts`                       | 文件写入                                                                            |
+| `freeForm.ts`                         | 兼容 re-export（实现已下沉至中立层 `src/schema/freeForm.ts`）                       |
+| `propertyType.ts`                     | 属性类型映射                                                                        |
+| `generators/interfaceGenerator.ts`    | 按标签生成接口文件                                                                  |
+| `generators/rootIndexGenerator.ts`    | 生成根 `index.ts` 导出                                                              |
+| `generators/typeGenerator.ts`         | TypeScript 类型文件（`outputDir/types/`）                                           |
+| `generators/schemaGenerator.ts`       | Zod Schema 文件（`outputDir/schemas/`）                                             |
+| `generators/zodTypesOnlyGenerator.ts` | Zod 仅类型 Schema 生成                                                              |
+| `template/`                           | Handlebars 引擎（见下）                                                             |
 
 ### `template/` 子目录
 
@@ -72,6 +73,24 @@ generateCode(configPath)                          src/generator/index.ts
 接口文件的 `import type { ... }` 由 `collectUsedTypesFromProperties()`（`src/processors/common.ts`）计算：将属性类型串按分隔符拆分为标识符后对自定义类型名集合做命中检查，因此 `X | null`（可空引用）、`Record<string, X>`、`A | B`、`A & B`、嵌套数组等复合形态中的自定义类型都会进入 import。
 
 类型文件（typeGenerator）的依赖 import **按依赖逐条指向具体类型文件**（`@/.../types/UserPreferences` 或相对路径 `./UserPreferences`），而非自身所属的桶文件 `types/index.ts`，消除「类型文件 ← 桶 ← 类型文件」的 type-only 循环引用。类型名→文件名的映射规则由 `getTypeFileName()` 统一提供（类型文件、桶索引、依赖 import 三处共用）。递归自引用（如树形 `children: Self[]`）会跳过自身 import，避免与自身声明冲突（TS2300）。可用 `api-power verify` 对产物做类型检查兜底。
+
+### 请求参数的 body/query 拆分与 @ParameterObject 展开（requestParameters.ts）
+
+请求参数按 OpenAPI 声明分组（`extractRequestParameterGroups`）：body 来自 requestBody schema、query/path 按参数 `in` 划分（header/cookie 归入 query 组保持既有行为）。参数写法兼容三种：`param.schema.$ref` 指向 DTO（Spring `@ParameterObject` 风格）时展开为独立参数、`param.schema` 为具体 schema 时按 getPropertyType 取类型、旧式 `param.type` 回退基础类型映射——因此数据源可直连 springdoc（`/v3/api-docs`）。
+
+当 **body 与 query 并存**时，模板生成静态解构拆分（仅此场景，纯 body / 纯 query 行为不变）：
+
+```ts
+const { page, limit, ...body } = params; // query 键逐个解构，rest 为 body
+const config: RequestConfig = {
+  url: '/api/users/search',
+  method: 'POST',
+  data: body, // multipart 时 FormData 只从 body 构造
+  params: { page, limit }, // query 走 config.params
+};
+```
+
+调用方签名不变（仍传单个 `params` 对象）。两个防护：query 参数名为非法标识符（如 `X-Custom`）时用别名绑定（`'X-Custom': X_Custom`）；与 rest 变量 `body` 重名时 rest 改名 `bodyParams`。method-specific 风格下 query 作为第三参数传入 `requestMethods.post(url, body, { page, limit })`。
 
 ### 类型映射与响应兜底（propertyType / extractor）
 

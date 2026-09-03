@@ -123,6 +123,94 @@ function makeProcessedDataWithMultipartUpload(): ProcessedApiData {
   } as ProcessedApiData;
 }
 
+// 复现 body 与 query 并存场景：POST + requestBody + query 参数（A1 拆分验证）
+function makeProcessedDataWithBodyAndQuery(): ProcessedApiData {
+  return {
+    interfaces: [
+      {
+        path: '/api/users/search',
+        method: 'post',
+        operation: {
+          summary: '搜索用户',
+          tags: ['用户'],
+          requestBody: {
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: { keyword: { type: 'string' } },
+                  required: ['keyword'],
+                },
+              },
+            },
+          },
+          parameters: [
+            { name: 'page', in: 'query', type: 'integer', required: false },
+            { name: 'limit', in: 'query', type: 'integer', required: false },
+          ],
+          responses: {
+            '200': {
+              description: 'ok',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: { total: { type: 'number' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ],
+    types: [],
+    categories: [],
+  } as ProcessedApiData;
+}
+
+// multipart 与 query 并存场景
+function makeProcessedDataWithMultipartAndQuery(): ProcessedApiData {
+  return {
+    interfaces: [
+      {
+        path: '/api/files/upload',
+        method: 'post',
+        operation: {
+          summary: '上传文件',
+          tags: ['文件管理'],
+          requestBody: {
+            content: {
+              'multipart/form-data': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    files: { type: 'array', items: { type: 'string', format: 'binary' } },
+                  },
+                  required: ['files'],
+                },
+              },
+            },
+          },
+          parameters: [{ name: 'overwrite', in: 'query', type: 'boolean', required: false }],
+          responses: {
+            '200': {
+              description: 'ok',
+              content: {
+                'application/json': {
+                  schema: { type: 'object', properties: { url: { type: 'string' } } },
+                },
+              },
+            },
+          },
+        },
+      },
+    ],
+    types: [],
+    categories: [],
+  } as ProcessedApiData;
+}
+
 // 复现可空类型漏 import bug：响应 $ref 展开后含嵌套 nullable $ref（UserPreferences 场景）
 function makeProcessedDataWithNullableNestedRef(): ProcessedApiData {
   return {
@@ -468,5 +556,147 @@ describe('generateInterfaceFileForTag', () => {
     expect(logger.warn).toHaveBeenCalledWith(
       expect.stringMatching(/POST \/api\/mail\/send.*响应|响应.*POST \/api\/mail\/send/),
     );
+  });
+
+  it('body 与 query 并存时应静态解构拆分：query 走 config.params、body 走 data', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateApi: true,
+      generateTypes: true,
+      typesFormat: 'typescript',
+    };
+    const data = makeProcessedDataWithBodyAndQuery();
+    await generateInterfaceFileForTag(
+      'user',
+      data.interfaces,
+      data,
+      config,
+      join(config.outputDir, 'user'),
+    );
+
+    // 静态解构：query 键逐个解构，rest 为 body
+    expect(captured.content).toContain('const { page, limit, ...body } = params;');
+    // body 进 data、query 进 params（简写对象）
+    expect(captured.content).toMatch(/data: body,/);
+    expect(captured.content).toMatch(/params: \{ page, limit \},?/);
+  });
+
+  it('multipart 与 query 并存时 FormData 只含 body 字段，query 走 params', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateApi: true,
+      generateTypes: true,
+      typesFormat: 'typescript',
+    };
+    const data = makeProcessedDataWithMultipartAndQuery();
+    await generateInterfaceFileForTag(
+      'file',
+      data.interfaces,
+      data,
+      config,
+      join(config.outputDir, 'file'),
+    );
+
+    expect(captured.content).toContain('const { overwrite, ...body } = params;');
+    // FormData 从解构后的 body 构造（不含 query 的 overwrite）
+    expect(captured.content).toMatch(/Object\.entries\(body\)/);
+    expect(captured.content).toMatch(/params: \{ overwrite \},?/);
+  });
+
+  it('仅 body（无 query）应保持 data: params 不引入解构', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateApi: true,
+      generateTypes: true,
+      typesFormat: 'typescript',
+    };
+    const data = makeProcessedDataWithMultipartUpload();
+    await generateInterfaceFileForTag(
+      'file',
+      data.interfaces,
+      data,
+      config,
+      join(config.outputDir, 'file'),
+    );
+
+    expect(captured.content).not.toContain('const {');
+    expect(captured.content).toMatch(/Object\.entries\(params\)/);
+  });
+
+  it('requestMethodStyle=method-specific 的 body+query 应以第三参数传递 query', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateApi: true,
+      generateTypes: true,
+      typesFormat: 'typescript',
+      requestMethodStyle: 'method-specific' as any,
+    };
+    const data = makeProcessedDataWithBodyAndQuery();
+    await generateInterfaceFileForTag(
+      'user',
+      data.interfaces,
+      data,
+      config,
+      join(config.outputDir, 'user'),
+    );
+
+    expect(captured.content).toContain('const { page, limit, ...body } = params;');
+    expect(captured.content).toMatch(/\.post<[^>]+>\([^,]+, body, \{ page, limit \}\)/);
+  });
+
+  it('含连字符的 query 参数名应以别名绑定生成合法解构', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateApi: true,
+      generateTypes: true,
+      typesFormat: 'typescript',
+    };
+    const data: ProcessedApiData = {
+      interfaces: [
+        {
+          path: '/api/jobs/run',
+          method: 'post',
+          operation: {
+            summary: '执行任务',
+            tags: ['任务'],
+            requestBody: {
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: { command: { type: 'string' } },
+                    required: ['command'],
+                  },
+                },
+              },
+            },
+            parameters: [{ name: 'X-Custom', in: 'query', type: 'string', required: false }],
+            responses: {
+              '200': {
+                description: 'ok',
+                content: {
+                  'application/json': {
+                    schema: { type: 'object', properties: { ok: { type: 'boolean' } } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
+      types: [],
+      categories: [],
+    } as unknown as ProcessedApiData;
+    await generateInterfaceFileForTag(
+      'job',
+      data.interfaces,
+      data,
+      config,
+      join(config.outputDir, 'job'),
+    );
+
+    // 非法标识符（X-Custom）需别名绑定，保证解构与 params 对象字面量合法
+    expect(captured.content).toContain("const { 'X-Custom': X_Custom, ...body } = params;");
+    expect(captured.content).toMatch(/params: \{ 'X-Custom': X_Custom \},?/);
   });
 });
