@@ -62,7 +62,7 @@ graph TD
 
 ### CLI 层（`src/cli/`）
 
-Commander.js 入口，注册 4 个子命令（generate/init/debug/visualize）。`src/cli/constants.ts` 存放 `init` 使用的默认配置模板。
+Commander.js 入口，注册 5 个子命令（generate/init/verify/debug/visualize）。`src/cli/constants.ts` 存放 `init` 使用的默认配置模板。
 
 ### 配置层（`src/utils/config.ts` + `src/utils/multiService.ts` + `src/config/` + `src/validation/`）
 

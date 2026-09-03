@@ -22,10 +22,13 @@
 | ----------- | ----- | ----------------------------------------- | ------------------------------- |
 | `generate`  | —     | 获取 API 定义并生成代码（支持 `--watch`） | `src/cli/commands/generate.ts`  |
 | `init`      | —     | 生成默认 `api-power.config.ts`            | `src/cli/commands/init.ts`      |
+| `verify`    | —     | 对生成产物运行 TypeScript 类型检查        | `src/cli/commands/verify.ts`    |
 | `debug`     | —     | 诊断模式：检查 API 定义（不生成代码）     | `src/cli/commands/debug.ts`     |
 | `visualize` | `viz` | 启动 HTTP 服务器，可视化查看 API 结构     | `src/cli/commands/visualize.ts` |
 
 全局选项：`-v, --verbose` 显示详细错误信息和堆栈跟踪。`init` 生成的默认配置模板位于 `src/cli/constants.ts` 的 `DEFAULT_CONFIG`。
+
+`verify` 作为生成后的质量关卡：复用消费方 `tsconfig.json` 的 paths 别名（强制 `noEmit`，忽略其 include/exclude），对配置中所有服务的产物目录递归跑 tsc 诊断；typescript 编译器优先解析消费方依赖、回退到工具自身。生成目录通常被 tsconfig exclude，此命令补上这道检查盲区。
 
 ## 版本与运行环境
 

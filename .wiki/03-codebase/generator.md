@@ -69,7 +69,9 @@ generateCode(configPath)                          src/generator/index.ts
 
 ### 类型 import 收集
 
-接口文件与类型文件的 `import type { ... }` 由 `collectUsedTypesFromProperties()`（`src/processors/common.ts`）计算：将属性类型串按分隔符拆分为标识符后对自定义类型名集合做命中检查，因此 `X | null`（可空引用）、`Record<string, X>`、`A | B`、`A & B`、嵌套数组等复合形态中的自定义类型都会进入 import。递归自引用（如树形 `children: Self[]`）会在 typeGenerator 中跳过自身 import，避免与自身声明冲突。
+接口文件的 `import type { ... }` 由 `collectUsedTypesFromProperties()`（`src/processors/common.ts`）计算：将属性类型串按分隔符拆分为标识符后对自定义类型名集合做命中检查，因此 `X | null`（可空引用）、`Record<string, X>`、`A | B`、`A & B`、嵌套数组等复合形态中的自定义类型都会进入 import。
+
+类型文件（typeGenerator）的依赖 import **按依赖逐条指向具体类型文件**（`@/.../types/UserPreferences` 或相对路径 `./UserPreferences`），而非自身所属的桶文件 `types/index.ts`，消除「类型文件 ← 桶 ← 类型文件」的 type-only 循环引用。类型名→文件名的映射规则由 `getTypeFileName()` 统一提供（类型文件、桶索引、依赖 import 三处共用）。递归自引用（如树形 `children: Self[]`）会跳过自身 import，避免与自身声明冲突（TS2300）。可用 `api-power verify` 对产物做类型检查兜底。
 
 ### 类型映射与响应兜底（propertyType / extractor）
 

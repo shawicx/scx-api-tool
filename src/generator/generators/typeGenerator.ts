@@ -71,8 +71,18 @@ export async function generateTypeFiles(
 }
 
 /**
+ * @description 计算类型名对应的文件名（非法字符替换为下划线）
+ * 类型文件命名与桶索引引用必须使用同一规则，抽为公共函数防止漂移
+ * @param typeName 已 sanitize 的类型名
+ * @returns 文件名（不含扩展名）
+ */
+function getTypeFileName(typeName: string): string {
+  return typeName.replace(/[^a-zA-Z0-9$_]/g, '_');
+}
+
+/**
  * @description 生成单个类型文件
- * 为指定的类型生成 TypeScript 类型定义
+ * 为指定的类型生成 TypeScript 类型定义文件
  * @param type 类型对象
  * @param processedData 处理后的 API 数据
  * @param config API 配置
@@ -87,7 +97,7 @@ async function generateTypeFile(
   hooks?: CliHooks,
 ): Promise<void> {
   const cleanTypeName = sanitizeTypeName(type.name);
-  const cleanFileName = cleanTypeName.replace(/[^a-zA-Z0-9$_]/g, '_');
+  const cleanFileName = getTypeFileName(cleanTypeName);
 
   // 根据 kind 选择模板：jsonValue（递归）/ jsonValueAlias（别名）/ 普通 interface
   let code: string;
@@ -128,13 +138,18 @@ async function generateTypeFile(
   }
 
   if (dependencies.size > 0) {
-    const importPath = getNormalizedPathWithAlias(
-      typesDir,
-      join(config.outputDir, 'types/index.ts'),
-    );
-    const cleanImportPath = importPath.replace(/\.ts$/, '').replace(/\/$/, '');
-    const importStatement = `import type { ${Array.from(dependencies).join(', ')} } from '${cleanImportPath}';\n\n`;
-    code = importStatement + code;
+    // 每个依赖一条独立 import，指向具体类型文件（而非自身所属的桶文件），
+    // 消除「类型文件 A ← 桶 index ← 类型文件 A」的 type-only 循环引用
+    const importStatements = Array.from(dependencies)
+      .sort()
+      .map((dep) => {
+        const depFileName = getTypeFileName(sanitizeTypeName(dep));
+        const importPath = getNormalizedPathWithAlias(typesDir, join(typesDir, `${depFileName}.ts`))
+          .replace(/\.ts$/, '')
+          .replace(/\/$/, '');
+        return `import type { ${dep} } from '${importPath}';`;
+      });
+    code = `${importStatements.join('\n')}\n\n${code}`;
   }
 
   await writeGeneratedFile(
@@ -164,7 +179,7 @@ async function generateTypesIndexFile(
 
   for (const type of processedData.types) {
     const cleanTypeName = sanitizeTypeName(type.name);
-    const cleanFileName = cleanTypeName.replace(/[^a-zA-Z0-9$_]/g, '_');
+    const cleanFileName = getTypeFileName(cleanTypeName);
     indexContent += `export type { ${cleanTypeName} } from './${cleanFileName}';\n`;
   }
 

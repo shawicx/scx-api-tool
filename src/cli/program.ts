@@ -6,6 +6,7 @@ import { version } from '../../package.json';
 import { debugCommand } from './commands/debug';
 import { generateCommand } from './commands/generate';
 import { initCommand } from './commands/init';
+import { verifyCommand } from './commands/verify';
 import { visualizeCommand } from './commands/visualize';
 
 export const program = new Command();
@@ -19,6 +20,7 @@ program
 // 注册命令
 program.addCommand(initCommand);
 program.addCommand(generateCommand);
+program.addCommand(verifyCommand);
 program.addCommand(debugCommand);
 program.addCommand(visualizeCommand);
 

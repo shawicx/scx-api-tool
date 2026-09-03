@@ -247,4 +247,44 @@ describe('generateTypeFiles', () => {
     // 但不得生成指向自身的 import（会与自身声明冲突 TS2300）
     expect(nodeWrite!.content).not.toMatch(/import type \{ [^}]*\bTreeNode\b[^}]* \} from/);
   });
+
+  it('类型依赖 import 应指向具体类型文件而非桶文件（消除循环引用）', async () => {
+    const config: ApiConfig = { ...minimalApiConfig, generateApi: true, generateTypes: true };
+    const data: ProcessedApiData = {
+      interfaces: [],
+      types: [
+        {
+          name: 'User',
+          originalName: 'User',
+          schema: { type: 'object', properties: { id: { type: 'number' } } },
+        },
+        {
+          name: 'Product',
+          originalName: 'Product',
+          schema: { type: 'object', properties: { title: { type: 'string' } } },
+        },
+        {
+          name: 'Post',
+          originalName: 'Post',
+          schema: {
+            type: 'object',
+            properties: {
+              author: { $ref: '#/components/schemas/User', nullable: true },
+              items: { type: 'array', items: { $ref: '#/components/schemas/Product' } },
+            },
+          },
+        },
+      ],
+      categories: [],
+    } as ProcessedApiData;
+    await generateTypeFiles(data, config);
+
+    const postWrite = writes.find((w) => w.path.endsWith('Post.ts'));
+    expect(postWrite).toBeDefined();
+    // 每个依赖一条独立 import，分别指向具体类型文件
+    expect(postWrite!.content).toMatch(/import type \{ User \} from '[^']*types\/User';/);
+    expect(postWrite!.content).toMatch(/import type \{ Product \} from '[^']*types\/Product';/);
+    // 不再从自身所属的桶文件 import（消除 type-only 循环引用）
+    expect(postWrite!.content).not.toContain('types/index');
+  });
 });
