@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.6.4](https://github.com/shawicx/scx-api-tool/compare/v0.6.3...v0.6.4) (2026-09-04)
+
+### Features
+
+- 支持 body/query 参数分离与 ParameterObject DTO 展开 ([593422b](https://github.com/shawicx/scx-api-tool/commit/593422be6e35739fc27f8e7905133eb8341df447))
+- 新增 verify 产物类型检查命令并消除类型文件循环 import ([627b25f](https://github.com/shawicx/scx-api-tool/commit/627b25fccfa48441fa480741b14350be0d769186))
+
+### Bug Fixes
+
+- 修复 FormData 数组序列化与可空类型漏 import 的生成缺陷 ([cf83c60](https://github.com/shawicx/scx-api-tool/commit/cf83c6053dce4abf9b4f81af43a90ed676b7c0dc))
+- 修复 OAS 3.1 type 数组退化与响应类型缺失的生成缺陷 ([8359716](https://github.com/shawicx/scx-api-tool/commit/8359716f817005127ae60d0ff065bc8639d705e5))
+- 移除服务根索引对共享 request 的重复 re-export ([59120bd](https://github.com/shawicx/scx-api-tool/commit/59120bdff23135b8254051762f07959db1bfb0a6))
+
 ### [0.6.3](https://github.com/shawicx/scx-api-tool/compare/v0.6.2...v0.6.3) (2026-08-31)
 
 ### Features
