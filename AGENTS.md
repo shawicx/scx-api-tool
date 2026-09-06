@@ -42,7 +42,7 @@ import type { ApiConfig } from '@/types';
 
 ### 格式化
 
-- 使用 **prettier-config-ali** 和 **eslint-config-ali**（Ali 配置标准）
+- 格式化使用 **prettier-config-ali**（Ali 配置标准）；代码检查使用 **OxLint**（配置见 `.oxlintrc.json`，规则类别 correctness + suspicious）
 - 换行符：LF
 - 运行 `pnpm run lint:fix` 自动格式化
 
@@ -187,7 +187,7 @@ export default defineConfig({
 
 ## 环境要求
 
-- Node.js >= 20.0.0
+- Node.js >= 22.18.0（开发工具链要求；发布产物 `engines` 为 >= 22.12.0）
 - 使用 pnpm 作为包管理器
 - 输出目录：`dist/`（由 tsdown 构建）
 - Husky + lint-staged 用于提交前钩子

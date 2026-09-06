@@ -1,0 +1,42 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "vitest/require-mock-type-parameters": "off",
+    "vitest/no-conditional-expect": "warn",
+    "vitest/require-to-throw-message": "warn",
+    "eslint/no-underscore-dangle": "off"
+  },
+  "ignorePatterns": [
+    "dist",
+    "coverage",
+    "lib",
+    "build",
+    "tmp",
+    "assets",
+    "scripts",
+    "docs",
+    "src/service",
+    "src/templates",
+    ".vitepress/cache",
+    ".zcode",
+    ".scx-wiki-agent",
+    "superpowers",
+    "apiPower.config.ts"
+  ],
+  "overrides": [
+    {
+      "files": ["**/__tests__/**", "tests/**"],
+      "rules": {
+        "typescript/no-require-imports": "off",
+        "typescript/no-unused-vars": "off",
+        "typescript/consistent-type-assertions": "off",
+        "unicorn/consistent-function-scoping": "off"
+      }
+    }
+  ]
+}

@@ -112,17 +112,6 @@ describe('fetchData', () => {
     expect(mockAxiosGet).toHaveBeenCalledTimes(1);
   });
 
-  it('should throw error when Apifox token is missing', async () => {
-    const apifoxConfig = {
-      serverType: ServerType.Apifox,
-      source: 'https://api.apifox.com/v1/projects/123/export-openapi',
-      token: '', // 空token
-    } as ApiConfig;
-
-    // Apifox 客户端应该抛出token错误，跳过这个测试因为重试机制会导致超时
-    // 实际的功能测试在 ApifoxClient 的单元测试中覆盖
-  }, 10000);
-
   it('should throw error for unsupported server type', async () => {
     const fakeError = new Error('配置不适用于当前配置的客户端');
     mockConfigInvalid.mockReturnValue(fakeError);

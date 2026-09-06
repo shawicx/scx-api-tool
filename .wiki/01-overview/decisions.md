@@ -1,6 +1,6 @@
 # 架构决策记录 (ADR)
 
-一句话职责：记录重大技术选型的背景、决策与影响。ADR-001 ~ ADR-010 延续自历史版本，ADR-011 为多服务配置重构（0.6.x 破坏式变更）。
+一句话职责：记录重大技术选型的背景、决策与影响。ADR-001 ~ ADR-010 延续自历史版本，ADR-011 为多服务配置重构（0.6.x 破坏式变更），ADR-012 为 2026-09 依赖升级与 Lint 工具切换。
 
 ## ADR-001：选用 Handlebars 作为模板引擎
 
@@ -62,9 +62,9 @@
 
 ## ADR-006：仅支持 ESM，要求 Node.js >= 20
 
-**状态**：已采纳
+**状态**：已采纳（2026-09 起运行时门槛提升至 >= 22.12.0，因 commander 15 的 engines 要求）
 
-**决策**：`"type": "module"`，Node.js >= 20.0.0。
+**决策**：`"type": "module"`，Node.js >= 22.12.0（原为 >= 20.0.0）。
 
 **影响**：用户必须 `import`；配置文件支持 `.ts` / `.js` / `.mjs`（loader 经 `pathToFileURL` 动态 import）。
 
@@ -123,6 +123,28 @@
 - `loadConfig()` 返回 `ApiConfig[]`；配置文件必须 `export default defineConfig({...})`，loader 以类型守卫校验导出格式
 - 单源场景使用 `services: [{ name: 'main', folder: '.', source, token }]`，输出直接落在 `baseOutputDir`
 - 迁移指南见 `docs/guides/migration.md`
+
+---
+
+## ADR-012：依赖全量升级；ESLint 切换为 OxLint；运行时门槛提升至 Node >= 22.12
+
+**状态**：已采纳（2026-09）
+
+**背景**：eslint 9.x 全线 deprecated，eslint-config-ali@16.6.0（最新）在 eslint 10 下因 `@babel/eslint-parser` v7 崩溃；同时各 devDependencies 最新大版本普遍要求 Node >= 22。
+
+**决策**：
+
+- devDependencies 全量升至最新（eslint 10、vitest 5、tsdown 0.23、commitlint 21、lint-staged 17、@types/node 26 等）
+- ESLint 整体替换为 **OxLint**（`oxlint@1.81`，配置 `.oxlintrc.json`：correctness=error + suspicious=warn，vitest/typescript/unicorn/oxc 插件），卸载 eslint、eslint-config-ali、eslint-plugin-prettier、eslint-config-prettier；格式化继续由 prettier + prettier-config-ali 承担
+- commander 升至 15（要求 Node >= 22.12），`engines.node` 相应从 >= 20 提升至 **>= 22.12.0**
+- **typescript 保留 5.9.x**：TS 7 为原生编译器重写版，npm 包仅剩 `tsc` bin、无 JS API，`verify` 命令依赖 `ts.createProgram` 等编译器 API，升 7 必坏；TS 6 尚在 beta
+
+**影响**：
+
+- 贡献者开发环境需 Node >= 22.18（tsdown 0.23 的 engines 要求），运行时门槛 >= 22.12
+- 失去 typescript-eslint 的类型感知规则（如 member-ordering）；OxLint `--type-aware` 为规则可选增强
+- tsdown 0.23 需显式 `fixedExtension: false` 保持 `.js/.d.ts` 产物名与 package.json `bin/main/types` 一致；`external` 选项改写为 `deps.neverBundle`
+- lint 从 ~10s 降至 ~30ms；`ci:eslint` 脚本更名 `ci:lint`（oxlint json 输出）
 
 ## Related
 

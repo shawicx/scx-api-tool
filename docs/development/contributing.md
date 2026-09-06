@@ -164,7 +164,7 @@ git push origin feature/your-feature-name
 
 ### 代码风格
 
-我们使用 ESLint 和 Prettier 来保持代码风格一致：
+我们使用 OxLint 和 Prettier 来保持代码风格一致：
 
 ```bash
 # 自动格式化

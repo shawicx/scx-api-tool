@@ -4,11 +4,13 @@
 
 ## 前置要求
 
-| 要求    | 版本      | 说明                |
-| ------- | --------- | ------------------- |
-| Node.js | >= 20.0.0 | ESM 和现代 API 所需 |
-| pnpm    | 最新版    | 包管理器            |
-| Git     | 任意版本  | 版本控制            |
+| 要求    | 版本       | 说明                                                      |
+| ------- | ---------- | --------------------------------------------------------- |
+| Node.js | >= 22.18.0 | 开发工具链要求（tsdown 0.23 / vitest 5 / lint-staged 17） |
+| pnpm    | 最新版     | 包管理器                                                  |
+| Git     | 任意版本   | 版本控制                                                  |
+
+> 注意区分：开发环境需 Node >= 22.18，**发布产物的运行时要求**为 Node >= 22.12.0（见 `package.json` 的 `engines` 字段）。
 
 ## 环境搭建
 
@@ -31,8 +33,8 @@ pnpm run dev          # 开发模式生成（需要根目录 api-power.config.ts
 | `test`           | `vitest run`                                                | 运行单元测试                 |
 | `test:watch`     | `vitest --watch`                                            | 监听模式                     |
 | `test:coverage`  | `vitest run --coverage`                                     | 覆盖率报告（v8，阈值 ≥ 75%） |
-| `lint`           | `eslint .`                                                  | 代码检查                     |
-| `lint:fix`       | `prettier --write . && eslint --fix .`                      | 自动格式化与修复             |
+| `lint`           | `oxlint .`                                                  | 代码检查（OxLint）           |
+| `lint:fix`       | `prettier --write . && oxlint --fix .`                      | 自动格式化与修复             |
 | `check:linesize` | `find src -name '*.ts' -exec wc -l {} + \| awk ...`         | 检查超过 360 行的文件        |
 | `docs:dev`       | `vitepress dev`                                             | 文档站开发服务器             |
 | `release`        | 构建 → `standard-version` → push → `pnpm publish`           | 完整发布流程                 |

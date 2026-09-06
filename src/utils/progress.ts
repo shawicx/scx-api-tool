@@ -15,7 +15,7 @@ export class SimpleProgress {
 
   constructor(private steps: Array<{ title: string; status: string }>) {
     this.startTime = Date.now();
-    this.stepStartTimes = new Array(steps.length).fill(0);
+    this.stepStartTimes = Array.from({ length: steps.length }, () => 0);
   }
 
   /**

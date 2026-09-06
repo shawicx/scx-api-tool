@@ -412,7 +412,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         run: npm ci
@@ -449,7 +449,7 @@ stages:
 
 api:generate:
   stage: api-update
-  image: node:20
+  image: node:22
   script:
     - npm ci
     - npm run api:generate

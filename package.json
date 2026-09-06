@@ -49,12 +49,12 @@
     "dev": "tsx src/cli/main.ts generate --config api-power.config.ts",
     "build": "NODE_ENV=production tsdown",
     "analyze:deps": "node scripts/analyze-deps.js",
-    "ci:eslint": "eslint -f json src -o ./.ci/eslint.json",
+    "ci:lint": "oxlint src -f json > ./.ci/oxlint.json",
     "docs": "pnpm run dumi build",
     "docs:build": "vitepress build",
     "docs:dev": "vitepress dev",
-    "lint": "eslint .",
-    "lint:fix": "prettier --write . && eslint --fix .",
+    "lint": "oxlint .",
+    "lint:fix": "prettier --write . && oxlint --fix .",
     "check:linesize": "find src -name '*.ts' -exec wc -l {} + | awk '$1 > 360 { print $2 \" (\" $1 \" lines)\" }'",
     "postaction": "git push origin main --tags && git push origin main --tags",
     "prepare": "husky",
@@ -97,41 +97,37 @@
     }
   },
   "lint-staged": {
-    "*.{cjs,cts,js,jsx,mjs,mts,ts,tsx,vue}": "eslint --fix",
+    "*.{cjs,cts,js,jsx,mjs,mts,ts,tsx,vue}": "oxlint --fix",
     "*.{cjs,css,cts,html,js,json,jsx,less,md,mjs,mts,scss,ts,tsx,vue,yaml,yml}": "prettier --write"
   },
   "prettier": "prettier-config-ali",
   "dependencies": {
-    "@clack/prompts": "^0.11.0",
-    "@scxfe/api-tool": "link:",
-    "axios": "^1.19.0",
-    "commander": "^14.0.3",
+    "@clack/prompts": "^1.7.0",
+    "axios": "^1.20.0",
+    "commander": "^15.0.0",
     "consola": "^3.4.2",
     "dayjs": "^1.11.23",
     "handlebars": "^4.7.9",
-    "pinyin-pro": "^3.29.2"
+    "pinyin-pro": "^3.29.3"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.8.1",
-    "@commitlint/config-conventional": "^19.8.1",
-    "@types/node": "^25.9.5",
-    "@vitest/coverage-v8": "^4.1.10",
-    "eslint": "^9.39.5",
-    "eslint-config-ali": "^16.6.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.6",
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "@types/node": "^26.4.1",
+    "@vitest/coverage-v8": "^5.0.0",
     "husky": "^9.1.7",
-    "lint-staged": "^16.4.0",
+    "lint-staged": "^17.5.0",
+    "oxlint": "^1.81.0",
     "prettier": "^3.9.6",
     "prettier-config-ali": "^1.5.0",
     "standard-version": "^9.5.0",
-    "tsdown": "^0.13.5",
-    "tsx": "^4.23.12",
+    "tsdown": "^0.23.0",
+    "tsx": "^4.23.13",
     "typescript": "^5.9.3",
     "vitepress": "2.0.0-alpha.15",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.0"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.12.0"
   }
 }

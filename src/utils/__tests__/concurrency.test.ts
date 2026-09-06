@@ -40,7 +40,7 @@ describe('executeWithConcurrency', () => {
 
     expect(handler).toHaveBeenCalledTimes(3);
     expect(results).toHaveLength(3);
-    expect(results.sort()).toEqual([1, 2, 3]);
+    expect(results.toSorted()).toEqual([1, 2, 3]);
   });
 
   it('should not log warnings when all items succeed', async () => {

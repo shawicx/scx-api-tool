@@ -1,6 +1,6 @@
 # 编码规范
 
-一句话职责：本仓库的代码风格、注释、命名与结构性约束摘要。权威来源为 [AGENTS.md](../../AGENTS.md) 与 ESLint/Prettier 配置。
+一句话职责：本仓库的代码风格、注释、命名与结构性约束摘要。权威来源为 [AGENTS.md](../../AGENTS.md) 与 OxLint/Prettier 配置。
 
 ## 导入顺序
 
@@ -16,7 +16,7 @@ import type { ApiConfig } from '@/types';
 
 ## 格式化
 
-- ESLint：`eslint-config-ali`；Prettier：`prettier-config-ali`
+- Lint：OxLint（`.oxlintrc.json`）；Prettier：`prettier-config-ali`
 - 换行符 LF；运行 `pnpm run lint:fix` 自动修复
 - TypeScript 严格模式（`noImplicitAny: false`）
 - 对象类型用 `interface`，常量集合用 `enum`，纯类型导出用 `export type`

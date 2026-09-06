@@ -38,7 +38,7 @@ describe('collectTypeScriptFiles', () => {
 
     const files = collectTypeScriptFiles([join(root, 'service')]);
 
-    const rels = files.map((f) => f.replace(root, '')).sort();
+    const rels = files.map((f) => f.replace(root, '')).toSorted();
     expect(rels).toEqual(['/service/index.ts', '/service/types/User.ts']);
   });
 

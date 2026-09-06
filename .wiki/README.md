@@ -64,6 +64,6 @@ pnpm test       # 运行单元测试
 ## 当前版本
 
 - **包名**：`@scxfe/api-tool`（CLI 名 `api-power`）
-- **Node.js**：>= 20.0.0（仅 ESM）
+- **Node.js**：>= 22.12.0（仅 ESM）
 - **包管理器**：pnpm
 - **许可证**：MIT

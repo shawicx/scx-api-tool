@@ -2,7 +2,7 @@
 
 ## 系统要求
 
-- Node.js >= 20.0.0
+- Node.js >= 22.12.0
 - npm >= 9.0.0 或 pnpm >= 10.0.0
 
 ## 安装方式
@@ -145,7 +145,7 @@ npm config set registry https://registry.npmmirror.com/
 
 ```bash
 # 检查 Node.js 版本
-node --version  # 需要 >= 20.0.0
+node --version  # 需要 >= 22.12.0
 
 # 检查 npm 版本
 npm --version   # 需要 >= 9.0.0

@@ -20,7 +20,10 @@ export default defineConfig([
     sourcemap: !isProd,
     treeshake: true,
     hash: false,
-    // 所有 node_modules 中的包都标记为 external
-    external: (id) => /node_modules/.test(id),
+    // tsdown 0.23 起 node 平台默认 fixedExtension: true（.mjs/.d.mts），
+    // 显式关闭以保持 package.json 的 bin/main/types 指向 .js/.d.ts
+    fixedExtension: false,
+    // 所有 node_modules 中的包都不打入产物（原 external 选项的替代写法）
+    deps: { neverBundle: (id: string) => /node_modules/.test(id) },
   },
 ]);

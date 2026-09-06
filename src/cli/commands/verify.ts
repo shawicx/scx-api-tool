@@ -181,7 +181,7 @@ export async function checkGeneratedFiles(
       const rel = relative(projectRoot, d.file!.fileName);
       return `${rel}:${pos.line + 1}:${pos.character + 1} - TS${d.code} ${ts.flattenDiagnosticMessageText(d.messageText, ' ')}`;
     })
-    .sort();
+    .toSorted();
 
   return { ok: diagnostics.length === 0, fileCount: files.length, diagnostics };
 }

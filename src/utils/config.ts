@@ -120,7 +120,7 @@ export function parseSourceUrl(source: string): {
     };
   } catch (error) {
     logger.error('parseSourceUrl error:', error);
-    throw new Error(`Invalid source URL format: ${source}`);
+    throw new Error(`Invalid source URL format: ${source}`, { cause: error });
   }
 }
 

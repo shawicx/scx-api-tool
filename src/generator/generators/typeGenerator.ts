@@ -141,7 +141,7 @@ async function generateTypeFile(
     // 每个依赖一条独立 import，指向具体类型文件（而非自身所属的桶文件），
     // 消除「类型文件 A ← 桶 index ← 类型文件 A」的 type-only 循环引用
     const importStatements = Array.from(dependencies)
-      .sort()
+      .toSorted()
       .map((dep) => {
         const depFileName = getTypeFileName(sanitizeTypeName(dep));
         const importPath = getNormalizedPathWithAlias(typesDir, join(typesDir, `${depFileName}.ts`))
