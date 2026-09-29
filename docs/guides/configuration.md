@@ -110,6 +110,13 @@ export default defineConfig({
 | `responseTypeName`         | `string`                                  | `'Response'`                        | 返回数据类型名                                                                      |
 | `requestMethodStyle`       | `'config' \| 'method-specific' \| 'both'` | `'config'`                          | 请求方法调用风格                                                                    |
 
+#### 生成请求的运行时行为
+
+- OpenAPI 参数按来源分离：path 参数只用于 URL 插值，query 参数只进入 Axios `params`，request body 字段只进入 Axios `data`。
+- 每个生成的请求函数都有可选第二参数 `options`，可透传 `timeout`、`signal`、`onUploadProgress`、`headers`、`baseURL` 等 Axios 配置；生成的 `url`、`method`、`data`、`params` 固定最后写入，不能被 `options` 覆盖。
+- `multipart/form-data` 会生成 FormData；`application/octet-stream` + `format: binary` 会生成 `data: Blob` 字段，并固定 `Content-Type: application/octet-stream`。
+- 生成的 `request.ts` 不硬编码 `baseURL`，普通请求默认 5 秒超时；FormData/Blob 上传默认不超时，调用方显式传入的 `timeout` 优先。
+
 ### 性能配置
 
 | 配置项        | 类型     | 默认值 | 说明                               |
@@ -424,7 +431,7 @@ export default defineConfig({
 #### ⚠️ 注意事项
 
 1. **函数命名副作用**：path 会完整地参与生成的函数命名（路径中的所有段都会出现在函数名里）。修改 path 会连带改变生成的函数名，例如 `/api/users` 会生成 `getApiUsersFunc`，而配置 `transformPath: (p) => p.replace(/^\/api/, '')` 后会生成 `getUsersFunc`。
-2. **关于 baseURL**：本工具生成的 `request.ts` 中硬编码了 axios `baseURL: '/api'`，与 `transformPath` 独立工作。如果同时配置了"加前缀"transformPath 和硬编码 baseURL，运行时 URL 会双重叠加（如 `/api/api/users`）。如需修改 baseURL，请直接编辑生成的 `request.ts`。
+2. **关于 baseURL**：本工具生成的 `request.ts` 不再硬编码 axios `baseURL`。路径前缀由 `transformPath` 负责；如需指定其它主机或代理，请通过生成的请求函数 `options.baseURL` 传入，或在自己的共享 `request.ts` 中添加项目级默认值。
 3. **函数必须是纯函数**：不要在函数内部进行副作用操作（如修改全局状态、发起请求）。
 
 #### 错误处理

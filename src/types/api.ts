@@ -199,6 +199,8 @@ export interface ApiProperty {
   name: string;
   /** TypeScript 类型字符串 */
   type: string;
+  /** 原始 OpenAPI schema（仅在需要运行时结构时填充，如 Zod 生成） */
+  schema?: OpenApiSchema;
   /** 属性描述 */
   description: string;
   /** 是否必需 */
@@ -258,6 +260,30 @@ export interface InterfaceTemplateData {
   requestMethodsObjectName: string;
   /** 请求参数变量名 */
   requestParamName: string;
+  /** 可选请求配置参数声明 */
+  requestOptionsParam: string;
+  /** 函数内非 body 参数解构语句 */
+  destructureStatement: string;
+  /** method-specific 模式下的请求选项构造语句 */
+  methodOptionsStatement: string;
+  /** Axios data 表达式 */
+  dataExpression: string;
+  /** Axios params 表达式 */
+  paramsExpression: string;
+  /** method-specific 模式下的请求选项表达式 */
+  methodOptionsExpression: string;
+  /** method-specific 模式完整调用表达式 */
+  methodCallExpression: string;
+  /** config 模式下 data/params/headers 字段 */
+  requestConfigFields: string;
+  /** config 声明语句 */
+  configDeclaration: string;
+  /** 是否为原始二进制请求体 */
+  isBinaryBody?: boolean;
+  /** 原始二进制请求体字段名 */
+  rawBodyPropertyName?: string;
+  /** 请求体 content-type */
+  requestContentType?: string | null;
   /** 请求 Schema 内容（Zod 模式） */
   requestSchema?: string;
   /** 响应 Schema 内容（Zod 模式） */

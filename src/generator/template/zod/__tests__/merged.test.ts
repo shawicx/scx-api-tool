@@ -57,6 +57,7 @@ describe('zod/merged', () => {
 
       const result = generateMergedSchemaFile(
         interfaces,
+        { interfaces: [], types: [], categories: [] } as any,
         { ...minimalApiConfig } as any,
         () => 'GetUsersRequest',
         () => 'GetUsersResponse',
@@ -93,6 +94,7 @@ describe('zod/merged', () => {
 
       const result = generateMergedSchemaFile(
         interfaces,
+        { interfaces: [], types: [], categories: [] } as any,
         { ...minimalApiConfig } as any,
         () => 'Req',
         () => 'Resp',
@@ -120,6 +122,7 @@ describe('zod/merged', () => {
 
       const result = generateMergedSchemaFile(
         interfaces,
+        { interfaces: [], types: [], categories: [] } as any,
         { ...minimalApiConfig, comment: true } as any,
         () => 'ListUsersRequest',
         () => 'ListUsersResponse',

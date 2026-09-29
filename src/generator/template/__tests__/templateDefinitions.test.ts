@@ -26,6 +26,7 @@ import {
   getZodTypesOnlyTemplateByConfig,
   generatePrecompiledMethodMap,
 } from '../templateDefinitions';
+import { getFormDataInlineExpression, getFormDataStatements } from '../formDataBody';
 
 // ==================== WithComment templates ====================
 
@@ -44,7 +45,8 @@ describe('WithComment templates', () => {
     expect(template).toContain('@description');
     expect(template).toContain('{{description}}');
     expect(template).toContain('{{functionName}}');
-    expect(template).toContain('{{requestFunctionName}}');
+    expect(template).toContain('{{{requestOptionsParam}}}');
+    expect(template).toContain('{{> functionBody}}');
   });
 
   it('getZodInterfaceTemplateWithComment should contain comment-related Handlebars syntax', () => {
@@ -149,22 +151,26 @@ describe('FormData 序列化片段（isFormData 分支）', () => {
 
   it('所有 isFormData 分支都应处理数组（File[] 逐个 append）', () => {
     for (const [name, getTemplate] of templatesWithFormDataBranch) {
-      expect(getTemplate(), `${name} 缺少数组处理`).toContain('Array.isArray');
+      expect(getTemplate(), `${name} 缺少函数体 partial`).toContain('{{> functionBody}}');
     }
+    expect(getFormDataInlineExpression('params')).toContain('Array.isArray');
+    expect(getFormDataStatements('params')).toContain('Array.isArray');
   });
 
   it('所有 isFormData 分支都应跳过 null/undefined 可选字段', () => {
     for (const [name, getTemplate] of templatesWithFormDataBranch) {
-      const template = getTemplate();
-      expect(template, `${name} 缺少 null 判断`).toContain('=== null');
-      expect(template, `${name} 缺少 undefined 判断`).toContain('=== undefined');
+      expect(getTemplate(), `${name} 缺少函数体 partial`).toContain('{{> functionBody}}');
     }
+    expect(getFormDataInlineExpression('params')).toContain('=== null');
+    expect(getFormDataStatements('params')).toContain('=== undefined');
   });
 
   it('所有 isFormData 分支都应 JSON.stringify 普通对象', () => {
     for (const [name, getTemplate] of templatesWithFormDataBranch) {
-      expect(getTemplate(), `${name} 缺少对象序列化`).toContain('JSON.stringify');
+      expect(getTemplate(), `${name} 缺少函数体 partial`).toContain('{{> functionBody}}');
     }
+    expect(getFormDataInlineExpression('params')).toContain('JSON.stringify');
+    expect(getFormDataStatements('params')).toContain('JSON.stringify');
   });
 
   it('所有 isFormData 分支都不应再用裸 String() 强转兜底（"[object File]" 根因）', () => {

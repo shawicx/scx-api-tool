@@ -22,6 +22,7 @@ import {
   hasRequestBody,
   isFormDataRequest,
 } from '../extractor';
+import { buildRequestBinding } from '../requestBinding';
 import { getNormalizedPathWithAlias } from '@/utils/pathUtils';
 import { applyNamingStrategy, type NamingContext } from '@/naming';
 import { generateInterfaceFunction } from '../template';
@@ -150,7 +151,8 @@ export async function generateInterfaceFileForTag(
       combinedCode += `import type { ${Array.from(usedTypes).join(', ')} } from '${cleanTypesRelativePath}';\n`;
     }
   } else if (apiOnly || isJS) {
-    combinedCode += `import { ${requestFunctionName} } from '${cleanRelativePath}';\n`;
+    const importedNames = isJS ? requestFunctionName : `RequestConfig, ${requestFunctionName}`;
+    combinedCode += `import { ${importedNames} } from '${cleanRelativePath}';\n`;
   } else {
     if (config.requestMethodStyle === 'method-specific' || config.requestMethodStyle === 'both') {
       combinedCode += `import { RequestConfig, ${requestFunctionName}, ${requestMethodsObjectName} } from '${cleanRelativePath}';\n`;
@@ -206,25 +208,27 @@ export async function generateInterfaceFileForTag(
       processedData,
     );
 
-    // body/query 分组：body 与 query 并存时生成静态解构拆分（query 走 config.params）
     const parameterGroups = extractRequestParameterGroups(apiInterface.operation, processedData);
-    const queryParameterNames = parameterGroups.queryProperties.map((p) => p.name);
     const hasBody = hasRequestBody(apiInterface.operation);
-    const hasQueryParams = hasBody && queryParameterNames.length > 0;
-    // 防御：query 参数名与 rest 变量 'body' 冲突时改用 bodyParams
-    const restVarName = queryParameterNames.includes('body') ? 'bodyParams' : 'body';
-    const requestBodyVarName = hasQueryParams ? restVarName : requestParamName;
-    // 解构/params 对象条目：合法标识符用简写（page）；sanitizePropertyName 对非法
-    // 标识符加引号（'X-Custom'），解构与 params 对象需改用别名绑定（'X-Custom': X_Custom）
-    const IDENTIFIER_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
-    const queryParamsList = parameterGroups.queryProperties
-      .map((p) => {
-        if (IDENTIFIER_RE.test(p.name)) return p.name;
-        const bare = p.name.replace(/^'(.*)'$/, '$1');
-        const alias = bare.replace(/[^A-Za-z0-9_$]/g, '_');
-        return `'${bare}': ${alias}`;
-      })
-      .join(', ');
+    if (
+      hasBody &&
+      parameterGroups.requestBodyKind === 'json' &&
+      parameterGroups.requestContentType !== 'application/json'
+    ) {
+      logger.warn(
+        `接口 ${apiInterface.method.toUpperCase()} ${apiInterface.path} 使用非 JSON/multipart 请求体 ${parameterGroups.requestContentType ?? 'unknown'}，当前按 JSON 兜底生成`,
+      );
+    }
+    const requestBinding = buildRequestBinding({
+      requestParamName,
+      groups: parameterGroups,
+      hasBody,
+      isJavaScript: isJS,
+      path: interpolatedPath.value,
+      method: apiInterface.method,
+      responseTypeName: namingResult.responseTypeName,
+      requestMethodsObjectName,
+    });
 
     // 文档质量告警：帮助定位「生成结果退化」的源头（均在 API 文档侧修数据）
     if (apiInterface.method.toLowerCase() === 'get' && hasRequestBody(apiInterface.operation)) {
@@ -257,14 +261,20 @@ export async function generateInterfaceFileForTag(
       responseProperties,
       hasBody,
       isFormData: isFormDataRequest(apiInterface.operation),
-      queryParameterNames,
-      hasQueryParams,
-      requestBodyVarName,
-      queryParamsList,
+      queryParameterNames: parameterGroups.queryProperties.map((p) => p.name),
+      hasQueryParams:
+        parameterGroups.queryProperties.length > 0 &&
+        (hasBody || parameterGroups.pathProperties.length > 0),
+      requestBodyVarName: requestParamName,
+      queryParamsList: parameterGroups.queryProperties.map((p) => p.name).join(', '),
       requestMethodStyle: config.requestMethodStyle,
       requestFunctionName: config.requestFunctionName || 'request',
       requestMethodsObjectName: config.requestMethodsObjectName || 'requestMethods',
       requestParamName: config.requestParamName || 'params',
+      ...requestBinding,
+      isBinaryBody: parameterGroups.requestBodyKind === 'binary',
+      rawBodyPropertyName: parameterGroups.rawBodyPropertyName,
+      requestContentType: parameterGroups.requestContentType,
     };
 
     const code = generateInterfaceFunction(templateData, config);

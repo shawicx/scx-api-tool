@@ -7,6 +7,7 @@ import { compileTemplate } from '../index';
 import { generateZodSchemaFromOperation } from './interfaces';
 import { escapeJsDocComment } from '@/utils/escape';
 import type { ApiConfig, ApiInterface, OpenApiOperation } from '@/types';
+import type { ProcessedApiData } from '../../../processors/openapi';
 
 /**
  * @description 合并的 Schema 文件模板 - 带注释
@@ -84,6 +85,7 @@ export function getMergedSchemaTemplateByConfig(comment: boolean): string {
  */
 export function generateMergedSchemaFile(
   interfaces: ApiInterface[],
+  processedData: ProcessedApiData,
   config: ApiConfig,
   getRequestTypeName: (
     path: string,
@@ -118,7 +120,11 @@ export function generateMergedSchemaFile(
       config,
     );
 
-    const requestResult = generateZodSchemaFromOperation(apiInterface.operation, 'request');
+    const requestResult = generateZodSchemaFromOperation(
+      apiInterface.operation,
+      'request',
+      processedData,
+    );
 
     const responseResult = generateZodSchemaFromOperation(apiInterface.operation, 'response');
 

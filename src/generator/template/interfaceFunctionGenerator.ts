@@ -26,13 +26,24 @@ export function generateInterfaceFunction(
   config: ApiConfig,
 ): string {
   const comment = config.comment !== false;
+  const requestOptionsParam =
+    config.target === 'javascript'
+      ? 'options = {}'
+      : "options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}";
+  const configDeclaration =
+    config.target === 'javascript' ? 'const config = {' : 'const config: RequestConfig = {';
+  const templateData = {
+    ...interfaceInfo,
+    requestOptionsParam,
+    configDeclaration,
+  };
 
   // JavaScript 目标始终使用 API-only 模板（无类型注解）
   if (config.target === 'javascript') {
     const template = getApiOnlyTemplateByConfig(comment);
     const compiledTemplate = compileTemplate(template);
     return compiledTemplate({
-      ...interfaceInfo,
+      ...templateData,
       requestFunctionName: config.requestFunctionName || 'request',
       requestMethodsObjectName: config.requestMethodsObjectName || 'requestMethods',
       requestMethodStyle: config.requestMethodStyle,
@@ -60,7 +71,7 @@ export function generateInterfaceFunction(
   const compiledTemplate = compileTemplate(template);
 
   return compiledTemplate({
-    ...interfaceInfo,
+    ...templateData,
     requestFunctionName: config.requestFunctionName || 'request',
     requestMethodsObjectName: config.requestMethodsObjectName || 'requestMethods',
     requestMethodStyle: config.requestMethodStyle,

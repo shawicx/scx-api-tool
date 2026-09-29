@@ -128,7 +128,7 @@ function makeProcessedDataWithBodyAndQuery(): ProcessedApiData {
   return {
     interfaces: [
       {
-        path: '/api/users/search',
+        path: '/api/users/{userId}/search',
         method: 'post',
         operation: {
           summary: '搜索用户',
@@ -145,6 +145,7 @@ function makeProcessedDataWithBodyAndQuery(): ProcessedApiData {
             },
           },
           parameters: [
+            { name: 'userId', in: 'path', required: true, schema: { type: 'string' } },
             { name: 'page', in: 'query', type: 'integer', required: false },
             { name: 'limit', in: 'query', type: 'integer', required: false },
           ],
@@ -174,7 +175,7 @@ function makeProcessedDataWithMultipartAndQuery(): ProcessedApiData {
   return {
     interfaces: [
       {
-        path: '/api/files/upload',
+        path: '/api/files/folders/{folderId}/upload',
         method: 'post',
         operation: {
           summary: '上传文件',
@@ -192,13 +193,93 @@ function makeProcessedDataWithMultipartAndQuery(): ProcessedApiData {
               },
             },
           },
-          parameters: [{ name: 'overwrite', in: 'query', type: 'boolean', required: false }],
+          parameters: [
+            { name: 'folderId', in: 'path', required: true, schema: { type: 'string' } },
+            { name: 'overwrite', in: 'query', type: 'boolean', required: false },
+          ],
           responses: {
             '200': {
               description: 'ok',
               content: {
                 'application/json': {
                   schema: { type: 'object', properties: { url: { type: 'string' } } },
+                },
+              },
+            },
+          },
+        },
+      },
+    ],
+    types: [],
+    categories: [],
+  } as ProcessedApiData;
+}
+
+// 复现 scx-admin 分片上传：path + query + application/octet-stream 原始二进制 body
+function makeProcessedDataWithRawBinaryChunk(): ProcessedApiData {
+  return {
+    interfaces: [
+      {
+        path: '/api/files/upload/sessions/{uploadId}/chunks/{partNumber}',
+        method: 'put',
+        operation: {
+          summary: '上传分片',
+          tags: ['大文件分片上传'],
+          requestBody: {
+            required: true,
+            content: {
+              'application/octet-stream': { schema: { type: 'string', format: 'binary' } },
+            },
+          },
+          parameters: [
+            { name: 'uploadId', in: 'path', required: true, schema: { type: 'string' } },
+            { name: 'partNumber', in: 'path', required: true, schema: { type: 'integer' } },
+            { name: 'md5', in: 'query', required: false, schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': {
+              description: 'ok',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      partNumber: { type: 'number' },
+                      etag: { type: 'string' },
+                      size: { type: 'number' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ],
+    types: [],
+    categories: [],
+  } as ProcessedApiData;
+}
+
+// 只有 path 参数、没有 query/body 的接口：path 参数不应被重复放入 query
+function makeProcessedDataWithPathOnly(): ProcessedApiData {
+  return {
+    interfaces: [
+      {
+        path: '/api/files/upload/sessions/{uploadId}/complete',
+        method: 'post',
+        operation: {
+          summary: '完成分片上传',
+          tags: ['大文件分片上传'],
+          parameters: [
+            { name: 'uploadId', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': {
+              description: 'ok',
+              content: {
+                'application/json': {
+                  schema: { type: 'object', properties: { id: { type: 'string' } } },
                 },
               },
             },
@@ -287,8 +368,8 @@ describe('generateInterfaceFileForTag', () => {
       join(config.outputDir, 'user'),
     );
 
-    // apiOnly 分支：import { request } from '...'
-    expect(captured.content).toMatch(/import \{ request \} from/);
+    // apiOnly 分支：函数签名需要 RequestConfig，但不应有 type import
+    expect(captured.content).toMatch(/import \{ RequestConfig, request \} from/);
     // apiOnly 不应有 type import
     expect(captured.content).not.toMatch(/import type \{/);
   });
@@ -575,7 +656,7 @@ describe('generateInterfaceFileForTag', () => {
     );
 
     // 静态解构：query 键逐个解构，rest 为 body
-    expect(captured.content).toContain('const { page, limit, ...body } = params;');
+    expect(captured.content).toContain('const { userId, page, limit, ...body } = params;');
     // body 进 data、query 进 params（简写对象）
     expect(captured.content).toMatch(/data: body,/);
     expect(captured.content).toMatch(/params: \{ page, limit \},?/);
@@ -597,7 +678,7 @@ describe('generateInterfaceFileForTag', () => {
       join(config.outputDir, 'file'),
     );
 
-    expect(captured.content).toContain('const { overwrite, ...body } = params;');
+    expect(captured.content).toContain('const { folderId, overwrite, ...body } = params;');
     // FormData 从解构后的 body 构造（不含 query 的 overwrite）
     expect(captured.content).toMatch(/Object\.entries\(body\)/);
     expect(captured.content).toMatch(/params: \{ overwrite \},?/);
@@ -640,8 +721,8 @@ describe('generateInterfaceFileForTag', () => {
       join(config.outputDir, 'user'),
     );
 
-    expect(captured.content).toContain('const { page, limit, ...body } = params;');
-    expect(captured.content).toMatch(/\.post<[^>]+>\([^,]+, body, \{ page, limit \}\)/);
+    expect(captured.content).toContain('const { userId, page, limit, ...body } = params;');
+    expect(captured.content).toMatch(/\.post<[^>]+>\([^,]+, body, \{ page, limit \}, options\)/);
   });
 
   it('含连字符的 query 参数名应以别名绑定生成合法解构', async () => {
@@ -698,5 +779,142 @@ describe('generateInterfaceFileForTag', () => {
     // 非法标识符（X-Custom）需别名绑定，保证解构与 params 对象字面量合法
     expect(captured.content).toContain("const { 'X-Custom': X_Custom, ...body } = params;");
     expect(captured.content).toMatch(/params: \{ 'X-Custom': X_Custom \},?/);
+  });
+
+  it('raw binary + path/query 应生成 data: Blob 且固定 octet-stream Content-Type', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateApi: true,
+      generateTypes: true,
+      typesFormat: 'typescript',
+    };
+    const data = makeProcessedDataWithRawBinaryChunk();
+    await generateInterfaceFileForTag(
+      'file',
+      data.interfaces,
+      data,
+      config,
+      join(config.outputDir, 'file'),
+    );
+
+    expect(captured.content).toContain('data: Blob');
+    expect(captured.content).toContain('const { uploadId, partNumber, md5, ...body } = params;');
+    expect(captured.content).toMatch(/data: body\.data,/);
+    expect(captured.content).toMatch(/params: \{ md5 \},?/);
+    expect(captured.content).toContain("'Content-Type': 'application/octet-stream'");
+    expect(captured.content).not.toMatch(/data: \{ uploadId/);
+  });
+
+  it('只有 path 参数时应只做 URL 插值，不生成 query params', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateApi: true,
+      generateTypes: true,
+      typesFormat: 'typescript',
+    };
+    const data = makeProcessedDataWithPathOnly();
+    await generateInterfaceFileForTag(
+      'file',
+      data.interfaces,
+      data,
+      config,
+      join(config.outputDir, 'file'),
+    );
+
+    expect(captured.content).toContain('${params.uploadId}');
+    expect(captured.content).not.toMatch(/params:\s*\{\s*uploadId/);
+    expect(captured.content).not.toMatch(/data:\s*\{\s*uploadId/);
+  });
+
+  it('所有生成方法应支持可选 options 且契约字段最后写入', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateApi: true,
+      generateTypes: true,
+      typesFormat: 'typescript',
+    };
+    const data = makeProcessedDataWithRawBinaryChunk();
+    await generateInterfaceFileForTag(
+      'file',
+      data.interfaces,
+      data,
+      config,
+      join(config.outputDir, 'file'),
+    );
+
+    expect(captured.content).toContain(
+      "options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}",
+    );
+    expect(captured.content.indexOf('...options')).toBeLessThan(captured.content.indexOf('url:'));
+    expect(captured.content.indexOf('data: body.data')).toBeGreaterThan(
+      captured.content.indexOf('...options'),
+    );
+  });
+
+  it('method-specific raw binary 应透传 options 并保留 Content-Type', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateApi: true,
+      generateTypes: true,
+      typesFormat: 'typescript',
+      requestMethodStyle: 'method-specific' as any,
+    };
+    const data = makeProcessedDataWithRawBinaryChunk();
+    await generateInterfaceFileForTag(
+      'file',
+      data.interfaces,
+      data,
+      config,
+      join(config.outputDir, 'file'),
+    );
+
+    expect(captured.content).toContain('const requestOptions = {');
+    expect(captured.content).toContain('...options');
+    expect(captured.content).toMatch(
+      /\.put<[^>]+>\([^,]+, body\.data, \{ md5 \}, requestOptions\)/,
+    );
+  });
+
+  it('method-specific 无 body POST 应为 data/params 保留 undefined 占位并透传 options', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateApi: true,
+      generateTypes: true,
+      typesFormat: 'typescript',
+      requestMethodStyle: 'method-specific' as any,
+    };
+    const data = makeProcessedDataWithPathOnly();
+    await generateInterfaceFileForTag(
+      'file',
+      data.interfaces,
+      data,
+      config,
+      join(config.outputDir, 'file'),
+    );
+
+    expect(captured.content).toMatch(/\.post<[^>]+>\([^,]+, undefined, undefined, options\)/);
+  });
+
+  it('JavaScript raw binary 应生成无类型 options 并保留二进制 data', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      target: 'javascript' as any,
+      generateApi: true,
+      generateTypes: false,
+      typesFormat: 'typescript',
+    };
+    const data = makeProcessedDataWithRawBinaryChunk();
+    await generateInterfaceFileForTag(
+      'file',
+      data.interfaces,
+      data,
+      config,
+      join(config.outputDir, 'file'),
+    );
+
+    expect(captured.content).toMatch(/params,\s+options = \{\}/);
+    expect(captured.content).toContain('data: body.data');
+    expect(captured.content).toContain("'Content-Type': 'application/octet-stream'");
+    expect(captured.content).not.toContain('options:');
   });
 });

@@ -5,7 +5,13 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { getRequestBodySchema, getRequestContentType, isFormDataRequest } from '../operation';
+import {
+  getRequestBodyKind,
+  getRequestBodySchema,
+  getRequestContentType,
+  isBinaryRequestBody,
+  isFormDataRequest,
+} from '../operation';
 import type { OpenApiOperation } from '@/types';
 
 // ==================== 测试数据工厂 ====================
@@ -31,6 +37,11 @@ const jsonFirstWithMultipart = makeOperation({
 /** 仅 application/json */
 const jsonOnly = makeOperation({
   'application/json': { schema: { type: 'object' } },
+});
+
+/** application/octet-stream 原始二进制请求体 */
+const binaryBody = makeOperation({
+  'application/octet-stream': { schema: { type: 'string', format: 'binary' } },
 });
 
 // ==================== getRequestContentType ====================
@@ -70,6 +81,30 @@ describe('isFormDataRequest', () => {
 
   it('无 requestBody 时应返回 false', () => {
     expect(isFormDataRequest(makeOperation())).toBe(false);
+  });
+});
+
+// ==================== binary request body ====================
+
+describe('binary request body', () => {
+  it('application/octet-stream + format binary 应识别为 binary body', () => {
+    expect(getRequestBodyKind(binaryBody)).toBe('binary');
+    expect(isBinaryRequestBody(binaryBody)).toBe(true);
+  });
+
+  it('multipart 优先级应高于其他 content-type', () => {
+    const operation = makeOperation({
+      'application/octet-stream': { schema: { type: 'string', format: 'binary' } },
+      'multipart/form-data': { schema: { type: 'object' } },
+    });
+
+    expect(getRequestBodyKind(operation)).toBe('multipart');
+    expect(isBinaryRequestBody(operation)).toBe(false);
+  });
+
+  it('无 requestBody 时应识别为 none', () => {
+    expect(getRequestBodyKind(makeOperation())).toBe('none');
+    expect(isBinaryRequestBody(makeOperation())).toBe(false);
   });
 });
 

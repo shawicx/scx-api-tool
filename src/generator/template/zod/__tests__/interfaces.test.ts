@@ -81,6 +81,58 @@ describe('zod/interfaces', () => {
     });
   });
 
+  describe('generateZodSchemaFromOperation - binary request bodies', () => {
+    it('raw binary body 应与 path/query 合并并生成 z.instanceof(Blob)', () => {
+      const operation: OpenApiOperation = {
+        requestBody: {
+          required: true,
+          content: {
+            'application/octet-stream': { schema: { type: 'string', format: 'binary' } },
+          },
+        },
+        parameters: [
+          { name: 'uploadId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'partNumber', in: 'path', required: true, schema: { type: 'integer' } },
+          { name: 'md5', in: 'query', required: false, schema: { type: 'string' } },
+        ],
+      };
+      const processedData = { interfaces: [], types: [], categories: [] } as any;
+
+      const result = (generateZodSchemaFromOperation as any)(operation, 'request', processedData);
+
+      expect(result.code).toContain('uploadId: z.string(),');
+      expect(result.code).toContain('partNumber: z.number(),');
+      expect(result.code).toContain('md5: z.string().optional()');
+      expect(result.code).toContain('data: z.instanceof(Blob)');
+      expect(result.imports).toEqual([]);
+    });
+
+    it('multipart binary 字段应生成 z.instanceof(File)', () => {
+      const operation: OpenApiOperation = {
+        requestBody: {
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                properties: { file: { type: 'string', format: 'binary' } },
+                required: ['file'],
+              },
+            },
+          },
+        },
+        parameters: [
+          { name: 'overwrite', in: 'query', required: false, schema: { type: 'boolean' } },
+        ],
+      };
+      const processedData = { interfaces: [], types: [], categories: [] } as any;
+
+      const result = (generateZodSchemaFromOperation as any)(operation, 'request', processedData);
+
+      expect(result.code).toContain('file: z.instanceof(File)');
+      expect(result.code).toContain('overwrite: z.boolean().optional()');
+    });
+  });
+
   describe('generateZodSchemaFromOperation - response', () => {
     it('response 200 为 $ref 应返回 {Name}Schema', () => {
       const operation: OpenApiOperation = {

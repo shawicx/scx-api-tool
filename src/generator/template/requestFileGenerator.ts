@@ -14,13 +14,16 @@ import { generatePrecompiledMethodMap } from './templateDefinitions';
 function generateNoBodyMethod(method: string, requestFunctionName: string, isJS: boolean): string {
   const methodUpper = method.toUpperCase();
   const tsGeneric = isJS ? '' : '<T = any>';
-  const tsParams = isJS ? '(url, params)' : '(url: string, params?: any)';
+  const tsParams = isJS ? 'url, params' : 'url: string, params?: any';
+  const optionsParam = isJS
+    ? 'options = {}'
+    : "options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}";
   const tsConfigType = isJS ? 'config' : 'config: RequestConfig';
   const tsReturn = isJS ? '' : '<T>';
 
-  return `  ${method}: ${tsGeneric}${tsParams} => {
-    const ${tsConfigType} = { url, method: '${methodUpper}' };
-    if (params) {
+  return `  ${method}: ${tsGeneric}(${tsParams}, ${optionsParam}) => {
+    const ${tsConfigType} = { ...options, url, method: '${methodUpper}' };
+    if (params !== undefined) {
       config.params = params;
     }
     return ${requestFunctionName}${tsReturn}(config);
@@ -33,16 +36,19 @@ function generateNoBodyMethod(method: string, requestFunctionName: string, isJS:
 function generateBodyMethod(method: string, requestFunctionName: string, isJS: boolean): string {
   const methodUpper = method.toUpperCase();
   const tsGeneric = isJS ? '' : '<T = any>';
-  const tsParams = isJS ? '(url, data, params)' : '(url: string, data?: any, params?: any)';
+  const tsParams = isJS ? 'url, data, params' : 'url: string, data?: any, params?: any';
+  const optionsParam = isJS
+    ? 'options = {}'
+    : "options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}";
   const tsConfigType = isJS ? 'config' : 'config: RequestConfig';
   const tsReturn = isJS ? '' : '<T>';
 
-  return `  ${method}: ${tsGeneric}${tsParams} => {
-    const ${tsConfigType} = { url, method: '${methodUpper}' };
-    if (data) {
+  return `  ${method}: ${tsGeneric}(${tsParams}, ${optionsParam}) => {
+    const ${tsConfigType} = { ...options, url, method: '${methodUpper}' };
+    if (data !== undefined) {
       config.data = data;
     }
-    if (params) {
+    if (params !== undefined) {
       config.params = params;
     }
     return ${requestFunctionName}${tsReturn}(config);
@@ -74,18 +80,20 @@ import consola from 'consola';`;
   method: string;
 }`;
 
-  const constants = `// 用于转发请求的代理地址
-const BASE_LINE_PROXY_PATH = '/api';
+  const uploadDataExpression = isJS
+    ? 'const isUploadData = (data) =>\n  data instanceof FormData || data instanceof Blob;'
+    : 'const isUploadData = (data: unknown): boolean =>\n  data instanceof FormData || data instanceof Blob;';
 
-// 超时时间
-const TIMEOUT = 5 * 1000;`;
+  const constants = `// 超时时间
+const TIMEOUT = 5 * 1000;
+
+${uploadDataExpression}`;
 
   const mainRequestFunction = `export async function ${requestFunctionName}${genericDecl}(${configType})${returnType} {
   try {
     const response = await axios({
       ...config,
-      baseURL: BASE_LINE_PROXY_PATH,
-      timeout: TIMEOUT,
+      timeout: config.timeout ?? (isUploadData(config.data) ? 0 : TIMEOUT),
     });
 
     return response.data;

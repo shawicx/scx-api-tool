@@ -11,7 +11,25 @@ import { sanitizePropertyName, sanitizeTypeName } from '@/naming';
 import { escapeJsDocComment } from '@/utils/escape';
 import { resolveComposedSchema } from '@/utils/refResolver';
 import { getPropertyType } from './propertyType';
-import { getRequestBodySchema } from '@/schema/operation';
+import {
+  getRequestBodyKind,
+  getRequestBodySchema,
+  getRequestContentType,
+  type RequestBodyKind,
+} from '@/schema/operation';
+
+const RAW_BODY_PROPERTY_CANDIDATES = ['data', 'body', 'requestBody'] as const;
+
+/**
+ * @description 请求体提取结果
+ * 除属性列表外，保留 content-type 分类与 raw body 字段名，供模板层生成请求配置
+ */
+interface RequestBodyInfo {
+  properties: ApiProperty[];
+  kind: RequestBodyKind;
+  contentType: string | null;
+  rawBodyPropertyName?: string;
+}
 
 /**
  * @description 提取请求体属性（$ref 展开 / 内联 / allOf 展平）
@@ -22,10 +40,40 @@ import { getRequestBodySchema } from '@/schema/operation';
 function extractBodyProperties(
   operation: OpenApiOperation,
   processedData: ProcessedApiData,
-): ApiProperty[] {
+  reservedNames: ReadonlySet<string> = new Set(),
+  includeSchema = false,
+): RequestBodyInfo {
+  const kind = getRequestBodyKind(operation);
+  const contentType = getRequestContentType(operation);
   const properties: ApiProperty[] = [];
   const requestBodySchema = getRequestBodySchema(operation);
-  if (!requestBodySchema) return properties;
+  if (!requestBodySchema) {
+    return { properties, kind, contentType };
+  }
+
+  if (kind === 'binary') {
+    const rawBodyPropertyName = RAW_BODY_PROPERTY_CANDIDATES.find(
+      (candidate) => !reservedNames.has(candidate),
+    );
+    if (!rawBodyPropertyName) {
+      throw new Error('无法为原始二进制请求体生成不冲突的字段名');
+    }
+
+    return {
+      properties: [
+        {
+          name: rawBodyPropertyName,
+          type: 'Blob',
+          ...(includeSchema ? { schema: requestBodySchema.schema } : {}),
+          description: '原始二进制请求体',
+          required: true,
+        },
+      ],
+      kind,
+      contentType,
+      rawBodyPropertyName,
+    };
+  }
 
   const { schema } = requestBodySchema;
   // allOf 展平（顶层合并）
@@ -39,6 +87,7 @@ function extractBodyProperties(
         properties.push({
           name: sanitizePropertyName(name),
           type: getPropertyType(property),
+          ...(includeSchema ? { schema: property } : {}),
           description: escapeJsDocComment(property.description || ''),
           required: refSchema.required?.includes(name) || false,
         });
@@ -49,12 +98,13 @@ function extractBodyProperties(
       properties.push({
         name: sanitizePropertyName(name),
         type: getPropertyType(property),
+        ...(includeSchema ? { schema: property } : {}),
         description: escapeJsDocComment(property.description || ''),
         required: resolved.required?.includes(name) || false,
       });
     }
   }
-  return properties;
+  return { properties, kind, contentType };
 }
 
 /**
@@ -70,6 +120,7 @@ function extractBodyProperties(
 function resolveParameterProperties(
   param: OpenApiParameter,
   processedData: ProcessedApiData,
+  includeSchema = false,
 ): ApiProperty[] {
   if (param.schema?.$ref) {
     const refName = sanitizeTypeName(param.schema.$ref.split('/').pop()!);
@@ -78,6 +129,7 @@ function resolveParameterProperties(
       return Object.entries(refSchema.properties).map(([name, property]) => ({
         name: sanitizePropertyName(name),
         type: getPropertyType(property),
+        ...(includeSchema ? { schema: property } : {}),
         description: escapeJsDocComment(property.description || ''),
         required: refSchema.required?.includes(name) || false,
       }));
@@ -89,6 +141,7 @@ function resolveParameterProperties(
       type: param.schema
         ? getPropertyType(param.schema)
         : getPropertyType({ type: param.type || 'string' }),
+      ...(includeSchema ? { schema: param.schema ?? { type: param.type || 'string' } } : {}),
       description: escapeJsDocComment(param.description || ''),
       required: !!param.required,
     },
@@ -106,6 +159,12 @@ export interface RequestParameterGroups {
   queryProperties: ApiProperty[];
   /** path 参数（已被 URL 插值消费） */
   pathProperties: ApiProperty[];
+  /** 请求体分类 */
+  requestBodyKind: RequestBodyKind;
+  /** 请求体 content-type */
+  requestContentType: string | null;
+  /** 原始二进制请求体字段名 */
+  rawBodyPropertyName?: string;
 }
 
 /**
@@ -125,22 +184,39 @@ export interface RequestParameterGroups {
 export function extractRequestParameterGroups(
   operation: OpenApiOperation,
   processedData: ProcessedApiData,
+  includeSchema = false,
 ): RequestParameterGroups {
-  const groups: RequestParameterGroups = {
-    bodyProperties: extractBodyProperties(operation, processedData),
-    queryProperties: [],
-    pathProperties: [],
-  };
+  const queryProperties: ApiProperty[] = [];
+  const pathProperties: ApiProperty[] = [];
+
   if (operation.parameters && Array.isArray(operation.parameters)) {
     for (const param of operation.parameters) {
-      const resolved = resolveParameterProperties(param, processedData);
+      const resolved = resolveParameterProperties(param, processedData, includeSchema);
       if (param.in === 'path') {
-        groups.pathProperties.push(...resolved);
+        pathProperties.push(...resolved);
       } else {
-        groups.queryProperties.push(...resolved);
+        queryProperties.push(...resolved);
       }
     }
   }
+
+  const reservedNames = new Set(
+    [...queryProperties, ...pathProperties].map((property) => property.name),
+  );
+  const requestBody = extractBodyProperties(operation, processedData, reservedNames, includeSchema);
+
+  const groups: RequestParameterGroups = {
+    bodyProperties: requestBody.properties,
+    queryProperties: [],
+    pathProperties,
+    requestBodyKind: requestBody.kind,
+    requestContentType: requestBody.contentType,
+    ...(requestBody.rawBodyPropertyName
+      ? { rawBodyPropertyName: requestBody.rawBodyPropertyName }
+      : {}),
+  };
+
+  groups.queryProperties.push(...queryProperties);
   return groups;
 }
 
@@ -165,11 +241,10 @@ export function extractRequestProperties(
   operation: OpenApiOperation,
   processedData: ProcessedApiData,
 ): ApiProperty[] {
-  const properties = extractBodyProperties(operation, processedData);
-  if (operation.parameters && Array.isArray(operation.parameters)) {
-    for (const param of operation.parameters) {
-      properties.push(...resolveParameterProperties(param, processedData));
-    }
+  const groups = extractRequestParameterGroups(operation, processedData);
+  if (groups.requestBodyKind === 'binary') {
+    return [...groups.pathProperties, ...groups.queryProperties, ...groups.bodyProperties];
   }
-  return properties;
+
+  return [...groups.bodyProperties, ...groups.queryProperties, ...groups.pathProperties];
 }

@@ -250,8 +250,8 @@ describe('generateRequestFile', () => {
       const result = generateRequestFile(config);
 
       // In JS mode, params use plain identifiers without types
-      expect(result).toMatch(/get:\s*\(url,\s*params\)/);
-      expect(result).toMatch(/post:\s*\(url,\s*data,\s*params\)/);
+      expect(result).toMatch(/get:\s*\(url,\s*params,\s*options = \{\}\)/);
+      expect(result).toMatch(/post:\s*\(url,\s*data,\s*params,\s*options = \{\}\)/);
     });
 
     it('should NOT include METHOD_MAP for JavaScript', () => {
@@ -302,7 +302,7 @@ describe('generateRequestFile', () => {
       expect(result).toContain("import consola from 'consola'");
     });
 
-    it('should always include BASE_LINE_PROXY_PATH and TIMEOUT constants', () => {
+    it('should always include TIMEOUT constants', () => {
       const config: ApiConfig = {
         ...minimalApiConfig,
         target: 'typescript',
@@ -310,10 +310,70 @@ describe('generateRequestFile', () => {
       };
 
       const result = generateRequestFile(config);
-      expect(result).toContain('BASE_LINE_PROXY_PATH');
-      expect(result).toContain("'/api'");
       expect(result).toContain('TIMEOUT');
       expect(result).toContain('5 * 1000');
+    });
+
+    it('should not hardcode axios baseURL', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        requestMethodStyle: RequestMethodStyle.CONFIG,
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).not.toContain('BASE_LINE_PROXY_PATH');
+      expect(result).not.toContain("baseURL: '/api'");
+      expect(result).not.toMatch(/baseURL:\s*BASE_LINE_PROXY_PATH/);
+    });
+
+    it('should preserve caller config and disable default timeout for upload bodies', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        requestMethodStyle: RequestMethodStyle.CONFIG,
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).toContain('const isUploadData =');
+      expect(result).toContain('data instanceof FormData || data instanceof Blob');
+      expect(result).toContain(
+        'timeout: config.timeout ?? (isUploadData(config.data) ? 0 : TIMEOUT)',
+      );
+      expect(result).toContain('...config');
+      expect(result).not.toContain('config.signal =');
+    });
+
+    it('method-specific wrappers should accept options and preserve undefined data/params', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        requestMethodStyle: RequestMethodStyle.METHOD_SPECIFIC,
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).toContain('options: Omit<RequestConfig,');
+      expect(result).toContain('if (data !== undefined)');
+      expect(result).toContain('if (params !== undefined)');
+      expect(result).toContain('...options');
+    });
+
+    it('JavaScript request file should not contain TypeScript annotations', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'javascript',
+        requestMethodStyle: RequestMethodStyle.METHOD_SPECIFIC,
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).toContain('const isUploadData = (data) =>');
+      expect(result).not.toContain('data: unknown');
+      expect(result).toContain('options = {}');
+      expect(result).not.toContain('options: Omit');
     });
   });
 

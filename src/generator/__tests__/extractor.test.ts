@@ -1172,4 +1172,55 @@ describe('extractRequestParameterGroups - body/query/path 分组', () => {
 
     expect(groups.queryProperties.map((p) => p.name)).toEqual(['page', 'userId']);
   });
+
+  it('application/octet-stream 请求体应生成必填 data: Blob 字段', () => {
+    const processedData = createProcessedApiData();
+    const operation: OpenApiOperation = {
+      requestBody: {
+        content: {
+          'application/octet-stream': { schema: { type: 'string', format: 'binary' } },
+        },
+        required: true,
+      },
+      parameters: [
+        { name: 'uploadId', in: 'path', required: true, schema: { type: 'string' } },
+        { name: 'partNumber', in: 'path', required: true, schema: { type: 'integer' } },
+        { name: 'md5', in: 'query', required: false, schema: { type: 'string' } },
+      ],
+    };
+
+    const groups = extractRequestParameterGroups(operation, processedData);
+
+    expect(groups.requestBodyKind).toBe('binary');
+    expect(groups.rawBodyPropertyName).toBe('data');
+    expect(groups.bodyProperties).toEqual([
+      expect.objectContaining({
+        name: 'data',
+        type: 'Blob',
+        required: true,
+      }),
+    ]);
+    expect(groups.pathProperties.map((p) => p.name)).toEqual(['uploadId', 'partNumber']);
+    expect(groups.queryProperties.map((p) => p.name)).toEqual(['md5']);
+  });
+
+  it('raw body 字段名冲突时应按 data/body/requestBody 顺序回退', () => {
+    const processedData = createProcessedApiData();
+    const operation: OpenApiOperation = {
+      requestBody: {
+        content: {
+          'application/octet-stream': { schema: { type: 'string', format: 'binary' } },
+        },
+      },
+      parameters: [
+        { name: 'data', in: 'query', required: true, schema: { type: 'string' } },
+        { name: 'body', in: 'query', required: true, schema: { type: 'string' } },
+      ],
+    };
+
+    const groups = extractRequestParameterGroups(operation, processedData);
+
+    expect(groups.rawBodyPropertyName).toBe('requestBody');
+    expect(groups.bodyProperties[0].name).toBe('requestBody');
+  });
 });

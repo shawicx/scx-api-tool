@@ -143,6 +143,7 @@ async function generateInterfaceSchemasFiles(
 
       const result = generateMergedSchemaFile(
         interfaces,
+        processedData,
         config,
         getRequestTypeName,
         getResponseTypeName,

@@ -3,12 +3,6 @@
  * 提供所有 Handlebars 模板的纯字符串定义
  */
 
-import { getFormDataInlineExpression } from './formDataBody';
-
-/** FormData 内联序列化表达式（config 风格模板的 data: 赋值共用，防漂移；
- *  使用 requestBodyVarName：body+query 拆分时为解构 rest 变量，否则等于 requestParamName） */
-const FORM_DATA_INLINE = getFormDataInlineExpression('{{requestBodyVarName}}');
-
 /**
  * @description 预编译方法映射 - 性能优化
  * 生成 METHOD_MAP 常量，避免运行时字符串操作
@@ -67,7 +61,10 @@ export interface {{responseTypeName}} {
  * @param {{requestParamName}} {{requestTypeName}}
  * @returns Promise<{{responseTypeName}}>
  */
-export async function {{functionName}}({{requestParamName}}: {{requestTypeName}}): Promise<{{responseTypeName}}> {
+export async function {{functionName}}(
+   {{requestParamName}}: {{requestTypeName}},
+   {{{requestOptionsParam}}}
+): Promise<{{responseTypeName}}> {
    {{> functionBody}}
 }
 `;
@@ -91,7 +88,10 @@ export interface {{responseTypeName}} {
  {{/if}}
 }
 
-export async function {{functionName}}({{requestParamName}}: {{requestTypeName}}): Promise<{{responseTypeName}}> {
+export async function {{functionName}}(
+   {{requestParamName}}: {{requestTypeName}},
+   {{{requestOptionsParam}}}
+): Promise<{{responseTypeName}}> {
    {{> functionBody}}
 }
 `;
@@ -107,27 +107,10 @@ export function getApiOnlyTemplateWithComment(): string {
  * @returns Promise<{{responseTypeName}}>
  */
 export async function {{functionName}}(
-   {{requestParamName}}
+   {{requestParamName}},
+   {{{requestOptionsParam}}}
 ) {
-{{#if hasQueryParams}}
- const { {{{queryParamsList}}}, ...{{requestBodyVarName}} } = {{requestParamName}};
-{{/if}}
-   const config = {
-     url: {{{path}}},
-     method: '{{method}}',
- {{#if hasParameters}}
- {{#if hasBody}}
- {{#if isFormData}}
-     data: ${FORM_DATA_INLINE},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
- {{else}}
-     data: {{requestBodyVarName}},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
- {{/if}}
- {{else}}
-     {{requestParamName}},
- {{/if}}
- {{/if}}
-   };
-   return {{requestFunctionName}}(config);
+   {{> functionBody}}
 }
 `;
 }
@@ -135,27 +118,10 @@ export async function {{functionName}}(
 /** API Only 模式的接口模板 - 不带注释 */
 export function getApiOnlyTemplateWithoutComment(): string {
   return `export async function {{functionName}}(
-   {{requestParamName}}
+   {{requestParamName}},
+   {{{requestOptionsParam}}}
 ) {
-{{#if hasQueryParams}}
- const { {{{queryParamsList}}}, ...{{requestBodyVarName}} } = {{requestParamName}};
-{{/if}}
-   const config = {
-     url: {{{path}}},
-     method: '{{method}}',
- {{#if hasParameters}}
- {{#if hasBody}}
- {{#if isFormData}}
-     data: ${FORM_DATA_INLINE},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
- {{else}}
-     data: {{requestBodyVarName}},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
- {{/if}}
- {{else}}
-     {{requestParamName}},
- {{/if}}
- {{/if}}
-   };
-   return {{requestFunctionName}}(config);
+   {{> functionBody}}
 }
 `;
 }
@@ -170,27 +136,10 @@ export function getZodInterfaceTemplateWithComment(): string {
  * @returns Promise<{{responseTypeName}}>
  */
 export async function {{functionName}}(
-   {{requestParamName}}: {{requestTypeName}}
+   {{requestParamName}}: {{requestTypeName}},
+   {{{requestOptionsParam}}}
 ): Promise<{{responseTypeName}}> {
-{{#if hasQueryParams}}
- const { {{{queryParamsList}}}, ...{{requestBodyVarName}} } = {{requestParamName}};
-{{/if}}
-   const config = {
-     url: {{{path}}},
-     method: '{{method}}',
- {{#if hasParameters}}
- {{#if hasBody}}
- {{#if isFormData}}
-     data: ${FORM_DATA_INLINE},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
- {{else}}
-     data: {{requestBodyVarName}},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
- {{/if}}
- {{else}}
-     params: {{requestParamName}},
- {{/if}}
- {{/if}}
-   };
-   return {{requestFunctionName}}(config);
+   {{> functionBody}}
 }
 `;
 }
@@ -198,27 +147,10 @@ export async function {{functionName}}(
 /** Zod 接口模板 - 不带注释 */
 export function getZodInterfaceTemplateWithoutComment(): string {
   return `export async function {{functionName}}(
-   {{requestParamName}}: {{requestTypeName}}
+   {{requestParamName}}: {{requestTypeName}},
+   {{{requestOptionsParam}}}
 ): Promise<{{responseTypeName}}> {
-{{#if hasQueryParams}}
- const { {{{queryParamsList}}}, ...{{requestBodyVarName}} } = {{requestParamName}};
-{{/if}}
-   const config = {
-     url: {{{path}}},
-     method: '{{method}}',
- {{#if hasParameters}}
- {{#if hasBody}}
- {{#if isFormData}}
-     data: ${FORM_DATA_INLINE},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
- {{else}}
-     data: {{requestBodyVarName}},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
- {{/if}}
- {{else}}
-     params: {{requestParamName}},
- {{/if}}
- {{/if}}
-   };
-   return {{requestFunctionName}}(config);
+   {{> functionBody}}
 }
 `;
 }
@@ -231,27 +163,10 @@ export function getZodApiOnlyTemplateWithComment(): string {
  * @returns Promise<{{responseTypeName}}>
  */
 export async function {{functionName}}(
-   {{requestParamName}}
+   {{requestParamName}},
+   {{{requestOptionsParam}}}
 ) {
-{{#if hasQueryParams}}
- const { {{{queryParamsList}}}, ...{{requestBodyVarName}} } = {{requestParamName}};
-{{/if}}
-   const config = {
-     url: {{{path}}},
-     method: '{{method}}',
- {{#if hasParameters}}
- {{#if hasBody}}
- {{#if isFormData}}
-     data: ${FORM_DATA_INLINE},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
- {{else}}
-     data: {{requestBodyVarName}},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
- {{/if}}
- {{else}}
-     params: {{requestParamName}},
- {{/if}}
- {{/if}}
-   };
-   return {{requestFunctionName}}(config);
+   {{> functionBody}}
 }
 `;
 }
@@ -259,27 +174,10 @@ export async function {{functionName}}(
 /** Zod ApiOnly 模式的接口模板 - 不带注释 */
 export function getZodApiOnlyTemplateWithoutComment(): string {
   return `export async function {{functionName}}(
-   {{requestParamName}}
+   {{requestParamName}},
+   {{{requestOptionsParam}}}
 ) {
-{{#if hasQueryParams}}
- const { {{{queryParamsList}}}, ...{{requestBodyVarName}} } = {{requestParamName}};
-{{/if}}
-   const config = {
-     url: {{{path}}},
-     method: '{{method}}',
- {{#if hasParameters}}
- {{#if hasBody}}
- {{#if isFormData}}
-     data: ${FORM_DATA_INLINE},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
- {{else}}
-     data: {{requestBodyVarName}},{{#if hasQueryParams}} params: { {{{queryParamsList}}} },{{/if}}
- {{/if}}
- {{else}}
-     params: {{requestParamName}},
- {{/if}}
- {{/if}}
-   };
-   return {{requestFunctionName}}(config);
+   {{> functionBody}}
 }
 `;
 }

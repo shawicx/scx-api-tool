@@ -10,6 +10,9 @@
 
 import type { OpenApiOperation, OpenApiSchema } from '@/types';
 
+/** 请求体分类：none / json / multipart / binary */
+export type RequestBodyKind = 'none' | 'json' | 'multipart' | 'binary';
+
 /**
  * @description 获取请求体的 schema
  * 按优先级查找 content-type：multipart/form-data → application/json → 其他
@@ -112,6 +115,33 @@ export function getRequestContentType(operation: OpenApiOperation): string | nul
  */
 export function isFormDataRequest(operation: OpenApiOperation): boolean {
   return getRequestContentType(operation) === 'multipart/form-data';
+}
+
+/**
+ * @description 判断请求体是否为 OpenAPI 原始二进制请求体
+ * 仅支持 application/octet-stream + string/binary 组合，其他内容类型保持既有兜底行为
+ * @param operation OpenAPI 操作对象
+ * @returns 是否为原始二进制请求体
+ */
+export function isBinaryRequestBody(operation: OpenApiOperation): boolean {
+  if (getRequestContentType(operation) !== 'application/octet-stream') return false;
+
+  const schema = getRequestBodySchema(operation)?.schema;
+  return schema?.type === 'string' && schema?.format === 'binary';
+}
+
+/**
+ * @description 获取请求体分类
+ * multipart 优先级保持与 schema 提取一致；未知 content-type 归入 json 以保持既有兜底行为
+ * @param operation OpenAPI 操作对象
+ * @returns 请求体分类
+ */
+export function getRequestBodyKind(operation: OpenApiOperation): RequestBodyKind {
+  const contentType = getRequestContentType(operation);
+  if (!contentType) return 'none';
+  if (contentType === 'multipart/form-data') return 'multipart';
+  if (isBinaryRequestBody(operation)) return 'binary';
+  return 'json';
 }
 
 /**

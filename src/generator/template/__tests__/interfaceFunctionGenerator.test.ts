@@ -42,6 +42,16 @@ const minimalInterfaceData: InterfaceTemplateData = {
   requestFunctionName: 'request',
   requestMethodsObjectName: 'requestMethods',
   requestParamName: 'params',
+  requestOptionsParam: "options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}",
+  destructureStatement: '',
+  methodOptionsStatement: '',
+  dataExpression: 'undefined',
+  paramsExpression: 'undefined',
+  methodOptionsExpression: 'options',
+  methodCallExpression:
+    "requestMethods.get<GetUserResponse>('/api/users/{id}', undefined, options)",
+  requestConfigFields: '',
+  configDeclaration: 'const config: RequestConfig = {',
 };
 
 describe('generateInterfaceFunction', () => {
@@ -308,6 +318,8 @@ describe('generateInterfaceFunction', () => {
       const data: InterfaceTemplateData = {
         ...minimalInterfaceData,
         path: interpolated.value,
+        methodCallExpression:
+          'requestMethods.get<GetUserResponse>(`/api/users/${params.id}`, undefined, options)',
       };
 
       const result = generateInterfaceFunction(data, config);
@@ -330,6 +342,8 @@ describe('generateInterfaceFunction', () => {
       const data: InterfaceTemplateData = {
         ...minimalInterfaceData,
         path: interpolated.value,
+        methodCallExpression:
+          'requestMethods.get<GetUserResponse>(`/api/users/${params.id}`, undefined, options)',
       };
 
       const result = generateInterfaceFunction(data, config);
@@ -399,6 +413,8 @@ describe('generateInterfaceFunction', () => {
       const data: InterfaceTemplateData = {
         ...minimalInterfaceData,
         path: interpolated.value,
+        methodCallExpression:
+          'requestMethods.get<GetUserResponse>(`/api/users/${params.id}`, undefined, options)',
       };
 
       const result = generateInterfaceFunction(data, config);

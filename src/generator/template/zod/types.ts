@@ -386,7 +386,10 @@ export function openApiPropertyToZodType(
     const enumValues = property.enum.map((v) => `'${escapeStringLiteral(v)}'`);
     result = { type: `z.union([${enumValues.join(', ')}])`, imports: [] };
   } else {
-    result = composeBasic(property);
+    result =
+      property.type === 'string' && property.format === 'binary'
+        ? { type: 'z.instanceof(File)', imports: [] }
+        : composeBasic(property);
   }
 
   // nullable 包装（兼容 3.0 的 nullable 与 3.1 的 type 数组）

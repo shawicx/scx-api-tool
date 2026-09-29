@@ -54,6 +54,7 @@ generateCode(configPath)                          src/generator/index.ts
 | `templatePartials.ts`                                | 自定义分部模板                                                        |
 | `templateDefinitions.ts`                             | 模板字符串定义                                                        |
 | `formDataBody.ts`                                    | FormData 请求体序列化片段（config 内联/method-specific 两种风格共用） |
+| `requestBinding.ts`                                  | 请求函数的 path/query/body 绑定与 options 透传片段生成                |
 | `interfaceFunctionGenerator.ts`                      | 接口函数代码生成                                                      |
 | `requestFileGenerator.ts`                            | `request.ts` 文件生成                                                 |
 | `jsonValueTemplates.ts`                              | JsonValue 递归类型模板                                                |
@@ -74,23 +75,27 @@ generateCode(configPath)                          src/generator/index.ts
 
 类型文件（typeGenerator）的依赖 import **按依赖逐条指向具体类型文件**（`@/.../types/UserPreferences` 或相对路径 `./UserPreferences`），而非自身所属的桶文件 `types/index.ts`，消除「类型文件 ← 桶 ← 类型文件」的 type-only 循环引用。类型名→文件名的映射规则由 `getTypeFileName()` 统一提供（类型文件、桶索引、依赖 import 三处共用）。递归自引用（如树形 `children: Self[]`）会跳过自身 import，避免与自身声明冲突（TS2300）。可用 `api-power verify` 对产物做类型检查兜底。
 
-### 请求参数的 body/query 拆分与 @ParameterObject 展开（requestParameters.ts）
+### 请求参数的 path/query/body 拆分与 @ParameterObject 展开（requestParameters.ts / requestBinding.ts）
 
 请求参数按 OpenAPI 声明分组（`extractRequestParameterGroups`）：body 来自 requestBody schema、query/path 按参数 `in` 划分（header/cookie 归入 query 组保持既有行为）。参数写法兼容三种：`param.schema.$ref` 指向 DTO（Spring `@ParameterObject` 风格）时展开为独立参数、`param.schema` 为具体 schema 时按 getPropertyType 取类型、旧式 `param.type` 回退基础类型映射——因此数据源可直连 springdoc（`/v3/api-docs`）。
 
-当 **body 与 query 并存**时，模板生成静态解构拆分（仅此场景，纯 body / 纯 query 行为不变）：
+生成请求时严格按来源消费参数：path 只进入 URL 插值，query 只进入 Axios `params`，body 只进入 Axios `data`。当 body 与 path/query 并存时，模板先解构非 body 参数，再用 rest 变量作为 JSON/multipart body：
 
 ```ts
-const { page, limit, ...body } = params; // query 键逐个解构，rest 为 body
+const { userId, page, limit, ...body } = params; // path/query 键逐个解构，rest 为 body
 const config: RequestConfig = {
-  url: '/api/users/search',
+  url: `/api/users/${userId}/search`,
   method: 'POST',
   data: body, // multipart 时 FormData 只从 body 构造
   params: { page, limit }, // query 走 config.params
 };
 ```
 
-调用方签名不变（仍传单个 `params` 对象）。两个防护：query 参数名为非法标识符（如 `X-Custom`）时用别名绑定（`'X-Custom': X_Custom`）；与 rest 变量 `body` 重名时 rest 改名 `bodyParams`。method-specific 风格下 query 作为第三参数传入 `requestMethods.post(url, body, { page, limit })`。
+调用方仍传单个 `params` 对象，并可额外传可选 `options` 透传 `timeout`、`signal`、`onUploadProgress`、`headers`、`baseURL` 等 Axios 配置。生成的 `url` / `method` / `data` / `params` 最后写入，不可被 `options` 覆盖。两个防护：query 参数名为非法标识符（如 `X-Custom`）时用别名绑定（`'X-Custom': X_Custom`）；与 rest 变量 `body` 重名时 rest 改名 `bodyParams`。method-specific 风格下 query 作为第三参数传入 `requestMethods.post(url, body, { page, limit }, options)`。
+
+`application/octet-stream` 且 schema 为 `{ type: 'string', format: 'binary' }` 的请求体会被识别为 raw binary body，生成必填 `data: Blob` 字段；若与已有参数冲突，字段名按 `data` → `body` → `requestBody` 回退。生成请求会直接把该字段作为 Axios `data`，并固定 `Content-Type: application/octet-stream`。
+
+生成的 `request.ts` 不再硬编码 `baseURL: '/api'`，会保留调用方传入的 `baseURL` 与 `signal`。普通请求默认 5 秒超时；`FormData`/`Blob` 上传默认 `timeout: 0`，调用方显式传入的 `timeout`（包括 `0`）优先。
 
 ### 类型映射与响应兜底（propertyType / extractor）
 

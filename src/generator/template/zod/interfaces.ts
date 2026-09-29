@@ -6,9 +6,12 @@
 import { compileTemplate } from '../index';
 import { sanitizeTypeName, sanitizePropertyName } from '@/naming';
 import { getRequestBodySchema, getResponseSchema } from '@/schema';
+import { getRequestBodyKind } from '@/schema/operation';
+import { extractRequestParameterGroups } from '../../requestParameters';
 import { generateZodSchemaFromOpenApiSchema, openApiPropertyToZodType } from './types';
 import { escapeJsDocComment } from '@/utils/escape';
 import type { ApiConfig, OpenApiOperation, OpenApiSchema } from '@/types';
+import type { ProcessedApiData } from '../../../processors/openapi';
 
 /**
  * @description Zod 接口 Schema 模板 - 带注释
@@ -91,10 +94,15 @@ export interface ZodInterfaceInfo {
 export function generateZodInterfaceSchemaFile(
   interfaceInfo: ZodInterfaceInfo,
   config: ApiConfig,
+  processedData?: ProcessedApiData,
 ): { code: string; imports: string[] } {
   const template = compileTemplate(getZodInterfaceSchemaTemplateByConfig(config.comment !== false));
 
-  const requestResult = generateZodSchemaFromOperation(interfaceInfo.operation, 'request');
+  const requestResult = generateZodSchemaFromOperation(
+    interfaceInfo.operation,
+    'request',
+    processedData,
+  );
 
   const responseResult = generateZodSchemaFromOperation(interfaceInfo.operation, 'response');
 
@@ -130,16 +138,28 @@ export function generateZodInterfaceSchemaFile(
 export function generateZodSchemaFromOperation(
   operation: OpenApiOperation,
   type: 'request' | 'response',
+  processedData?: ProcessedApiData,
 ): { code: string; imports: string[] } {
   let schema: OpenApiSchema | null = null;
   const imports: Set<string> = new Set();
 
   if (type === 'request') {
     const bodySchema = getRequestBodySchema(operation);
+    const nonHeaderParameters = (operation.parameters ?? []).filter(
+      (param) => param.in !== 'header',
+    );
+    if (
+      processedData &&
+      bodySchema &&
+      (getRequestBodyKind(operation) === 'binary' || nonHeaderParameters.length > 0)
+    ) {
+      return generateMergedRequestSchema(operation, processedData);
+    }
+
     if (bodySchema) {
       schema = bodySchema.schema;
     } else if (operation.parameters && operation.parameters.length > 0) {
-      const nonHeaderParams = operation.parameters.filter((param) => param.in !== 'header');
+      const nonHeaderParams = nonHeaderParameters;
 
       if (nonHeaderParams.length > 0) {
         const fields: string[] = [];
@@ -178,4 +198,38 @@ export function generateZodSchemaFromOperation(
   }
 
   return generateZodSchemaFromOpenApiSchema(schema);
+}
+
+/**
+ * @description 合并 body/path/query 字段生成请求 Schema
+ * @param operation OpenAPI 操作对象
+ * @param processedData 处理后的 API 数据
+ * @returns Zod Schema 生成结果
+ */
+function generateMergedRequestSchema(
+  operation: OpenApiOperation,
+  processedData: ProcessedApiData,
+): { code: string; imports: string[] } {
+  const groups = extractRequestParameterGroups(operation, processedData, true);
+  const properties = [
+    ...groups.pathProperties,
+    ...groups.queryProperties,
+    ...groups.bodyProperties,
+  ];
+  const imports = new Set<string>();
+  const fields = properties.map((property) => {
+    const isRawBody =
+      groups.requestBodyKind === 'binary' && groups.rawBodyPropertyName === property.name;
+    const result = isRawBody
+      ? { type: 'z.instanceof(Blob)', imports: [] as string[] }
+      : openApiPropertyToZodType(property.schema ?? { type: 'string' });
+    result.imports.forEach((importName) => imports.add(importName));
+    const optional = property.required ? '' : '.optional()';
+    return `  ${sanitizePropertyName(property.name)}: ${result.type}${optional},`;
+  });
+
+  return {
+    code: `z.object({\n${fields.join('\n')}\n})`,
+    imports: Array.from(imports),
+  };
 }
