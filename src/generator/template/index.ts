@@ -42,7 +42,20 @@ export {
   getReactQueryHookTemplate,
   getReactMutationHookTemplate,
   getReactHookTemplateByKind,
+  getSwrQueryHookTemplate,
+  getSwrMutationHookTemplate,
+  getSwrHookTemplateByKind,
+  getAhooksQueryHookTemplate,
+  getAhooksMutationHookTemplate,
+  getAhooksHookTemplateByKind,
 } from './hookTemplateDefinitions';
+
+export {
+  getHookLibraryAdapter,
+  type HookLibraryAdapter,
+  type HookInterfaceData,
+  type HookImportContext,
+} from './hookLibraryRegistry';
 
 export {
   getJsonValueTemplateWithComment,

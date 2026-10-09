@@ -1,7 +1,7 @@
 /**
- * @description Hook 文件生成器
- * 在已生成的 API 请求函数之上生成 React Query v5 风格的 Hook 包装：
- * GET / HEAD 生成 useQuery hook，POST / PUT / PATCH / DELETE 生成 useMutation hook
+ * @description Hook 文件生成器（库无关）
+ * 在已生成的 API 请求函数之上生成 Hook 包装：GET/HEAD 生成 query hook，
+ * POST/PUT/PATCH/DELETE 生成 mutation hook；具体库语法由 hookLibraryRegistry 的适配器提供
  */
 
 import { join } from 'path';
@@ -12,30 +12,11 @@ import { chineseToPinyinCamelCase } from '../../utils/path';
 import { escapeJsDocComment } from '@/utils/escape';
 import { getNormalizedPathWithAlias } from '@/utils/pathUtils';
 import { applyNamingStrategy, type NamingContext } from '@/naming';
-import { compileTemplate, getReactHookTemplateByKind } from '../template';
+import { getHookLibraryAdapter } from '../template/hookLibraryRegistry';
 import { writeGeneratedFile } from '../fileWriter';
 import { executeWithConcurrency } from '../../utils/concurrency';
 import { getFileExtension } from '../../utils/config';
 import { logger } from '@/utils/logger';
-
-/** 单个接口的 Hook 渲染所需数据（模板数据 + 签名预渲染字符串） */
-interface HookTemplateData {
-  comment: boolean;
-  hookName: string;
-  functionName: string;
-  requestParamName: string;
-  description: string;
-  requestTypeName: string;
-  responseTypeName: string;
-  hasParameters: boolean;
-  /** query hook 专用 */
-  paramsSignature?: string;
-  queryOptionsSignature?: string;
-  queryKeyItems?: string;
-  /** mutation hook 专用 */
-  mutationOptionsSignature?: string;
-  mutationFnSignature?: string;
-}
 
 /**
  * @description 生成所有 Hook 文件
@@ -57,11 +38,10 @@ interface HookTemplateData {
 export async function generateHookFiles(
   processedData: ProcessedApiData,
   config: ApiConfig,
-  hooks?: CliHooks,
+  cliHooks?: CliHooks,
 ): Promise<void> {
-  logger.info(
-    '已启用 Hooks 生成（react-query v5）：请确保项目中已安装 peer dependency "@tanstack/react-query@^5" 并配置了 QueryClientProvider',
-  );
+  const adapter = getHookLibraryAdapter(config.hooksLibrary);
+  logger.info(adapter.peerDependencyHint);
 
   const { outputDir } = config;
   const interfacesByTag = groupInterfacesByTag(processedData.interfaces);
@@ -74,7 +54,7 @@ export async function generateHookFiles(
       const tagDir = chineseToPinyinCamelCase(tag);
       const dirPath = join(outputDir, tagDir);
       await ensureDir(dirPath);
-      await generateHookFileForTag(interfaces, config, dirPath, hooks);
+      await generateHookFileForTag(interfaces, config, adapter, dirPath, cliHooks);
     },
     concurrency,
     '生成 Hooks 文件',
@@ -94,7 +74,7 @@ export async function generateHookFiles(
       join(outputDir, `hooks${ext}`),
       barrelContent,
       config,
-      hooks,
+      cliHooks,
       '创建根 Hooks barrel 文件',
     );
   }
@@ -103,16 +83,17 @@ export async function generateHookFiles(
 /**
  * @description 为指定标签生成 hooks 文件
  * @param interfaces 接口数组
- * @param processedData 处理后的 API 数据
  * @param config API 配置
+ * @param adapter Hook 库适配器
  * @param dirPath 标签目录路径
- * @param hooks 钩子函数
+ * @param cliHooks 钩子函数
  */
 async function generateHookFileForTag(
   interfaces: ApiInterface[],
   config: ApiConfig,
+  adapter: ReturnType<typeof getHookLibraryAdapter>,
   dirPath: string,
-  hooks?: CliHooks,
+  cliHooks?: CliHooks,
 ): Promise<void> {
   const isJS = config.target === 'javascript';
   const ext = getFileExtension(config.target);
@@ -136,21 +117,8 @@ async function generateHookFileForTag(
 
     const isQuery =
       apiInterface.method.toUpperCase() === 'GET' || apiInterface.method.toUpperCase() === 'HEAD';
-    const kind = isQuery ? 'query' : 'mutation';
 
-    const requestTypeName = hasTypeAnnotations ? naming.requestTypeName : 'any';
-    const responseTypeName = hasTypeAnnotations ? naming.responseTypeName : 'any';
-    const hasParameters = !!(
-      apiInterface.operation.parameters || apiInterface.operation.requestBody
-    );
-
-    importedFunctions.add(naming.functionName);
-    if (hasTypeAnnotations) {
-      importedTypes.add(naming.requestTypeName);
-      importedTypes.add(naming.responseTypeName);
-    }
-
-    const templateData: HookTemplateData = {
+    const data = {
       comment: config.comment !== false,
       hookName: naming.hookName,
       functionName: naming.functionName,
@@ -158,93 +126,64 @@ async function generateHookFileForTag(
       description: escapeJsDocComment(
         apiInterface.operation.summary || apiInterface.operation.description || '',
       ),
-      requestTypeName,
-      responseTypeName,
-      hasParameters,
+      requestTypeName: hasTypeAnnotations ? naming.requestTypeName : 'any',
+      responseTypeName: hasTypeAnnotations ? naming.responseTypeName : 'any',
+      hasParameters: !!(apiInterface.operation.parameters || apiInterface.operation.requestBody),
+      hasTypeAnnotations,
+      queryKeyPrefix: config.queryKeyPrefix ?? [],
     };
+
+    importedFunctions.add(naming.functionName);
+    if (hasTypeAnnotations) {
+      importedTypes.add(naming.requestTypeName);
+      importedTypes.add(naming.responseTypeName);
+    }
 
     if (isQuery) {
       usedQuery.add(naming.hookName);
-      templateData.paramsSignature = hasTypeAnnotations
-        ? `${requestParamName}: ${requestTypeName}${hasParameters ? '' : ` = {} as ${requestTypeName}`}`
-        : `${requestParamName}${hasParameters ? '' : ' = {}'}`;
-      templateData.queryOptionsSignature = hasTypeAnnotations
-        ? `options: Omit<UseQueryOptions<${responseTypeName}, Error>, 'queryKey' | 'queryFn'> = {}`
-        : 'options = {}';
-      templateData.queryKeyItems = buildQueryKeyItems(
-        config.queryKeyPrefix,
-        naming.functionName,
-        requestParamName,
-      );
+      combinedCode += `${adapter.renderQuery(data)}\n`;
     } else {
       usedMutation.add(naming.hookName);
-      templateData.mutationOptionsSignature = hasTypeAnnotations
-        ? `options: Omit<UseMutationOptions<${responseTypeName}, Error, ${requestTypeName}, unknown>> = {}`
-        : 'options = {}';
-      templateData.mutationFnSignature = hasTypeAnnotations
-        ? `${requestParamName}: ${requestTypeName}`
-        : requestParamName;
+      combinedCode += `${adapter.renderMutation(data)}\n`;
     }
-
-    const template = getReactHookTemplateByKind(kind);
-    const compiled = compileTemplate(template);
-    combinedCode += `${compiled(templateData)}\n`;
   }
 
-  // 组装 import 段
+  // 组装 import 段：库相关 import + API 函数 import + 类型 import
   combinedCode =
-    buildImportSection(
+    adapter.renderLibraryImports({
       isJS,
-      usedQuery.size > 0,
-      usedMutation.size > 0,
-      importedFunctions,
-      importedTypes,
-      config,
-      dirPath,
-    ) + combinedCode;
+      hasQuery: usedQuery.size > 0,
+      hasMutation: usedMutation.size > 0,
+    }) +
+    buildCommonImports(isJS, importedFunctions, importedTypes, config, dirPath) +
+    combinedCode;
 
   await writeGeneratedFile(
     join(dirPath, `hooks${ext}`),
     combinedCode,
     config,
-    hooks,
+    cliHooks,
     '创建 Hooks 文件',
   );
 }
 
 /**
- * @description 组装 hooks 文件的 import 段
+ * @description 组装库无关的 import 段（API 函数 + 类型模块）
  * @param isJS 是否为 JavaScript 目标
- * @param hasQuery 是否包含 query hook
- * @param hasMutation 是否包含 mutation hook
  * @param importedFunctions 引用的 API 函数名集合
  * @param importedTypes 引用的类型名集合
  * @param config API 配置
  * @param dirPath 标签目录路径
  * @returns import 段代码字符串
  */
-function buildImportSection(
+function buildCommonImports(
   isJS: boolean,
-  hasQuery: boolean,
-  hasMutation: boolean,
   importedFunctions: Set<string>,
   importedTypes: Set<string>,
   config: ApiConfig,
   dirPath: string,
 ): string {
   let imports = '';
-
-  const hookFns: string[] = [];
-  if (hasQuery) hookFns.push('useQuery');
-  if (hasMutation) hookFns.push('useMutation');
-  imports += `import { ${hookFns.join(', ')} } from '@tanstack/react-query';\n`;
-
-  if (!isJS) {
-    const optionTypes: string[] = [];
-    if (hasQuery) optionTypes.push('UseQueryOptions');
-    if (hasMutation) optionTypes.push('UseMutationOptions');
-    imports += `import type { ${optionTypes.join(', ')} } from '@tanstack/react-query';\n`;
-  }
 
   imports += `import { ${Array.from(importedFunctions).join(', ')} } from './index';\n`;
 
@@ -259,31 +198,7 @@ function buildImportSection(
     imports += `import type { ${Array.from(importedTypes).join(', ')} } from '${typeModulePath}';\n`;
   }
 
-  return `${imports}\n`;
-}
-
-/**
- * @description 构建 queryKey 数组项字符串（前缀 + 函数名 + 参数对象）
- * @param prefix 配置的 queryKey 前缀
- * @param functionName API 函数名
- * @param requestParamName 请求参数名
- * @returns 逗号分隔的数组项字符串，如 `'user', 'getUserFunc', params`
- *
- * @example
- * ```typescript
- * buildQueryKeyItems(['user'], 'getUserFunc', 'params');
- * // "'user', 'getUserFunc', params"
- * ```
- */
-function buildQueryKeyItems(
-  prefix: string[] | undefined,
-  functionName: string,
-  requestParamName: string,
-): string {
-  const items = (prefix ?? []).map((p) => `'${p}'`);
-  items.push(`'${functionName}'`);
-  items.push(requestParamName);
-  return items.join(', ');
+  return imports;
 }
 
 /**

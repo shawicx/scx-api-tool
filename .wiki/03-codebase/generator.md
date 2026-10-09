@@ -24,7 +24,7 @@ generateCode(configPath)                          src/generator/index.ts
 4. **类型/Schema 文件**（当 `generateTypes && target !== 'javascript'`）：
    - `typesFormat: 'typescript'` → `generateTypeFiles`
    - `typesFormat: 'zod'` → `generateSchemaFiles`
-5. **Hooks 文件**：`generateHookFiles`（当 `generateApi && generateHooks`）——在 API 函数之上生成 React Query v5 风格的 `useXxx` 包装：GET/HEAD → `useQuery`，POST/PUT/PATCH/DELETE → `useMutation`；每个 tag 目录生成 `hooks.ts` + 根目录 `hooks.ts` barrel。类型链路复用现有 RequestType/ResultType；`target: 'javascript'` 时去除类型注解。用户项目需自行安装 peer dependency `@tanstack/react-query@^5` 并配置 `QueryClientProvider`
+5. **Hooks 文件**：`generateHookFiles`（当 `generateApi && generateHooks`）——在 API 函数之上生成 `useXxx` 包装：GET/HEAD → query hook，POST/PUT/PATCH/DELETE → mutation hook；每个 tag 目录生成 `hooks.ts` + 根目录 `hooks.ts` barrel。库语法由「适配器注册表」提供：`template/hookLibraryRegistry.ts` 定义 `HookLibraryAdapter` 接口，`template/adapters/` 下 react-query（v5 `useQuery`/`useMutation`，queryFn 透传 signal）、swr（v2 `useSWR`/`useSWRMutation`）、ahooks（v3 `useRequest`，mutation 为 manual 模式）各一份实现，按 `hooksLibrary` 配置路由。类型链路复用现有 RequestType/ResultType；`target: 'javascript'` 时去除类型注解；`queryKeyPrefix` 统一为缓存 key 前缀语义（react-query/swr 进 key 数组，ahooks 映射为 `cacheKey`）。用户项目需自行安装对应 peer dependency（react-query 还需配置 `QueryClientProvider`）
 
 ## 目录结构
 
@@ -43,8 +43,10 @@ generateCode(configPath)                          src/generator/index.ts
 | `generators/typeGenerator.ts`         | TypeScript 类型文件（`outputDir/types/`）                                           |
 | `generators/schemaGenerator.ts`       | Zod Schema 文件（`outputDir/schemas/`）                                             |
 | `generators/zodTypesOnlyGenerator.ts` | Zod 仅类型 Schema 生成                                                              |
-| `generators/hookGenerator.ts`         | Hooks 文件（react-query v5 的 useQuery/useMutation 包装，需 `generateHooks: true`） |
-| `template/hookTemplateDefinitions.ts` | Hook 的 Handlebars 模板字符串（query / mutation）                                   |
+| `generators/hookGenerator.ts`         | Hooks 文件（库无关生成器，需 `generateHooks: true`）                                |
+| `template/hookLibraryRegistry.ts`     | Hook 库适配器接口与注册表（react-query / swr / ahooks）                             |
+| `template/adapters/`                  | 各 Hook 库适配器实现（模板选择、签名与 import 拼接）                                |
+| `template/hookTemplateDefinitions.ts` | 三库的 Hook Handlebars 模板字符串（各含 query / mutation）                          |
 | `template/`                           | Handlebars 引擎（见下）                                                             |
 
 ### `template/` 子目录

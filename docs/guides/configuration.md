@@ -112,21 +112,29 @@ export default defineConfig({
 
 ### Hooks 配置（可选）
 
-在生成的 API 请求函数之上额外生成 Hook 包装（React Query v5 风格），**依赖 `generateApi: true`**（否则校验报错 `HOOKS_REQUIRE_API`）。
+在生成的 API 请求函数之上额外生成 Hook 包装，**依赖 `generateApi: true`**（否则校验报错 `HOOKS_REQUIRE_API`）。
 
-| 配置项           | 类型            | 默认值          | 说明                                                                                                       |
-| ---------------- | --------------- | --------------- | ---------------------------------------------------------------------------------------------------------- |
-| `generateHooks`  | `boolean`       | `false`         | 是否生成 Hooks；开启后每个 tag 目录生成 `hooks.ts` + 根目录 `hooks.ts` barrel                              |
-| `hooksLibrary`   | `'react-query'` | `'react-query'` | Hook 依赖的客户端库，当前版本仅支持 `react-query`（`@tanstack/react-query` v5 对象式 API），其余值校验报错 |
-| `queryKeyPrefix` | `string[]`      | `[]`            | queryKey 前缀；多服务场景建议配置 `[serviceName]` 隔离各服务缓存                                           |
+| 配置项           | 类型                                 | 默认值          | 说明                                                                          |
+| ---------------- | ------------------------------------ | --------------- | ----------------------------------------------------------------------------- |
+| `generateHooks`  | `boolean`                            | `false`         | 是否生成 Hooks；开启后每个 tag 目录生成 `hooks.ts` + 根目录 `hooks.ts` barrel |
+| `hooksLibrary`   | `'react-query' \| 'swr' \| 'ahooks'` | `'react-query'` | Hook 依赖的客户端库；`vue-query` 为预留枚举，配置会校验报错                   |
+| `queryKeyPrefix` | `string[]`                           | `[]`            | 缓存 key 前缀；多服务场景建议配置 `[serviceName]` 隔离各服务缓存              |
 
-生成规则与使用要求：
+各库语义与 peer dependency 要求：
 
-- 分类：`GET` / `HEAD` 接口生成 `useQuery` hook（queryKey 为 `[...queryKeyPrefix, functionName, params]`，queryFn 透传 `signal` 以支持请求取消）；`POST` / `PUT` / `PATCH` / `DELETE` 生成 `useMutation` hook（`variables` 即请求参数）。
+| 库          | peer dependency            | query 行为                                                                                    | mutation 触发                    | queryKeyPrefix 语义                      |
+| ----------- | -------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------- |
+| react-query | `@tanstack/react-query@^5` | `useQuery`，key 含 params，变化自动重新请求；queryFn 透传 `signal` 支持请求取消               | `mutate` / `mutateAsync`         | key 数组首位                             |
+| swr         | `swr@^2`                   | `useSWR` 数组 key，变化自动重新请求（无 signal 透传）                                         | `trigger`                        | key 数组首位（mutation key 不含 params） |
+| ahooks      | `ahooks@^3`                | `useRequest` 自动模式，params 变化**不会**自动重新请求（透传 `refreshDeps` 或手动 `refresh`） | `manual: true`，`run(variables)` | 非空时映射为 `cacheKey: 'prefix:fnName'` |
+
+其他规则：
+
+- 分类：`GET` / `HEAD` 接口生成 query hook；`POST` / `PUT` / `PATCH` / `DELETE` 生成 mutation hook。
 - 命名：默认 `use` + API 函数名首字母大写（如 `getUserFunc` → `useGetUserFunc`）；可通过 `namingStrategy.hookName` 自定义。
-- 类型：Hook 参数与返回值复用已生成的 RequestType / ResultType；`target: 'javascript'` 时去除全部类型注解；`generateTypes: false` 时退化为 `any`。
-- **peer dependency**：请自行在业务项目中安装 `@tanstack/react-query@^5` 并配置 `QueryClientProvider`，本工具不代为安装。
-- 不支持 `useInfiniteQuery`（分页结构无法从 OpenAPI 静态推断），可基于生成的 API 函数自行组合。
+- 类型：Hook 参数与返回值复用已生成的 RequestType / ResultType；`target: 'javascript'` 时去除全部类型注解；`generateTypes: false` 时退化为 `any`（ahooks 的 options 类型用 `Parameters<typeof useRequest>[1]` 推导，因其未导出 Options 类型）。
+- **peer dependency 需自行安装**，本工具不代为安装；react-query 还需配置 `QueryClientProvider`。
+- 不支持无限列表/分页 hook（`useInfiniteQuery` / `useSWRInfinite` / `loadMore`，分页结构无法从 OpenAPI 静态推断），可基于生成的 API 函数自行组合。
 
 #### 生成请求的运行时行为
 

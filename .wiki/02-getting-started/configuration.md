@@ -17,7 +17,7 @@ export default defineConfig({
 
   // ===== Hooks 生成（可选，依赖 generateApi: true）=====
   generateHooks: true, // 默认 false；开启后在 API 函数之上生成 useXxx Hook
-  hooksLibrary: 'react-query', // 当前版本仅支持 'react-query'（@tanstack/react-query v5）
+  hooksLibrary: 'react-query', // 'react-query' | 'swr' | 'ahooks'（vue-query 预留）
   queryKeyPrefix: ['main'], // queryKey 前缀，多服务场景建议配 [serviceName] 隔离缓存
 
   // ===== 服务列表（必填，非空数组）=====

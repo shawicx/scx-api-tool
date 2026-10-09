@@ -9,7 +9,14 @@ import {
   getReactQueryHookTemplate,
   getReactMutationHookTemplate,
   getReactHookTemplateByKind,
+  getSwrQueryHookTemplate,
+  getSwrMutationHookTemplate,
+  getSwrHookTemplateByKind,
+  getAhooksQueryHookTemplate,
+  getAhooksMutationHookTemplate,
+  getAhooksHookTemplateByKind,
 } from '../hookTemplateDefinitions';
+import { getHookLibraryAdapter } from '../hookLibraryRegistry';
 
 const baseData = {
   comment: true,
@@ -77,5 +84,85 @@ describe('getReactHookTemplateByKind', () => {
   it('按 kind 返回对应模板', () => {
     expect(getReactHookTemplateByKind('query')).toBe(getReactQueryHookTemplate());
     expect(getReactHookTemplateByKind('mutation')).toBe(getReactMutationHookTemplate());
+  });
+});
+
+describe('swr templates', () => {
+  it('渲染 useSWR query（数组 key + fetcher + options 直传）', () => {
+    const compiled = compileTemplate(getSwrQueryHookTemplate());
+    const code = compiled({
+      ...baseData,
+      paramsSignature: 'params: GetApiUsersRequestType',
+      optionsSignature: 'options: SWRConfiguration<GetApiUsersResultType, Error> = {}',
+      keyItems: "'user', 'getApiUsersFunc', params",
+    });
+
+    expect(code).toContain(' * @description 获取用户列表');
+    expect(code).toContain("['user', 'getApiUsersFunc', params],");
+    expect(code).toContain('() => getApiUsersFunc(params),');
+    expect(code).toContain('    options,\n');
+  });
+
+  it('渲染 useSWRMutation（trigger 触发 + arg 签名）', () => {
+    const compiled = compileTemplate(getSwrMutationHookTemplate());
+    const code = compiled({
+      ...baseData,
+      optionsSignature: 'options: SWRMutationConfiguration<GetApiUsersResultType, Error> = {}',
+      keyItems: "'user', 'getApiUsersFunc'",
+      fetcherSignature: '(_, { arg }: { arg: GetApiUsersRequestType }) => getApiUsersFunc(arg)',
+    });
+
+    expect(code).toContain('useSWRMutation(');
+    expect(code).toContain(
+      '(_, { arg }: { arg: GetApiUsersRequestType }) => getApiUsersFunc(arg),',
+    );
+  });
+
+  it('getSwrHookTemplateByKind 按 kind 路由', () => {
+    expect(getSwrHookTemplateByKind('query')).toBe(getSwrQueryHookTemplate());
+    expect(getSwrHookTemplateByKind('mutation')).toBe(getSwrMutationHookTemplate());
+  });
+});
+
+describe('ahooks templates', () => {
+  it('渲染 useRequest 自动模式（options 直传）', () => {
+    const compiled = compileTemplate(getAhooksQueryHookTemplate());
+    const code = compiled({
+      ...baseData,
+      paramsSignature: 'params: GetApiUsersRequestType',
+      optionsSignature: 'options: Parameters<typeof useRequest>[1] = {}',
+      optionsArgument: ', options',
+    });
+
+    expect(code).toContain('useRequest(() => getApiUsersFunc(params), options);');
+    expect(code).toContain('@returns useRequest 查询结果');
+  });
+
+  it('渲染 useRequest manual 模式（cacheKey 不被 HTML 转义）', () => {
+    const compiled = compileTemplate(getAhooksMutationHookTemplate());
+    const code = compiled({
+      ...baseData,
+      optionsSignature: 'options: Parameters<typeof useRequest>[1] = {}',
+      fetcherSignature: 'params: GetApiUsersRequestType',
+    });
+
+    expect(code).toContain('useRequest(');
+    expect(code).toContain('{ manual: true, ...(options ?? {}) },');
+  });
+
+  it('getAhooksHookTemplateByKind 按 kind 路由', () => {
+    expect(getAhooksHookTemplateByKind('query')).toBe(getAhooksQueryHookTemplate());
+    expect(getAhooksHookTemplateByKind('mutation')).toBe(getAhooksMutationHookTemplate());
+  });
+});
+
+describe('getHookLibraryAdapter', () => {
+  it('按配置路由到对应适配器，未实现的库抛错', () => {
+    expect(getHookLibraryAdapter('react-query').peerDependencyHint).toContain(
+      '@tanstack/react-query@^5',
+    );
+    expect(getHookLibraryAdapter('swr').peerDependencyHint).toContain('swr@^2');
+    expect(getHookLibraryAdapter('ahooks').peerDependencyHint).toContain('ahooks@^3');
+    expect(() => getHookLibraryAdapter('vue-query')).toThrow(/未实现/);
   });
 });

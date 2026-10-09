@@ -18,12 +18,14 @@ export default defineConfig({
   // 是否生成类型定义（在接口文件中）
   generateTypes: true,
   // 是否生成 Hooks（可选，依赖 generateApi: true）
-  // 开启后在 API 函数之上生成 React Query v5 风格的 useQuery / useMutation Hook
-  // 注意：需自行安装 peer dependency "@tanstack/react-query@^5" 并配置 QueryClientProvider
+  // 开启后在 API 函数之上生成 query / mutation Hook（GET/HEAD → query，其余 → mutation）
   // generateHooks: true,
-  // Hook 依赖的客户端库（当前版本仅支持 'react-query'）
+  // Hook 依赖的客户端库：'react-query' | 'swr' | 'ahooks'（vue-query 预留）
+  // 需自行安装对应 peer dependency：
+  // - 'react-query' → "@tanstack/react-query@^5"（还需配置 QueryClientProvider）
+  // - 'swr' → "swr@^2"；'ahooks' → "ahooks@^3"
   // hooksLibrary: 'react-query',
-  // queryKey 前缀（多服务场景建议配置 [serviceName] 隔离缓存）
+  // 缓存 key 前缀（react-query/swr 进 key 数组，ahooks 映射为 cacheKey；多服务场景建议配 [serviceName]）
   // queryKeyPrefix: [],
   // 目标语言
   target: 'typescript',

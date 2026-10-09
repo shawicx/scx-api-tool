@@ -274,12 +274,12 @@ describe('validateConfigLogic', () => {
       expect(hookError!.field).toBe('generateHooks & generateApi');
     });
 
-    it('returns ERROR when generateHooks uses an unimplemented library', () => {
+    it('returns ERROR when generateHooks uses an unimplemented library (vue-query)', () => {
       const config: CommonServiceConfig = {
         ...validSwaggerUserConfig,
         generateHooks: true,
         generateApi: true,
-        hooksLibrary: 'swr',
+        hooksLibrary: 'vue-query',
       };
       const errors = validateConfigLogic(config);
 
@@ -287,6 +287,19 @@ describe('validateConfigLogic', () => {
       expect(libError).toBeDefined();
       expect(libError!.severity).toBe(ValidationSeverity.ERROR);
       expect(libError!.field).toBe('hooksLibrary');
+    });
+
+    it('returns no library error for implemented libraries (react-query / swr / ahooks)', () => {
+      for (const library of ['react-query', 'swr', 'ahooks'] as const) {
+        const config: CommonServiceConfig = {
+          ...validSwaggerUserConfig,
+          generateHooks: true,
+          generateApi: true,
+          hooksLibrary: library,
+        };
+        const errors = validateConfigLogic(config);
+        expect(errors.find((e) => e.code === 'HOOKS_LIBRARY_NOT_SUPPORTED')).toBeUndefined();
+      }
     });
 
     it('returns no hook errors for generateHooks with react-query', () => {

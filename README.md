@@ -143,9 +143,9 @@ export default defineConfig({
   generateApi: true,
   generateTypes: true,
 
-  // Hooks 生成（可选，依赖 generateApi: true；需自行安装 @tanstack/react-query@^5）
+  // Hooks 生成（可选，依赖 generateApi: true；需自行安装对应库）
   generateHooks: true,
-  hooksLibrary: 'react-query', // 当前版本仅支持 react-query
+  hooksLibrary: 'react-query', // 'react-query'(@tanstack/react-query@^5) | 'swr'(swr@^2) | 'ahooks'(ahooks@^3)
   queryKeyPrefix: ['main'], // queryKey 前缀，多服务场景建议按服务名隔离
 
   // 代码生成选项

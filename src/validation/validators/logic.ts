@@ -106,19 +106,20 @@ export function validateConfigLogic(config: CommonServiceConfig): ValidationErro
     );
   }
 
-  // 验证 hooksLibrary 实现状态（当前版本仅实现 react-query）
+  // 验证 hooksLibrary 实现状态（react-query / swr / ahooks 已实现，vue-query 预留）
+  const UNIMPLEMENTED_HOOK_LIBRARIES = ['vue-query'];
   if (
     config.generateHooks === true &&
     config.hooksLibrary &&
-    config.hooksLibrary !== 'react-query'
+    UNIMPLEMENTED_HOOK_LIBRARIES.includes(config.hooksLibrary)
   ) {
     errors.push(
       createValidationError(
         'hooksLibrary',
         'HOOKS_LIBRARY_NOT_SUPPORTED',
-        `当前版本仅支持 hooksLibrary: "react-query"，不支持 "${config.hooksLibrary}"`,
+        `当前版本不支持 hooksLibrary: "${config.hooksLibrary}"，已支持：react-query / swr / ahooks`,
         ValidationSeverity.ERROR,
-        '请使用 hooksLibrary: "react-query"（@tanstack/react-query v5 对象式 API）',
+        '请使用 "react-query"（@tanstack/react-query v5）、"swr"（swr v2）或 "ahooks"（ahooks v3）',
         config.hooksLibrary,
       ),
     );

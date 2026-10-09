@@ -88,7 +88,7 @@ function findWrite(name: string): { path: string; content: string } | undefined 
   return capturedWrites.find((w) => w.path.endsWith(name));
 }
 
-describe('generateHookFiles', () => {
+describe('generateHookFiles (react-query)', () => {
   beforeEach(() => {
     capturedWrites.length = 0;
   });
@@ -208,5 +208,153 @@ describe('generateHookFiles', () => {
     expect(hooksFile!.content).toContain(
       "import type { GetApiUsersRequestType, GetApiUsersResultType, PostApiUsersRequestType, PostApiUsersResultType } from './schema';",
     );
+  });
+});
+
+describe('generateHookFiles (swr)', () => {
+  beforeEach(() => {
+    capturedWrites.length = 0;
+  });
+
+  it('TS 目标：GET 生成 useSWR（数组 key）、POST 生成 useSWRMutation', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateHooks: true,
+      hooksLibrary: 'swr',
+    };
+    await generateHookFiles(makeProcessedData(), config);
+
+    const hooksFile = findWrite(join('USER', 'hooks.ts'));
+    expect(hooksFile).toBeDefined();
+
+    // import 段：query 与 mutation 分别来自 swr / swr/mutation
+    expect(hooksFile!.content).toContain("import useSWR from 'swr';");
+    expect(hooksFile!.content).toContain("import type { SWRConfiguration } from 'swr';");
+    expect(hooksFile!.content).toContain("import useSWRMutation from 'swr/mutation';");
+    expect(hooksFile!.content).toContain(
+      "import type { SWRMutationConfiguration } from 'swr/mutation';",
+    );
+
+    // query hook：数组 key + fetcher
+    expect(hooksFile!.content).toContain(
+      "['getApiUsersFunc', params],\n    () => getApiUsersFunc(params),",
+    );
+    expect(hooksFile!.content).toContain(
+      'options: SWRConfiguration<GetApiUsersResultType, Error> = {}',
+    );
+
+    // mutation hook：arg 签名 + trigger
+    expect(hooksFile!.content).toContain(
+      '(_, { arg }: { arg: PostApiUsersRequestType }) => postApiUsersFunc(arg),',
+    );
+    expect(hooksFile!.content).toContain(
+      'options: SWRMutationConfiguration<PostApiUsersResultType, Error, undefined, PostApiUsersRequestType> = {}',
+    );
+  });
+
+  it('queryKeyPrefix：前缀进入 query 与 mutation 的 key，mutation key 不含 params', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateHooks: true,
+      hooksLibrary: 'swr',
+      queryKeyPrefix: ['user-service'],
+    };
+    await generateHookFiles(makeProcessedData(), config);
+
+    const hooksFile = findWrite(join('USER', 'hooks.ts'));
+    expect(hooksFile!.content).toContain(
+      "['user-service', 'getApiUsersFunc', params],\n    () => getApiUsersFunc(params),",
+    );
+    expect(hooksFile!.content).toContain(
+      "['user-service', 'postApiUsersFunc'],\n    (_, { arg }: { arg: PostApiUsersRequestType }) => postApiUsersFunc(arg),",
+    );
+  });
+
+  it('JS 目标：无类型注解与 type import', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateHooks: true,
+      hooksLibrary: 'swr',
+      target: 'javascript',
+    };
+    await generateHookFiles(makeProcessedData(), config);
+
+    const hooksFile = findWrite(join('USER', 'hooks.js'));
+    expect(hooksFile).toBeDefined();
+    expect(hooksFile!.content).not.toContain('import type');
+    expect(hooksFile!.content).toContain('(_, { arg }) => postApiUsersFunc(arg),');
+  });
+});
+
+describe('generateHookFiles (ahooks)', () => {
+  beforeEach(() => {
+    capturedWrites.length = 0;
+  });
+
+  it('TS 目标：GET 生成自动模式 useRequest、POST 生成 manual 模式', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateHooks: true,
+      hooksLibrary: 'ahooks',
+    };
+    await generateHookFiles(makeProcessedData(), config);
+
+    const hooksFile = findWrite(join('USER', 'hooks.ts'));
+    expect(hooksFile).toBeDefined();
+
+    // import 段
+    expect(hooksFile!.content).toContain("import { useRequest } from 'ahooks';");
+    expect(hooksFile!.content).not.toContain("from '@tanstack/react-query'");
+
+    // query hook：自动模式，直接透传 options
+    expect(hooksFile!.content).toContain('useRequest(() => getApiUsersFunc(params), options);');
+    expect(hooksFile!.content).toContain('options: Parameters<typeof useRequest>[1] = {}');
+
+    // mutation hook：manual 模式 + run 触发
+    expect(hooksFile!.content).toContain(
+      'useRequest(\n    (params: PostApiUsersRequestType) => postApiUsersFunc(params),\n    { manual: true, ...(options ?? {}) },\n  );',
+    );
+  });
+
+  it('queryKeyPrefix：非空时生成 cacheKey，为空时不生成', async () => {
+    const withPrefix: ApiConfig = {
+      ...minimalApiConfig,
+      generateHooks: true,
+      hooksLibrary: 'ahooks',
+      queryKeyPrefix: ['user-service'],
+    };
+    await generateHookFiles(makeProcessedData(), withPrefix);
+
+    let hooksFile = findWrite(join('USER', 'hooks.ts'));
+    expect(hooksFile!.content).toContain(
+      "useRequest(() => getApiUsersFunc(params), { cacheKey: 'user-service:getApiUsersFunc', ...(options ?? {}) });",
+    );
+
+    capturedWrites.length = 0;
+
+    const noPrefix: ApiConfig = {
+      ...minimalApiConfig,
+      generateHooks: true,
+      hooksLibrary: 'ahooks',
+    };
+    await generateHookFiles(makeProcessedData(), noPrefix);
+
+    hooksFile = findWrite(join('USER', 'hooks.ts'));
+    expect(hooksFile!.content).not.toContain('cacheKey');
+  });
+
+  it('JS 目标：无类型注解', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateHooks: true,
+      hooksLibrary: 'ahooks',
+      target: 'javascript',
+    };
+    await generateHookFiles(makeProcessedData(), config);
+
+    const hooksFile = findWrite(join('USER', 'hooks.js'));
+    expect(hooksFile).toBeDefined();
+    expect(hooksFile!.content).toContain('(params) => postApiUsersFunc(params),');
+    expect(hooksFile!.content).not.toContain('Parameters<');
   });
 });
