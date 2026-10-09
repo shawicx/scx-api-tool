@@ -257,6 +257,52 @@ describe('validateConfigLogic', () => {
     });
   });
 
+  // --- generateHooks ---
+  describe('generateHooks dependency checks', () => {
+    it('returns ERROR when generateHooks is true but generateApi is false', () => {
+      const config: CommonServiceConfig = {
+        ...validSwaggerUserConfig,
+        generateHooks: true,
+        generateApi: false,
+        generateTypes: true,
+      };
+      const errors = validateConfigLogic(config);
+
+      const hookError = errors.find((e) => e.code === 'HOOKS_REQUIRE_API');
+      expect(hookError).toBeDefined();
+      expect(hookError!.severity).toBe(ValidationSeverity.ERROR);
+      expect(hookError!.field).toBe('generateHooks & generateApi');
+    });
+
+    it('returns ERROR when generateHooks uses an unimplemented library', () => {
+      const config: CommonServiceConfig = {
+        ...validSwaggerUserConfig,
+        generateHooks: true,
+        generateApi: true,
+        hooksLibrary: 'swr',
+      };
+      const errors = validateConfigLogic(config);
+
+      const libError = errors.find((e) => e.code === 'HOOKS_LIBRARY_NOT_SUPPORTED');
+      expect(libError).toBeDefined();
+      expect(libError!.severity).toBe(ValidationSeverity.ERROR);
+      expect(libError!.field).toBe('hooksLibrary');
+    });
+
+    it('returns no hook errors for generateHooks with react-query', () => {
+      const config: CommonServiceConfig = {
+        ...validSwaggerUserConfig,
+        generateHooks: true,
+        generateApi: true,
+        hooksLibrary: 'react-query',
+      };
+      const errors = validateConfigLogic(config);
+
+      expect(errors.find((e) => e.code === 'HOOKS_REQUIRE_API')).toBeUndefined();
+      expect(errors.find((e) => e.code === 'HOOKS_LIBRARY_NOT_SUPPORTED')).toBeUndefined();
+    });
+  });
+
   // --- Multiple combined scenarios ---
   describe('combined scenarios', () => {
     it('returns no errors for a fully valid Swagger config', () => {

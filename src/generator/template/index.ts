@@ -39,6 +39,12 @@ export {
 } from './templateDefinitions';
 
 export {
+  getReactQueryHookTemplate,
+  getReactMutationHookTemplate,
+  getReactHookTemplateByKind,
+} from './hookTemplateDefinitions';
+
+export {
   getJsonValueTemplateWithComment,
   getJsonValueTemplateWithoutComment,
   getJsonValueTemplateByConfig,

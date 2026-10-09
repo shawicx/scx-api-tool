@@ -13,6 +13,7 @@ import {
   validateStringFields,
   validateBooleanFields,
   validateNumberFields,
+  validateArrayFields,
 } from './validators/basic';
 import { validateSourceUrl } from './validators/url';
 import { validateConfigLogic } from './validators/logic';
@@ -67,6 +68,8 @@ export function validateConfiguration(config: MultiServiceConfig): void {
     ...validateEnumValues(common),
     ...validateNumberFields(common),
     ...validateBooleanFields(common),
+    ...validateArrayFields(common),
+    ...validateConfigLogic(common),
   );
 
   // 3. 服务名唯一性校验
@@ -132,6 +135,7 @@ export {
   validateStringFields,
   validateBooleanFields,
   validateNumberFields,
+  validateArrayFields,
   validateSourceUrl,
   validateConfigLogic,
 };

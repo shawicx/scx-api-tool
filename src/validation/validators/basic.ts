@@ -122,6 +122,21 @@ export function validateEnumValues(config: CommonServiceConfig): ValidationError
     );
   }
 
+  // 验证 hooksLibrary 枚举值
+  const HOOK_LIBRARIES = ['react-query', 'swr', 'ahooks', 'vue-query'];
+  if (config.hooksLibrary && !HOOK_LIBRARIES.includes(config.hooksLibrary)) {
+    errors.push(
+      createValidationError(
+        'hooksLibrary',
+        'INVALID_ENUM_VALUE',
+        `无效的 hooksLibrary 值: ${config.hooksLibrary}`,
+        ValidationSeverity.ERROR,
+        `支持的值: ${HOOK_LIBRARIES.map((v) => `"${v}"`).join(', ')}`,
+        config.hooksLibrary,
+      ),
+    );
+  }
+
   // 验证 preset 枚举值
   if (config.preset && !['minimal', 'standard', 'verbose'].includes(config.preset)) {
     errors.push(
@@ -288,7 +303,7 @@ export function validateStringFields(config: ServiceConfig): ValidationError[] {
 export function validateBooleanFields(config: CommonServiceConfig): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  const booleanFields = ['typesOnly', 'apiOnly', 'comment'] as const;
+  const booleanFields = ['typesOnly', 'apiOnly', 'comment', 'generateHooks'] as const;
 
   for (const field of booleanFields) {
     const value = config[field];
@@ -353,18 +368,50 @@ export function validateNumberFields(config: CommonServiceConfig): ValidationErr
 /**
  * @description 验证数组字段
  * 检查配置中数组类型字段的有效性
+ * @param config 用户配置对象（可选，未提供时跳过校验）
  * @returns 验证错误数组
  *
  * @example
  * ```typescript
- * const errors = validateArrayFields();
- * // 目前没有需要验证的数组字段，返回空数组
+ * const errors = validateArrayFields({ queryKeyPrefix: ['user'] });
+ * // errors = []
  * ```
  */
-export function validateArrayFields(): ValidationError[] {
+export function validateArrayFields(config?: CommonServiceConfig): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  // 目前没有需要验证的数组字段
+  // 验证 queryKeyPrefix（字符串数组，元素为非空字符串）
+  if (config?.queryKeyPrefix !== undefined) {
+    const { queryKeyPrefix } = config;
+    if (!Array.isArray(queryKeyPrefix)) {
+      errors.push(
+        createValidationError(
+          'queryKeyPrefix',
+          'INVALID_ARRAY',
+          `queryKeyPrefix 必须是字符串数组，当前类型: ${typeof queryKeyPrefix}`,
+          ValidationSeverity.ERROR,
+          '请提供字符串数组，例如: queryKeyPrefix: ["user-service"]',
+          queryKeyPrefix,
+        ),
+      );
+    } else {
+      for (const item of queryKeyPrefix) {
+        if (typeof item !== 'string' || item.trim() === '') {
+          errors.push(
+            createValidationError(
+              'queryKeyPrefix',
+              'INVALID_ARRAY_ITEM',
+              'queryKeyPrefix 的每个元素必须是非空字符串',
+              ValidationSeverity.ERROR,
+              '请提供字符串数组，例如: queryKeyPrefix: ["user-service"]',
+              queryKeyPrefix,
+            ),
+          );
+          break;
+        }
+      }
+    }
+  }
 
   return errors;
 }

@@ -11,6 +11,7 @@
 - 灵活配置: 支持自定义命名策略、输出目录、代码风格等
 - 钩子系统: 在代码生成过程的不同阶段执行自定义操作
 - Watch 模式: 监视配置文件变化，自动重新生成代码
+- Hooks 生成: 可选生成 React Query v5 风格的 `useQuery` / `useMutation` Hook（`generateHooks: true`）
 
 ## 快速开始
 
@@ -141,6 +142,11 @@ export default defineConfig({
   // 输出配置
   generateApi: true,
   generateTypes: true,
+
+  // Hooks 生成（可选，依赖 generateApi: true；需自行安装 @tanstack/react-query@^5）
+  generateHooks: true,
+  hooksLibrary: 'react-query', // 当前版本仅支持 react-query
+  queryKeyPrefix: ['main'], // queryKey 前缀，多服务场景建议按服务名隔离
 
   // 代码生成选项
   target: 'typescript',

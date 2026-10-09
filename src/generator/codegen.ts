@@ -10,6 +10,7 @@ import {
   generateRequestFile,
   generateTypeFiles,
   generateSchemaFiles,
+  generateHookFiles,
 } from './fileGenerator';
 import { aliasToRealPath } from '@/utils/pathUtils';
 import { cleanOutputDir } from '../utils/file';
@@ -59,6 +60,12 @@ export async function generateFiles(
     if (config.generateApi) {
       logger.info('生成 API 请求方法');
       await generateRequestFile(config, config.hooks);
+    }
+
+    // 生成 Hooks（依赖 API 请求方法已生成）
+    if (config.generateApi && config.generateHooks) {
+      logger.info('生成 Hooks 文件');
+      await generateHookFiles(processedData, config, config.hooks);
     }
 
     // 生成类型定义（如果需要且目标不是 JavaScript）

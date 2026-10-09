@@ -15,6 +15,11 @@ export default defineConfig({
   preset: 'standard', // 'minimal' | 'standard' | 'verbose'（仅公共层生效）
   concurrency: 5,
 
+  // ===== Hooks 生成（可选，依赖 generateApi: true）=====
+  generateHooks: true, // 默认 false；开启后在 API 函数之上生成 useXxx Hook
+  hooksLibrary: 'react-query', // 当前版本仅支持 'react-query'（@tanstack/react-query v5）
+  queryKeyPrefix: ['main'], // queryKey 前缀，多服务场景建议配 [serviceName] 隔离缓存
+
   // ===== 服务列表（必填，非空数组）=====
   services: [
     {
@@ -71,13 +76,14 @@ api-power.config.ts（export default defineConfig({...})）
 
 ## 校验规则（`src/validation/`）
 
-| 校验                             | 位置                                        | 说明                                                      |
-| -------------------------------- | ------------------------------------------- | --------------------------------------------------------- |
-| services 非空数组                | `validation/index.ts`                       | `REQUIRED_FIELD`                                          |
-| 公共配置枚举/数值/布尔           | `validators/basic.ts`                       | preset、target、requestMethodStyle、indentSize 等         |
-| 服务名唯一                       | `validation/index.ts`                       | `DUPLICATE_SERVICE_NAME`                                  |
-| outputDir 隔离（不相同、不嵌套） | `validators/serviceDirs.ts`                 | `OUTPUT_DIR_CONFLICT`，防止生成时 cleanOutputDir 相互清理 |
-| 逐服务必填/字符串/URL/逻辑       | `validators/basic.ts`、`url.ts`、`logic.ts` | name、source 等                                           |
+| 校验                             | 位置                                        | 说明                                                                     |
+| -------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------ |
+| services 非空数组                | `validation/index.ts`                       | `REQUIRED_FIELD`                                                         |
+| 公共配置枚举/数值/布尔           | `validators/basic.ts`                       | preset、target、requestMethodStyle、indentSize 等                        |
+| 服务名唯一                       | `validation/index.ts`                       | `DUPLICATE_SERVICE_NAME`                                                 |
+| outputDir 隔离（不相同、不嵌套） | `validators/serviceDirs.ts`                 | `OUTPUT_DIR_CONFLICT`，防止生成时 cleanOutputDir 相互清理                |
+| 逐服务必填/字符串/URL/逻辑       | `validators/basic.ts`、`url.ts`、`logic.ts` | name、source 等                                                          |
+| Hooks 依赖与库支持               | `validators/logic.ts`                       | `HOOKS_REQUIRE_API`（generateApi: false）、`HOOKS_LIBRARY_NOT_SUPPORTED` |
 
 校验失败抛 `ConfigValidationError`（携带含全部错误与修复建议的 `ValidationReport`）。
 

@@ -92,6 +92,38 @@ export function validateConfigLogic(config: CommonServiceConfig): ValidationErro
     );
   }
 
+  // 验证 generateHooks 依赖 generateApi
+  if (config.generateHooks === true && config.generateApi === false) {
+    errors.push(
+      createValidationError(
+        'generateHooks & generateApi',
+        'HOOKS_REQUIRE_API',
+        'generateHooks 依赖 API 请求方法，generateApi 为 false 时无法生成 Hooks',
+        ValidationSeverity.ERROR,
+        'Hooks 是对已生成 API 函数的包装层，请设置 generateApi: true，或关闭 generateHooks',
+        { generateHooks: config.generateHooks, generateApi: config.generateApi },
+      ),
+    );
+  }
+
+  // 验证 hooksLibrary 实现状态（当前版本仅实现 react-query）
+  if (
+    config.generateHooks === true &&
+    config.hooksLibrary &&
+    config.hooksLibrary !== 'react-query'
+  ) {
+    errors.push(
+      createValidationError(
+        'hooksLibrary',
+        'HOOKS_LIBRARY_NOT_SUPPORTED',
+        `当前版本仅支持 hooksLibrary: "react-query"，不支持 "${config.hooksLibrary}"`,
+        ValidationSeverity.ERROR,
+        '请使用 hooksLibrary: "react-query"（@tanstack/react-query v5 对象式 API）',
+        config.hooksLibrary,
+      ),
+    );
+  }
+
   // 验证 javascript 目标下的类型相关配置
   if (config.target === 'javascript') {
     if (config.generateTypes) {

@@ -13,6 +13,7 @@ import {
   RequestMethod,
   TypesFormat,
   CliHooks,
+  HookLibrary,
 } from '@/types';
 import { logger } from '@/utils/logger';
 import { ErrorFactory } from '@/errors';
@@ -41,6 +42,9 @@ const DEFAULT_CONFIG_VALUES: Omit<
   requestParamName: 'params',
   responseTypeName: 'Response',
   concurrency: 50, // 默认并发数
+  generateHooks: false, // 默认不生成 Hooks
+  hooksLibrary: 'react-query' as HookLibrary, // 默认使用 React Query v5
+  queryKeyPrefix: [] as string[], // 默认无 queryKey 前缀
   hooks: undefined as CliHooks | undefined, // 钩子函数
 };
 

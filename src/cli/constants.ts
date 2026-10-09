@@ -17,6 +17,14 @@ export default defineConfig({
   generateApi: true,
   // 是否生成类型定义（在接口文件中）
   generateTypes: true,
+  // 是否生成 Hooks（可选，依赖 generateApi: true）
+  // 开启后在 API 函数之上生成 React Query v5 风格的 useQuery / useMutation Hook
+  // 注意：需自行安装 peer dependency "@tanstack/react-query@^5" 并配置 QueryClientProvider
+  // generateHooks: true,
+  // Hook 依赖的客户端库（当前版本仅支持 'react-query'）
+  // hooksLibrary: 'react-query',
+  // queryKey 前缀（多服务场景建议配置 [serviceName] 隔离缓存）
+  // queryKeyPrefix: [],
   // 目标语言
   target: 'typescript',
   // 缩进大小

@@ -155,6 +155,17 @@ export const defaultNamingStrategy: Required<NamingStrategy> = {
     const interfaceName = defaultNamingStrategy.interfaceName(ctx);
     return `${interfaceName}ResultType`;
   },
+
+  /**
+   * @description 默认 Hook 名称生成
+   * 格式：use + FunctionName（首字母大写）
+   * 例如：getApiUsersByIdFunc → useGetApiUsersByIdFunc
+   */
+  hookName: (ctx: NamingContext): string => {
+    const functionName = defaultNamingStrategy.functionName(ctx);
+    const capitalized = functionName.charAt(0).toUpperCase() + functionName.slice(1);
+    return sanitizeParamName(`use${capitalized}`);
+  },
 };
 
 /**
@@ -181,6 +192,7 @@ export function applyNamingStrategy(
   functionName: string;
   requestTypeName: string;
   responseTypeName: string;
+  hookName: string;
 } {
   const strategy = customStrategy
     ? { ...defaultNamingStrategy, ...customStrategy }
@@ -191,5 +203,6 @@ export function applyNamingStrategy(
     functionName: strategy.functionName(ctx),
     requestTypeName: strategy.requestTypeName(ctx),
     responseTypeName: strategy.responseTypeName(ctx),
+    hookName: strategy.hookName(ctx),
   };
 }

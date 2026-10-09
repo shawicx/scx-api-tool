@@ -15,6 +15,7 @@ export { generateInterfaceFiles } from './generators/interfaceGenerator';
 export { generateRootIndexFile } from './generators/rootIndexGenerator';
 export { generateTypeFiles } from './generators/typeGenerator';
 export { generateSchemaFiles } from './generators/schemaGenerator';
+export { generateHookFiles } from './generators/hookGenerator';
 
 /**
  * @description 生成请求函数文件

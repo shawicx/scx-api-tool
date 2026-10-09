@@ -110,6 +110,24 @@ export default defineConfig({
 | `responseTypeName`         | `string`                                  | `'Response'`                        | 返回数据类型名                                                                      |
 | `requestMethodStyle`       | `'config' \| 'method-specific' \| 'both'` | `'config'`                          | 请求方法调用风格                                                                    |
 
+### Hooks 配置（可选）
+
+在生成的 API 请求函数之上额外生成 Hook 包装（React Query v5 风格），**依赖 `generateApi: true`**（否则校验报错 `HOOKS_REQUIRE_API`）。
+
+| 配置项           | 类型            | 默认值          | 说明                                                                                                       |
+| ---------------- | --------------- | --------------- | ---------------------------------------------------------------------------------------------------------- |
+| `generateHooks`  | `boolean`       | `false`         | 是否生成 Hooks；开启后每个 tag 目录生成 `hooks.ts` + 根目录 `hooks.ts` barrel                              |
+| `hooksLibrary`   | `'react-query'` | `'react-query'` | Hook 依赖的客户端库，当前版本仅支持 `react-query`（`@tanstack/react-query` v5 对象式 API），其余值校验报错 |
+| `queryKeyPrefix` | `string[]`      | `[]`            | queryKey 前缀；多服务场景建议配置 `[serviceName]` 隔离各服务缓存                                           |
+
+生成规则与使用要求：
+
+- 分类：`GET` / `HEAD` 接口生成 `useQuery` hook（queryKey 为 `[...queryKeyPrefix, functionName, params]`，queryFn 透传 `signal` 以支持请求取消）；`POST` / `PUT` / `PATCH` / `DELETE` 生成 `useMutation` hook（`variables` 即请求参数）。
+- 命名：默认 `use` + API 函数名首字母大写（如 `getUserFunc` → `useGetUserFunc`）；可通过 `namingStrategy.hookName` 自定义。
+- 类型：Hook 参数与返回值复用已生成的 RequestType / ResultType；`target: 'javascript'` 时去除全部类型注解；`generateTypes: false` 时退化为 `any`。
+- **peer dependency**：请自行在业务项目中安装 `@tanstack/react-query@^5` 并配置 `QueryClientProvider`，本工具不代为安装。
+- 不支持 `useInfiniteQuery`（分页结构无法从 OpenAPI 静态推断），可基于生成的 API 函数自行组合。
+
 #### 生成请求的运行时行为
 
 - OpenAPI 参数按来源分离：path 参数只用于 URL 插值，query 参数只进入 Axios `params`，request body 字段只进入 Axios `data`。

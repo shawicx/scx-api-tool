@@ -149,6 +149,9 @@ export const minimalApiConfig: ApiConfig = {
   requestParamName: 'params',
   responseTypeName: 'Response',
   concurrency: 50,
+  generateHooks: false,
+  hooksLibrary: 'react-query',
+  queryKeyPrefix: [],
 };
 
 export const apifoxApiConfig: ApiConfig = {

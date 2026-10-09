@@ -24,6 +24,7 @@ generateCode(configPath)                          src/generator/index.ts
 4. **类型/Schema 文件**（当 `generateTypes && target !== 'javascript'`）：
    - `typesFormat: 'typescript'` → `generateTypeFiles`
    - `typesFormat: 'zod'` → `generateSchemaFiles`
+5. **Hooks 文件**：`generateHookFiles`（当 `generateApi && generateHooks`）——在 API 函数之上生成 React Query v5 风格的 `useXxx` 包装：GET/HEAD → `useQuery`，POST/PUT/PATCH/DELETE → `useMutation`；每个 tag 目录生成 `hooks.ts` + 根目录 `hooks.ts` barrel。类型链路复用现有 RequestType/ResultType；`target: 'javascript'` 时去除类型注解。用户项目需自行安装 peer dependency `@tanstack/react-query@^5` 并配置 `QueryClientProvider`
 
 ## 目录结构
 
@@ -42,6 +43,8 @@ generateCode(configPath)                          src/generator/index.ts
 | `generators/typeGenerator.ts`         | TypeScript 类型文件（`outputDir/types/`）                                           |
 | `generators/schemaGenerator.ts`       | Zod Schema 文件（`outputDir/schemas/`）                                             |
 | `generators/zodTypesOnlyGenerator.ts` | Zod 仅类型 Schema 生成                                                              |
+| `generators/hookGenerator.ts`         | Hooks 文件（react-query v5 的 useQuery/useMutation 包装，需 `generateHooks: true`） |
+| `template/hookTemplateDefinitions.ts` | Hook 的 Handlebars 模板字符串（query / mutation）                                   |
 | `template/`                           | Handlebars 引擎（见下）                                                             |
 
 ### `template/` 子目录

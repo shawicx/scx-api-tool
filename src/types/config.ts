@@ -19,6 +19,13 @@ export type PresetType = 'minimal' | 'standard' | 'verbose';
 export type TypesFormat = 'typescript' | 'zod';
 
 /**
+ * @description 控制 Hook 生成所依赖的客户端库：
+ * @argument - react-query: @tanstack/react-query v5（当前版本已实现）
+ * @argument - swr / ahooks / vue-query: 预留枚举，当前版本未实现
+ */
+export type HookLibrary = 'react-query' | 'swr' | 'ahooks' | 'vue-query';
+
+/**
  * 命名上下文，提供命名策略所需的上下文信息
  */
 export interface NamingContext {
@@ -56,6 +63,13 @@ export interface NamingStrategy {
    * @returns 函数名称，例如：getAiCompletionStreamApi
    */
   functionName?: (ctx: NamingContext) => string;
+
+  /**
+   * 自定义 Hook 名称生成函数
+   * @param ctx 命名上下文
+   * @returns Hook 名称，例如：useGetAiCompletionStream
+   */
+  hookName?: (ctx: NamingContext) => string;
 
   /**
    * 自定义请求类型名称生成函数
@@ -123,6 +137,13 @@ export interface CommonServiceConfig {
 
   /** 目标语言 */
   target?: 'javascript' | 'typescript';
+
+  /** 是否生成 Hooks（依赖 generateApi: true，默认 false） */
+  generateHooks?: boolean;
+  /** Hook 依赖的客户端库（仅 generateHooks 为 true 时生效，默认 react-query） */
+  hooksLibrary?: HookLibrary;
+  /** queryKey 前缀（多服务场景建议配置 [serviceName] 以隔离缓存） */
+  queryKeyPrefix?: string[];
   /**
    * @description 路径转换函数：接收原始 path，返回转换后的 path。
    * 不配置时使用恒等函数（不做任何修改）。
@@ -229,6 +250,13 @@ export interface ApiConfig {
 
   /** 目标语言 */
   target: 'javascript' | 'typescript';
+
+  /** 是否生成 Hooks（依赖 generateApi: true） */
+  generateHooks: boolean;
+  /** Hook 依赖的客户端库 */
+  hooksLibrary: HookLibrary;
+  /** queryKey 前缀 */
+  queryKeyPrefix: string[];
   /**
    * @description 路径转换函数（已规范化，恒为函数）。
    * 接收原始 path，返回转换后的 path。
