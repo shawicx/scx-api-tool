@@ -9,6 +9,8 @@ import { isDepthExceeded, CircularRefGuard } from '@/utils/schemaSafety';
 import { escapeStringLiteral, escapeJsDocComment } from '@/utils/escape';
 import type { ApiConfig, OpenApiSchema } from '@/types';
 import { isFreeFormSchema } from '@/schema';
+import { renderRecursiveTypeSchema } from './recursive';
+import { isNullable, composeBasic, composeObject, composeUnion, composeAllOf } from './compose';
 import { logger } from '@/utils/logger';
 
 /**
@@ -27,7 +29,9 @@ export interface ZodTypeInfo {
  */
 function getZodTypeTemplateWithComment(): string {
   return `import { z } from 'zod';
-
+{{#each extraImports}}
+import { {{name}} } from '{{path}}';
+{{/each}}
 /**
  {{#if description}}
  * @description {{description}}
@@ -46,7 +50,9 @@ export type {{typeName}} = z.infer<typeof {{schemaName}}>;
  */
 function getZodTypeTemplateWithoutComment(): string {
   return `import { z } from 'zod';
-
+{{#each extraImports}}
+import { {{name}} } from '{{path}}';
+{{/each}}
 export const {{schemaName}} = {{{schemaContent}}};
 
 // 推导类型
@@ -113,7 +119,6 @@ export function generateZodTypeSchema(typeInfo: ZodTypeInfo, config: ApiConfig):
   }
 
   // Jackson 别名：JsonNodeSchema = JsonValueSchema（引用已定义的递归 schema）
-  // 注意：当前 zod 类型生成不拼装 import 语句，别名文件需手动补 `import { JsonValueSchema } from './JsonValueSchema'`
   if (typeInfo.kind === 'jsonValueAlias') {
     logger.debug(`Generating JsonValue alias schema: ${typeInfo.name}`);
     return template({
@@ -121,20 +126,48 @@ export function generateZodTypeSchema(typeInfo: ZodTypeInfo, config: ApiConfig):
       typeName: typeInfo.name,
       description: escapeJsDocComment(typeInfo.schema.description || typeInfo.name),
       schemaContent: 'JsonValueSchema',
+      // 别名文件引用 JsonValueSchema，必须补齐同目录 import（否则生成产物编译报 TS2304）
+      extraImports: [{ name: 'JsonValueSchema', path: './JsonValueSchema' }],
     });
   }
 
   const result = generateZodSchemaFromOpenApiSchema(typeInfo.schema);
 
+  const schemaName = `${typeInfo.name}Schema`;
+
+  // 自引用检测：schema 内容引用了自身（如树形结构的 children），
+  // zod 递归必须用 z.lazy 延迟求值，且 const 声明需要显式类型标注（否则 TS7022 循环推断）
+  const selfRefPattern = new RegExp(`\\b${schemaName}\\b`);
+  const isRecursive = selfRefPattern.test(result.code);
+  let schemaContent = result.code;
+  if (isRecursive) {
+    schemaContent = schemaContent.replace(
+      new RegExp(`\\b${schemaName}\\b`, 'g'),
+      `z.lazy(() => ${schemaName})`,
+    );
+  }
+
   logger.debug(
     `Generating Zod type schema: ${typeInfo.name}, properties count: ${result.imports.length}`,
   );
 
+  // 跨类型 $ref：为引用的其他 Schema 生成同目录 import（过滤自身引用，去重）
+  const refImports = Array.from(new Set(result.imports))
+    .filter((name) => name !== schemaName)
+    .map((name) => ({ name, path: `./${name}` }));
+
+  // 递归 schema 走专用渲染（见 recursive.ts）：const 声明带 `: z.ZodType<X>` 标注，
+  // 类型 X 以手写 interface 声明（zod 官方递归模式），避免 z.infer 循环推导（TS2456/TS2502）
+  if (isRecursive) {
+    return renderRecursiveTypeSchema(typeInfo, config, schemaContent, refImports);
+  }
+
   const templateData = {
-    schemaName: `${typeInfo.name}Schema`,
+    schemaName,
     typeName: typeInfo.name,
     description: escapeJsDocComment(typeInfo.schema.description || typeInfo.name),
-    schemaContent: result.code,
+    schemaContent,
+    extraImports: refImports,
   };
 
   return template(templateData);
@@ -204,145 +237,6 @@ export function generateZodSchemaFromOpenApiSchema(
   return {
     code: `z.object({\n${fields.join('\n')}\n})`,
     imports: Array.from(imports),
-  };
-}
-
-/**
- * @description 检测属性是否可空（兼容 OpenAPI 3.0 的 nullable 与 3.1 的 type 数组）
- * @param property OpenAPI schema 属性
- * @returns 是否可空
- */
-function isNullable(property: OpenApiSchema): boolean {
-  return (
-    property.nullable === true ||
-    (Array.isArray(property.type) && (property.type as unknown[]).includes('null'))
-  );
-}
-
-/**
- * @description 映射基本类型到 Zod（含 3.1 风格 type 数组取第一个非 null 项）
- * @param property OpenAPI schema 属性
- * @returns Zod 类型字符串与 imports
- */
-function composeBasic(property: OpenApiSchema): { type: string; imports: string[] } {
-  const typeMap: Record<string, string> = {
-    string: 'z.string()',
-    number: 'z.number()',
-    integer: 'z.number()',
-    boolean: 'z.boolean()',
-    null: 'z.null()',
-  };
-
-  // 3.1 风格 type 数组（非 null 项取第一个）
-  if (Array.isArray(property.type)) {
-    const nonNull = property.type.filter((t) => t !== 'null');
-    if (nonNull.length && typeMap[nonNull[0] as string]) {
-      return { type: typeMap[nonNull[0] as string], imports: [] };
-    }
-    return { type: 'z.any()', imports: [] };
-  }
-
-  if (property.type && typeMap[property.type]) {
-    return { type: typeMap[property.type], imports: [] };
-  }
-  return { type: 'z.any()', imports: [] };
-}
-
-/**
- * @description 处理 object 类型（additionalProperties / properties / 空对象）
- * @param property 含 type:'object' 的 schema
- * @param depth 当前递归深度
- * @param guard 循环引用检测器（必须透传）
- * @returns Zod 类型字符串与 imports
- */
-function composeObject(
-  property: OpenApiSchema,
-  depth: number,
-  guard: CircularRefGuard,
-): { type: string; imports: string[] } {
-  // free-form（任意 JSON 值，如 JsonNode 属性）→ z.unknown()
-  if (isFreeFormSchema(property)) {
-    return { type: 'z.unknown()', imports: [] };
-  }
-  const ap = property.additionalProperties;
-  // additionalProperties 为具名 schema（非 boolean）时按 map 处理
-  if (ap && typeof ap === 'object') {
-    if (ap.$ref) {
-      const refName = ap.$ref.split('/').pop()!;
-      const sanitizedRefName = sanitizeTypeName(refName);
-      return {
-        type: `z.record(${sanitizedRefName}Schema)`,
-        imports: [`${sanitizedRefName}Schema`],
-      };
-    }
-    const inner = openApiPropertyToZodType(ap, depth + 1, guard);
-    return { type: `z.record(${inner.type})`, imports: inner.imports };
-  }
-  if (property.properties) {
-    const inner = generateZodSchemaFromOpenApiSchema(property, depth + 1, guard);
-    return { type: inner.code, imports: inner.imports };
-  }
-  return { type: 'z.record(z.any())', imports: [] };
-}
-
-/**
- * @description 处理 oneOf / anyOf 组合
- * 递归每个子 schema（透传 guard），结果拼为 z.union([...])。
- * @param property 含 oneOf 或 anyOf 的 schema
- * @param depth 当前递归深度
- * @param guard 循环引用检测器（必须透传）
- * @returns z.union 类型字符串与收集的 imports
- */
-function composeUnion(
-  property: OpenApiSchema,
-  depth: number,
-  guard: CircularRefGuard,
-): { type: string; imports: string[] } {
-  const subs = (property.oneOf || property.anyOf)!;
-  const results = subs.map((s) => openApiPropertyToZodType(s, depth + 1, guard));
-  const imports = results.flatMap((r) => r.imports);
-  return {
-    type: `z.union([${results.map((r) => r.type).join(', ')}])`,
-    imports,
-  };
-}
-
-/**
- * @description 处理 allOf 组合
- * 全为 $ref 时输出 z.intersection(A, B)；单个 $ref 退化为 {Name}Schema。
- * 含内联子 schema 时递归取各 object 后用 z.intersection 包裹（深度合并留作后续）。
- * @param property 含 allOf 的 schema
- * @param depth 当前递归深度
- * @param guard 循环引用检测器（必须透传）
- * @returns z.intersection 类型字符串与收集的 imports
- */
-function composeAllOf(
-  property: OpenApiSchema,
-  depth: number,
-  guard: CircularRefGuard,
-): { type: string; imports: string[] } {
-  const subs = property.allOf!;
-  const allRef = subs.every((s) => s.$ref);
-
-  // 全为 $ref：z.intersection（单个时退化为该 ref）
-  if (allRef) {
-    const refs = subs.map((s) => {
-      const refName = s.$ref!.split('/').pop()!;
-      const sanitizedRefName = sanitizeTypeName(refName);
-      return { type: `${sanitizedRefName}Schema`, import: `${sanitizedRefName}Schema` };
-    });
-    const imports = refs.map((r) => r.import);
-    const type =
-      refs.length === 1 ? refs[0].type : `z.intersection(${refs.map((r) => r.type).join(', ')})`;
-    return { type, imports };
-  }
-
-  // 含内联子 schema：递归各子 schema 后用 z.intersection 包裹
-  const results = subs.map((s) => openApiPropertyToZodType(s, depth + 1, guard));
-  const imports = results.flatMap((r) => r.imports);
-  return {
-    type: `z.intersection(${results.map((r) => r.type).join(', ')})`,
-    imports,
   };
 }
 

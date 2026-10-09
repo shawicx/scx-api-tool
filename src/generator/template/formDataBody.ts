@@ -52,9 +52,15 @@ function buildAppendBranchLines(
  * // => (() => { const fd = new FormData(); Object.entries(params).forEach(([k, v]) => { ... }); return fd; })()
  * ```
  */
-export function getFormDataInlineExpression(requestParamName: string): string {
+export function getFormDataInlineExpression(
+  requestParamName: string,
+  isJavaScript = false,
+): string {
   const branches = buildAppendBranchLines('k', 'v', 'fd').join(' ');
-  return `(() => { const fd = new FormData(); Object.entries(${requestParamName}).forEach(([k, v]) => { ${branches} }); return fd; })()`;
+  // TS 目标注解 [string, unknown]：Object.entries 的值类型为原始类型联合时，
+  // `v instanceof Blob` 会触发 TS2358（左侧必须是对象类型）；JS 目标不带注解
+  const entryAnnotation = isJavaScript ? '' : ': [string, unknown]';
+  return `(() => { const fd = new FormData(); Object.entries(${requestParamName}).forEach(([k, v]${entryAnnotation}) => { ${branches} }); return fd; })()`;
 }
 
 /**

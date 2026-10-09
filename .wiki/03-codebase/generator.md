@@ -51,19 +51,21 @@ generateCode(configPath)                          src/generator/index.ts
 
 ### `template/` 子目录
 
-| 文件                                                 | 职责                                                                  |
-| ---------------------------------------------------- | --------------------------------------------------------------------- |
-| `compiler.ts`                                        | Handlebars 编译（行数豁免于 360 行限制，主要含模板字符串）            |
-| `templateCache.ts`                                   | Map 缓存                                                              |
-| `templateHelpers.ts`                                 | 自定义辅助函数                                                        |
-| `templatePartials.ts`                                | 自定义分部模板                                                        |
-| `templateDefinitions.ts`                             | 模板字符串定义                                                        |
-| `formDataBody.ts`                                    | FormData 请求体序列化片段（config 内联/method-specific 两种风格共用） |
-| `requestBinding.ts`                                  | 请求函数的 path/query/body 绑定与 options 透传片段生成                |
-| `interfaceFunctionGenerator.ts`                      | 接口函数代码生成                                                      |
-| `requestFileGenerator.ts`                            | `request.ts` 文件生成                                                 |
-| `jsonValueTemplates.ts`                              | JsonValue 递归类型模板                                                |
-| `zod/interfaces.ts`、`zod/merged.ts`、`zod/types.ts` | Zod 模板（接口/合并/类型）                                            |
+| 文件                                                 | 职责                                                                                |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `compiler.ts`                                        | Handlebars 编译（行数豁免于 360 行限制，主要含模板字符串）                          |
+| `templateCache.ts`                                   | Map 缓存                                                                            |
+| `templateHelpers.ts`                                 | 自定义辅助函数                                                                      |
+| `templatePartials.ts`                                | 自定义分部模板                                                                      |
+| `templateDefinitions.ts`                             | 模板字符串定义                                                                      |
+| `formDataBody.ts`                                    | FormData 请求体序列化片段（config 内联/method-specific 两种风格共用）               |
+| `requestBinding.ts`                                  | 请求函数的 path/query/body 绑定与 options 透传片段生成                              |
+| `interfaceFunctionGenerator.ts`                      | 接口函数代码生成                                                                    |
+| `requestFileGenerator.ts`                            | `request.ts` 文件生成                                                               |
+| `jsonValueTemplates.ts`                              | JsonValue 递归类型模板                                                              |
+| `zod/interfaces.ts`、`zod/merged.ts`、`zod/types.ts` | Zod 模板（接口/合并/类型；types.ts 负责跨类型 $ref 的同目录 import 拼装）           |
+| `zod/recursive.ts`                                   | 递归 Schema 渲染：z.lazy + `z.ZodType<X>` 标注 + 手写 interface（zod 官方递归模式） |
+| `zod/compose.ts`                                     | Zod 组合 schema：nullable / 基本类型 / object / union / allOf                       |
 
 ### FormData 请求体序列化（`formDataBody.ts`）
 

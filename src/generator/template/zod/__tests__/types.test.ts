@@ -222,6 +222,61 @@ describe('zod/types', () => {
       expect(code).toContain('@description');
       expect(code).toContain('用户实体');
     });
+
+    it('跨类型 $ref 引用应生成同目录 import（修复：类型使用了但没有 import）', () => {
+      const code = generateZodTypeSchema(
+        {
+          name: 'UserListResponse',
+          schema: {
+            type: 'object',
+            properties: {
+              data: { type: 'array', items: { $ref: '#/components/schemas/User' } },
+              total: { type: 'number' },
+            },
+            required: ['data', 'total'],
+          },
+        },
+        { ...minimalApiConfig } as ApiConfig,
+      );
+      expect(code).toContain("import { UserSchema } from './UserSchema';");
+      expect(code).toContain('data: z.array(UserSchema),');
+    });
+
+    it('自引用递归 schema 应包裹 z.lazy 并加类型标注', () => {
+      const code = generateZodTypeSchema(
+        {
+          name: 'MenuNode',
+          schema: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              children: { type: 'array', items: { $ref: '#/components/schemas/MenuNode' } },
+            },
+            required: ['id'],
+          },
+        },
+        { ...minimalApiConfig } as ApiConfig,
+      );
+      // z.lazy 延迟求值（运行时避免自引用 undefined）
+      expect(code).toContain('z.array(z.lazy(() => MenuNodeSchema))');
+      // const 声明带显式类型标注（避免 TS7022 循环推断）
+      expect(code).toContain('export const MenuNodeSchema: z.ZodType<MenuNode> =');
+      // 自引用不应生成对自身文件的 import
+      expect(code).not.toContain("from './MenuNodeSchema'");
+    });
+
+    it('jsonValueAlias 应补 JsonValueSchema 的 import', () => {
+      const code = generateZodTypeSchema(
+        {
+          name: 'JsonNode',
+          schema: { type: 'object', description: 'Jackson JsonNode' },
+          kind: 'jsonValueAlias',
+        },
+        { ...minimalApiConfig } as ApiConfig,
+      );
+      expect(code).toContain("import { JsonValueSchema } from './JsonValueSchema';");
+      expect(code).toContain('export const JsonNodeSchema = JsonValueSchema;');
+    });
   });
 
   describe('generateZodSchemaIndex', () => {

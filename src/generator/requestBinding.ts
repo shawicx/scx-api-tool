@@ -164,7 +164,7 @@ export function buildRequestBinding(input: RequestBindingInput): RequestBinding 
     if (groups.requestBodyKind === 'binary') {
       dataExpression = `${requestBodyVariable}.${groups.rawBodyPropertyName}`;
     } else if (groups.requestBodyKind === 'multipart') {
-      dataExpression = getFormDataInlineExpression(requestBodyVariable);
+      dataExpression = getFormDataInlineExpression(requestBodyVariable, isJavaScript);
     } else {
       dataExpression = requestBodyVariable;
     }
