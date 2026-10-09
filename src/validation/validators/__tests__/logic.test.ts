@@ -274,23 +274,8 @@ describe('validateConfigLogic', () => {
       expect(hookError!.field).toBe('generateHooks & generateApi');
     });
 
-    it('returns ERROR when generateHooks uses an unimplemented library (vue-query)', () => {
-      const config: CommonServiceConfig = {
-        ...validSwaggerUserConfig,
-        generateHooks: true,
-        generateApi: true,
-        hooksLibrary: 'vue-query',
-      };
-      const errors = validateConfigLogic(config);
-
-      const libError = errors.find((e) => e.code === 'HOOKS_LIBRARY_NOT_SUPPORTED');
-      expect(libError).toBeDefined();
-      expect(libError!.severity).toBe(ValidationSeverity.ERROR);
-      expect(libError!.field).toBe('hooksLibrary');
-    });
-
-    it('returns no library error for implemented libraries (react-query / swr / ahooks)', () => {
-      for (const library of ['react-query', 'swr', 'ahooks'] as const) {
+    it('returns no library error for implemented libraries (react-query / vue-query / swr / ahooks)', () => {
+      for (const library of ['react-query', 'vue-query', 'swr', 'ahooks'] as const) {
         const config: CommonServiceConfig = {
           ...validSwaggerUserConfig,
           generateHooks: true,
@@ -300,6 +285,65 @@ describe('validateConfigLogic', () => {
         const errors = validateConfigLogic(config);
         expect(errors.find((e) => e.code === 'HOOKS_LIBRARY_NOT_SUPPORTED')).toBeUndefined();
       }
+    });
+
+    it('returns ERROR when hooksValidateResponse is true but generateHooks is not enabled', () => {
+      const config: CommonServiceConfig = {
+        ...validSwaggerUserConfig,
+        hooksValidateResponse: true,
+        typesFormat: 'zod',
+      };
+      const errors = validateConfigLogic(config);
+
+      const vError = errors.find((e) => e.code === 'HOOKS_VALIDATION_MISCONFIGURED');
+      expect(vError).toBeDefined();
+      expect(vError!.severity).toBe(ValidationSeverity.ERROR);
+      expect(vError!.field).toBe('hooksValidateResponse & generateHooks');
+    });
+
+    it('returns ERROR when hooksValidateResponse is true but typesFormat is not zod', () => {
+      const config: CommonServiceConfig = {
+        ...validSwaggerUserConfig,
+        generateHooks: true,
+        generateApi: true,
+        hooksValidateResponse: true,
+        typesFormat: 'typescript',
+      };
+      const errors = validateConfigLogic(config);
+
+      const vError = errors.find((e) => e.code === 'HOOKS_VALIDATION_MISCONFIGURED');
+      expect(vError).toBeDefined();
+      expect(vError!.field).toBe('hooksValidateResponse & typesFormat');
+    });
+
+    it('returns ERROR when hooksValidateResponse is true under javascript target', () => {
+      const config: CommonServiceConfig = {
+        ...validSwaggerUserConfig,
+        generateHooks: true,
+        generateApi: true,
+        hooksValidateResponse: true,
+        typesFormat: 'zod',
+        target: 'javascript',
+      };
+      const errors = validateConfigLogic(config);
+
+      const vError = errors.find((e) => e.code === 'HOOKS_VALIDATION_MISCONFIGURED');
+      expect(vError).toBeDefined();
+      expect(vError!.field).toBe('hooksValidateResponse & target');
+    });
+
+    it('returns no validation error for valid combination (generateHooks + zod + typescript)', () => {
+      const config: CommonServiceConfig = {
+        ...validSwaggerUserConfig,
+        generateHooks: true,
+        generateApi: true,
+        hooksValidateResponse: true,
+        typesFormat: 'zod',
+        target: 'typescript',
+      };
+      const errors = validateConfigLogic(config);
+
+      expect(errors.find((e) => e.code === 'HOOKS_VALIDATION_MISCONFIGURED')).toBeUndefined();
     });
 
     it('returns no hook errors for generateHooks with react-query', () => {

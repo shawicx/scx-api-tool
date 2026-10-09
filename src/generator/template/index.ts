@@ -52,6 +52,7 @@ export {
 
 export {
   getHookLibraryAdapter,
+  appendResponseValidation,
   type HookLibraryAdapter,
   type HookInterfaceData,
   type HookImportContext,

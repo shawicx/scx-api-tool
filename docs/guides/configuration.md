@@ -114,19 +114,35 @@ export default defineConfig({
 
 在生成的 API 请求函数之上额外生成 Hook 包装，**依赖 `generateApi: true`**（否则校验报错 `HOOKS_REQUIRE_API`）。
 
-| 配置项           | 类型                                 | 默认值          | 说明                                                                          |
-| ---------------- | ------------------------------------ | --------------- | ----------------------------------------------------------------------------- |
-| `generateHooks`  | `boolean`                            | `false`         | 是否生成 Hooks；开启后每个 tag 目录生成 `hooks.ts` + 根目录 `hooks.ts` barrel |
-| `hooksLibrary`   | `'react-query' \| 'swr' \| 'ahooks'` | `'react-query'` | Hook 依赖的客户端库；`vue-query` 为预留枚举，配置会校验报错                   |
-| `queryKeyPrefix` | `string[]`                           | `[]`            | 缓存 key 前缀；多服务场景建议配置 `[serviceName]` 隔离各服务缓存              |
+| 配置项                  | 类型                                                | 默认值          | 说明                                                                                               |
+| ----------------------- | --------------------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
+| `generateHooks`         | `boolean`                                           | `false`         | 是否生成 Hooks；开启后每个 tag 目录生成 `hooks.ts` + 根目录 `hooks.ts` barrel                      |
+| `hooksLibrary`          | `'react-query' \| 'vue-query' \| 'swr' \| 'ahooks'` | `'react-query'` | Hook 依赖的客户端库（四个库均已实现）                                                              |
+| `queryKeyPrefix`        | `string[]`                                          | `[]`            | 缓存 key 前缀；多服务场景建议配置 `[serviceName]` 隔离各服务缓存                                   |
+| `hooksValidateResponse` | `boolean`                                           | `false`         | 是否在 Hook 内注入 Zod 响应运行时校验；依赖 `generateHooks: true` + `typesFormat: 'zod'` + TS 目标 |
 
 各库语义与 peer dependency 要求：
 
-| 库          | peer dependency            | query 行为                                                                                    | mutation 触发                    | queryKeyPrefix 语义                      |
-| ----------- | -------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------- |
-| react-query | `@tanstack/react-query@^5` | `useQuery`，key 含 params，变化自动重新请求；queryFn 透传 `signal` 支持请求取消               | `mutate` / `mutateAsync`         | key 数组首位                             |
-| swr         | `swr@^2`                   | `useSWR` 数组 key，变化自动重新请求（无 signal 透传）                                         | `trigger`                        | key 数组首位（mutation key 不含 params） |
-| ahooks      | `ahooks@^3`                | `useRequest` 自动模式，params 变化**不会**自动重新请求（透传 `refreshDeps` 或手动 `refresh`） | `manual: true`，`run(variables)` | 非空时映射为 `cacheKey: 'prefix:fnName'` |
+| 库          | peer dependency            | 适用框架                                                                                      | query 行为                                                                      | mutation 触发                            | queryKeyPrefix 语义 |
+| ----------- | -------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------- | ------------------- |
+| react-query | `@tanstack/react-query@^5` | React                                                                                         | `useQuery`，key 含 params，变化自动重新请求；queryFn 透传 `signal` 支持请求取消 | `mutate` / `mutateAsync`                 | key 数组首位        |
+| vue-query   | `@tanstack/vue-query@^5`   | Vue 3                                                                                         | 同 react-query（API 同形，Composition API 中使用；需注册 `VueQueryPlugin`）     | `mutate` / `mutateAsync`                 | key 数组首位        |
+| swr         | `swr@^2`                   | `useSWR` 数组 key，变化自动重新请求（无 signal 透传）                                         | `trigger`                                                                       | key 数组首位（mutation key 不含 params） |
+| ahooks      | `ahooks@^3`                | `useRequest` 自动模式，params 变化**不会**自动重新请求（透传 `refreshDeps` 或手动 `refresh`） | `manual: true`，`run(variables)`                                                | 非空时映射为 `cacheKey: 'prefix:fnName'` |
+
+#### 响应运行时校验（hooksValidateResponse）
+
+`typesFormat: 'zod'` 且 `hooksValidateResponse: true` 时，生成的 queryFn / mutationFn 会自动包裹响应 Schema 校验：
+
+```typescript
+queryFn: ({ signal }) =>
+  getUserFunc(params, { signal }).then((res) => GetUserResultTypeSchema.parse(res)),
+```
+
+- 校验失败（`ZodError`）会让 query/mutation 进入 `error` 状态，错误对象即 ZodError。
+- Schema 以**值导入**方式引入（`import { GetUserResultTypeSchema } from './schema'`），类型仍走 `import type`。
+- 只做响应校验，不做请求参数校验（请求侧已有编译期类型约束）。
+- 非法组合（未开 hooks / 非 zod 模式 / JS 目标）在校验层报 `HOOKS_VALIDATION_MISCONFIGURED`（E1002）。
 
 其他规则：
 

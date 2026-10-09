@@ -10,10 +10,11 @@ import {
   getAhooksQueryHookTemplate,
   getAhooksMutationHookTemplate,
 } from '../hookTemplateDefinitions';
-import type {
-  HookInterfaceData,
-  HookImportContext,
-  HookLibraryAdapter,
+import {
+  appendResponseValidation,
+  type HookInterfaceData,
+  type HookImportContext,
+  type HookLibraryAdapter,
 } from '../hookLibraryRegistry';
 
 /** ahooks 未导出 Options 类型，用 Parameters 技巧从 useRequest 签名推导 */
@@ -50,6 +51,10 @@ export const ahooksAdapter: HookLibraryAdapter = {
         ? `options: ${AHOOKS_OPTIONS_TYPE} = {}`
         : 'options = {}',
       optionsArgument: buildOptionsArgument(data),
+      fetcherExpression: appendResponseValidation(
+        `() => ${data.functionName}(${data.requestParamName})`,
+        data,
+      ),
     });
   },
 
@@ -63,6 +68,7 @@ export const ahooksAdapter: HookLibraryAdapter = {
       fetcherSignature: data.hasTypeAnnotations
         ? `${data.requestParamName}: ${data.requestTypeName}`
         : data.requestParamName,
+      fetcherBody: appendResponseValidation(`${data.functionName}(${data.requestParamName})`, data),
     });
   },
 

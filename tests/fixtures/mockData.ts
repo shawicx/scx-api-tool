@@ -152,6 +152,7 @@ export const minimalApiConfig: ApiConfig = {
   generateHooks: false,
   hooksLibrary: 'react-query',
   queryKeyPrefix: [],
+  hooksValidateResponse: false,
 };
 
 export const apifoxApiConfig: ApiConfig = {

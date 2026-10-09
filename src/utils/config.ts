@@ -45,6 +45,7 @@ const DEFAULT_CONFIG_VALUES: Omit<
   generateHooks: false, // 默认不生成 Hooks
   hooksLibrary: 'react-query' as HookLibrary, // 默认使用 React Query v5
   queryKeyPrefix: [] as string[], // 默认无 queryKey 前缀
+  hooksValidateResponse: false, // 默认不注入响应运行时校验
   hooks: undefined as CliHooks | undefined, // 钩子函数
 };
 

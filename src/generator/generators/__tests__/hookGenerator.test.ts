@@ -358,3 +358,114 @@ describe('generateHookFiles (ahooks)', () => {
     expect(hooksFile!.content).not.toContain('Parameters<');
   });
 });
+
+describe('generateHookFiles (vue-query)', () => {
+  beforeEach(() => {
+    capturedWrites.length = 0;
+  });
+
+  it('TS 目标：import 来自 @tanstack/vue-query，主体与 react-query 同构', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateHooks: true,
+      hooksLibrary: 'vue-query',
+    };
+    await generateHookFiles(makeProcessedData(), config);
+
+    const hooksFile = findWrite(join('USER', 'hooks.ts'));
+    expect(hooksFile).toBeDefined();
+
+    expect(hooksFile!.content).toContain(
+      "import { useQuery, useMutation } from '@tanstack/vue-query';",
+    );
+    expect(hooksFile!.content).toContain(
+      "import type { UseQueryOptions, UseMutationOptions } from '@tanstack/vue-query';",
+    );
+    expect(hooksFile!.content).not.toContain('@tanstack/react-query');
+    expect(hooksFile!.content).toContain('UseQueryReturnType<GetApiUsersResultType, Error>');
+    expect(hooksFile!.content).toContain(
+      'queryFn: ({ signal }) => getApiUsersFunc(params, { signal }),',
+    );
+    expect(hooksFile!.content).toContain(
+      'mutationFn: (params: PostApiUsersRequestType) => postApiUsersFunc(params),',
+    );
+  });
+});
+
+describe('generateHookFiles (hooksValidateResponse)', () => {
+  beforeEach(() => {
+    capturedWrites.length = 0;
+  });
+
+  it('zod 模式开启校验：queryFn/mutationFn 包裹 Schema.parse，Schema 值导入', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateHooks: true,
+      typesFormat: 'zod',
+      hooksValidateResponse: true,
+    };
+    await generateHookFiles(makeProcessedData(), config);
+
+    const hooksFile = findWrite(join('USER', 'hooks.ts'));
+    expect(hooksFile).toBeDefined();
+
+    // 值导入 Schema + 类型仍走 import type
+    expect(hooksFile!.content).toContain(
+      "import { GetApiUsersResultTypeSchema, PostApiUsersResultTypeSchema } from './schema';",
+    );
+    expect(hooksFile!.content).toContain(
+      "import type { GetApiUsersRequestType, GetApiUsersResultType, PostApiUsersRequestType, PostApiUsersResultType } from './schema';",
+    );
+
+    // 校验注入
+    expect(hooksFile!.content).toContain(
+      'queryFn: ({ signal }) => getApiUsersFunc(params, { signal }).then((res) => GetApiUsersResultTypeSchema.parse(res)),',
+    );
+    expect(hooksFile!.content).toContain(
+      'mutationFn: (params: PostApiUsersRequestType) => postApiUsersFunc(params).then((res) => PostApiUsersResultTypeSchema.parse(res)),',
+    );
+  });
+
+  it('关闭校验：zod 模式产物无 parse 与值导入（零回归）', async () => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateHooks: true,
+      typesFormat: 'zod',
+    };
+    await generateHookFiles(makeProcessedData(), config);
+
+    const hooksFile = findWrite(join('USER', 'hooks.ts'));
+    expect(hooksFile!.content).not.toContain('Schema.parse');
+    expect(hooksFile!.content).not.toContain("from './schema';\nimport {");
+    expect(hooksFile!.content).toContain(
+      "import type { GetApiUsersRequestType, GetApiUsersResultType, PostApiUsersRequestType, PostApiUsersResultType } from './schema';",
+    );
+  });
+
+  it.each([
+    [
+      'swr',
+      "['getApiUsersFunc', params],\n    () => getApiUsersFunc(params).then((res) => GetApiUsersResultTypeSchema.parse(res)),",
+    ],
+    [
+      'ahooks',
+      'useRequest(() => getApiUsersFunc(params).then((res) => GetApiUsersResultTypeSchema.parse(res)), options);',
+    ],
+    [
+      'vue-query',
+      'queryFn: ({ signal }) => getApiUsersFunc(params, { signal }).then((res) => GetApiUsersResultTypeSchema.parse(res)),',
+    ],
+  ] as const)('%s 适配器同样注入校验', async (library, expected) => {
+    const config: ApiConfig = {
+      ...minimalApiConfig,
+      generateHooks: true,
+      hooksLibrary: library,
+      typesFormat: 'zod',
+      hooksValidateResponse: true,
+    };
+    await generateHookFiles(makeProcessedData(), config);
+
+    const hooksFile = findWrite(join('USER', 'hooks.ts'));
+    expect(hooksFile!.content).toContain(expected);
+  });
+});

@@ -99,11 +99,13 @@ async function generateHookFileForTag(
   const ext = getFileExtension(config.target);
   const requestParamName = config.requestParamName || 'params';
   const hasTypeAnnotations = !isJS && config.generateTypes;
+  const validateResponse = config.hooksValidateResponse && config.typesFormat === 'zod' && !isJS;
 
   const usedQuery = new Set<string>();
   const usedMutation = new Set<string>();
   const importedFunctions = new Set<string>();
   const importedTypes = new Set<string>();
+  const importedSchemas = new Set<string>();
 
   let combinedCode = '';
 
@@ -131,12 +133,17 @@ async function generateHookFileForTag(
       hasParameters: !!(apiInterface.operation.parameters || apiInterface.operation.requestBody),
       hasTypeAnnotations,
       queryKeyPrefix: config.queryKeyPrefix ?? [],
+      validateResponse,
+      responseSchemaName: validateResponse ? `${naming.responseTypeName}Schema` : '',
     };
 
     importedFunctions.add(naming.functionName);
     if (hasTypeAnnotations) {
       importedTypes.add(naming.requestTypeName);
       importedTypes.add(naming.responseTypeName);
+    }
+    if (validateResponse) {
+      importedSchemas.add(`${naming.responseTypeName}Schema`);
     }
 
     if (isQuery) {
@@ -148,14 +155,14 @@ async function generateHookFileForTag(
     }
   }
 
-  // 组装 import 段：库相关 import + API 函数 import + 类型 import
+  // 组装 import 段：库相关 import + API 函数 import + 类型/Schema import
   combinedCode =
     adapter.renderLibraryImports({
       isJS,
       hasQuery: usedQuery.size > 0,
       hasMutation: usedMutation.size > 0,
     }) +
-    buildCommonImports(isJS, importedFunctions, importedTypes, config, dirPath) +
+    buildCommonImports(isJS, importedFunctions, importedTypes, importedSchemas, config, dirPath) +
     combinedCode;
 
   await writeGeneratedFile(
@@ -168,10 +175,11 @@ async function generateHookFileForTag(
 }
 
 /**
- * @description 组装库无关的 import 段（API 函数 + 类型模块）
+ * @description 组装库无关的 import 段（API 函数 + 类型模块 + 响应校验 Schema）
  * @param isJS 是否为 JavaScript 目标
  * @param importedFunctions 引用的 API 函数名集合
  * @param importedTypes 引用的类型名集合
+ * @param importedSchemas 需要值导入的响应 Schema 名集合（zod 校验开启时）
  * @param config API 配置
  * @param dirPath 标签目录路径
  * @returns import 段代码字符串
@@ -180,6 +188,7 @@ function buildCommonImports(
   isJS: boolean,
   importedFunctions: Set<string>,
   importedTypes: Set<string>,
+  importedSchemas: Set<string>,
   config: ApiConfig,
   dirPath: string,
 ): string {
@@ -187,7 +196,7 @@ function buildCommonImports(
 
   imports += `import { ${Array.from(importedFunctions).join(', ')} } from './index';\n`;
 
-  if (!isJS && config.generateTypes && importedTypes.size > 0) {
+  if (!isJS && config.generateTypes && (importedTypes.size > 0 || importedSchemas.size > 0)) {
     let typeModulePath: string;
     if (config.typesFormat === 'zod') {
       typeModulePath = './schema';
@@ -195,7 +204,12 @@ function buildCommonImports(
       const typesDirPath = join(config.outputDir, 'types');
       typeModulePath = getNormalizedPathWithAlias(dirPath, typesDirPath).replace(/\/$/, '');
     }
-    imports += `import type { ${Array.from(importedTypes).join(', ')} } from '${typeModulePath}';\n`;
+    if (importedSchemas.size > 0) {
+      imports += `import { ${Array.from(importedSchemas).join(', ')} } from '${typeModulePath}';\n`;
+    }
+    if (importedTypes.size > 0) {
+      imports += `import type { ${Array.from(importedTypes).join(', ')} } from '${typeModulePath}';\n`;
+    }
   }
 
   return imports;

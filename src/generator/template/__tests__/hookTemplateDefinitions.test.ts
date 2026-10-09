@@ -16,7 +16,7 @@ import {
   getAhooksMutationHookTemplate,
   getAhooksHookTemplateByKind,
 } from '../hookTemplateDefinitions';
-import { getHookLibraryAdapter } from '../hookLibraryRegistry';
+import { getHookLibraryAdapter, appendResponseValidation } from '../hookLibraryRegistry';
 
 const baseData = {
   comment: true,
@@ -33,10 +33,12 @@ describe('getReactQueryHookTemplate', () => {
     const compiled = compileTemplate(getReactQueryHookTemplate());
     const code = compiled({
       ...baseData,
+      queryResultTypeName: 'UseQueryResult',
       paramsSignature: 'params: GetApiUsersRequestType',
       queryOptionsSignature:
         "options: Omit<UseQueryOptions<GetApiUsersResultType, Error>, 'queryKey' | 'queryFn'> = {}",
       queryKeyItems: "'getApiUsersFunc', params",
+      queryFnExpression: '({ signal }) => getApiUsersFunc(params, { signal })',
     });
 
     expect(code).toContain(' * @description 获取用户列表');
@@ -67,9 +69,10 @@ describe('getReactMutationHookTemplate', () => {
     const code = compiled({
       ...baseData,
       hookName: 'usePostApiUsersFunc',
+      mutationResultTypeName: 'UseMutationResult',
       mutationOptionsSignature:
         'options: Omit<UseMutationOptions<GetApiUsersResultType, Error, GetApiUsersRequestType, unknown>> = {}',
-      mutationFnSignature: 'params: GetApiUsersRequestType',
+      mutationFnExpression: '(params: GetApiUsersRequestType) => getApiUsersFunc(params)',
     });
 
     expect(code).toContain('export function usePostApiUsersFunc(');
@@ -95,6 +98,7 @@ describe('swr templates', () => {
       paramsSignature: 'params: GetApiUsersRequestType',
       optionsSignature: 'options: SWRConfiguration<GetApiUsersResultType, Error> = {}',
       keyItems: "'user', 'getApiUsersFunc', params",
+      fetcherExpression: '() => getApiUsersFunc(params)',
     });
 
     expect(code).toContain(' * @description 获取用户列表');
@@ -132,6 +136,7 @@ describe('ahooks templates', () => {
       paramsSignature: 'params: GetApiUsersRequestType',
       optionsSignature: 'options: Parameters<typeof useRequest>[1] = {}',
       optionsArgument: ', options',
+      fetcherExpression: '() => getApiUsersFunc(params)',
     });
 
     expect(code).toContain('useRequest(() => getApiUsersFunc(params), options);');
@@ -144,6 +149,7 @@ describe('ahooks templates', () => {
       ...baseData,
       optionsSignature: 'options: Parameters<typeof useRequest>[1] = {}',
       fetcherSignature: 'params: GetApiUsersRequestType',
+      fetcherBody: 'getApiUsersFunc(params)',
     });
 
     expect(code).toContain('useRequest(');
@@ -157,12 +163,30 @@ describe('ahooks templates', () => {
 });
 
 describe('getHookLibraryAdapter', () => {
-  it('按配置路由到对应适配器，未实现的库抛错', () => {
+  it('按配置路由到对应适配器（四库均已实现）', () => {
     expect(getHookLibraryAdapter('react-query').peerDependencyHint).toContain(
       '@tanstack/react-query@^5',
     );
+    expect(getHookLibraryAdapter('vue-query').peerDependencyHint).toContain(
+      '@tanstack/vue-query@^5',
+    );
     expect(getHookLibraryAdapter('swr').peerDependencyHint).toContain('swr@^2');
     expect(getHookLibraryAdapter('ahooks').peerDependencyHint).toContain('ahooks@^3');
-    expect(() => getHookLibraryAdapter('vue-query')).toThrow(/未实现/);
+  });
+});
+
+describe('appendResponseValidation', () => {
+  it('开启校验时追加 zod parse，关闭时原样返回', () => {
+    const data = {
+      validateResponse: true,
+      responseSchemaName: 'GetApiUsersResultTypeSchema',
+    } as Parameters<typeof appendResponseValidation>[1];
+    expect(appendResponseValidation('() => fn(params)', data)).toBe(
+      '() => fn(params).then((res) => GetApiUsersResultTypeSchema.parse(res))',
+    );
+    const off = { validateResponse: false, responseSchemaName: '' } as Parameters<
+      typeof appendResponseValidation
+    >[1];
+    expect(appendResponseValidation('() => fn(params)', off)).toBe('() => fn(params)');
   });
 });

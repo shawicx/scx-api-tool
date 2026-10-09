@@ -6,10 +6,11 @@
 
 import { compileTemplate } from '../compiler';
 import { getSwrQueryHookTemplate, getSwrMutationHookTemplate } from '../hookTemplateDefinitions';
-import type {
-  HookInterfaceData,
-  HookImportContext,
-  HookLibraryAdapter,
+import {
+  appendResponseValidation,
+  type HookInterfaceData,
+  type HookImportContext,
+  type HookLibraryAdapter,
 } from '../hookLibraryRegistry';
 
 /**
@@ -44,20 +45,25 @@ export const swrAdapter: HookLibraryAdapter = {
         ? `options: SWRConfiguration<${data.responseTypeName}, Error> = {}`
         : 'options = {}',
       keyItems: buildKeyItems(data, true),
+      fetcherExpression: appendResponseValidation(
+        `() => ${data.functionName}(${data.requestParamName})`,
+        data,
+      ),
     });
   },
 
   renderMutation(data: HookInterfaceData): string {
     const compiled = compileTemplate(getSwrMutationHookTemplate());
+    const argSignature = data.hasTypeAnnotations
+      ? `(_, { arg }: { arg: ${data.requestTypeName} }) => ${data.functionName}(arg)`
+      : `(_, { arg }) => ${data.functionName}(arg)`;
     return compiled({
       ...data,
       optionsSignature: data.hasTypeAnnotations
         ? `options: SWRMutationConfiguration<${data.responseTypeName}, Error, undefined, ${data.requestTypeName}> = {}`
         : 'options = {}',
       keyItems: buildKeyItems(data, false),
-      fetcherSignature: data.hasTypeAnnotations
-        ? `(_, { arg }: { arg: ${data.requestTypeName} }) => ${data.functionName}(arg)`
-        : `(_, { arg }) => ${data.functionName}(arg)`,
+      fetcherSignature: appendResponseValidation(argSignature, data),
     });
   },
 

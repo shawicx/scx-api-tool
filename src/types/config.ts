@@ -144,6 +144,8 @@ export interface CommonServiceConfig {
   hooksLibrary?: HookLibrary;
   /** queryKey 前缀（多服务场景建议配置 [serviceName] 以隔离缓存） */
   queryKeyPrefix?: string[];
+  /** 是否在 Hook 中注入 Zod 响应运行时校验（依赖 generateHooks + typesFormat: 'zod'，默认 false） */
+  hooksValidateResponse?: boolean;
   /**
    * @description 路径转换函数：接收原始 path，返回转换后的 path。
    * 不配置时使用恒等函数（不做任何修改）。
@@ -257,6 +259,8 @@ export interface ApiConfig {
   hooksLibrary: HookLibrary;
   /** queryKey 前缀 */
   queryKeyPrefix: string[];
+  /** 是否在 Hook 中注入 Zod 响应运行时校验 */
+  hooksValidateResponse: boolean;
   /**
    * @description 路径转换函数（已规范化，恒为函数）。
    * 接收原始 path，返回转换后的 path。

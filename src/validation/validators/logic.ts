@@ -106,8 +106,8 @@ export function validateConfigLogic(config: CommonServiceConfig): ValidationErro
     );
   }
 
-  // 验证 hooksLibrary 实现状态（react-query / swr / ahooks 已实现，vue-query 预留）
-  const UNIMPLEMENTED_HOOK_LIBRARIES = ['vue-query'];
+  // 四个 Hook 库均已实现，暂无未实现库；保留拦截逻辑以备后续新增预留枚举时启用
+  const UNIMPLEMENTED_HOOK_LIBRARIES: string[] = [];
   if (
     config.generateHooks === true &&
     config.hooksLibrary &&
@@ -117,12 +117,53 @@ export function validateConfigLogic(config: CommonServiceConfig): ValidationErro
       createValidationError(
         'hooksLibrary',
         'HOOKS_LIBRARY_NOT_SUPPORTED',
-        `当前版本不支持 hooksLibrary: "${config.hooksLibrary}"，已支持：react-query / swr / ahooks`,
+        `当前版本不支持 hooksLibrary: "${config.hooksLibrary}"，已支持：react-query / vue-query / swr / ahooks`,
         ValidationSeverity.ERROR,
-        '请使用 "react-query"（@tanstack/react-query v5）、"swr"（swr v2）或 "ahooks"（ahooks v3）',
+        '请使用 "react-query" / "vue-query"（TanStack Query v5）、"swr"（swr v2）或 "ahooks"（ahooks v3）',
         config.hooksLibrary,
       ),
     );
+  }
+
+  // 验证 hooksValidateResponse 依赖组合（依赖 generateHooks + zod 模式 + TS 目标）
+  if (config.hooksValidateResponse === true) {
+    if (config.generateHooks !== true) {
+      errors.push(
+        createValidationError(
+          'hooksValidateResponse & generateHooks',
+          'HOOKS_VALIDATION_MISCONFIGURED',
+          'hooksValidateResponse 依赖 Hooks 生成，generateHooks 未开启时不会生效',
+          ValidationSeverity.ERROR,
+          '请设置 generateHooks: true，或关闭 hooksValidateResponse',
+          {
+            hooksValidateResponse: config.hooksValidateResponse,
+            generateHooks: config.generateHooks,
+          },
+        ),
+      );
+    } else if (config.typesFormat !== 'zod') {
+      errors.push(
+        createValidationError(
+          'hooksValidateResponse & typesFormat',
+          'HOOKS_VALIDATION_MISCONFIGURED',
+          `hooksValidateResponse 依赖 Zod Schema 产物，当前 typesFormat 为 "${config.typesFormat}"`,
+          ValidationSeverity.ERROR,
+          '请设置 typesFormat: "zod"，或关闭 hooksValidateResponse',
+          { hooksValidateResponse: config.hooksValidateResponse, typesFormat: config.typesFormat },
+        ),
+      );
+    } else if (config.target === 'javascript') {
+      errors.push(
+        createValidationError(
+          'hooksValidateResponse & target',
+          'HOOKS_VALIDATION_MISCONFIGURED',
+          'JavaScript 目标不生成 Zod Schema，hooksValidateResponse 无法生效',
+          ValidationSeverity.ERROR,
+          '请使用 typescript 目标，或关闭 hooksValidateResponse',
+          { hooksValidateResponse: config.hooksValidateResponse, target: config.target },
+        ),
+      );
+    }
   }
 
   // 验证 javascript 目标下的类型相关配置

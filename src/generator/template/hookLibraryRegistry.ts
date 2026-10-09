@@ -6,6 +6,7 @@
 
 import type { HookLibrary } from '../../types';
 import { reactQueryAdapter } from './adapters/reactQueryAdapter';
+import { vueQueryAdapter } from './adapters/vueQueryAdapter';
 import { swrAdapter } from './adapters/swrAdapter';
 import { ahooksAdapter } from './adapters/ahooksAdapter';
 
@@ -31,6 +32,10 @@ export interface HookInterfaceData {
   hasTypeAnnotations: boolean;
   /** queryKey 前缀配置 */
   queryKeyPrefix: string[];
+  /** 是否注入响应运行时校验（zod 模式且 hooksValidateResponse 开启） */
+  validateResponse: boolean;
+  /** 响应 Zod Schema 名（非 zod 模式为空字符串） */
+  responseSchemaName: string;
 }
 
 /** 适配器渲染库相关 import 语句所需的上下文 */
@@ -73,6 +78,7 @@ export interface HookLibraryAdapter {
 export function getHookLibraryAdapter(library: HookLibrary): HookLibraryAdapter {
   const registry: Record<string, HookLibraryAdapter> = {
     'react-query': reactQueryAdapter,
+    'vue-query': vueQueryAdapter,
     swr: swrAdapter,
     ahooks: ahooksAdapter,
   };
@@ -80,8 +86,29 @@ export function getHookLibraryAdapter(library: HookLibrary): HookLibraryAdapter 
   const adapter = registry[library];
   if (!adapter) {
     throw new Error(
-      `hooksLibrary "${library}" 当前版本未实现，已支持：react-query / swr / ahooks（vue-query 预留）`,
+      `hooksLibrary "${library}" 当前版本未实现，已支持：react-query / vue-query / swr / ahooks`,
     );
   }
   return adapter;
+}
+
+/**
+ * @description 为请求表达式追加响应运行时校验（zod parse）
+ * @param expression 请求表达式（如 `({ signal }) => fn(params, { signal })`）
+ * @param data 接口渲染数据
+ * @returns 开启校验时追加 `.then((res) => XxxResultTypeSchema.parse(res))` 的表达式
+ *
+ * @example
+ * ```typescript
+ * appendResponseValidation('() => getUserFunc(params)', {
+ *   validateResponse: true, responseSchemaName: 'GetUserResultTypeSchema', ...
+ * });
+ * // "() => getUserFunc(params).then((res) => GetUserResultTypeSchema.parse(res))"
+ * ```
+ */
+export function appendResponseValidation(expression: string, data: HookInterfaceData): string {
+  if (!data.validateResponse) {
+    return expression;
+  }
+  return `${expression}.then((res) => ${data.responseSchemaName}.parse(res))`;
 }

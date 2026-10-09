@@ -20,10 +20,13 @@ export default defineConfig({
   // 是否生成 Hooks（可选，依赖 generateApi: true）
   // 开启后在 API 函数之上生成 query / mutation Hook（GET/HEAD → query，其余 → mutation）
   // generateHooks: true,
-  // Hook 依赖的客户端库：'react-query' | 'swr' | 'ahooks'（vue-query 预留）
+  // Hook 依赖的客户端库：'react-query' | 'vue-query' | 'swr' | 'ahooks'
   // 需自行安装对应 peer dependency：
   // - 'react-query' → "@tanstack/react-query@^5"（还需配置 QueryClientProvider）
+  // - 'vue-query' → "@tanstack/vue-query@^5"（还需注册 VueQueryPlugin）
   // - 'swr' → "swr@^2"；'ahooks' → "ahooks@^3"
+  // 是否在 Hook 内注入 Zod 响应运行时校验（依赖 typesFormat: 'zod'）
+  // hooksValidateResponse: false,
   // hooksLibrary: 'react-query',
   // 缓存 key 前缀（react-query/swr 进 key 数组，ahooks 映射为 cacheKey；多服务场景建议配 [serviceName]）
   // queryKeyPrefix: [],

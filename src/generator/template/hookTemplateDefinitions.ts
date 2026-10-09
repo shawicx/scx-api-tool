@@ -1,7 +1,7 @@
 /**
  * @description Hook 模板字符串定义
- * 提供 react-query v5 / swr v2 / ahooks v3 三种库的 query / mutation Hook Handlebars 模板
- * 类型注解等 JS/TS 差异通过模板数据（预渲染字符串 + 三花括号）注入，避免模板分支爆炸
+ * 提供 react-query v5 / swr v2 / ahooks v3（vue-query v5 复用 react-query 模板）的 query / mutation Hook Handlebars 模板
+ * 类型注解、请求函数表达式等差异通过模板数据（预渲染字符串 + 三花括号）注入，避免模板分支爆炸
  */
 
 // ==================== Query Hook 模版（GET / HEAD） ====================
@@ -12,7 +12,7 @@ export function getReactQueryHookTemplate(): string {
 /**
  * @description {{description}}
  * @param {{requestParamName}} {{requestTypeName}}
- * @returns useQuery 查询结果（UseQueryResult<{{responseTypeName}}, Error>）
+ * @returns useQuery 查询结果（{{queryResultTypeName}}<{{responseTypeName}}, Error>）
  */
 {{/if}}
 export function {{hookName}}(
@@ -21,7 +21,7 @@ export function {{hookName}}(
 ) {
   return useQuery({
     queryKey: [{{{queryKeyItems}}}],
-    queryFn: ({ signal }) => {{functionName}}({{requestParamName}}, { signal }),
+    queryFn: {{{queryFnExpression}}},
     ...options,
   });
 }
@@ -36,12 +36,12 @@ export function getReactMutationHookTemplate(): string {
 /**
  * @description {{description}}（mutation：通过 mutate / mutateAsync 触发）
  * @param variables {{requestTypeName}}
- * @returns useMutation 结果（UseMutationResult<{{responseTypeName}}, Error, {{requestTypeName}}>）
+ * @returns useMutation 结果（{{mutationResultTypeName}}<{{responseTypeName}}, Error, {{requestTypeName}}>）
  */
 {{/if}}
 export function {{hookName}}({{{mutationOptionsSignature}}}) {
   return useMutation({
-    mutationFn: ({{{mutationFnSignature}}}) => {{functionName}}({{requestParamName}}),
+    mutationFn: {{{mutationFnExpression}}},
     ...options,
   });
 }
@@ -80,7 +80,7 @@ export function {{hookName}}(
 ) {
   return useSWR(
     [{{{keyItems}}}],
-    () => {{functionName}}({{requestParamName}}),
+    {{{fetcherExpression}}},
     options,
   );
 }
@@ -130,7 +130,7 @@ export function {{hookName}}(
   {{{paramsSignature}}},
   {{{optionsSignature}}}
 ) {
-  return useRequest(() => {{functionName}}({{requestParamName}}){{{optionsArgument}}});
+  return useRequest({{{fetcherExpression}}}{{{optionsArgument}}});
 }
 `;
 }
@@ -146,7 +146,7 @@ export function getAhooksMutationHookTemplate(): string {
 {{/if}}
 export function {{hookName}}({{{optionsSignature}}}) {
   return useRequest(
-    ({{{fetcherSignature}}}) => {{functionName}}({{requestParamName}}),
+    ({{{fetcherSignature}}}) => {{{fetcherBody}}},
     { manual: true, ...(options ?? {}) },
   );
 }
