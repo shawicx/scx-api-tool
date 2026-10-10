@@ -32,10 +32,16 @@ export function generateInterfaceFunction(
       : "options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}";
   const configDeclaration =
     config.target === 'javascript' ? 'const config = {' : 'const config: RequestConfig = {';
+  // TS 模式使用 RequestMethod 枚举成员，JS 模式退化为字符串字面量
+  const methodExpression =
+    config.target === 'javascript'
+      ? `'${interfaceInfo.method}'`
+      : `RequestMethod.${interfaceInfo.method}`;
   const templateData = {
     ...interfaceInfo,
     requestOptionsParam,
     configDeclaration,
+    methodExpression,
   };
 
   // JavaScript 目标始终使用 API-only 模板（无类型注解）

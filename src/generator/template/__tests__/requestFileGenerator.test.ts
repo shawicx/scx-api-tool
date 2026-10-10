@@ -40,7 +40,11 @@ describe('generateRequestFile', () => {
       expect(result).toContain("import type { AxiosRequestConfig } from 'axios'");
       expect(result).toContain('export interface RequestConfig extends AxiosRequestConfig');
       expect(result).toContain('url: string');
-      expect(result).toContain('method: string');
+      expect(result).toContain('method: RequestMethod');
+      // TS 模式应导出 RequestMethod 常量对象（as const，替代 enum）及同名类型
+      expect(result).toContain('export const RequestMethod');
+      expect(result).toContain('} as const');
+      expect(result).toContain('export type RequestMethod');
     });
 
     it('should NOT include method-specific functions in CONFIG style', () => {

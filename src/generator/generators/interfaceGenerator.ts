@@ -151,13 +151,20 @@ export async function generateInterfaceFileForTag(
       combinedCode += `import type { ${Array.from(usedTypes).join(', ')} } from '${cleanTypesRelativePath}';\n`;
     }
   } else if (apiOnly || isJS) {
-    const importedNames = isJS ? requestFunctionName : `RequestConfig, ${requestFunctionName}`;
+    // TS 模式下 config 风格函数体使用 RequestMethod 枚举，需要一并导入（JS 无枚举）
+    const methodEnumName =
+      isJS || config.requestMethodStyle === 'method-specific' ? '' : 'RequestMethod, ';
+    const importedNames = isJS
+      ? requestFunctionName
+      : `${methodEnumName}RequestConfig, ${requestFunctionName}`;
     combinedCode += `import { ${importedNames} } from '${cleanRelativePath}';\n`;
   } else {
     if (config.requestMethodStyle === 'method-specific' || config.requestMethodStyle === 'both') {
-      combinedCode += `import { RequestConfig, ${requestFunctionName}, ${requestMethodsObjectName} } from '${cleanRelativePath}';\n`;
+      // method-specific 纯函数调用无 method 字段；both 模式函数体走 config 分支，需要 RequestMethod
+      const methodEnumName = config.requestMethodStyle === 'both' ? 'RequestMethod, ' : '';
+      combinedCode += `import { ${methodEnumName}RequestConfig, ${requestFunctionName}, ${requestMethodsObjectName} } from '${cleanRelativePath}';\n`;
     } else {
-      combinedCode += `import { RequestConfig, ${requestFunctionName} } from '${cleanRelativePath}';\n`;
+      combinedCode += `import { RequestMethod, RequestConfig, ${requestFunctionName} } from '${cleanRelativePath}';\n`;
     }
 
     if (config.typesFormat === 'typescript' && usedTypes.size > 0) {

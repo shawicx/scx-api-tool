@@ -369,7 +369,7 @@ describe('generateInterfaceFileForTag', () => {
     );
 
     // apiOnly 分支：函数签名需要 RequestConfig，但不应有 type import
-    expect(captured.content).toMatch(/import \{ RequestConfig, request \} from/);
+    expect(captured.content).toMatch(/import \{ RequestMethod, RequestConfig, request \} from/);
     // apiOnly 不应有 type import
     expect(captured.content).not.toMatch(/import type \{/);
   });
@@ -415,7 +415,7 @@ describe('generateInterfaceFileForTag', () => {
     );
 
     // 全量分支：import { RequestConfig, request } from '...'
-    expect(captured.content).toMatch(/import \{ RequestConfig, request \} from/);
+    expect(captured.content).toMatch(/import \{ RequestMethod, RequestConfig, request \} from/);
     // usedTypes 命中 User → 生成 type import（路径经 alias 解析为 @/types）
     expect(captured.content).toMatch(/import type \{ User \} from/);
   });
@@ -437,6 +437,7 @@ describe('generateInterfaceFileForTag', () => {
       join(config.outputDir, 'user'),
     );
 
+    // method-specific 纯函数调用无 method 字段，不应导入 RequestMethod
     expect(captured.content).toMatch(/import \{ RequestConfig, request, requestMethods \} from/);
   });
 
@@ -457,7 +458,9 @@ describe('generateInterfaceFileForTag', () => {
       join(config.outputDir, 'user'),
     );
 
-    expect(captured.content).toMatch(/import \{ RequestConfig, request, requestMethods \} from/);
+    expect(captured.content).toMatch(
+      /import \{ RequestMethod, RequestConfig, request, requestMethods \} from/,
+    );
   });
 
   it('Zod 模式（typesFormat=zod, generateApi+generateTypes）应含 request import 与 ./schema type import', async () => {
@@ -476,7 +479,7 @@ describe('generateInterfaceFileForTag', () => {
       join(config.outputDir, 'user'),
     );
 
-    expect(captured.content).toMatch(/import \{ RequestConfig, request \} from/);
+    expect(captured.content).toMatch(/import \{ RequestMethod, RequestConfig, request \} from/);
     // Zod 分支：import type { ... } from './schema'
     expect(captured.content).toMatch(/import type \{ .* \} from '\.\/schema'/);
   });

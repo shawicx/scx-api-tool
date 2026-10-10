@@ -92,11 +92,13 @@ generateCode(configPath)                          src/generator/index.ts
 const { userId, page, limit, ...body } = params; // path/query 键逐个解构，rest 为 body
 const config: RequestConfig = {
   url: `/api/users/${userId}/search`,
-  method: 'POST',
+  method: RequestMethod.POST, // TS 模式使用 request.ts 导出的 RequestMethod 枚举
   data: body, // multipart 时 FormData 只从 body 构造
   params: { page, limit }, // query 走 config.params
 };
 ```
+
+生成的 `request.ts`（仅 TypeScript 模式）导出 `RequestMethod` 常量对象（`as const`，可擦除语法）及同名联合类型 `type RequestMethod = (typeof RequestMethod)[keyof typeof RequestMethod]`（GET/POST/PUT/DELETE/HEAD/OPTIONS/PATCH），`RequestConfig.method` 类型为 `RequestMethod`，config 风格接口文件会一并 `import { RequestMethod }`；JavaScript 模式无枚举，method 保持字符串字面量。method-specific 风格走函数调用（`requestMethods.post(...)`），不涉及 `method` 字段，也不导入该对象。
 
 调用方仍传单个 `params` 对象，并可额外传可选 `options` 透传 `timeout`、`signal`、`onUploadProgress`、`headers`、`baseURL` 等 Axios 配置。生成的 `url` / `method` / `data` / `params` 最后写入，不可被 `options` 覆盖。两个防护：query 参数名为非法标识符（如 `X-Custom`）时用别名绑定（`'X-Custom': X_Custom`）；与 rest 变量 `body` 重名时 rest 改名 `bodyParams`。method-specific 风格下 query 作为第三参数传入 `requestMethods.post(url, body, { page, limit }, options)`。
 

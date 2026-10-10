@@ -30,7 +30,7 @@ export function registerTemplatePartials(): void {
   {{{configDeclaration}}}
     ...options,
     url: {{{path}}},
-    method: '{{method}}',
+    method: {{{methodExpression}}},
 {{#if requestConfigFields}}
 {{{requestConfigFields}}}
 {{/if}}

@@ -21,8 +21,10 @@ function generateNoBodyMethod(method: string, requestFunctionName: string, isJS:
   const tsConfigType = isJS ? 'config' : 'config: RequestConfig';
   const tsReturn = isJS ? '' : '<T>';
 
+  const methodValue = isJS ? `'${methodUpper}'` : `RequestMethod.${methodUpper}`;
+
   return `  ${method}: ${tsGeneric}(${tsParams}, ${optionsParam}) => {
-    const ${tsConfigType} = { ...options, url, method: '${methodUpper}' };
+    const ${tsConfigType} = { ...options, url, method: ${methodValue} };
     if (params !== undefined) {
       config.params = params;
     }
@@ -43,8 +45,10 @@ function generateBodyMethod(method: string, requestFunctionName: string, isJS: b
   const tsConfigType = isJS ? 'config' : 'config: RequestConfig';
   const tsReturn = isJS ? '' : '<T>';
 
+  const methodValue = isJS ? `'${methodUpper}'` : `RequestMethod.${methodUpper}`;
+
   return `  ${method}: ${tsGeneric}(${tsParams}, ${optionsParam}) => {
-    const ${tsConfigType} = { ...options, url, method: '${methodUpper}' };
+    const ${tsConfigType} = { ...options, url, method: ${methodValue} };
     if (data !== undefined) {
       config.data = data;
     }
@@ -135,11 +139,27 @@ export function generateRequestFile(config: ApiConfig): string {
   const importSection = `${isJS ? '' : "import type { AxiosRequestConfig } from 'axios';\n"}import axios from 'axios';
 import consola from 'consola';`;
 
+  const requestMethodEnum = isJS
+    ? ''
+    : `/** HTTP 请求方法常量（as const 对象，替代 enum 以保持可擦除语法） */
+export const RequestMethod = {
+  GET: 'GET',
+  POST: 'POST',
+  PUT: 'PUT',
+  DELETE: 'DELETE',
+  HEAD: 'HEAD',
+  OPTIONS: 'OPTIONS',
+  PATCH: 'PATCH',
+} as const;
+
+/** HTTP 请求方法类型 */
+export type RequestMethod = (typeof RequestMethod)[keyof typeof RequestMethod];`;
+
   const requestConfigInterface = isJS
     ? ''
     : `export interface RequestConfig extends AxiosRequestConfig {
   url: string;
-  method: string;
+  method: RequestMethod;
 }`;
 
   const uploadDataExpression = isJS
@@ -171,6 +191,7 @@ ${generateStripContentTypeSnippet(isJS)}
 
   const sections = [
     importSection,
+    requestMethodEnum,
     requestConfigInterface,
     constants,
     mainRequestFunction,
