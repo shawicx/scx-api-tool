@@ -128,7 +128,7 @@ describe('generateHookFiles (react-query)', () => {
       'mutationFn: (params: PostApiUsersRequestType) => postApiUsersFunc(params),',
     );
     expect(hooksFile!.content).toContain(
-      'options: Omit<UseMutationOptions<PostApiUsersResultType, Error, PostApiUsersRequestType, unknown>> = {}',
+      "options: Omit<UseMutationOptions<PostApiUsersResultType, Error, PostApiUsersRequestType, unknown>, 'mutationFn' | 'mutationKey'> = {}",
     );
 
     // 根 barrel（排除 tag 目录下的 hooks 文件）

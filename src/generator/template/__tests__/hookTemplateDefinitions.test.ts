@@ -71,7 +71,7 @@ describe('getReactMutationHookTemplate', () => {
       hookName: 'usePostApiUsersFunc',
       mutationResultTypeName: 'UseMutationResult',
       mutationOptionsSignature:
-        'options: Omit<UseMutationOptions<GetApiUsersResultType, Error, GetApiUsersRequestType, unknown>> = {}',
+        "options: Omit<UseMutationOptions<GetApiUsersResultType, Error, GetApiUsersRequestType, unknown>, 'mutationFn' | 'mutationKey'> = {}",
       mutationFnExpression: '(params: GetApiUsersRequestType) => getApiUsersFunc(params)',
     });
 

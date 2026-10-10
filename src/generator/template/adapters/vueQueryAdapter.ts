@@ -64,7 +64,7 @@ export const vueQueryAdapter: HookLibraryAdapter = {
       ...data,
       mutationResultTypeName: 'UseMutationReturnType',
       mutationOptionsSignature: data.hasTypeAnnotations
-        ? `options: Omit<UseMutationOptions<${data.responseTypeName}, Error, ${data.requestTypeName}, unknown>> = {}`
+        ? `options: Omit<UseMutationOptions<${data.responseTypeName}, Error, ${data.requestTypeName}, unknown>, 'mutationFn' | 'mutationKey'> = {}`
         : 'options = {}',
       mutationFnExpression: appendResponseValidation(
         `(${paramsSignature}) => ${data.functionName}(${data.requestParamName})`,
