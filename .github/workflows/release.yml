@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # 本仓库 package.json 未声明 packageManager，需显式指定 pnpm 版本
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # trusted publishing（OIDC）要求 npm CLI ≥ 11.5.1，node22 自带版本较低
+      - name: 升级 npm
+        run: npm install -g npm@latest
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 门禁（代码检查 + 构建 + 测试）
+        run: |
+          pnpm lint
+          pnpm build
+          pnpm test
+
+      - name: 校验 tag 与 package.json 版本一致
+        run: test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
+
+      # trusted publishing：以 GitHub OIDC 短时凭证发布，无长效 token（npm 2026 安全模型推荐）
+      - name: 发布到 npm
+        run: npm publish --provenance
+
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

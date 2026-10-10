@@ -50,7 +50,6 @@
     "build": "NODE_ENV=production tsdown",
     "analyze:deps": "node scripts/analyze-deps.js",
     "ci:lint": "oxlint src -f json > ./.ci/oxlint.json",
-    "docs": "pnpm run dumi build",
     "docs:build": "vitepress build",
     "docs:dev": "vitepress dev",
     "lint": "oxlint .",
