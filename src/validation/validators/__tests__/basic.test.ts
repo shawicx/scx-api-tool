@@ -521,6 +521,45 @@ describe('validateNumberFields', () => {
     expect(errors).toHaveLength(1);
     expect(errors[0]!.field).toBe('indentSize');
   });
+
+  it('returns no errors when requestTimeout is a positive number', () => {
+    const config = { ...validSwaggerUserConfig, requestTimeout: 30 * 1000 };
+    const errors = validateNumberFields(config);
+
+    expect(errors.filter((error) => error.field === 'requestTimeout')).toHaveLength(0);
+  });
+
+  it('returns no errors when requestTimeout is undefined', () => {
+    const config = { ...validSwaggerUserConfig };
+    const errors = validateNumberFields(config);
+
+    expect(errors.filter((error) => error.field === 'requestTimeout')).toHaveLength(0);
+  });
+
+  it('returns error for non-positive requestTimeout', () => {
+    const config = { ...validSwaggerUserConfig, requestTimeout: 0 };
+    const errors = validateNumberFields(config);
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.field).toBe('requestTimeout');
+    expect(errors[0]!.code).toBe('INVALID_NUMBER');
+  });
+
+  it('returns error for negative requestTimeout', () => {
+    const config = { ...validSwaggerUserConfig, requestTimeout: -1000 };
+    const errors = validateNumberFields(config);
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.field).toBe('requestTimeout');
+  });
+
+  it('returns error for string requestTimeout', () => {
+    const config = { ...validSwaggerUserConfig, requestTimeout: '5000' as any };
+    const errors = validateNumberFields(config);
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.field).toBe('requestTimeout');
+  });
 });
 
 // ---------------------------------------------------------------------------

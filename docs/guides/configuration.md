@@ -101,14 +101,15 @@ export default defineConfig({
 
 ### 请求函数配置
 
-| 配置项                     | 类型                                      | 默认值                              | 说明                                                                                |
-| -------------------------- | ----------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------- |
-| `requestFunctionFilePath`  | `string`                                  | `join(baseOutputDir, 'request.ts')` | 请求函数文件路径（位于 `baseOutputDir` 层级，所有服务共享；多服务场景下仅生成一次） |
-| `requestFunctionName`      | `string`                                  | `'request'`                         | 请求函数名称                                                                        |
-| `requestMethodsObjectName` | `string`                                  | `'requestMethods'`                  | 请求方法对象名称                                                                    |
-| `requestParamName`         | `string`                                  | `'params'`                          | 请求参数名                                                                          |
-| `responseTypeName`         | `string`                                  | `'Response'`                        | 返回数据类型名                                                                      |
-| `requestMethodStyle`       | `'config' \| 'method-specific' \| 'both'` | `'config'`                          | 请求方法调用风格                                                                    |
+| 配置项                     | 类型                                      | 默认值                              | 说明                                                                                                                       |
+| -------------------------- | ----------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `requestFunctionFilePath`  | `string`                                  | `join(baseOutputDir, 'request.ts')` | 请求函数文件路径（位于 `baseOutputDir` 层级，所有服务共享；多服务场景下仅生成一次）                                        |
+| `requestTimeout`           | `number`                                  | `5000`                              | 默认请求超时毫秒数；上传类请求（`data` 为 `FormData`/`Blob`）不受此默认超时限制，单次请求可用 `RequestConfig.timeout` 覆盖 |
+| `requestFunctionName`      | `string`                                  | `'request'`                         | 请求函数名称                                                                                                               |
+| `requestMethodsObjectName` | `string`                                  | `'requestMethods'`                  | 请求方法对象名称                                                                                                           |
+| `requestParamName`         | `string`                                  | `'params'`                          | 请求参数名                                                                                                                 |
+| `responseTypeName`         | `string`                                  | `'Response'`                        | 返回数据类型名                                                                                                             |
+| `requestMethodStyle`       | `'config' \| 'method-specific' \| 'both'` | `'config'`                          | 请求方法调用风格                                                                                                           |
 
 ### Hooks 配置（可选）
 

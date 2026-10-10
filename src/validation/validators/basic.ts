@@ -362,6 +362,26 @@ export function validateNumberFields(config: CommonServiceConfig): ValidationErr
     }
   }
 
+  // 验证 requestTimeout
+  if (config.requestTimeout !== undefined) {
+    if (
+      typeof config.requestTimeout !== 'number' ||
+      !Number.isFinite(config.requestTimeout) ||
+      config.requestTimeout <= 0
+    ) {
+      errors.push(
+        createValidationError(
+          'requestTimeout',
+          'INVALID_NUMBER',
+          'requestTimeout 必须是正数（毫秒）',
+          ValidationSeverity.ERROR,
+          '请设置正数超时毫秒数，例如 30000 表示 30 秒；上传类请求不受此默认超时限制',
+          config.requestTimeout,
+        ),
+      );
+    }
+  }
+
   return errors;
 }
 

@@ -102,7 +102,7 @@ const config: RequestConfig = {
 
 `application/octet-stream` 且 schema 为 `{ type: 'string', format: 'binary' }` 的请求体会被识别为 raw binary body，生成必填 `data: Blob` 字段；若与已有参数冲突，字段名按 `data` → `body` → `requestBody` 回退。生成请求会直接把该字段作为 Axios `data`，并固定 `Content-Type: application/octet-stream`。
 
-生成的 `request.ts` 不再硬编码 `baseURL: '/api'`，会保留调用方传入的 `baseURL` 与 `signal`。普通请求默认 5 秒超时；`FormData`/`Blob` 上传默认 `timeout: 0`，调用方显式传入的 `timeout`（包括 `0`）优先。
+生成的 `request.ts` 不再硬编码 `baseURL: '/api'`，会保留调用方传入的 `baseURL` 与 `signal`。普通请求默认超时可由 `defineConfig` 的 `requestTimeout`（毫秒，默认 5000）配置；`FormData`/`Blob` 上传默认 `timeout: 0`，调用方显式传入的 `timeout`（包括 `0`）优先。`FormData` 请求体会自动剥离调用方误传的固定 `Content-Type`（boundary 由运行时生成）。文件内还生成空的 `customizeAxios(instance)` 扩展点（模块加载时调用一次），由于请求文件仅首次生成、后续不覆盖，项目级 baseURL/拦截器/Token 注入可写在此处而不必另写 request。
 
 ### 类型映射与响应兜底（propertyType / extractor）
 

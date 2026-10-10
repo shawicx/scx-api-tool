@@ -56,6 +56,68 @@ function generateBodyMethod(method: string, requestFunctionName: string, isJS: b
 }
 
 /**
+ * @description 格式化超时常量为可读表达式
+ * 整千毫秒输出为 `N * 1000`（保持默认 5s 的既有形态），否则输出原始数值
+ * @param ms 超时毫秒数
+ * @returns 常量表达式字符串
+ *
+ * @example
+ * ```typescript
+ * formatTimeout(5000); // => '5 * 1000'
+ * formatTimeout(1500); // => '1500'
+ * ```
+ */
+function formatTimeout(ms: number): string {
+  return ms > 0 && ms % 1000 === 0 ? `${ms / 1000} * 1000` : String(ms);
+}
+
+/**
+ * @description 生成 FormData 请求体的 Content-Type 剥离片段
+ * multipart 请求的 boundary 由运行时生成，固定 Content-Type 会导致后端解析失败，
+ * 因此对 FormData 请求过滤掉调用方误传的 Content-Type 头
+ * @param isJS 是否生成 JavaScript 代码
+ * @returns 代码片段
+ */
+function generateStripContentTypeSnippet(isJS: boolean): string {
+  const cast = isJS ? '' : " as RequestConfig['headers']";
+  return `    if (config.data instanceof FormData) {
+      // multipart 的 boundary 由运行时生成，剥离调用方误传的固定 Content-Type
+      config.headers = Object.fromEntries(
+        Object.entries(config.headers ?? {}).filter(
+          ([headerKey]) => headerKey.toLowerCase() !== 'content-type',
+        ),
+      )${cast};
+    }`;
+}
+
+/**
+ * @description 生成请求客户端扩展点函数
+ * 请求文件仅首次生成（已存在则跳过），用户在 customizeAxios 中的自定义不会被重新生成覆盖，
+ * 可在此注入 baseURL、拦截器、Token 等项目级 axios 行为，避免整份另写 request
+ * @param isJS 是否生成 JavaScript 代码
+ * @returns 扩展点代码片段
+ */
+function generateCustomizeAxios(isJS: boolean): string {
+  const instanceType = isJS ? 'instance' : 'instance: typeof axios';
+  const returnType = isJS ? '' : ': void';
+  return `/**
+ * 请求客户端扩展点：模块加载时调用一次，可在此自定义 axios 全局行为
+ * （baseURL、请求/响应拦截器、Token 注入等）。本文件仅在首次生成时创建，
+ * 后续重新生成不会覆盖此文件，此处自定义可长期保留。
+ */
+export function customizeAxios(${instanceType})${returnType} {
+  // 按需自定义，例如：
+  // instance.defaults.baseURL = '/api';
+  // instance.interceptors.request.use((config) => {
+  //   config.headers.Authorization = \`Bearer \${getToken()}\`;
+  //   return config;
+  // });
+}
+
+customizeAxios(axios);`;
+}
+
+/**
  * @description 生成请求文件内容
  * @param config 配置对象
  * @returns 生成的请求文件代码字符串
@@ -84,13 +146,15 @@ import consola from 'consola';`;
     ? 'const isUploadData = (data) =>\n  data instanceof FormData || data instanceof Blob;'
     : 'const isUploadData = (data: unknown): boolean =>\n  data instanceof FormData || data instanceof Blob;';
 
-  const constants = `// 超时时间
-const TIMEOUT = 5 * 1000;
+  const constants = `// 超时时间（可通过 defineConfig 的 requestTimeout 配置；上传类请求不受此默认超时限制）
+const TIMEOUT = ${formatTimeout(config.requestTimeout ?? 5 * 1000)};
 
 ${uploadDataExpression}`;
 
   const mainRequestFunction = `export async function ${requestFunctionName}${genericDecl}(${configType})${returnType} {
   try {
+${generateStripContentTypeSnippet(isJS)}
+
     const response = await axios({
       ...config,
       timeout: config.timeout ?? (isUploadData(config.data) ? 0 : TIMEOUT),
@@ -103,9 +167,15 @@ ${uploadDataExpression}`;
   }
 }`;
 
-  const sections = [importSection, requestConfigInterface, constants, mainRequestFunction].filter(
-    Boolean,
-  );
+  const customizeAxiosSection = generateCustomizeAxios(isJS);
+
+  const sections = [
+    importSection,
+    requestConfigInterface,
+    constants,
+    mainRequestFunction,
+    customizeAxiosSection,
+  ].filter(Boolean);
 
   // 方法特定函数
   if (

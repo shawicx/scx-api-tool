@@ -143,6 +143,7 @@ export const minimalApiConfig: ApiConfig = {
   comment: true,
   prodEnvName: 'production',
   requestFunctionFilePath: 'src/service/request.ts',
+  requestTimeout: 5 * 1000,
   requestMethodStyle: RequestMethodStyle.CONFIG,
   requestFunctionName: 'request',
   requestMethodsObjectName: 'requestMethods',

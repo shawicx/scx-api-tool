@@ -234,6 +234,36 @@ export default defineConfig({
 });
 ```
 
+## 文件上传支持与请求扩展点
+
+### 生成的 request 对文件上传的内置支持
+
+生成的 `request.ts` 对文件上传做了以下内置处理，业务侧无需另写一份请求实现：
+
+- **上传类请求不受默认超时限制**：当 `data` 为 `FormData` 或 `Blob` 时，默认超时自动放宽为不限时；默认超时可通过 `defineConfig` 的 `requestTimeout`（毫秒，默认 5000）调整，单次请求也可用 `RequestConfig.timeout` 覆盖。
+- **FormData 的 Content-Type 保护**：multipart 请求的 boundary 由运行时生成，若调用方误传了固定 `Content-Type` 头，请求层会自动剥离，避免后端解析 multipart 失败。
+- **raw binary 请求体**：`application/octet-stream` + `format: binary` 的接口会生成必填的 `data: Blob` 参数，并固定 `Content-Type: application/octet-stream`。
+- **multipart 请求体**：`multipart/form-data` 接口自动将参数对象序列化为 `FormData`，正确处理 `File`/`Blob` 单值、`File[]` 数组（逐个 append）、普通对象（JSON 序列化）并跳过 `null`/`undefined` 字段。
+- **上传进度**：`RequestConfig` 继承自 `AxiosRequestConfig`，可直接透传 `onUploadProgress` / `onDownloadProgress` / `responseType` 等选项。
+
+### customizeAxios 扩展点
+
+生成的 `request.ts` 内置一个空的 `customizeAxios` 钩子，在模块加载时调用一次。由于请求文件**仅在首次生成时创建**（已存在则跳过、不会被重新生成覆盖），项目级定制（baseURL、拦截器、Token 注入、业务错误处理等）可以直接写在这里，后续重新生成代码不会丢失：
+
+```typescript
+export function customizeAxios(instance: typeof axios): void {
+  instance.defaults.baseURL = '/api';
+  instance.interceptors.request.use((config) => {
+    config.headers.Authorization = `Bearer ${getToken()}`;
+    return config;
+  });
+}
+
+customizeAxios(axios);
+```
+
+这样接口函数层（`xxxFunc` / Hooks）与请求基础设施层可以保持由生成器统一维护，避免手工另写一份 request 实现导致两套逻辑漂移。
+
 ## Watch 模式
 
 ### 开发时自动重新生成

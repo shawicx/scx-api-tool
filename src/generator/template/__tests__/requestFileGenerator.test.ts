@@ -426,4 +426,99 @@ describe('generateRequestFile', () => {
       expect(result).toContain('POST: apiClient.post');
     });
   });
+
+  // ==================== 上传支持（requestTimeout / FormData 头保护 / 扩展点） ====================
+
+  describe('upload support', () => {
+    it('未配置 requestTimeout 时默认生成 5 * 1000', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        requestMethodStyle: RequestMethodStyle.CONFIG,
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).toContain('const TIMEOUT = 5 * 1000;');
+    });
+
+    it('requestTimeout 配置应反映到 TIMEOUT 常量', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        requestMethodStyle: RequestMethodStyle.CONFIG,
+        requestTimeout: 30 * 1000,
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).toContain('const TIMEOUT = 30 * 1000;');
+    });
+
+    it('非整千的 requestTimeout 应输出原始数值', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        requestMethodStyle: RequestMethodStyle.CONFIG,
+        requestTimeout: 1500,
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).toContain('const TIMEOUT = 1500;');
+    });
+
+    it('FormData 请求体应剥离固定 Content-Type（TypeScript）', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        requestMethodStyle: RequestMethodStyle.CONFIG,
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).toContain('config.data instanceof FormData');
+      expect(result).toContain("headerKey.toLowerCase() !== 'content-type'");
+      expect(result).toContain("as RequestConfig['headers']");
+    });
+
+    it('FormData 请求体应剥离固定 Content-Type（JavaScript 无类型注解）', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'javascript',
+        requestMethodStyle: RequestMethodStyle.CONFIG,
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).toContain('config.data instanceof FormData');
+      expect(result.includes("as RequestConfig['headers']")).toBe(false);
+    });
+
+    it('应生成 customizeAxios 扩展点并在模块加载时调用', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        requestMethodStyle: RequestMethodStyle.CONFIG,
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).toContain('export function customizeAxios(instance: typeof axios): void');
+      expect(result).toContain('customizeAxios(axios);');
+    });
+
+    it('JavaScript 目标的 customizeAxios 不应包含类型注解', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'javascript',
+        requestMethodStyle: RequestMethodStyle.CONFIG,
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).toContain('export function customizeAxios(instance)');
+      expect(result.includes('instance: typeof axios')).toBe(false);
+    });
+  });
 });

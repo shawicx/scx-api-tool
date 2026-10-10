@@ -36,6 +36,7 @@ const DEFAULT_CONFIG_VALUES: Omit<
   comment: true, // 默认生成注释
   prodEnvName: 'production',
   requestFunctionFilePath: 'src/service/request.ts',
+  requestTimeout: 5 * 1000, // 默认请求超时；上传类请求（FormData/Blob）不受此默认超时限制
   requestMethodStyle: RequestMethodStyle.CONFIG, // 默认为标准配置方式
   requestFunctionName: 'request',
   requestMethodsObjectName: 'requestMethods',

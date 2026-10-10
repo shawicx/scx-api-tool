@@ -171,6 +171,12 @@ export interface CommonServiceConfig {
   prodEnvName?: string;
   /** 请求函数文件路径 */
   requestFunctionFilePath?: string;
+  /**
+   * @description 默认请求超时时间（毫秒）。
+   * 上传类请求（data 为 FormData/Blob）不受此默认超时限制，
+   * 单次请求仍可通过 RequestConfig.timeout 覆盖。
+   */
+  requestTimeout?: number;
   /** 请求方法调用风格 */
   requestMethodStyle?: RequestMethodStyle;
   /** 自定义请求函数名 */
@@ -276,6 +282,8 @@ export interface ApiConfig {
   prodEnvName: string;
   /** 请求函数文件路径 */
   requestFunctionFilePath: string;
+  /** 默认请求超时时间（毫秒）；上传类请求不受此默认超时限制 */
+  requestTimeout: number;
   /** 请求方法调用风格 */
   requestMethodStyle: RequestMethodStyle;
   /** 自定义请求函数名 */
