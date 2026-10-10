@@ -1,0 +1,29 @@
+# git-cliff 配置：基于 Conventional Commits 生成中文分组的变更日志
+# 与 scx-terminal 项目保持一致；release.yml 中以 --latest --strip header 调用
+[changelog]
+header = """
+# Changelog\n
+All notable changes to this project will be documented in this file.\n
+"""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+commit_parsers = [
+  { message = "^feat", group = "<!-- 0 -->🚀 新功能" },
+  { message = "^fix", group = "<!-- 1 -->🐛 修复" },
+  { message = "^perf", group = "<!-- 2 -->⚡ 性能优化" },
+  { message = "^refactor", group = "<!-- 3 -->♻️ 重构" },
+  # style 必须保留分组：纯样式迭代若被 skip 会得到空 changelog
+  { message = "^style", group = "<!-- 4 -->🎨 样式" },
+  { message = "^docs", group = "<!-- 5 -->📚 文档" },
+  { message = "^ci", group = "<!-- 6 -->🔧 CI/CD" },
+  { message = "^chore", group = "<!-- 7 -->🧹 其他杂项" },
+  { message = "^test", group = "<!-- 8 -->🧪 测试" },
+]
+protect_breaking_commits = false
+filter_commits = true
+tag_pattern = "v[0-9].*"
+sort_commits = "oldest"

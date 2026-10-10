@@ -12,7 +12,20 @@ jobs:
       contents: write
       id-token: write
     steps:
+      # git-cliff 需要完整历史来对比上一个 tag 生成变更内容
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 生成变更内容：基于 Conventional Commits，配置见 cliff.toml（与 scx-terminal 一致）
+      - name: 生成变更日志
+        id: git-cliff
+        # 第三方 action 一律钉 commit SHA（可变 tag 被劫持即获得本 workflow 的 contents:write）；
+        # 升级时改 SHA 并同步注释里的版本号
+        uses: orhun/git-cliff-action@a9a95522b26fe6403f7bb24031f21fb573d0f5ff # v4
+        with:
+          config: cliff.toml
+          args: --latest --strip header
 
       # 本仓库 package.json 未声明 packageManager，需显式指定 pnpm 版本
       - uses: pnpm/action-setup@v4
@@ -47,4 +60,5 @@ jobs:
       - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
+          # 使用 git-cliff 生成的变更内容作为 Release 说明
+          body: ${{ steps.git-cliff.outputs.content }}

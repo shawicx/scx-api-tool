@@ -90,7 +90,9 @@
           "test",
           "refactor",
           "chore",
-          "revert"
+          "revert",
+          "ci",
+          "build"
         ]
       ]
     }
