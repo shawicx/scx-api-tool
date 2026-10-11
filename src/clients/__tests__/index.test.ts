@@ -48,6 +48,7 @@ vi.mock('@/errors', () => ({
 import { fetchData, clientRegistry } from '../index';
 import axios from 'axios';
 import { ErrorFactory } from '@/errors';
+import type { ConfigError } from '@/errors';
 
 const mockAxiosGet = vi.mocked(axios.get);
 const mockAxiosPost = vi.mocked(axios.post);
@@ -113,7 +114,8 @@ describe('fetchData', () => {
   });
 
   it('should throw error for unsupported server type', async () => {
-    const fakeError = new Error('配置不适用于当前配置的客户端');
+    // mock 工厂返回原生 Error，此处断言为 ConfigError 以匹配真实签名
+    const fakeError = new Error('配置不适用于当前配置的客户端') as unknown as ConfigError;
     mockConfigInvalid.mockReturnValue(fakeError);
 
     // 创建一个不匹配任何客户端的配置

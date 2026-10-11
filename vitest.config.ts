@@ -11,17 +11,18 @@ export default defineConfig({
   test: {
     include: ['src/**/*.{test}.ts', 'src/**/__tests__/**/*.test.ts', 'src/**/__tests__/*.ts'],
     exclude: ['src/service/**/*', 'src/templates/**/*'],
-  },
-  coverage: {
-    provider: 'v8',
-    reporter: ['text', 'lcov'],
-    include: ['src/**/*.ts'],
-    exclude: ['src/service/**/*', 'src/templates/**/*', 'src/**/index.ts'],
-    thresholds: {
-      branches: 75,
-      functions: 75,
-      lines: 75,
-      statements: 75,
+    // vitest 的 coverage 配置位于 test 命名空间下，而非顶层
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      include: ['src/**/*.ts'],
+      exclude: ['src/service/**/*', 'src/templates/**/*', 'src/**/index.ts'],
+      thresholds: {
+        branches: 75,
+        functions: 75,
+        lines: 75,
+        statements: 75,
+      },
     },
   },
 });

@@ -70,6 +70,7 @@ vi.mock('@/errors', () => {
 import { existsSync } from 'fs';
 import { loadConfig } from '../loader';
 import { ErrorFactory } from '@/errors';
+import type { ConfigError } from '@/errors';
 
 const mockExistsSync = vi.mocked(existsSync);
 const mockConfigNotFound = vi.mocked(ErrorFactory.configNotFound);
@@ -148,7 +149,7 @@ describe('loadConfig', () => {
 
   it('should throw when config file is not found', async () => {
     mockExistsSync.mockReturnValue(false);
-    const fakeError = new Error('配置文件未找到: /path/to/config.ts');
+    const fakeError = new Error('配置文件未找到: /path/to/config.ts') as unknown as ConfigError;
     mockConfigNotFound.mockReturnValue(fakeError);
 
     await expect(loadConfig('/path/to/config.ts')).rejects.toThrow('配置文件未找到');
@@ -211,7 +212,7 @@ describe('loadConfig', () => {
 
     mockExistsSync.mockReturnValue(true);
 
-    const wrappedError = new Error('配置文件解析失败');
+    const wrappedError = new Error('配置文件解析失败') as unknown as ConfigError;
     mockConfigParseError.mockReturnValue(wrappedError);
 
     await expect(loadConfig(configPath)).rejects.toThrow('配置文件解析失败');
@@ -230,7 +231,7 @@ describe('loadConfig', () => {
     );
     mockExistsSync.mockReturnValue(true);
 
-    const wrappedError = new Error('配置文件解析失败');
+    const wrappedError = new Error('配置文件解析失败') as unknown as ConfigError;
     mockConfigParseError.mockReturnValue(wrappedError);
 
     await expect(loadConfig(configPath)).rejects.toThrow('配置文件解析失败');
@@ -257,7 +258,7 @@ describe('loadConfig', () => {
     );
     mockExistsSync.mockReturnValue(true);
 
-    const wrappedError = new Error('配置文件解析失败');
+    const wrappedError = new Error('配置文件解析失败') as unknown as ConfigError;
     mockConfigParseError.mockReturnValue(wrappedError);
 
     await expect(loadConfig(configPath)).rejects.toThrow('配置文件解析失败');
