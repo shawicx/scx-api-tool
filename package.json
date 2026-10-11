@@ -109,7 +109,8 @@
     "consola": "^3.4.2",
     "dayjs": "^1.11.23",
     "handlebars": "^4.7.9",
-    "pinyin-pro": "^3.29.3"
+    "pinyin-pro": "^3.29.3",
+    "prettier": "^3.9.6"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",
@@ -119,7 +120,6 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.5.0",
     "oxlint": "^1.81.0",
-    "prettier": "^3.9.6",
     "prettier-config-ali": "^1.5.0",
     "standard-version": "^9.5.0",
     "tsdown": "^0.23.0",

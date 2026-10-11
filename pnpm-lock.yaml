@@ -29,6 +29,9 @@ importers:
       pinyin-pro:
         specifier: ^3.29.3
         version: 3.29.3
+      prettier:
+        specifier: ^3.9.6
+        version: 3.9.6
     devDependencies:
       '@commitlint/cli':
         specifier: ^21.2.2
@@ -51,9 +54,6 @@ importers:
       oxlint:
         specifier: ^1.81.0
         version: 1.81.0
-      prettier:
-        specifier: ^3.9.6
-        version: 3.9.6
       prettier-config-ali:
         specifier: ^1.5.0
         version: 1.5.0(prettier@3.9.6)
