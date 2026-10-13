@@ -36,6 +36,8 @@ const DEFAULT_CONFIG_VALUES: Omit<
   comment: true, // 默认生成注释
   prodEnvName: 'production',
   requestFunctionFilePath: 'src/service/request.ts',
+  requestMode: 'shared' as 'shared' | 'isolated', // 默认共享一份 request 文件（全局 axios）
+  requestBaseURL: undefined as string | undefined, // 仅 isolated 模式生效
   requestTimeout: 5 * 1000, // 默认请求超时；上传类请求（FormData/Blob）不受此默认超时限制
   requestMethodStyle: RequestMethodStyle.CONFIG, // 默认为标准配置方式
   requestFunctionName: 'request',

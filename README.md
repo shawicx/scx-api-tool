@@ -99,7 +99,7 @@ export default defineConfig({
 
 ### 多服务（微服务）
 
-适合需要同时对接多个后端服务（用户服务、订单服务等）的项目。每个服务有独立的数据源、token 和输出子目录，共享 `baseOutputDir` 下的 `request.ts`。
+适合需要同时对接多个后端服务（用户服务、订单服务等）的项目。每个服务有独立的数据源、token 和输出子目录，默认共享 `baseOutputDir` 下的 `request.ts`。
 
 ```typescript
 import { defineConfig } from '@scxfe/api-tool';
@@ -126,6 +126,38 @@ export default defineConfig({
   ],
 });
 ```
+
+#### 服务级独立请求实例（requestMode: 'isolated'）
+
+不同后端服务可能需要不同的 baseURL、鉴权方式、超时与响应解包逻辑。默认所有服务共享一份 `request.ts`（使用全局 axios 实例）；为单个服务声明 `requestMode: 'isolated'` 后，该服务会在自己的输出目录内生成独立的 `request.ts`，其中通过 `axios.create` 创建**私有实例**，baseURL / 拦截器 / Token 等配置互不影响：
+
+```typescript
+export default defineConfig({
+  baseOutputDir: 'src/service',
+
+  services: [
+    {
+      name: 'user',
+      source: 'https://user-svc.example.com/v3/api-docs',
+      // 默认 shared：与其他服务共享 src/service/request.ts（全局 axios）
+    },
+    {
+      name: 'order',
+      source: 'https://order-svc.example.com/swagger.json',
+      requestMode: 'isolated', // 独立 request 文件 → src/service/order/request.ts
+      requestBaseURL: '/order-api', // 烘焙进私有实例（可选）
+      requestTimeout: 30000, // 服务级超时覆盖（可选）
+    },
+  ],
+});
+```
+
+说明：
+
+- `requestMode`（默认 `'shared'`）：可配置在顶层作为所有服务的默认值，也可在单个服务上覆盖
+- `requestBaseURL`：仅 `isolated` 模式生效，烘焙进生成的 `axios.create({ baseURL, timeout })`；`shared` 模式下配置会产生警告
+- 鉴权与响应解包：在各自 request 文件的 `customizeAxios` 扩展点中以拦截器实现（文件仅首次生成，自定义不会在重新生成时丢失）
+- 共享同一 `request.ts` 的服务若 `requestTimeout` 不一致，会得到 `SHARED_REQUEST_CONFLICT` 警告（共享文件仅首次生成，先到先得）
 
 ### 完整配置
 
@@ -159,6 +191,8 @@ export default defineConfig({
   requestFunctionName: 'request',
   requestParamName: 'params',
   requestMethodStyle: 'config',
+  requestMode: 'shared', // 'shared' 共享 request 文件（默认）| 'isolated' 服务级独立文件 + 私有 axios 实例
+  // requestBaseURL: '/api', // 仅 isolated 模式生效，烘焙进私有实例
 
   // 自定义命名策略
   namingStrategy: {
@@ -197,7 +231,7 @@ export default defineConfig({
 
 ## 项目结构
 
-输出结构遵循 `baseOutputDir/<folder或name>/...`。`request.ts` 位于 `baseOutputDir` 层级并被各服务共享；每个服务的输出（分类目录、types/schemas、index.ts）落在 `join(baseOutputDir, folder ?? name)` 下。
+输出结构遵循 `baseOutputDir/<folder或name>/...`。默认情况下 `request.ts` 位于 `baseOutputDir` 层级并被各服务共享；声明 `requestMode: 'isolated'` 的服务会在自己的输出目录内生成独立 `request.ts`（私有 axios 实例）。每个服务的输出（分类目录、types/schemas、index.ts）落在 `join(baseOutputDir, folder ?? name)` 下。未显式配置 `requestFunctionFilePath` 时，默认路径跟随 `baseOutputDir`（即 `join(baseOutputDir, 'request.ts')`）。
 
 ### 单服务输出结构（folder: '.'，输出直接落在 baseOutputDir）
 

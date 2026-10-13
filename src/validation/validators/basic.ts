@@ -137,6 +137,20 @@ export function validateEnumValues(config: CommonServiceConfig): ValidationError
     );
   }
 
+  // 验证 requestMode 枚举值
+  if (config.requestMode && !['shared', 'isolated'].includes(config.requestMode)) {
+    errors.push(
+      createValidationError(
+        'requestMode',
+        'INVALID_ENUM_VALUE',
+        `无效的 requestMode 值: ${config.requestMode}`,
+        ValidationSeverity.ERROR,
+        '支持的值: "shared"（共享一份 request 文件与全局 axios）, "isolated"（本服务独立 request 文件与私有 axios 实例）',
+        config.requestMode,
+      ),
+    );
+  }
+
   // 验证 preset 枚举值
   if (config.preset && !['minimal', 'standard', 'verbose'].includes(config.preset)) {
     errors.push(
@@ -240,6 +254,22 @@ export function validateStringFields(config: ServiceConfig): ValidationError[] {
           ValidationSeverity.ERROR,
           '请提供有效的请求函数文件路径，例如: "src/service/request.ts"',
           config.requestFunctionFilePath,
+        ),
+      );
+    }
+  }
+
+  // 验证 requestBaseURL
+  if (config.requestBaseURL !== undefined) {
+    if (typeof config.requestBaseURL !== 'string' || config.requestBaseURL.trim() === '') {
+      errors.push(
+        createValidationError(
+          'requestBaseURL',
+          'INVALID_STRING',
+          'requestBaseURL 必须是非空字符串',
+          ValidationSeverity.ERROR,
+          '请提供有效的 baseURL，例如: "https://api.example.com" 或 "/api/v1"（仅 requestMode: "isolated" 时生效）',
+          config.requestBaseURL,
         ),
       );
     }

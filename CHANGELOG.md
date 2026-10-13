@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [Unreleased]
+
+### Features
+
+- 多服务场景支持服务级独立请求实例：新增 `requestMode: 'isolated'`（独立 request 文件 + `axios.create` 私有实例）与 `requestBaseURL` 配置，鉴权/响应解包经各文件 `customizeAxios` 扩展点实现
+- 未显式配置 `requestFunctionFilePath` 时，默认共享路径跟随 `baseOutputDir`（原硬编码 `src/service/request.ts`）；新增 `SHARED_REQUEST_CONFLICT` 警告：共享同一 request 文件的服务 `requestTimeout` 不一致时提示
+
 ### [0.6.5](https://github.com/shawicx/scx-api-tool/compare/v0.6.4...v0.6.5) (2026-09-06)
 
 ### [0.6.4](https://github.com/shawicx/scx-api-tool/compare/v0.6.3...v0.6.4) (2026-09-04)

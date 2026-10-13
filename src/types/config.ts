@@ -172,6 +172,19 @@ export interface CommonServiceConfig {
   /** 请求函数文件路径 */
   requestFunctionFilePath?: string;
   /**
+   * @description 请求文件模式：
+   * - shared（默认）：所有服务共享一份 request 文件，使用全局 axios 实例
+   * - isolated：本服务生成独立 request 文件（默认位于服务输出目录内），
+   *   并使用 axios.create 独立实例，baseURL/拦截器等配置互不影响
+   */
+  requestMode?: 'shared' | 'isolated';
+  /**
+   * @description 请求实例 baseURL，烘焙进 isolated 模式生成的独立 axios 实例。
+   * 仅 requestMode: 'isolated' 时生效；鉴权与响应解包请在生成文件的
+   * customizeAxios 扩展点中以拦截器实现（文件仅首次生成，自定义不会丢失）。
+   */
+  requestBaseURL?: string;
+  /**
    * @description 默认请求超时时间（毫秒）。
    * 上传类请求（data 为 FormData/Blob）不受此默认超时限制，
    * 单次请求仍可通过 RequestConfig.timeout 覆盖。
@@ -282,6 +295,10 @@ export interface ApiConfig {
   prodEnvName: string;
   /** 请求函数文件路径 */
   requestFunctionFilePath: string;
+  /** 请求文件模式（shared 共享 / isolated 独立实例） */
+  requestMode: 'shared' | 'isolated';
+  /** 请求实例 baseURL（仅 isolated 模式生效） */
+  requestBaseURL?: string;
   /** 默认请求超时时间（毫秒）；上传类请求不受此默认超时限制 */
   requestTimeout: number;
   /** 请求方法调用风格 */

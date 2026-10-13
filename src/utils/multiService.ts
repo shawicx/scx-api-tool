@@ -8,7 +8,7 @@
 import { ApiConfig, MultiServiceConfig } from '@/types';
 import { join } from 'path';
 import { validateConfiguration } from '@/validation';
-import { applyPreset, parseSourceUrl, normalizeTransformPath } from './config';
+import { applyPreset, parseSourceUrl, normalizeTransformPath, getFileExtension } from './config';
 
 /** 公共根输出目录默认值 */
 const DEFAULT_BASE_OUTPUT_DIR = 'src/service';
@@ -41,15 +41,25 @@ export function resolveServiceConfigs(config: MultiServiceConfig): ApiConfig[] {
   // 先校验原始 MultiServiceConfig（在合并处理之前），确保无效配置尽早失败
   validateConfiguration(config);
 
+  // 用户是否显式配置了顶层 requestFunctionFilePath（applyPreset 之前检测，
+  // 用于决定默认路径是否跟随 baseOutputDir）
+  const hasExplicitRequestFilePath =
+    typeof config.requestFunctionFilePath === 'string' &&
+    config.requestFunctionFilePath.trim() !== '';
+
   // 公共配置应用 preset（剔除 services/baseOutputDir）
   const { services: _services, baseOutputDir: _baseOutputDir, ...commonRaw } = config;
   const common = applyPreset(commonRaw);
   const baseOutputDir = config.baseOutputDir ?? DEFAULT_BASE_OUTPUT_DIR;
 
-  // 当 target 为 javascript 时，自动调整默认的 requestFunctionFilePath 扩展名
-  // （applyPreset 已合并 DEFAULT_CONFIG_VALUES，requestFunctionFilePath 必然存在）
-  if (common.target === 'javascript' && !config.requestFunctionFilePath) {
-    common.requestFunctionFilePath = common.requestFunctionFilePath!.replace(/\.ts$/, '.js');
+  // 未显式配置 requestFunctionFilePath 时，共享默认路径跟随 baseOutputDir
+  // （默认 baseOutputDir 为 'src/service'，与历史硬编码默认值一致，向后兼容）；
+  // 扩展名按 target 自动调整；显式配置的路径不做任何改写
+  if (!hasExplicitRequestFilePath) {
+    common.requestFunctionFilePath = join(
+      baseOutputDir,
+      `request${getFileExtension(common.target ?? 'typescript')}`,
+    );
   }
 
   // 公共配置经 applyPreset 后已填充所有默认值，具备 ApiConfig 必填字段
@@ -65,6 +75,17 @@ export function resolveServiceConfigs(config: MultiServiceConfig): ApiConfig[] {
     // 计算 outputDir：join(baseOutputDir, folder ?? name)
     const folder = svc.folder ?? svc.name;
     const outputDir = join(baseOutputDir, folder);
+
+    // isolated 服务未显式配置 requestFunctionFilePath 时，
+    // 默认在本服务输出目录内生成独立 request 文件（扩展名按 target 调整）
+    const svcHasExplicitRequestFilePath =
+      typeof svc.requestFunctionFilePath === 'string' && svc.requestFunctionFilePath.trim() !== '';
+    if (merged.requestMode === 'isolated' && !svcHasExplicitRequestFilePath) {
+      merged.requestFunctionFilePath = join(
+        outputDir,
+        `request${getFileExtension(merged.target ?? 'typescript')}`,
+      );
+    }
 
     const finalConfig: ApiConfig = {
       ...merged,

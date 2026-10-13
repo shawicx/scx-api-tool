@@ -525,4 +525,76 @@ describe('generateRequestFile', () => {
       expect(result.includes('instance: typeof axios')).toBe(false);
     });
   });
+
+  // ==================== isolated 模式（独立 axios 实例） ====================
+
+  describe('isolated request instance', () => {
+    it('shared 模式（默认）不应创建 axios 实例，请求走全局 axios', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        requestMethodStyle: RequestMethodStyle.CONFIG,
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).not.toContain('axios.create');
+      expect(result).toContain('await axios({');
+      expect(result).toContain('customizeAxios(axios);');
+    });
+
+    it('isolated 模式应创建私有实例并烘焙 baseURL/timeout', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        requestMethodStyle: RequestMethodStyle.CONFIG,
+        requestMode: 'isolated',
+        requestBaseURL: '/order-api',
+        requestTimeout: 10 * 1000,
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).toContain('const instance = axios.create({');
+      expect(result).toContain("baseURL: '/order-api',");
+      expect(result).toContain('timeout: TIMEOUT,');
+      // 请求函数应走私有实例而非全局 axios
+      expect(result).toContain('await instance({');
+      expect(result).not.toContain('await axios({');
+      // 扩展点作用于私有实例
+      expect(result).toContain('customizeAxios(instance);');
+      expect(result).not.toContain('customizeAxios(axios);');
+    });
+
+    it('isolated 模式未配置 requestBaseURL 时应省略 baseURL 行', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'typescript',
+        requestMethodStyle: RequestMethodStyle.CONFIG,
+        requestMode: 'isolated',
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).toContain('const instance = axios.create({');
+      expect(result).not.toContain('baseURL:');
+    });
+
+    it('isolated 模式 JavaScript 目标同样生成私有实例', () => {
+      const config: ApiConfig = {
+        ...minimalApiConfig,
+        target: 'javascript',
+        requestMethodStyle: RequestMethodStyle.CONFIG,
+        requestMode: 'isolated',
+        requestBaseURL: '/order-api',
+      };
+
+      const result = generateRequestFile(config);
+
+      expect(result).toContain('const instance = axios.create({');
+      expect(result).toContain("baseURL: '/order-api',");
+      expect(result).toContain('await instance({');
+      expect(result).toContain('export function customizeAxios(instance)');
+    });
+  });
 });

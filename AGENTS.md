@@ -140,7 +140,8 @@ logger.debug('调试信息:', data);
 
 - 顶层 `outputDir` → `baseOutputDir`（公共根输出目录）
 - `source` / `token` 下沉到 `services[]` 每个服务级（必填 `name`，可选 `folder`，默认取 `name`，可多段如 `'trade/order'`）
-- 共享 `request.ts` 位于 `baseOutputDir` 层级；各服务输出至 `join(baseOutputDir, folder ?? name)`
+- 共享 `request.ts` 位于 `baseOutputDir` 层级（未显式配置 `requestFunctionFilePath` 时默认路径为 `join(baseOutputDir, 'request.<ext>')`）；各服务输出至 `join(baseOutputDir, folder ?? name)`
+- 服务级可声明 `requestMode: 'isolated'` 获得独立 request 文件（默认在服务输出目录内）与 `axios.create` 私有实例；`requestBaseURL` 仅 isolated 模式生效，鉴权/响应解包经各文件 `customizeAxios` 扩展点实现
 - 校验：`name` 唯一、各服务计算后的 `outputDir` 不相同/不嵌套，否则抛 `E1002`
 - 单源场景用 `services: [{ name: 'main', folder: '.', source, token }]`，输出直接落在 `baseOutputDir`
 

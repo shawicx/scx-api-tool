@@ -173,8 +173,8 @@ describe('defineConfig (单服务)', () => {
     const [config] = defineConfig(multiConfig);
 
     expect(config.target).toBe('javascript');
-    // 未自定义 requestFunctionFilePath 时，.ts 自动改为 .js
-    expect(config.requestFunctionFilePath).toBe('src/service/request.js');
+    // 未自定义 requestFunctionFilePath 时，默认路径跟随 baseOutputDir 且 .ts 自动改为 .js
+    expect(config.requestFunctionFilePath).toBe('src/api/request.js');
   });
 
   it('should NOT adjust requestFunctionFilePath when user provides a custom path', () => {

@@ -481,3 +481,87 @@ describe('validateConfiguration', () => {
     expect(() => validateConfiguration(config as any)).not.toThrow();
   });
 });
+
+// ---------------------------------------------------------------------------
+// requestMode / requestBaseURL / 共享 request 文件冲突校验
+
+describe('requestMode & requestBaseURL validation', () => {
+  it('throws for invalid requestMode enum value', () => {
+    const config = {
+      ...validSwaggerMultiServiceConfig,
+      requestMode: 'standalone' as any,
+    };
+
+    expect(() => validateConfiguration(config as any)).toThrow(ConfigValidationError);
+    expect(logger.error).toHaveBeenCalled();
+  });
+
+  it('throws for empty requestBaseURL string', () => {
+    const config = {
+      ...validSwaggerMultiServiceConfig,
+      requestBaseURL: '',
+    };
+
+    expect(() => validateConfiguration(config as any)).toThrow(ConfigValidationError);
+  });
+
+  it('does not throw for valid requestMode and requestBaseURL', () => {
+    const config = {
+      ...validSwaggerMultiServiceConfig,
+      requestMode: 'isolated' as const,
+      requestBaseURL: '/order-api',
+    };
+
+    expect(() => validateConfiguration(config as any)).not.toThrow();
+  });
+});
+
+describe('shared request conflict validation', () => {
+  it('does not warn when shared services use the same requestTimeout', () => {
+    const config: any = {
+      ...validSwaggerMultiServiceConfig,
+      requestTimeout: 5000,
+      services: [
+        { ...validSwaggerServiceConfig, name: 'user' },
+        { ...validSwaggerServiceConfig, name: 'order' },
+      ],
+    };
+
+    expect(() => validateConfiguration(config)).not.toThrow();
+  });
+
+  it('passes validation (warning is non-blocking) when shared services differ in requestTimeout', () => {
+    const config: any = {
+      ...validSwaggerMultiServiceConfig,
+      services: [
+        { ...validSwaggerServiceConfig, name: 'user', requestTimeout: 5000 },
+        { ...validSwaggerServiceConfig, name: 'order', requestTimeout: 30000 },
+      ],
+    };
+
+    // SHARED_REQUEST_CONFLICT 仅为 WARNING，不阻断执行
+    expect(() => validateConfiguration(config)).not.toThrow();
+  });
+
+  it('does not produce conflict when services are isolated', () => {
+    const config: any = {
+      ...validSwaggerMultiServiceConfig,
+      services: [
+        {
+          ...validSwaggerServiceConfig,
+          name: 'user',
+          requestMode: 'isolated',
+          requestTimeout: 5000,
+        },
+        {
+          ...validSwaggerServiceConfig,
+          name: 'order',
+          requestMode: 'isolated',
+          requestTimeout: 30000,
+        },
+      ],
+    };
+
+    expect(() => validateConfiguration(config)).not.toThrow();
+  });
+});

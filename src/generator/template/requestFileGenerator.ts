@@ -97,28 +97,57 @@ function generateStripContentTypeSnippet(isJS: boolean): string {
 /**
  * @description 生成请求客户端扩展点函数
  * 请求文件仅首次生成（已存在则跳过），用户在 customizeAxios 中的自定义不会被重新生成覆盖，
- * 可在此注入 baseURL、拦截器、Token 等项目级 axios 行为，避免整份另写 request
+ * 可在此注入拦截器、Token、响应解包等项目级行为，避免整份另写 request
  * @param isJS 是否生成 JavaScript 代码
+ * @param isIsolated 是否为 isolated 模式（独立 axios 实例）
  * @returns 扩展点代码片段
  */
-function generateCustomizeAxios(isJS: boolean): string {
+function generateCustomizeAxios(isJS: boolean, isIsolated: boolean): string {
   const instanceType = isJS ? 'instance' : 'instance: typeof axios';
   const returnType = isJS ? '' : ': void';
+  const scopeComment = isIsolated
+    ? '本实例为本服务私有（axios.create 创建），baseURL/拦截器等配置不影响其他服务'
+    : '此处自定义作用于全局 axios 实例，会影响所有共享本文件的服务';
   return `/**
- * 请求客户端扩展点：模块加载时调用一次，可在此自定义 axios 全局行为
- * （baseURL、请求/响应拦截器、Token 注入等）。本文件仅在首次生成时创建，
- * 后续重新生成不会覆盖此文件，此处自定义可长期保留。
+ * 请求客户端扩展点：模块加载时调用一次，可在此自定义请求行为
+ * （请求/响应拦截器、Token 注入、响应解包等）。${scopeComment}。
+ * 本文件仅在首次生成时创建，后续重新生成不会覆盖此文件，此处自定义可长期保留。
  */
 export function customizeAxios(${instanceType})${returnType} {
   // 按需自定义，例如：
-  // instance.defaults.baseURL = '/api';
   // instance.interceptors.request.use((config) => {
   //   config.headers.Authorization = \`Bearer \${getToken()}\`;
   //   return config;
   // });
+  // instance.interceptors.response.use((response) =>
+  //   response.data?.code === 0 ? response.data.data : Promise.reject(response.data),
+  // );
 }
 
-customizeAxios(axios);`;
+customizeAxios(${isIsolated ? 'instance' : 'axios'});`;
+}
+
+/**
+ * @description 生成请求客户端实例声明片段。
+ * - shared 模式（默认）：直接使用全局 axios，保持既有行为
+ * - isolated 模式：axios.create 创建服务私有实例，烘焙 baseURL/timeout
+ * @param config 配置对象
+ * @returns 实例声明代码片段
+ */
+function generateClientInstance(config: ApiConfig): string {
+  if (config.requestMode !== 'isolated') {
+    return '';
+  }
+  const lines: string[] = [];
+  if (config.requestBaseURL) {
+    lines.push(`  baseURL: '${config.requestBaseURL}',`);
+  }
+  lines.push(`  timeout: TIMEOUT,`);
+  const fields = lines.join('\n');
+  return `// 本服务私有请求实例：baseURL/拦截器等配置不影响其他服务
+const instance = axios.create({
+${fields}
+});`;
 }
 
 /**
@@ -175,7 +204,7 @@ ${uploadDataExpression}`;
   try {
 ${generateStripContentTypeSnippet(isJS)}
 
-    const response = await axios({
+    const response = await ${config.requestMode === 'isolated' ? 'instance' : 'axios'}({
       ...config,
       timeout: config.timeout ?? (isUploadData(config.data) ? 0 : TIMEOUT),
     });
@@ -187,13 +216,16 @@ ${generateStripContentTypeSnippet(isJS)}
   }
 }`;
 
-  const customizeAxiosSection = generateCustomizeAxios(isJS);
+  // isolated 模式：实例声明需在请求函数之前；customizeAxios 作用于该实例
+  const clientInstanceSection = generateClientInstance(config);
+  const customizeAxiosSection = generateCustomizeAxios(isJS, config.requestMode === 'isolated');
 
   const sections = [
     importSection,
     requestMethodEnum,
     requestConfigInterface,
     constants,
+    clientInstanceSection,
     mainRequestFunction,
     customizeAxiosSection,
   ].filter(Boolean);

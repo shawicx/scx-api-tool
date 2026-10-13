@@ -92,6 +92,21 @@ export function validateConfigLogic(config: CommonServiceConfig): ValidationErro
     );
   }
 
+  // 验证 requestBaseURL 仅在 isolated 模式下生效
+  if (config.requestBaseURL && config.requestMode !== 'isolated') {
+    errors.push(
+      createValidationError(
+        'requestBaseURL & requestMode',
+        'REQUEST_BASE_URL_IGNORED',
+        `requestBaseURL 仅在 requestMode: "isolated" 时生效，当前为 "${config.requestMode ?? 'shared'}"`,
+        ValidationSeverity.WARNING,
+        '共享模式的 request 文件使用全局 axios 实例，requestBaseURL 不会被烘焙。' +
+          '如需独立 baseURL，请设置 requestMode: "isolated"，或在共享文件的 customizeAxios 中统一配置',
+        { requestBaseURL: config.requestBaseURL, requestMode: config.requestMode },
+      ),
+    );
+  }
+
   // 验证 generateHooks 依赖 generateApi
   if (config.generateHooks === true && config.generateApi === false) {
     errors.push(

@@ -17,7 +17,7 @@ import {
 } from './validators/basic';
 import { validateSourceUrl } from './validators/url';
 import { validateConfigLogic } from './validators/logic';
-import { validateServiceOutputDirs } from './validators/serviceDirs';
+import { validateServiceOutputDirs, validateSharedRequestConfigs } from './validators/serviceDirs';
 import type { MultiServiceConfig, CommonServiceConfig } from '@/types';
 
 /**
@@ -66,6 +66,7 @@ export function validateConfiguration(config: MultiServiceConfig): void {
   const common = config as CommonServiceConfig;
   allErrors.push(
     ...validateEnumValues(common),
+    ...validateStringFields(common),
     ...validateNumberFields(common),
     ...validateBooleanFields(common),
     ...validateArrayFields(common),
@@ -92,6 +93,9 @@ export function validateConfiguration(config: MultiServiceConfig): void {
 
   // 4. outputDir 隔离校验：各服务计算后的 outputDir 不相同、不嵌套（避免 cleanOutputDir 相互清理）
   allErrors.push(...validateServiceOutputDirs(config.services, config.baseOutputDir));
+
+  // 4.5 共享 request 文件冲突校验：同一文件被多个服务共享但请求配置不一致时给出警告
+  allErrors.push(...validateSharedRequestConfigs(config));
 
   // 5. 逐服务校验：必需字段、字符串字段、source URL、服务级逻辑
   for (const svc of config.services) {
@@ -138,4 +142,6 @@ export {
   validateArrayFields,
   validateSourceUrl,
   validateConfigLogic,
+  validateServiceOutputDirs,
+  validateSharedRequestConfigs,
 };
