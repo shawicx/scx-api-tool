@@ -51,6 +51,37 @@ export function groupInterfacesByTag(interfaces: ApiInterface[]): Record<string,
 }
 
 /**
+ * @description 从类型字符串中收集使用的自定义类型名称
+ * 将类型串按分隔符（联合 |、交叉 &、泛型 <>、数组 []、逗号与空白）
+ * 拆分为标识符 token 后，对自定义类型名集合做命中检查。
+ * 供 interface 属性列表与顶层类型别名（type X = Y[] 等）共用。
+ * @param typeString 类型字符串（如 `'User | null'`、`'Record<string, User>'`）
+ * @param processedData 处理后的 API 数据
+ * @returns 类型名称集合
+ *
+ * @example
+ * ```typescript
+ * const used = collectUsedTypeNamesFromTypeString('User | null', processedData);
+ * // used = Set(['User'])
+ * ```
+ */
+export function collectUsedTypeNamesFromTypeString(
+  typeString: string,
+  processedData: ProcessedApiData,
+): Set<string> {
+  const usedTypes = new Set<string>();
+  const knownTypeNames = new Set(processedData.types.map((t) => t.name));
+  // 分隔符涵盖：联合 |、交叉 &、泛型 <>、数组 []、Record 逗号与空白
+  const SEPARATOR_RE = /[|&<>[\],\s]+/;
+  for (const token of typeString.split(SEPARATOR_RE)) {
+    if (token && knownTypeNames.has(token)) {
+      usedTypes.add(token);
+    }
+  }
+  return usedTypes;
+}
+
+/**
  * @description 从属性列表中收集使用的自定义类型名称
  * 将属性类型串按分隔符（联合 |、交叉 &、泛型 <>、数组 []、逗号与空白）
  * 拆分为标识符 token 后，对自定义类型名集合做命中检查。
@@ -74,14 +105,9 @@ export function collectUsedTypesFromProperties(
   processedData: ProcessedApiData,
 ): Set<string> {
   const usedTypes = new Set<string>();
-  const knownTypeNames = new Set(processedData.types.map((t) => t.name));
-  // 分隔符涵盖：联合 |、交叉 &、泛型 <>、数组 []、Record 逗号与空白
-  const SEPARATOR_RE = /[|&<>[\],\s]+/;
   for (const prop of properties) {
-    for (const token of prop.type.split(SEPARATOR_RE)) {
-      if (token && knownTypeNames.has(token)) {
-        usedTypes.add(token);
-      }
+    for (const name of collectUsedTypeNamesFromTypeString(prop.type, processedData)) {
+      usedTypes.add(name);
     }
   }
   return usedTypes;

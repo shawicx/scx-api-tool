@@ -6,7 +6,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { processOpenApiData } from '../openapi';
-import { minimalApiConfig } from '../../../../tests/fixtures/mockData';
+import { minimalApiConfig } from '../../../tests/fixtures/mockData';
 
 // Mock 统一 logger 模块（抑制日志噪音）
 vi.mock('@/utils/logger', () => ({

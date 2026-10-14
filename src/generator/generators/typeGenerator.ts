@@ -5,7 +5,10 @@
 
 import { join } from 'path';
 import { ProcessedApiData } from '../../processors/openapi';
-import { collectUsedTypesFromProperties } from '../../processors/common';
+import {
+  collectUsedTypesFromProperties,
+  collectUsedTypeNamesFromTypeString,
+} from '../../processors/common';
 import { ApiConfig, CliHooks } from '../../types';
 import type { ApiTypeDefinition } from '../../types';
 import { ensureDir, writeFormattedFile } from '../../utils/file';
@@ -17,7 +20,7 @@ import {
   getJsonValueTemplateByConfig,
   getTypeAliasTemplateByConfig,
 } from '../template';
-import { extractTypeProperties } from '../extractor';
+import { extractTypeProperties, extractTypeAlias } from '../extractor';
 import { executeWithConcurrency } from '../../utils/concurrency';
 import { writeGeneratedFile } from '../fileWriter';
 import { escapeJsDocComment } from '@/utils/escape';
@@ -122,17 +125,30 @@ async function generateTypeFile(
     // 别名引用 JsonValue，需要 import（除非自身就是 JsonValue）
     dependencies = cleanTypeName === 'JsonValue' ? new Set<string>() : new Set(['JsonValue']);
   } else {
-    // 普通 interface 类型（原有逻辑）
-    const template = compileTemplate(getTypeTemplateByConfig(config.comment !== false));
-    const properties = extractTypeProperties(type.schema, processedData);
-    code = template({
-      typeName: cleanTypeName,
-      description: escapeJsDocComment(type.schema.description || type.name),
-      properties,
-    });
-    dependencies = collectUsedTypesFromProperties(properties, processedData);
-    // 递归自引用（如树形结构 children: Self[]）不得生成指向自身的 import，
-    // 否则与自身声明冲突（TS2300 duplicate identifier）
+    // 顶层非对象形态（$ref/枚举/数组/原始类型/联合/map/free-form）生成类型别名，
+    // 避免被 interface 模板渲染成空接口（如组件仅为另一个 Schema 的引用时输出 type X = Y）
+    const aliasType = extractTypeAlias(type.schema);
+    if (aliasType) {
+      const template = compileTemplate(getTypeAliasTemplateByConfig(config.comment !== false));
+      code = template({
+        typeName: cleanTypeName,
+        description: escapeJsDocComment(type.schema.description || type.name),
+        aliasType,
+      });
+      dependencies = collectUsedTypeNamesFromTypeString(aliasType, processedData);
+    } else {
+      // 普通 interface 类型（原有逻辑）
+      const template = compileTemplate(getTypeTemplateByConfig(config.comment !== false));
+      const properties = extractTypeProperties(type.schema, processedData);
+      code = template({
+        typeName: cleanTypeName,
+        description: escapeJsDocComment(type.schema.description || type.name),
+        properties,
+      });
+      dependencies = collectUsedTypesFromProperties(properties, processedData);
+    }
+    // 递归自引用（如树形结构 children: Self[]、递归数组别名 type A = A[]）
+    // 不得生成指向自身的 import，否则与自身声明冲突（TS2300 duplicate identifier）
     dependencies.delete(cleanTypeName);
     dependencies.delete(type.name);
   }

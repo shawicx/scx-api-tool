@@ -44,23 +44,27 @@ export function getJsonValueTemplateByConfig(comment: boolean): string {
 
 /**
  * @description 类型别名模板 - 带注释
- * 用于 Jackson 动态类型，生成 `type JsonNode = JsonValue`
+ * 用于 Jackson 动态类型及顶层非对象形态（$ref/枚举/数组/原始类型/联合），
+ * 生成 `type JsonNode = JsonValue`、`type Status = 'a' | 'b'` 等。
+ * aliasType 使用三花括号原样插值：类型串含引号/竖线/尖括号，
+ * 双花括号会被 Handlebars 转义为 HTML 实体
  * @returns 模板字符串
  */
 export function getTypeAliasTemplateWithComment(): string {
   return `/**
  * @description {{description}}
  */
-export type {{typeName}} = {{aliasType}};
+export type {{typeName}} = {{{aliasType}}};
 `;
 }
 
 /**
  * @description 类型别名模板 - 不带注释
+ * aliasType 使用三花括号原样插值（类型串含引号/竖线/尖括号，不可转义）
  * @returns 模板字符串
  */
 export function getTypeAliasTemplateWithoutComment(): string {
-  return `export type {{typeName}} = {{aliasType}};
+  return `export type {{typeName}} = {{{aliasType}}};
 `;
 }
 

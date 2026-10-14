@@ -6,11 +6,11 @@
  */
 
 import type { ProcessedApiData } from '../processors/openapi';
-import type { ApiProperty, OpenApiOperation, OpenApiSchema } from '../types';
+import type { ApiProperty, OpenApiOperation, OpenApiSchema } from '@/types';
 import { sanitizePropertyName, sanitizeTypeName } from '@/naming';
-import { escapeJsDocComment } from '@/utils/escape';
+import { escapeJsDocComment, escapeStringLiteral } from '@/utils/escape';
 import { resolveComposedSchema } from '@/utils/refResolver';
-import { getPropertyType } from './propertyType';
+import { getPropertyType, wrapNullable } from './propertyType';
 import { getResponseSchema } from '@/schema/operation';
 
 /**
@@ -186,9 +186,8 @@ export function extractTypeProperties(
 
   // 处理引用模式
   if (resolved.$ref) {
-    // 目前，我们对引用类型返回空数组
-    // 在更完整的实现中，我们将解析引用
-    // 并从引用的模式中提取属性
+    // 顶层引用等非对象形态由 extractTypeAlias 走类型别名路径（type X = Y），
+    // 此处保留空数组作为 interface 路径的兜底行为
     return [];
   }
 
@@ -208,6 +207,74 @@ export function extractTypeProperties(
   }
 
   return properties;
+}
+
+/**
+ * @description 判断顶层 Schema 是否为「对象形态」（应生成 interface）
+ * 含 properties（属性表）、allOf（合并语义）、或显式空对象声明
+ * （type: object 且无 additionalProperties）均视为对象形态；
+ * 其余形态适合生成类型别名。
+ * @param schema OpenAPI Schema 对象
+ * @returns 是否为对象形态
+ */
+function isObjectShapedSchema(schema: OpenApiSchema): boolean {
+  if (schema.properties) return true;
+  if (schema.allOf) return true;
+  // 显式空对象 DTO（无属性、无 map/free-form 语义）：维持空 interface 的既有行为
+  if (schema.type === 'object' && schema.additionalProperties === undefined) return true;
+  return false;
+}
+
+/**
+ * @description 渲染枚举值为 TypeScript 字面量联合
+ * 字符串值经 escapeStringLiteral 转义，数字/布尔直接输出
+ * @param values 枚举值数组
+ * @returns 字面量联合串，如 `'active' | 'inactive'`、`1 | 2 | 3`
+ */
+function renderEnumLiterals(values: unknown[]): string {
+  return values
+    .map((v) => {
+      if (typeof v === 'string') return `'${escapeStringLiteral(v)}'`;
+      if (v === null) return 'null';
+      if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+      return `'${escapeStringLiteral(String(v))}'`;
+    })
+    .join(' | ');
+}
+
+/**
+ * @description 提取顶层类型别名
+ * 顶层 Schema 为非对象形态（$ref、枚举、数组、原始类型、oneOf/anyOf 联合、
+ * map/free-form 对象）时，返回对应的 TypeScript 类型串；对象形态
+ * （properties / allOf / 显式空对象 / 无结构信息）返回 null，由调用方走 interface 路径。
+ * 典型场景：组件 Schema 仅为另一个 Schema 的引用时，应生成 `type X = Y`
+ * 而非空接口 `interface X {}`。
+ * @param schema OpenAPI Schema 对象
+ * @returns 类型别名串（如 `'User'`、`"'active' | 'inactive'"`、`'User[]'`、`'Record<string, User>'`），不可别名时返回 null
+ *
+ * @example
+ * ```typescript
+ * extractTypeAlias({ $ref: '#/components/schemas/User' }); // 'User'
+ * extractTypeAlias({ type: 'string', enum: ['a', 'b'] }); // "'a' | 'b'"
+ * extractTypeAlias({ type: 'array', items: { type: 'number' } }); // 'number[]'
+ * extractTypeAlias({ type: 'object', properties: {} }); // null（对象形态走 interface）
+ * ```
+ */
+export function extractTypeAlias(schema: OpenApiSchema): string | null {
+  if (!schema || typeof schema !== 'object') return null;
+  if (isObjectShapedSchema(schema)) return null;
+
+  // 枚举 → 字面量联合（字符串/数字枚举均支持）
+  if (Array.isArray(schema.enum) && schema.enum.length > 0) {
+    return wrapNullable(renderEnumLiterals(schema.enum as unknown[]), schema);
+  }
+
+  // 其余非对象形态交由 getPropertyType 统一映射
+  // （$ref / 数组 / 原始类型 / oneOf / anyOf / 3.1 type 数组 / map / free-form 均已覆盖）
+  const mapped = getPropertyType(schema);
+  // 完全无结构信息的 schema（映射为 any）不生成别名，维持 interface 兜底
+  if (!mapped || mapped === 'any') return null;
+  return mapped;
 }
 
 // 操作内容（content-type / schema）提取已下沉至中立层 @/schema/operation
