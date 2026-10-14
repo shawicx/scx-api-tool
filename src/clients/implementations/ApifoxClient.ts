@@ -12,6 +12,7 @@ import type {
   OpenApiResponse,
 } from '@/types';
 import { logger } from '@/utils/logger';
+import { isHttpMethod } from '@/utils/httpMethod';
 import { makeRequestWithProgress } from '@/utils/progress';
 import { redactHeaders } from '@/utils/redact';
 import { ErrorFactory } from '@/errors';
@@ -73,6 +74,12 @@ export class ApifoxClient extends BaseClient {
       // 防御畸形输入：跳过非对象的 methods
       if (!methods || typeof methods !== 'object') continue;
       for (const [method, operation] of Object.entries(methods)) {
+        // 白名单过滤：Path Item 的 $ref/summary/servers/parameters 等非操作字段
+        // 原样透传，不参与操作级归一化（避免公共参数数组被误改写为操作对象）
+        if (!isHttpMethod(method)) {
+          normalizedPaths[path][method] = operation;
+          continue;
+        }
         // 防御畸形输入：跳过非对象的 operation
         if (!operation || typeof operation !== 'object') {
           normalizedPaths[path][method] = operation as any;

@@ -13,6 +13,7 @@ import type {
 } from '@/types';
 import { sanitizeTypeName } from '@/naming';
 import { isFreeFormSchema, isJacksonDynamicType, createJsonValueDefinition } from '@/schema';
+import { isHttpMethod } from '@/utils/httpMethod';
 import { logger } from '@/utils/logger';
 import { ErrorFactory } from '@/errors';
 
@@ -112,7 +113,9 @@ function collectSchemasFromPaths(paths: NonNullable<OpenApiDocument['paths']>): 
   const schemas: unknown[] = [];
   for (const methods of Object.values(paths)) {
     if (!methods || typeof methods !== 'object') continue;
-    for (const operation of Object.values(methods)) {
+    for (const [method, operation] of Object.entries(methods)) {
+      // 白名单过滤：跳过 Path Item 的非操作字段（parameters/$ref/summary 等）
+      if (!isHttpMethod(method)) continue;
       if (!operation || typeof operation !== 'object') continue;
       const op = operation as Record<string, unknown>;
       // requestBody.content.*.schema
@@ -245,6 +248,10 @@ export function processOpenApiData(data: OpenApiDocument, config: ApiConfig): Pr
       if (!methods || typeof methods !== 'object') continue;
 
       for (const [method, operation] of Object.entries(methods)) {
+        // 白名单过滤：Path Item 的 $ref/summary/description/servers/parameters
+        // 等非操作字段不构成接口，避免被误识别为接口操作
+        if (!isHttpMethod(method)) continue;
+
         // 防御畸形输入：跳过非对象的 operation
         if (!operation || typeof operation !== 'object') continue;
 

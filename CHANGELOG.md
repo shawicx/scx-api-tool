@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
+- 修复 OpenAPI Path Item 非操作字段（`parameters`/`$ref`/`summary`/`servers` 等）被误识别为接口的问题：解析器改为 HTTP 方法白名单（get/put/post/delete/options/head/patch/trace），Apifox 归一化对路径级公共参数原样透传
 - 修复输出目录指向项目根目录（如 `.`）时 cleanOutputDir 可能递归清空整个项目的问题：路径安全检查不再放行恰好等于 cwd 的路径，并在清理入口增加纵深防御
 
 ### Features

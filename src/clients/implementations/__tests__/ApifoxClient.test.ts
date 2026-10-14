@@ -275,4 +275,59 @@ describe('ApifoxClient.normalize', () => {
     const normalized = client.publicNormalize(doc);
     expect(normalized).toEqual(doc);
   });
+
+  it('Path Item 级公共参数应原样透传，不被改写为操作对象', () => {
+    const pathLevelParams = [
+      { name: 'orderId', in: 'path', required: true, type: 'string' },
+      { name: 'traceId', in: 'header', type: 'string' },
+    ];
+    const apifoxDoc = {
+      openapi: '3.0.0',
+      paths: {
+        '/orders/{orderId}': {
+          parameters: pathLevelParams,
+          get: {
+            summary: '查询订单',
+            parameters: [{ name: 'verbose', in: 'query', type: 'boolean' }],
+          },
+        },
+      },
+    };
+
+    const normalized = client.publicNormalize(apifoxDoc);
+    const pathItem = normalized.paths!['/orders/{orderId}'] as Record<string, any>;
+
+    // 路径级公共参数数组保持原样（不得被补全为 parameters/responses 等操作字段）
+    expect(Array.isArray(pathItem.parameters)).toBe(true);
+    expect(pathItem.parameters).toEqual(pathLevelParams);
+    expect(pathItem.parameters).not.toHaveProperty('responses');
+
+    // 操作字段仍正常归一化
+    expect(pathItem.get.parameters).toHaveLength(1);
+    expect(pathItem.get.parameters[0].in).toBe('query');
+    expect(pathItem.get.parameters[0].description).toBe('');
+  });
+
+  it('Path Item 的 $ref/summary/servers 字段应原样透传', () => {
+    const apifoxDoc = {
+      openapi: '3.0.0',
+      paths: {
+        '/common': { $ref: '#/components/pathItems/CommonPath' },
+        '/users': {
+          summary: '用户接口',
+          servers: [{ url: 'https://api.example.com' }],
+          get: { summary: 'Get users' },
+        },
+      },
+    };
+
+    const normalized = client.publicNormalize(apifoxDoc);
+
+    expect(normalized.paths!['/common']).toEqual({ $ref: '#/components/pathItems/CommonPath' });
+    const usersItem = normalized.paths!['/users'] as Record<string, any>;
+    expect(usersItem.summary).toBe('用户接口');
+    expect(usersItem.servers).toEqual([{ url: 'https://api.example.com' }]);
+    // $ref 不应被当作操作归一化（如补全 responses 空对象等）
+    expect((normalized.paths!['/common'] as any).responses).toBeUndefined();
+  });
 });
