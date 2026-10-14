@@ -32,6 +32,32 @@ describe('isWithinCwd', () => {
     expect(isWithinCwd('')).toBe(false);
     expect(isWithinCwd(process.cwd())).toBe(false);
   });
+
+  it('路径规范化等价形态应正确归一（./ 前缀、尾斜杠、中间点段、.. 回退）', () => {
+    expect(isWithinCwd('src/service/')).toBe(true);
+    expect(isWithinCwd('src/./service')).toBe(true);
+    expect(isWithinCwd('src/a/../service')).toBe(true);
+    expect(isWithinCwd('././src//service')).toBe(true);
+    // 规范化后恰为 cwd：'src/..' === '.'
+    expect(isWithinCwd('src/..')).toBe(false);
+    expect(isWithinCwd('src/service/../..')).toBe(false);
+  });
+
+  it('中段 .. 逃逸应返回 false（不等价于前缀字符串比较）', () => {
+    // 若仅做字符串前缀判定，'src/../..' 之类的形态可能被漏判；resolve 归一后正确越界
+    expect(isWithinCwd('src/../..')).toBe(false);
+    expect(isWithinCwd('src/service/../../../etc')).toBe(false);
+  });
+
+  it('cwd 内的绝对路径应返回 true（仅路径形式不同，不视为越界）', () => {
+    expect(isWithinCwd(`${process.cwd()}/src/service`)).toBe(true);
+    expect(isWithinCwd(`${process.cwd()}/./src`)).toBe(true);
+  });
+
+  it('UNC 风格路径（//server/share）应返回 false', () => {
+    // POSIX 下 '//server/share' 是保留双斜杠的绝对路径，relative 结果含 '..' 或以 '/' 开头
+    expect(isWithinCwd('//server/share')).toBe(false);
+  });
 });
 
 describe('assertWithinCwd', () => {

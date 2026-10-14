@@ -6,12 +6,15 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
+- 修复多服务生命周期钩子语义不明确的问题：`beforeGenerate`/`afterGenerate` 由仅取首个服务改为按服务执行——顶层公共 hooks 随各服务生成各执行一次，服务级 hooks 仅自身执行（与 `beforeWriteFile`/`afterWriteFile` 语义对齐）；获取失败的服务不执行其生命周期钩子
+- 修复多服务部分失败时旧产物无提示的问题：失败服务现在会输出明确的过期风险告警（含其输出目录），聚合错误信息中标明「失败服务的输出目录保留了未更新的旧产物」，避免开发人员静默沿用过期接口定义
 - 修复顶层非对象 Schema（纯 `$ref` 引用、枚举、数组、原始类型、oneOf/anyOf 联合、map/free-form）被渲染成空接口的问题：此类形态改用类型别名模板生成 `type X = Y`（含字面量联合/Record/JsonValue 别名）并正确收集依赖 import；别名模板插值改为原样输出，避免类型串中的引号/竖线/尖括号被转义为 HTML 实体
 - 修复 OpenAPI Path Item 非操作字段（`parameters`/`$ref`/`summary`/`servers` 等）被误识别为接口的问题：解析器改为 HTTP 方法白名单（get/put/post/delete/options/head/patch/trace），Apifox 归一化对路径级公共参数原样透传
 - 修复输出目录指向项目根目录（如 `.`）时 cleanOutputDir 可能递归清空整个项目的问题：路径安全检查不再放行恰好等于 cwd 的路径，并在清理入口增加纵深防御
 
 ### Features
 
+- 新增服务输出目录逃逸校验（`OUTPUT_DIR_ESCAPE`）：folder 含 `../` 段或与 baseOutputDir 组合后指向项目根之外/项目根本身时，在配置加载阶段即拦截，不再等到拉取完数据后的清理阶段失败；目录隔离判定补充路径规范化等价（`./` 前缀、尾斜杠、中间点段、`..` 回退、双斜杠）与嵌套冲突的专项测试
 - 多服务场景支持服务级独立请求实例：新增 `requestMode: 'isolated'`（独立 request 文件 + `axios.create` 私有实例）与 `requestBaseURL` 配置，鉴权/响应解包经各文件 `customizeAxios` 扩展点实现
 - 未显式配置 `requestFunctionFilePath` 时，默认共享路径跟随 `baseOutputDir`（原硬编码 `src/service/request.ts`）；新增 `SHARED_REQUEST_CONFLICT` 警告：共享同一 request 文件的服务 `requestTimeout` 不一致时提示
 

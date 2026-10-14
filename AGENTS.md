@@ -142,7 +142,8 @@ logger.debug('调试信息:', data);
 - `source` / `token` 下沉到 `services[]` 每个服务级（必填 `name`，可选 `folder`，默认取 `name`，可多段如 `'trade/order'`）
 - 共享 `request.ts` 位于 `baseOutputDir` 层级（未显式配置 `requestFunctionFilePath` 时默认路径为 `join(baseOutputDir, 'request.<ext>')`）；各服务输出至 `join(baseOutputDir, folder ?? name)`
 - 服务级可声明 `requestMode: 'isolated'` 获得独立 request 文件（默认在服务输出目录内）与 `axios.create` 私有实例；`requestBaseURL` 仅 isolated 模式生效，鉴权/响应解包经各文件 `customizeAxios` 扩展点实现
-- 校验：`name` 唯一、各服务计算后的 `outputDir` 不相同/不嵌套，否则抛 `E1002`
+- 校验：`name` 唯一、各服务计算后的 `outputDir` 不相同/不嵌套（`OUTPUT_DIR_CONFLICT`），且必须严格位于项目根之内、不得为项目根本身（`OUTPUT_DIR_ESCAPE`），否则配置加载阶段即失败
+- 生命周期钩子按服务执行（与 `beforeWriteFile`/`afterWriteFile` 一致）：顶层公共 `hooks` 被每个服务继承、随各服务生成各执行一次；服务级 `hooks` 覆盖公共值、仅自身生成前后执行；获取失败的服务不执行其生命周期钩子
 - 单源场景用 `services: [{ name: 'main', folder: '.', source, token }]`，输出直接落在 `baseOutputDir`
 
 ### typesFormat 配置

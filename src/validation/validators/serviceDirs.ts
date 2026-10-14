@@ -29,6 +29,44 @@ function computeOutputDir(svc: ServiceConfig, baseOutputDir: string): string {
 }
 
 /**
+ * @description 判断绝对路径是否严格位于 base 之内（不含 base 本身）。
+ * 与 utils/pathSafety 的 isWithinCwd 同源的词法判定（resolve + relative，非字符串前缀）：
+ * 相对路径以 '..' 开头、为空（恰为 base 本身）或为绝对路径（跨盘符）均视为越界。
+ * 词法解析不跟踪符号链接：指向 cwd 外的符号链接无法在此层识别，
+ * 由生成阶段 cleanOutputDir 的运行时护栏兜底。
+ */
+function isStrictlyInside(childAbs: string, baseAbs: string): boolean {
+  const rel = relative(baseAbs, childAbs);
+  return rel !== '' && !rel.startsWith('..') && !rel.startsWith('/');
+}
+
+/**
+ * @description 校验单个服务的 outputDir 是否严格位于项目根（cwd）之内。
+ * folder 含 '../..' 段或 baseOutputDir 本身指向 cwd 外时，计算结果会逃逸项目根；
+ * 恰为 cwd 本身时 cleanOutputDir 会拒绝执行。两者都应在配置阶段拦截，
+ * 避免拉取完所有服务数据后才在生成阶段失败。
+ */
+function validateOutputDirWithinCwd(
+  svc: { name: string; outputDir: string; absDir: string },
+  errors: ValidationError[],
+): void {
+  const cwd = process.cwd();
+  if (!isStrictlyInside(svc.absDir, cwd)) {
+    errors.push(
+      createValidationError(
+        `services[${svc.name}].folder`,
+        'OUTPUT_DIR_ESCAPE',
+        `服务 "${svc.name}" 的输出目录逃逸项目根目录或指向项目根本身: ${svc.outputDir}（解析为 ${svc.absDir}）`,
+        ValidationSeverity.ERROR,
+        '输出目录必须严格位于项目根目录之内（不能是项目根本身，也不能通过 ../ 或绝对路径逃逸）：\n' +
+          '  请检查 baseOutputDir 与服务 folder 的组合，移除 ../ 段与绝对路径',
+        { service: svc.name, outputDir: svc.outputDir, absDir: svc.absDir },
+      ),
+    );
+  }
+}
+
+/**
  * @description 校验各服务 outputDir 不相同、不嵌套。
  *
  * outputDir 由 baseOutputDir 与各服务的 folder（默认取 name）计算得出。
@@ -51,6 +89,11 @@ export function validateServiceOutputDirs(
     outputDir: computeOutputDir(svc, baseOutputDir),
     absDir: resolve(process.cwd(), computeOutputDir(svc, baseOutputDir)),
   }));
+
+  // 各服务的 outputDir 必须严格位于项目根之内（防 ../ 逃逸与指向项目根本身）
+  for (const svc of computed) {
+    validateOutputDirWithinCwd(svc, errors);
+  }
 
   for (let i = 0; i < computed.length; i++) {
     for (let j = i + 1; j < computed.length; j++) {

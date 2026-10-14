@@ -2,6 +2,14 @@
  * @description 路径安全工具
  * 防御路径遍历攻击：确保 outputDir、requestFunctionFilePath 等用户可配置的路径
  * 不会逃逸到项目根目录（process.cwd()）之外，避免 cleanOutputDir 的递归删除造成误删。
+ *
+ * 安全边界说明：
+ * - 判定基于 resolve + relative 的路径语义（非字符串前缀比较），规范化
+ *   './a'、'a/'、'a/./b'、'a/b/../c'、双斜杠等形态后不会绕过；
+ * - 词法解析不跟踪符号链接：路径中含指向 cwd 之外的符号链接时，
+ *   词法判定仍视为位于 cwd 之内（不误伤使用符号链接的合法工作区）。
+ *   删除操作 fs.rm 对符号链接条目本身执行 unlink、不递归其目标，
+ *   符号链接指向的内容不会被清空；如需严格物理路径校验可引入 fs.realpath。
  */
 
 import { resolve, relative } from 'path';
