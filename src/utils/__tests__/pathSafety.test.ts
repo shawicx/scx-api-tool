@@ -26,8 +26,11 @@ describe('isWithinCwd', () => {
     expect(isWithinCwd('/usr/local/bin')).toBe(false);
   });
 
-  it('cwd 本身应返回 true', () => {
-    expect(isWithinCwd('.')).toBe(true);
+  it('cwd 本身应返回 false（删除型操作会清空整个项目）', () => {
+    expect(isWithinCwd('.')).toBe(false);
+    expect(isWithinCwd('./')).toBe(false);
+    expect(isWithinCwd('')).toBe(false);
+    expect(isWithinCwd(process.cwd())).toBe(false);
   });
 });
 
@@ -45,6 +48,12 @@ describe('assertWithinCwd', () => {
   it('系统绝对路径应抛 ConfigError', () => {
     expect(() => assertWithinCwd('/etc', 'outputDir')).toThrow(ConfigError);
     expect(() => assertWithinCwd('/', 'outputDir')).toThrow(ConfigError);
+  });
+
+  it('指向 cwd 本身的路径应抛 ConfigError（防误删项目根）', () => {
+    expect(() => assertWithinCwd('.', 'outputDir')).toThrow(ConfigError);
+    expect(() => assertWithinCwd('', 'requestFunctionFilePath')).toThrow(ConfigError);
+    expect(() => assertWithinCwd(process.cwd(), 'outputDir')).toThrow(ConfigError);
   });
 
   it('错误信息应包含路径标签和具体路径', () => {

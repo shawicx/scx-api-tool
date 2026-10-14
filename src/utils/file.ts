@@ -3,9 +3,10 @@
  */
 
 import { promises as fs } from 'fs';
-import { dirname, relative, join } from 'path';
+import { dirname, relative, join, resolve } from 'path';
 import { getHookManager } from './hooks';
 import { assertWithinCwd } from './pathSafety';
+import { ErrorFactory } from '@/errors';
 import type { CliHooks } from '@/types';
 import { logger } from '@/utils/logger';
 
@@ -96,6 +97,23 @@ export async function fileExists(filePath: string): Promise<boolean> {
 export async function cleanOutputDir(dirPath: string, excludeFiles: string[] = []): Promise<void> {
   // 安全护栏：禁止清理项目根目录之外的路径，避免误删
   assertWithinCwd(dirPath, 'outputDir');
+
+  // 纵深防御：目标恰好为项目根目录（如 outputDir 配置为 '.'）时直接拒绝，
+  // 递归删除会清空整个项目（含 .git、配置文件、源码等）
+  if (resolve(process.cwd(), dirPath) === process.cwd()) {
+    throw ErrorFactory.configInvalid(
+      `outputDir 不能指向项目根目录本身: ${dirPath}（清理操作会递归删除整个项目）`,
+      [
+        {
+          title: '修正输出目录',
+          steps: [
+            '将 baseOutputDir / folder 配置为项目内的子目录，例如 src/service',
+            '避免 folder: "." 且 baseOutputDir: "." 这类把输出指向项目根的组合',
+          ],
+        },
+      ],
+    );
+  }
 
   // 检查目录是否存在
   const exists = await fileExists(dirPath);

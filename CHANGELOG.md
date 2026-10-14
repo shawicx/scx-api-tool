@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## [Unreleased]
 
+### Bug Fixes
+
+- 修复输出目录指向项目根目录（如 `.`）时 cleanOutputDir 可能递归清空整个项目的问题：路径安全检查不再放行恰好等于 cwd 的路径，并在清理入口增加纵深防御
+
 ### Features
 
 - 多服务场景支持服务级独立请求实例：新增 `requestMode: 'isolated'`（独立 request 文件 + `axios.create` 私有实例）与 `requestBaseURL` 配置，鉴权/响应解包经各文件 `customizeAxios` 扩展点实现

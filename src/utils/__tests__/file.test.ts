@@ -173,4 +173,15 @@ describe('cleanOutputDir', () => {
     expect(fs.readdir).not.toHaveBeenCalled();
     expect(fs.rm).not.toHaveBeenCalled();
   });
+
+  it('should reject cleaning the project root itself (defense against wiping the project)', async () => {
+    // outputDir 配置为 '.' / '' / cwd 绝对路径时，必须在任何删除操作前拒绝
+    for (const dir of ['.', '', process.cwd()]) {
+      await expect(cleanOutputDir(dir)).rejects.toThrow();
+    }
+
+    // 不应触发任何读取或删除
+    expect(fs.readdir).not.toHaveBeenCalled();
+    expect(fs.rm).not.toHaveBeenCalled();
+  });
 });
