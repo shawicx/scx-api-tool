@@ -57,6 +57,28 @@ graph TD
 | 具体校验器       | `src/validation/validators/__tests__`   |
 | 顶层 / 跨模块    | `tests`                                 |
 
+## 两类测试：单元覆盖 vs 生成结果正确性
+
+单元测试覆盖达标（工具内部函数被测试执行过）与生成结果正确（输出代码可编译、类型与请求行为符合 OpenAPI 契约）是两个独立命题。前者由上述 `__tests__/` 就近单测保证；后者由 `tests/e2e/` 的生成结果正确性测试保证（对标 Orval 的公开测试思路：生成多种目标代码后，对产物做类型检查与快照验证）。
+
+| 项           | 事实                                                                                            | 证据                                      |
+| ------------ | ----------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| E2E 目录     | `tests/e2e`（由 `vitest.config.ts` 的 include 纳入 `pnpm test`）                                | `vitest.config.ts`、`tests/e2e/*.test.ts` |
+| 契约夹具     | `tests/e2e/fixtures/openApiContract.ts`（路径/查询/JSON/multipart 参数、顶层枚举、嵌套 $ref）   | `tests/e2e/fixtures/openApiContract.ts`   |
+| 共享脚手架   | `tests/e2e/helpers.ts`（本地 HTTP 数据源、真实配置文件驱动、tsc noEmit 检查、axios 适配器捕获） | `tests/e2e/helpers.ts`                    |
+| 临时输出目录 | `.tmp-e2e/`（`.gitignore` 的 `.tmp*` 规则覆盖，不进入版本库）                                   | `.gitignore`                              |
+| 目标矩阵     | TS+typescript、TS+zod、JS、多服务+isolated 四类目标各一个测试文件                               | `tests/e2e/*.e2e.test.ts`                 |
+| zod 测试依赖 | `zod@^3` devDependency（生成代码按 zod 3 API 生成，测试需用同版本做类型检查与运行时校验）       | `package.json`                            |
+
+每个 E2E 用例验证四件事：
+
+1. **结构断言**：文件树与契约一致（中文标签目录转拼音、类型/Schema 文件、request 文件位置）。
+2. **类型检查**：用 TypeScript 编译器 API 对生成目录做 `noEmit` 检查；TS 目标另附「用法检查文件」以 `@ts-expect-error` 反向锁定类型契约。
+3. **运行时请求行为**：动态导入生成模块，替换 axios 适配器捕获实际请求（URL 插值、query/body 落位、multipart FormData、响应解包、isolated baseURL）。
+4. **快照验证**：关键生成文件落入 `tests/e2e/__snapshots__/`，防止无意识的输出漂移（有意变更时用 `vitest run tests/e2e -u` 更新）。
+
+> 该类测试在引入当天即捕获了 5 个真实生成缺陷（zod 顶层枚举退化为 `z.object({})`、标准 OpenAPI 3.0 参数 `schema` 被忽略、枚举缺 `z.literal` 包裹、isolated 模式 `customizeAxios` 类型不兼容、JS 产物泄漏 TS 泛型调用语法），均为既有单元测试未覆盖的产物级问题。
+
 ## 运行方式
 
 项目使用的运行命令为 `vitest run`：

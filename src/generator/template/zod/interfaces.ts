@@ -165,7 +165,9 @@ export function generateZodSchemaFromOperation(
         const fields: string[] = [];
         for (const param of nonHeaderParams) {
           const sanitizedName = sanitizePropertyName(param.name);
-          const result = openApiPropertyToZodType({ type: param.type || 'string' });
+          // 标准 OpenAPI 3.0 参数类型在 param.schema（简化格式才是 param.type）；
+          // 忽略 param.schema 会把 integer 路径参数与枚举查询参数一律退化成 z.string()
+          const result = openApiPropertyToZodType(param.schema ?? { type: param.type || 'string' });
           const required = param.required !== false;
           const optional = required ? '' : '.optional()';
           fields.push(`  ${sanitizedName}: ${result.type}${optional},`);

@@ -1,0 +1,80 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`生成结果正确性：多服务 + isolated 请求实例 > isolated 请求文件烘焙 axios.create 私有实例与 requestBaseURL > isolated-request.ts 1`] = `
+"import type { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios from 'axios';
+import consola from 'consola';
+
+/** HTTP 请求方法常量（as const 对象，替代 enum 以保持可擦除语法） */
+export const RequestMethod = {
+  GET: 'GET',
+  POST: 'POST',
+  PUT: 'PUT',
+  DELETE: 'DELETE',
+  HEAD: 'HEAD',
+  OPTIONS: 'OPTIONS',
+  PATCH: 'PATCH',
+} as const;
+
+/** HTTP 请求方法类型 */
+export type RequestMethod = (typeof RequestMethod)[keyof typeof RequestMethod];
+
+export interface RequestConfig extends AxiosRequestConfig {
+  url: string;
+  method: RequestMethod;
+}
+
+// 超时时间（可通过 defineConfig 的 requestTimeout 配置；上传类请求不受此默认超时限制）
+const TIMEOUT = 5 * 1000;
+
+const isUploadData = (data: unknown): boolean =>
+  data instanceof FormData || data instanceof Blob;
+
+// 本服务私有请求实例：baseURL/拦截器等配置不影响其他服务
+const instance = axios.create({
+  baseURL: '/store-svc',
+  timeout: TIMEOUT,
+});
+
+export async function request<T = any>(config: RequestConfig): Promise<T> {
+  try {
+    if (config.data instanceof FormData) {
+      // multipart 的 boundary 由运行时生成，剥离调用方误传的固定 Content-Type
+      config.headers = Object.fromEntries(
+        Object.entries(config.headers ?? {}).filter(
+          ([headerKey]) => headerKey.toLowerCase() !== 'content-type'
+        )
+      ) as RequestConfig['headers'];
+    }
+
+    const response = await instance({
+      ...config,
+      timeout: config.timeout ?? (isUploadData(config.data) ? 0 : TIMEOUT),
+    });
+
+    return response.data;
+  } catch (error) {
+    consola.error('Request failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * 请求客户端扩展点：模块加载时调用一次，可在此自定义请求行为
+ * （请求/响应拦截器、Token 注入、响应解包等）。本实例为本服务私有（axios.create 创建），baseURL/拦截器等配置不影响其他服务。
+ * 本文件仅在首次生成时创建，后续重新生成不会覆盖此文件，此处自定义可长期保留。
+ */
+export function customizeAxios(instance: AxiosInstance): void {
+  // 按需自定义，例如：
+  // instance.interceptors.request.use((config) => {
+  //   config.headers.Authorization = \`Bearer \${getToken()}\`;
+  //   return config;
+  // });
+  // instance.interceptors.response.use((response) =>
+  //   response.data?.code === 0 ? response.data.data : Promise.reject(response.data),
+  // );
+}
+
+customizeAxios(instance);
+"
+`;

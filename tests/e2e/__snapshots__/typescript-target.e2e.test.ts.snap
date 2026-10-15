@@ -1,0 +1,346 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`生成结果正确性：TypeScript 目标 > 生成代码通过快照验证（request 文件 / 接口文件 / 类型索引） > Pet.ts 1`] = `
+"import type { Category } from './Category';
+import type { PetStatus } from './PetStatus';
+import type { Tag } from './Tag';
+
+/**
+ * @description Pet
+ */
+export interface Pet {
+  /** @description  */
+  id: number;
+  /** @description  */
+  name: string;
+  /** @description  */
+  status?: PetStatus;
+  /** @description  */
+  category?: Category;
+  /** @description  */
+  tags?: Tag[];
+  /** @description  */
+  photoUrls: string[];
+}
+"
+`;
+
+exports[`生成结果正确性：TypeScript 目标 > 生成代码通过快照验证（request 文件 / 接口文件 / 类型索引） > interface-index.ts 1`] = `
+"import { RequestMethod, RequestConfig, request } from '../../request';
+import type { PetStatus, Category, Tag, Pet } from '../types';
+
+/**
+ * @description 查询宠物详情
+ * @param params GetPetsByPetIdRequestType
+ * @returns Promise<GetPetsByPetIdResultType>
+ */
+export interface GetPetsByPetIdRequestType {
+  /** @description 宠物 ID */
+  petId: number;
+}
+
+/**
+ * @description 查询宠物详情 的返回数据类型
+ */
+export interface GetPetsByPetIdResultType {
+  /** @description  */
+  id: number;
+  /** @description  */
+  name: string;
+  /** @description  */
+  status: PetStatus;
+  /** @description  */
+  category: Category;
+  /** @description  */
+  tags: Tag[];
+  /** @description  */
+  photoUrls: string[];
+}
+
+/**
+ * @description 查询宠物详情
+ * @param params GetPetsByPetIdRequestType
+ * @returns Promise<GetPetsByPetIdResultType>
+ */
+export async function getPetsByPetIdFunc(
+  params: GetPetsByPetIdRequestType,
+  options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}
+): Promise<GetPetsByPetIdResultType> {
+  const config: RequestConfig = {
+    ...options,
+    url: \`/pets/\${params.petId}\`,
+    method: RequestMethod.GET,
+  };
+  return request<GetPetsByPetIdResultType>(config);
+}
+
+/**
+ * @description 删除宠物
+ * @param params DeletePetsByPetIdRequestType
+ * @returns Promise<DeletePetsByPetIdResultType>
+ */
+export interface DeletePetsByPetIdRequestType {
+  /** @description  */
+  petId: number;
+}
+
+/**
+ * @description 删除宠物 的返回数据类型
+ */
+export interface DeletePetsByPetIdResultType {}
+
+/**
+ * @description 删除宠物
+ * @param params DeletePetsByPetIdRequestType
+ * @returns Promise<DeletePetsByPetIdResultType>
+ */
+export async function deletePetsByPetIdFunc(
+  params: DeletePetsByPetIdRequestType,
+  options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}
+): Promise<DeletePetsByPetIdResultType> {
+  const config: RequestConfig = {
+    ...options,
+    url: \`/pets/\${params.petId}\`,
+    method: RequestMethod.DELETE,
+  };
+  return request<DeletePetsByPetIdResultType>(config);
+}
+
+/**
+ * @description 分页查询宠物列表
+ * @param params GetPetsRequestType
+ * @returns Promise<GetPetsResultType>
+ */
+export interface GetPetsRequestType {
+  /** @description  */
+  page?: number;
+  /** @description  */
+  pageSize?: number;
+  /** @description 按状态过滤（枚举） */
+  status?: PetStatus;
+}
+
+/**
+ * @description 分页查询宠物列表 的返回数据类型
+ */
+export interface GetPetsResultType {
+  /** @description  */
+  data: Pet[];
+  /** @description  */
+  total: number;
+}
+
+/**
+ * @description 分页查询宠物列表
+ * @param params GetPetsRequestType
+ * @returns Promise<GetPetsResultType>
+ */
+export async function getPetsFunc(
+  params: GetPetsRequestType,
+  options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}
+): Promise<GetPetsResultType> {
+  const config: RequestConfig = {
+    ...options,
+    url: '/pets',
+    method: RequestMethod.GET,
+    params: params,
+  };
+  return request<GetPetsResultType>(config);
+}
+
+/**
+ * @description 创建宠物
+ * @param params PostPetsRequestType
+ * @returns Promise<PostPetsResultType>
+ */
+export interface PostPetsRequestType {
+  /** @description  */
+  name: string;
+  /** @description  */
+  status?: PetStatus;
+  /** @description  */
+  category?: Category;
+  /** @description  */
+  photoUrls?: string[];
+}
+
+/**
+ * @description 创建宠物 的返回数据类型
+ */
+export interface PostPetsResultType {
+  /** @description  */
+  id: number;
+  /** @description  */
+  name: string;
+  /** @description  */
+  status: PetStatus;
+  /** @description  */
+  category: Category;
+  /** @description  */
+  tags: Tag[];
+  /** @description  */
+  photoUrls: string[];
+}
+
+/**
+ * @description 创建宠物
+ * @param params PostPetsRequestType
+ * @returns Promise<PostPetsResultType>
+ */
+export async function postPetsFunc(
+  params: PostPetsRequestType,
+  options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}
+): Promise<PostPetsResultType> {
+  const config: RequestConfig = {
+    ...options,
+    url: '/pets',
+    method: RequestMethod.POST,
+    data: params,
+  };
+  return request<PostPetsResultType>(config);
+}
+
+/**
+ * @description 上传宠物照片
+ * @param params PostPetsPhotosByPetIdRequestType
+ * @returns Promise<PostPetsPhotosByPetIdResultType>
+ */
+export interface PostPetsPhotosByPetIdRequestType {
+  /** @description 图片文件 */
+  file: File;
+  /** @description 图片说明 */
+  caption?: string;
+  /** @description  */
+  petId: number;
+}
+
+/**
+ * @description 上传宠物照片 的返回数据类型
+ */
+export interface PostPetsPhotosByPetIdResultType {
+  /** @description  */
+  photoId: string;
+  /** @description  */
+  url: string;
+}
+
+/**
+ * @description 上传宠物照片
+ * @param params PostPetsPhotosByPetIdRequestType
+ * @returns Promise<PostPetsPhotosByPetIdResultType>
+ */
+export async function postPetsPhotosByPetIdFunc(
+  params: PostPetsPhotosByPetIdRequestType,
+  options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}
+): Promise<PostPetsPhotosByPetIdResultType> {
+  const { petId, ...body } = params;
+  const config: RequestConfig = {
+    ...options,
+    url: \`/pets/\${params.petId}/photos\`,
+    method: RequestMethod.POST,
+    data: (() => {
+      const fd = new FormData();
+      Object.entries(body).forEach(([k, v]: [string, unknown]) => {
+        if (v === null || v === undefined) return;
+        if (Array.isArray(v)) {
+          v.forEach((item) =>
+            fd.append(k, item instanceof Blob ? item : String(item))
+          );
+        } else if (v instanceof Blob) {
+          fd.append(k, v);
+        } else if (typeof v === 'object') {
+          fd.append(k, JSON.stringify(v));
+        } else {
+          fd.append(k, String(v));
+        }
+      });
+      return fd;
+    })(),
+  };
+  return request<PostPetsPhotosByPetIdResultType>(config);
+}
+"
+`;
+
+exports[`生成结果正确性：TypeScript 目标 > 生成代码通过快照验证（request 文件 / 接口文件 / 类型索引） > request.ts 1`] = `
+"import type { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
+import consola from 'consola';
+
+/** HTTP 请求方法常量（as const 对象，替代 enum 以保持可擦除语法） */
+export const RequestMethod = {
+  GET: 'GET',
+  POST: 'POST',
+  PUT: 'PUT',
+  DELETE: 'DELETE',
+  HEAD: 'HEAD',
+  OPTIONS: 'OPTIONS',
+  PATCH: 'PATCH',
+} as const;
+
+/** HTTP 请求方法类型 */
+export type RequestMethod = (typeof RequestMethod)[keyof typeof RequestMethod];
+
+export interface RequestConfig extends AxiosRequestConfig {
+  url: string;
+  method: RequestMethod;
+}
+
+// 超时时间（可通过 defineConfig 的 requestTimeout 配置；上传类请求不受此默认超时限制）
+const TIMEOUT = 5 * 1000;
+
+const isUploadData = (data: unknown): boolean =>
+  data instanceof FormData || data instanceof Blob;
+
+export async function request<T = any>(config: RequestConfig): Promise<T> {
+  try {
+    if (config.data instanceof FormData) {
+      // multipart 的 boundary 由运行时生成，剥离调用方误传的固定 Content-Type
+      config.headers = Object.fromEntries(
+        Object.entries(config.headers ?? {}).filter(
+          ([headerKey]) => headerKey.toLowerCase() !== 'content-type'
+        )
+      ) as RequestConfig['headers'];
+    }
+
+    const response = await axios({
+      ...config,
+      timeout: config.timeout ?? (isUploadData(config.data) ? 0 : TIMEOUT),
+    });
+
+    return response.data;
+  } catch (error) {
+    consola.error('Request failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * 请求客户端扩展点：模块加载时调用一次，可在此自定义请求行为
+ * （请求/响应拦截器、Token 注入、响应解包等）。此处自定义作用于全局 axios 实例，会影响所有共享本文件的服务。
+ * 本文件仅在首次生成时创建，后续重新生成不会覆盖此文件，此处自定义可长期保留。
+ */
+export function customizeAxios(instance: typeof axios): void {
+  // 按需自定义，例如：
+  // instance.interceptors.request.use((config) => {
+  //   config.headers.Authorization = \`Bearer \${getToken()}\`;
+  //   return config;
+  // });
+  // instance.interceptors.response.use((response) =>
+  //   response.data?.code === 0 ? response.data.data : Promise.reject(response.data),
+  // );
+}
+
+customizeAxios(axios);
+"
+`;
+
+exports[`生成结果正确性：TypeScript 目标 > 生成代码通过快照验证（request 文件 / 接口文件 / 类型索引） > types-index.ts 1`] = `
+"export type { PetStatus } from './PetStatus';
+export type { Category } from './Category';
+export type { Tag } from './Tag';
+export type { Pet } from './Pet';
+export type { CreatePetRequest } from './CreatePetRequest';
+export type { PetListResponse } from './PetListResponse';
+"
+`;

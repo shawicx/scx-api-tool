@@ -9,12 +9,16 @@ pnpm install && pnpm run build       # 安装依赖并构建项目
 pnpm run lint:fix                    # 格式化并修复代码
 pnpm run dev                         # 开发模式（使用配置文件生成代码）
 npx api-power generate --config xxx  # 使用配置生成代码
-pnpm test                            # 运行单元测试
+pnpm test                            # 运行全部测试（单元 + 生成结果 E2E）
 pnpm test:watch                      # 监听模式运行测试
 pnpm test:coverage                   # 运行测试并生成覆盖率报告
+npx vitest run tests/e2e -u          # 有意变更生成产物后更新 E2E 快照
 ```
 
-**重要**: 修改代码后务必运行 `pnpm test` 确保所有测试通过。测试框架为 Vitest，测试文件位于各模块的 `__tests__/` 目录下，共享夹具在 `tests/fixtures/mockData.ts`。
+**重要**: 修改代码后务必运行 `pnpm test` 确保所有测试通过。测试框架为 Vitest，测试分两类：
+
+- **单元测试**：验证工具内部函数，位于各模块的 `__tests__/` 目录下，共享夹具在 `tests/fixtures/mockData.ts`。
+- **生成结果正确性测试**（`tests/e2e/`）：走完整真实链路生成代码后，验证「生成结果」本身——结构、TypeScript `noEmit` 类型检查、类型契约（`@ts-expect-error` 用法检查文件）、运行时请求行为（axios 适配器捕获）、快照。契约夹具在 `tests/e2e/fixtures/openApiContract.ts`，脚手架在 `tests/e2e/helpers.ts`，临时产物写入 `.tmp-e2e/`（已 gitignore）。改动生成器模板/输出形态时，此类测试的快照需随有意变更一起更新（`npx vitest run tests/e2e -u`）。`zod@^3` devDependency 仅供 zod 产物的类型检查与运行时校验使用（生成代码按 zod 3 API 生成）。
 
 ## 规则
 

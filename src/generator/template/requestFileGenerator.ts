@@ -103,7 +103,13 @@ function generateStripContentTypeSnippet(isJS: boolean): string {
  * @returns 扩展点代码片段
  */
 function generateCustomizeAxios(isJS: boolean, isIsolated: boolean): string {
-  const instanceType = isJS ? 'instance' : 'instance: typeof axios';
+  // isolated 模式的实例来自 axios.create（AxiosInstance）；shared 模式为全局 axios（AxiosStatic），
+  // 两者的类型不兼容，混用会导致生成产物自身类型检查失败
+  const instanceType = isJS
+    ? 'instance'
+    : isIsolated
+      ? 'instance: AxiosInstance'
+      : 'instance: typeof axios';
   const returnType = isJS ? '' : ': void';
   const scopeComment = isIsolated
     ? '本实例为本服务私有（axios.create 创建），baseURL/拦截器等配置不影响其他服务'
@@ -165,7 +171,10 @@ export function generateRequestFile(config: ApiConfig): string {
   const genericDecl = isJS ? '' : '<T = any>';
   const returnType = isJS ? '' : ': Promise<T>';
 
-  const importSection = `${isJS ? '' : "import type { AxiosRequestConfig } from 'axios';\n"}import axios from 'axios';
+  const isIsolated = config.requestMode === 'isolated';
+  // isolated 模式的 customizeAxios 参数标注 AxiosInstance，需一并导入该类型
+  const axiosTypeImports = isIsolated ? 'AxiosInstance, AxiosRequestConfig' : 'AxiosRequestConfig';
+  const importSection = `${isJS ? '' : `import type { ${axiosTypeImports} } from 'axios';\n`}import axios from 'axios';
 import consola from 'consola';`;
 
   const requestMethodEnum = isJS

@@ -184,7 +184,9 @@ export function buildRequestBinding(input: RequestBindingInput): RequestBinding 
   const methodCallArguments = canHaveBody
     ? [dataExpression, paramsExpression, methodOptions.expression]
     : [paramsExpression, methodOptions.expression];
-  const methodCallExpression = `${input.requestMethodsObjectName}.${input.method.toLowerCase()}<${input.responseTypeName}>(${[
+  // JS 产物不能带 TS 泛型调用语法，否则被解析为比较运算（运行时 ReferenceError）
+  const genericArgument = isJavaScript ? '' : `<${input.responseTypeName}>`;
+  const methodCallExpression = `${input.requestMethodsObjectName}.${input.method.toLowerCase()}${genericArgument}(${[
     input.path,
     ...methodCallArguments,
   ].join(', ')})`;

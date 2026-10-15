@@ -9,7 +9,12 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['src/**/*.{test}.ts', 'src/**/__tests__/**/*.test.ts', 'src/**/__tests__/*.ts'],
+    include: [
+      'src/**/*.{test}.ts',
+      'src/**/__tests__/**/*.test.ts',
+      'src/**/__tests__/*.ts',
+      'tests/e2e/**/*.test.ts',
+    ],
     exclude: ['src/service/**/*', 'src/templates/**/*'],
     // vitest 的 coverage 配置位于 test 命名空间下，而非顶层
     coverage: {

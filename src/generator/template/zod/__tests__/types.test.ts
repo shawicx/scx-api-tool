@@ -99,16 +99,16 @@ describe('zod/types', () => {
   });
 
   describe('openApiPropertyToZodType - enum', () => {
-    it('enum 应转为 z.union([...])', () => {
+    it('enum 应转为 z.union([z.literal(...), ...])（union 成员必须是 schema）', () => {
       const result = openApiPropertyToZodType({ enum: ['a', 'b'] });
-      expect(result.type).toBe("z.union(['a', 'b'])");
+      expect(result.type).toBe("z.union([z.literal('a'), z.literal('b')])");
       expect(result.imports).toEqual([]);
     });
 
     it('enum 含单引号应转义（注入防护）', () => {
       const result = openApiPropertyToZodType({ enum: ["a'b"] });
       // escapeStringLiteral 转义单引号
-      expect(result.type).toBe("z.union(['a\\'b'])");
+      expect(result.type).toBe("z.union([z.literal('a\\'b')])");
     });
   });
 

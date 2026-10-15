@@ -35,7 +35,11 @@ export function registerTemplatePartials(): void {
 {{{requestConfigFields}}}
 {{/if}}
   };
+{{#if isJavaScript}}
+  return {{requestFunctionName}}(config);
+{{else}}
   return {{requestFunctionName}}<{{responseTypeName}}>(config);
+{{/if}}
 {{/if}}
 `,
   );

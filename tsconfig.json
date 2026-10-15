@@ -25,6 +25,7 @@
   "include": [
     "src/**/*",
     "scripts/**/*",
+    "tests/**/*",
     "tsdown.config.ts",
     "api-power.config.ts",
     "vitest.config.ts",

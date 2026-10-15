@@ -42,6 +42,8 @@ export function generateInterfaceFunction(
     requestOptionsParam,
     configDeclaration,
     methodExpression,
+    // JS 产物不能出现 TS 泛型调用语法（request<T>(config) 会被解析为比较运算，运行时 ReferenceError）
+    isJavaScript: config.target === 'javascript',
   };
 
   // JavaScript 目标始终使用 API-only 模板（无类型注解）

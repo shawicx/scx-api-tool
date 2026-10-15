@@ -1,0 +1,129 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`生成结果正确性：Zod 目标 > 生成代码通过快照验证（类型 Schema / 接口合并 Schema） > PetSchema.ts 1`] = `
+"import { z } from 'zod';
+import { PetStatusSchema } from './PetStatusSchema';
+import { CategorySchema } from './CategorySchema';
+import { TagSchema } from './TagSchema';
+/**
+ * @description Pet
+ */
+export const PetSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  status: PetStatusSchema.optional(),
+  category: CategorySchema.optional(),
+  tags: z.array(TagSchema).optional(),
+  photoUrls: z.array(z.string()),
+});
+
+// 推导类型
+export type Pet = z.infer<typeof PetSchema>;
+"
+`;
+
+exports[`生成结果正确性：Zod 目标 > 生成代码通过快照验证（类型 Schema / 接口合并 Schema） > merged-schema.ts 1`] = `
+"import { z } from 'zod';
+import { PetSchema } from '../schemas/PetSchema';
+import { PetStatusSchema } from '../schemas/PetStatusSchema';
+import { PetListResponseSchema } from '../schemas/PetListResponseSchema';
+import { CreatePetRequestSchema } from '../schemas/CreatePetRequestSchema';
+
+/**
+ * @description 查询宠物详情
+ */
+export const GetPetsByPetIdRequestTypeSchema = z.object({
+  petId: z.number(),
+});
+
+/**
+ * @description 查询宠物详情
+ */
+export const GetPetsByPetIdResultTypeSchema = PetSchema;
+
+// 推导类型
+export type GetPetsByPetIdRequestType = z.infer<
+  typeof GetPetsByPetIdRequestTypeSchema
+>;
+export type GetPetsByPetIdResultType = z.infer<
+  typeof GetPetsByPetIdResultTypeSchema
+>;
+
+/**
+ * @description 删除宠物
+ */
+export const DeletePetsByPetIdRequestTypeSchema = z.object({
+  petId: z.number(),
+});
+
+/**
+ * @description 删除宠物
+ */
+export const DeletePetsByPetIdResultTypeSchema = z.object({});
+
+// 推导类型
+export type DeletePetsByPetIdRequestType = z.infer<
+  typeof DeletePetsByPetIdRequestTypeSchema
+>;
+export type DeletePetsByPetIdResultType = z.infer<
+  typeof DeletePetsByPetIdResultTypeSchema
+>;
+
+/**
+ * @description 分页查询宠物列表
+ */
+export const GetPetsRequestTypeSchema = z.object({
+  page: z.number(),
+  pageSize: z.number(),
+  status: PetStatusSchema,
+});
+
+/**
+ * @description 分页查询宠物列表
+ */
+export const GetPetsResultTypeSchema = PetListResponseSchema;
+
+// 推导类型
+export type GetPetsRequestType = z.infer<typeof GetPetsRequestTypeSchema>;
+export type GetPetsResultType = z.infer<typeof GetPetsResultTypeSchema>;
+
+/**
+ * @description 创建宠物
+ */
+export const PostPetsRequestTypeSchema = CreatePetRequestSchema;
+
+/**
+ * @description 创建宠物
+ */
+export const PostPetsResultTypeSchema = PetSchema;
+
+// 推导类型
+export type PostPetsRequestType = z.infer<typeof PostPetsRequestTypeSchema>;
+export type PostPetsResultType = z.infer<typeof PostPetsResultTypeSchema>;
+
+/**
+ * @description 上传宠物照片
+ */
+export const PostPetsPhotosByPetIdRequestTypeSchema = z.object({
+  petId: z.number(),
+  file: z.instanceof(File),
+  caption: z.string().optional(),
+});
+
+/**
+ * @description 上传宠物照片
+ */
+export const PostPetsPhotosByPetIdResultTypeSchema = z.object({
+  photoId: z.string(),
+  url: z.string(),
+});
+
+// 推导类型
+export type PostPetsPhotosByPetIdRequestType = z.infer<
+  typeof PostPetsPhotosByPetIdRequestTypeSchema
+>;
+export type PostPetsPhotosByPetIdResultType = z.infer<
+  typeof PostPetsPhotosByPetIdResultTypeSchema
+>;
+"
+`;

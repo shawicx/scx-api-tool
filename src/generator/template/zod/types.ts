@@ -210,6 +210,13 @@ export function generateZodSchemaFromOpenApiSchema(
     if (isFreeFormSchema(schema)) {
       return { code: 'z.unknown()', imports: [] };
     }
+    // 顶层非对象 Schema（$ref 引用 / 枚举 / 标量 / 数组）按叶子类型生成，
+    // 不再退化为 z.object({})（与 TypeScript 模式的顶层类型别名生成对齐，
+    // 否则枚举被引用处运行时校验语义完全错误）；无任何形态信息的 schema 维持兜底
+    if (schema.$ref || schema.enum || (schema.type && schema.type !== 'object')) {
+      const leaf = openApiPropertyToZodType(schema, depth, guard);
+      return { code: leaf.type, imports: leaf.imports };
+    }
     return { code: 'z.object({})', imports: [] };
   }
 
@@ -277,7 +284,8 @@ export function openApiPropertyToZodType(
   } else if (property.type === 'object') {
     result = composeObject(property, depth, guard);
   } else if (property.enum) {
-    const enumValues = property.enum.map((v) => `'${escapeStringLiteral(v)}'`);
+    // union 的成员必须是 schema：裸字符串字面量会在 parse 阶段抛 TypeError
+    const enumValues = property.enum.map((v) => `z.literal('${escapeStringLiteral(v)}')`);
     result = { type: `z.union([${enumValues.join(', ')}])`, imports: [] };
   } else {
     result =
