@@ -128,6 +128,8 @@ transformPath: (p) => '/api/v1' + p,
 
 分类规则：`GET` / `HEAD` 接口生成 query hook；`POST` / `PUT` / `PATCH` / `DELETE` 生成 mutation hook。命名默认 `use` + API 函数名首字母大写（`getPetsFunc` → `useGetPetsFunc`），可通过 `namingStrategy.hookName` 自定义。不支持无限列表/分页 hook（分页结构无法从 OpenAPI 静态推断）。
 
+Hook 引用的端点 `RequestType` / `ResultType` 与 API 函数同源：TypeScript 模式从同目录 `./index` 导入（类型内联在接口文件中），Zod 模式从同目录 `./schema` 导入。
+
 生成的 Hook 形态（真实产物截图）：
 
 ![生成的 hooks.ts](../assets/gen-hooks.png)
@@ -271,6 +273,11 @@ interface CliHooks {
 - `RequestMethod` 常量与 `RequestConfig` 接口（`url` + `method` 必填的 AxiosRequestConfig 扩展）；
 - `request<T>(config)` 请求函数：默认超时 `requestTimeout`，上传类请求（`FormData`/`Blob`）不限时；multipart 请求自动剥离误传的固定 `Content-Type`；
 - `customizeAxios` 扩展点：模块加载时调用一次，可注入拦截器、Token、响应解包等。**该文件仅在首次生成时创建，后续重新生成不会覆盖**，此处自定义可长期保留。
+
+生成代码从该文件导入 `request`（值）与 `RequestConfig`（类型）；HTTP 方法以字符串字面量（`method: 'GET'`）传入，**不导入 `RequestMethod`**。因此完全自定义 request 文件时只需满足最小契约：
+
+- 导出 `request(config)` 请求函数（导入名可用 `requestFunctionName` 自定义）；
+- 导出 `RequestConfig` 接口，`method` 字段类型为 `string` 或 HTTP 方法字面量联合均可兼容。
 
 真实产物截图（首次生成时的完整内容）：
 

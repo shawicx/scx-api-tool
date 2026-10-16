@@ -368,10 +368,12 @@ describe('generateInterfaceFileForTag', () => {
       join(config.outputDir, 'user'),
     );
 
-    // apiOnly 分支：函数签名需要 RequestConfig，但不应有 type import
-    expect(captured.content).toMatch(/import \{ RequestMethod, RequestConfig, request \} from/);
-    // apiOnly 不应有 type import
-    expect(captured.content).not.toMatch(/import type \{/);
+    // apiOnly 分支：函数签名需要 RequestConfig（type import）+ request 值导入，无 RequestMethod
+    expect(captured.content).toMatch(/import type \{ RequestConfig \} from/);
+    expect(captured.content).toMatch(/import \{ request \} from/);
+    expect(captured.content).not.toContain('RequestMethod');
+    // apiOnly 不应有 schema 类型 import
+    expect(captured.content).not.toMatch(/import type \{ User \} from/);
   });
 
   it('JS 模式（target=javascript）应含 request import、无类型 import，文件名为 index.js', async () => {
@@ -414,8 +416,10 @@ describe('generateInterfaceFileForTag', () => {
       join(config.outputDir, 'user'),
     );
 
-    // 全量分支：import { RequestConfig, request } from '...'
-    expect(captured.content).toMatch(/import \{ RequestMethod, RequestConfig, request \} from/);
+    // 全量分支：request 值导入 + RequestConfig 类型导入（method 为字面量，无 RequestMethod）
+    expect(captured.content).toMatch(/import \{ request \} from/);
+    expect(captured.content).toMatch(/import type \{ RequestConfig \} from/);
+    expect(captured.content).not.toContain('RequestMethod');
     // usedTypes 命中 User → 生成 type import（路径经 alias 解析为 @/types）
     expect(captured.content).toMatch(/import type \{ User \} from/);
   });
@@ -437,8 +441,9 @@ describe('generateInterfaceFileForTag', () => {
       join(config.outputDir, 'user'),
     );
 
-    // method-specific 纯函数调用无 method 字段，不应导入 RequestMethod
-    expect(captured.content).toMatch(/import \{ RequestConfig, request, requestMethods \} from/);
+    // method-specific 纯函数调用无 method 字段，不导入 RequestMethod
+    expect(captured.content).toMatch(/import \{ request, requestMethods \} from/);
+    expect(captured.content).toMatch(/import type \{ RequestConfig \} from/);
   });
 
   it('requestMethodStyle=both 应 import 含 requestMethods', async () => {
@@ -458,9 +463,9 @@ describe('generateInterfaceFileForTag', () => {
       join(config.outputDir, 'user'),
     );
 
-    expect(captured.content).toMatch(
-      /import \{ RequestMethod, RequestConfig, request, requestMethods \} from/,
-    );
+    expect(captured.content).toMatch(/import \{ request, requestMethods \} from/);
+    expect(captured.content).toMatch(/import type \{ RequestConfig \} from/);
+    expect(captured.content).not.toContain('RequestMethod');
   });
 
   it('Zod 模式（typesFormat=zod, generateApi+generateTypes）应含 request import 与 ./schema type import', async () => {
@@ -479,7 +484,9 @@ describe('generateInterfaceFileForTag', () => {
       join(config.outputDir, 'user'),
     );
 
-    expect(captured.content).toMatch(/import \{ RequestMethod, RequestConfig, request \} from/);
+    expect(captured.content).toMatch(/import \{ request \} from/);
+    expect(captured.content).toMatch(/import type \{ RequestConfig \} from/);
+    expect(captured.content).not.toContain('RequestMethod');
     // Zod 分支：import type { ... } from './schema'
     expect(captured.content).toMatch(/import type \{ .* \} from '\.\/schema'/);
   });

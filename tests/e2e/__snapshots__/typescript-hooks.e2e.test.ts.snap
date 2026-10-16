@@ -1,0 +1,367 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`生成结果正确性：TypeScript 目标 + Hooks > 生成代码通过快照验证（hooks 文件 / 接口文件） > hooks.ts 1`] = `
+"import { useQuery, useMutation } from '@tanstack/react-query';
+import type {
+  UseQueryOptions,
+  UseMutationOptions,
+} from '@tanstack/react-query';
+import {
+  getPetsByPetIdFunc,
+  deletePetsByPetIdFunc,
+  getPetsFunc,
+  postPetsFunc,
+  postPetsPhotosByPetIdFunc,
+} from './index';
+import type {
+  GetPetsByPetIdRequestType,
+  GetPetsByPetIdResultType,
+  DeletePetsByPetIdRequestType,
+  DeletePetsByPetIdResultType,
+  GetPetsRequestType,
+  GetPetsResultType,
+  PostPetsRequestType,
+  PostPetsResultType,
+  PostPetsPhotosByPetIdRequestType,
+  PostPetsPhotosByPetIdResultType,
+} from './index';
+/**
+ * @description 查询宠物详情
+ * @param params GetPetsByPetIdRequestType
+ * @returns useQuery 查询结果（UseQueryResult<GetPetsByPetIdResultType, Error>）
+ */
+export function useGetPetsByPetIdFunc(
+  params: GetPetsByPetIdRequestType,
+  options: Omit<
+    UseQueryOptions<GetPetsByPetIdResultType, Error>,
+    'queryKey' | 'queryFn'
+  > = {}
+) {
+  return useQuery({
+    queryKey: ['getPetsByPetIdFunc', params],
+    queryFn: ({ signal }) => getPetsByPetIdFunc(params, { signal }),
+    ...options,
+  });
+}
+
+/**
+ * @description 删除宠物（mutation：通过 mutate / mutateAsync 触发）
+ * @param variables DeletePetsByPetIdRequestType
+ * @returns useMutation 结果（UseMutationResult<DeletePetsByPetIdResultType, Error, DeletePetsByPetIdRequestType>）
+ */
+export function useDeletePetsByPetIdFunc(
+  options: Omit<
+    UseMutationOptions<
+      DeletePetsByPetIdResultType,
+      Error,
+      DeletePetsByPetIdRequestType,
+      unknown
+    >,
+    'mutationFn' | 'mutationKey'
+  > = {}
+) {
+  return useMutation({
+    mutationFn: (params: DeletePetsByPetIdRequestType) =>
+      deletePetsByPetIdFunc(params),
+    ...options,
+  });
+}
+
+/**
+ * @description 分页查询宠物列表
+ * @param params GetPetsRequestType
+ * @returns useQuery 查询结果（UseQueryResult<GetPetsResultType, Error>）
+ */
+export function useGetPetsFunc(
+  params: GetPetsRequestType,
+  options: Omit<
+    UseQueryOptions<GetPetsResultType, Error>,
+    'queryKey' | 'queryFn'
+  > = {}
+) {
+  return useQuery({
+    queryKey: ['getPetsFunc', params],
+    queryFn: ({ signal }) => getPetsFunc(params, { signal }),
+    ...options,
+  });
+}
+
+/**
+ * @description 创建宠物（mutation：通过 mutate / mutateAsync 触发）
+ * @param variables PostPetsRequestType
+ * @returns useMutation 结果（UseMutationResult<PostPetsResultType, Error, PostPetsRequestType>）
+ */
+export function usePostPetsFunc(
+  options: Omit<
+    UseMutationOptions<PostPetsResultType, Error, PostPetsRequestType, unknown>,
+    'mutationFn' | 'mutationKey'
+  > = {}
+) {
+  return useMutation({
+    mutationFn: (params: PostPetsRequestType) => postPetsFunc(params),
+    ...options,
+  });
+}
+
+/**
+ * @description 上传宠物照片（mutation：通过 mutate / mutateAsync 触发）
+ * @param variables PostPetsPhotosByPetIdRequestType
+ * @returns useMutation 结果（UseMutationResult<PostPetsPhotosByPetIdResultType, Error, PostPetsPhotosByPetIdRequestType>）
+ */
+export function usePostPetsPhotosByPetIdFunc(
+  options: Omit<
+    UseMutationOptions<
+      PostPetsPhotosByPetIdResultType,
+      Error,
+      PostPetsPhotosByPetIdRequestType,
+      unknown
+    >,
+    'mutationFn' | 'mutationKey'
+  > = {}
+) {
+  return useMutation({
+    mutationFn: (params: PostPetsPhotosByPetIdRequestType) =>
+      postPetsPhotosByPetIdFunc(params),
+    ...options,
+  });
+}
+"
+`;
+
+exports[`生成结果正确性：TypeScript 目标 + Hooks > 生成代码通过快照验证（hooks 文件 / 接口文件） > interface-index.ts 1`] = `
+"import { request } from '../../request';
+import type { RequestConfig } from '../../request';
+import type { PetStatus, Category, Tag, Pet } from '../types';
+
+/**
+ * @description 查询宠物详情
+ * @param params GetPetsByPetIdRequestType
+ * @returns Promise<GetPetsByPetIdResultType>
+ */
+export interface GetPetsByPetIdRequestType {
+  /** @description 宠物 ID */
+  petId: number;
+}
+
+/**
+ * @description 查询宠物详情 的返回数据类型
+ */
+export interface GetPetsByPetIdResultType {
+  /** @description  */
+  id: number;
+  /** @description  */
+  name: string;
+  /** @description  */
+  status: PetStatus;
+  /** @description  */
+  category: Category;
+  /** @description  */
+  tags: Tag[];
+  /** @description  */
+  photoUrls: string[];
+}
+
+/**
+ * @description 查询宠物详情
+ * @param params GetPetsByPetIdRequestType
+ * @returns Promise<GetPetsByPetIdResultType>
+ */
+export async function getPetsByPetIdFunc(
+  params: GetPetsByPetIdRequestType,
+  options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}
+): Promise<GetPetsByPetIdResultType> {
+  const config: RequestConfig = {
+    ...options,
+    url: \`/pets/\${params.petId}\`,
+    method: 'GET',
+  };
+  return request<GetPetsByPetIdResultType>(config);
+}
+
+/**
+ * @description 删除宠物
+ * @param params DeletePetsByPetIdRequestType
+ * @returns Promise<DeletePetsByPetIdResultType>
+ */
+export interface DeletePetsByPetIdRequestType {
+  /** @description  */
+  petId: number;
+}
+
+/**
+ * @description 删除宠物 的返回数据类型
+ */
+export interface DeletePetsByPetIdResultType {}
+
+/**
+ * @description 删除宠物
+ * @param params DeletePetsByPetIdRequestType
+ * @returns Promise<DeletePetsByPetIdResultType>
+ */
+export async function deletePetsByPetIdFunc(
+  params: DeletePetsByPetIdRequestType,
+  options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}
+): Promise<DeletePetsByPetIdResultType> {
+  const config: RequestConfig = {
+    ...options,
+    url: \`/pets/\${params.petId}\`,
+    method: 'DELETE',
+  };
+  return request<DeletePetsByPetIdResultType>(config);
+}
+
+/**
+ * @description 分页查询宠物列表
+ * @param params GetPetsRequestType
+ * @returns Promise<GetPetsResultType>
+ */
+export interface GetPetsRequestType {
+  /** @description  */
+  page?: number;
+  /** @description  */
+  pageSize?: number;
+  /** @description 按状态过滤（枚举） */
+  status?: PetStatus;
+}
+
+/**
+ * @description 分页查询宠物列表 的返回数据类型
+ */
+export interface GetPetsResultType {
+  /** @description  */
+  data: Pet[];
+  /** @description  */
+  total: number;
+}
+
+/**
+ * @description 分页查询宠物列表
+ * @param params GetPetsRequestType
+ * @returns Promise<GetPetsResultType>
+ */
+export async function getPetsFunc(
+  params: GetPetsRequestType,
+  options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}
+): Promise<GetPetsResultType> {
+  const config: RequestConfig = {
+    ...options,
+    url: '/pets',
+    method: 'GET',
+    params: params,
+  };
+  return request<GetPetsResultType>(config);
+}
+
+/**
+ * @description 创建宠物
+ * @param params PostPetsRequestType
+ * @returns Promise<PostPetsResultType>
+ */
+export interface PostPetsRequestType {
+  /** @description  */
+  name: string;
+  /** @description  */
+  status?: PetStatus;
+  /** @description  */
+  category?: Category;
+  /** @description  */
+  photoUrls?: string[];
+}
+
+/**
+ * @description 创建宠物 的返回数据类型
+ */
+export interface PostPetsResultType {
+  /** @description  */
+  id: number;
+  /** @description  */
+  name: string;
+  /** @description  */
+  status: PetStatus;
+  /** @description  */
+  category: Category;
+  /** @description  */
+  tags: Tag[];
+  /** @description  */
+  photoUrls: string[];
+}
+
+/**
+ * @description 创建宠物
+ * @param params PostPetsRequestType
+ * @returns Promise<PostPetsResultType>
+ */
+export async function postPetsFunc(
+  params: PostPetsRequestType,
+  options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}
+): Promise<PostPetsResultType> {
+  const config: RequestConfig = {
+    ...options,
+    url: '/pets',
+    method: 'POST',
+    data: params,
+  };
+  return request<PostPetsResultType>(config);
+}
+
+/**
+ * @description 上传宠物照片
+ * @param params PostPetsPhotosByPetIdRequestType
+ * @returns Promise<PostPetsPhotosByPetIdResultType>
+ */
+export interface PostPetsPhotosByPetIdRequestType {
+  /** @description 图片文件 */
+  file: File;
+  /** @description 图片说明 */
+  caption?: string;
+  /** @description  */
+  petId: number;
+}
+
+/**
+ * @description 上传宠物照片 的返回数据类型
+ */
+export interface PostPetsPhotosByPetIdResultType {
+  /** @description  */
+  photoId: string;
+  /** @description  */
+  url: string;
+}
+
+/**
+ * @description 上传宠物照片
+ * @param params PostPetsPhotosByPetIdRequestType
+ * @returns Promise<PostPetsPhotosByPetIdResultType>
+ */
+export async function postPetsPhotosByPetIdFunc(
+  params: PostPetsPhotosByPetIdRequestType,
+  options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}
+): Promise<PostPetsPhotosByPetIdResultType> {
+  const { petId, ...body } = params;
+  const config: RequestConfig = {
+    ...options,
+    url: \`/pets/\${params.petId}/photos\`,
+    method: 'POST',
+    data: (() => {
+      const fd = new FormData();
+      Object.entries(body).forEach(([k, v]: [string, unknown]) => {
+        if (v === null || v === undefined) return;
+        if (Array.isArray(v)) {
+          v.forEach((item) =>
+            fd.append(k, item instanceof Blob ? item : String(item))
+          );
+        } else if (v instanceof Blob) {
+          fd.append(k, v);
+        } else if (typeof v === 'object') {
+          fd.append(k, JSON.stringify(v));
+        } else {
+          fd.append(k, String(v));
+        }
+      });
+      return fd;
+    })(),
+  };
+  return request<PostPetsPhotosByPetIdResultType>(config);
+}
+"
+`;

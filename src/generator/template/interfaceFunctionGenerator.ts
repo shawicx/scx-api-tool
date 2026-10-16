@@ -32,11 +32,9 @@ export function generateInterfaceFunction(
       : "options: Omit<RequestConfig, 'url' | 'method' | 'data' | 'params'> = {}";
   const configDeclaration =
     config.target === 'javascript' ? 'const config = {' : 'const config: RequestConfig = {';
-  // TS 模式使用 RequestMethod 枚举成员，JS 模式退化为字符串字面量
-  const methodExpression =
-    config.target === 'javascript'
-      ? `'${interfaceInfo.method}'`
-      : `RequestMethod.${interfaceInfo.method}`;
+  // method 统一为字符串字面量：生成代码与 request 文件的 RequestMethod 导出解耦，
+  // 字面量可赋给 union/string 形态的 RequestConfig['method']（自定义 request 文件无需 re-export）
+  const methodExpression = `'${interfaceInfo.method}'`;
   const templateData = {
     ...interfaceInfo,
     requestOptionsParam,

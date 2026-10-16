@@ -26,7 +26,8 @@ export interface Pet {
 `;
 
 exports[`生成结果正确性：TypeScript 目标 > 生成代码通过快照验证（request 文件 / 接口文件 / 类型索引） > interface-index.ts 1`] = `
-"import { RequestMethod, RequestConfig, request } from '../../request';
+"import { request } from '../../request';
+import type { RequestConfig } from '../../request';
 import type { PetStatus, Category, Tag, Pet } from '../types';
 
 /**
@@ -69,7 +70,7 @@ export async function getPetsByPetIdFunc(
   const config: RequestConfig = {
     ...options,
     url: \`/pets/\${params.petId}\`,
-    method: RequestMethod.GET,
+    method: 'GET',
   };
   return request<GetPetsByPetIdResultType>(config);
 }
@@ -101,7 +102,7 @@ export async function deletePetsByPetIdFunc(
   const config: RequestConfig = {
     ...options,
     url: \`/pets/\${params.petId}\`,
-    method: RequestMethod.DELETE,
+    method: 'DELETE',
   };
   return request<DeletePetsByPetIdResultType>(config);
 }
@@ -142,7 +143,7 @@ export async function getPetsFunc(
   const config: RequestConfig = {
     ...options,
     url: '/pets',
-    method: RequestMethod.GET,
+    method: 'GET',
     params: params,
   };
   return request<GetPetsResultType>(config);
@@ -194,7 +195,7 @@ export async function postPetsFunc(
   const config: RequestConfig = {
     ...options,
     url: '/pets',
-    method: RequestMethod.POST,
+    method: 'POST',
     data: params,
   };
   return request<PostPetsResultType>(config);
@@ -237,7 +238,7 @@ export async function postPetsPhotosByPetIdFunc(
   const config: RequestConfig = {
     ...options,
     url: \`/pets/\${params.petId}/photos\`,
-    method: RequestMethod.POST,
+    method: 'POST',
     data: (() => {
       const fd = new FormData();
       Object.entries(body).forEach(([k, v]: [string, unknown]) => {

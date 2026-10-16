@@ -110,6 +110,12 @@ describe('generateHookFiles (react-query)', () => {
     expect(hooksFile!.content).toContain(
       "import { getApiUsersFunc, postApiUsersFunc } from './index';",
     );
+    // TS 模式端点 Request/Result 类型内联于标签目录 index.ts，必须从 './index' 导入
+    // （曾错误指向共享 types 目录，导致引用不存在的导出）
+    expect(hooksFile!.content).toContain(
+      "import type { GetApiUsersRequestType, GetApiUsersResultType, PostApiUsersRequestType, PostApiUsersResultType } from './index';",
+    );
+    expect(hooksFile!.content).not.toMatch(/from '[^']*\/types';/);
 
     // query hook：函数签名 + queryKey + signal 透传
     expect(hooksFile!.content).toContain(

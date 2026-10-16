@@ -10,7 +10,6 @@ import type { ApiConfig, ApiInterface, CliHooks, OpenApiOperation } from '../../
 import { ensureDir } from '../../utils/file';
 import { chineseToPinyinCamelCase } from '../../utils/path';
 import { escapeJsDocComment } from '@/utils/escape';
-import { getNormalizedPathWithAlias } from '@/utils/pathUtils';
 import { applyNamingStrategy, type NamingContext } from '@/naming';
 import { getHookLibraryAdapter } from '../template/hookLibraryRegistry';
 import { writeGeneratedFile } from '../fileWriter';
@@ -162,7 +161,7 @@ async function generateHookFileForTag(
       hasQuery: usedQuery.size > 0,
       hasMutation: usedMutation.size > 0,
     }) +
-    buildCommonImports(isJS, importedFunctions, importedTypes, importedSchemas, config, dirPath) +
+    buildCommonImports(isJS, importedFunctions, importedTypes, importedSchemas, config) +
     combinedCode;
 
   await writeGeneratedFile(
@@ -181,7 +180,6 @@ async function generateHookFileForTag(
  * @param importedTypes 引用的类型名集合
  * @param importedSchemas 需要值导入的响应 Schema 名集合（zod 校验开启时）
  * @param config API 配置
- * @param dirPath 标签目录路径
  * @returns import 段代码字符串
  */
 function buildCommonImports(
@@ -190,19 +188,18 @@ function buildCommonImports(
   importedTypes: Set<string>,
   importedSchemas: Set<string>,
   config: ApiConfig,
-  dirPath: string,
 ): string {
   let imports = '';
 
   imports += `import { ${Array.from(importedFunctions).join(', ')} } from './index';\n`;
 
   if (!isJS && config.generateTypes && (importedTypes.size > 0 || importedSchemas.size > 0)) {
+    // 类型落点：TS 模式端点 Request/Result 类型内联于标签目录 index.ts；zod 模式位于标签目录 schema 文件
     let typeModulePath: string;
     if (config.typesFormat === 'zod') {
       typeModulePath = './schema';
     } else {
-      const typesDirPath = join(config.outputDir, 'types');
-      typeModulePath = getNormalizedPathWithAlias(dirPath, typesDirPath).replace(/\/$/, '');
+      typeModulePath = './index';
     }
     if (importedSchemas.size > 0) {
       imports += `import { ${Array.from(importedSchemas).join(', ')} } from '${typeModulePath}';\n`;
