@@ -49,7 +49,8 @@ export default defineConfig({
         items: [
           { text: 'CLI 命令', link: '/guides/cli' },
           { text: '配置指南', link: '/guides/configuration' },
-          { text: '模板自定义', link: '/guides/templates' },
+          { text: '配置参考', link: '/guides/config-reference' },
+          { text: '生成模板说明', link: '/guides/templates' },
           { text: '高级用法', link: '/guides/advanced' },
         ],
       },
@@ -65,7 +66,7 @@ export default defineConfig({
         items: [
           { text: '贡献指南', link: '/development/contributing' },
           { text: '架构说明', link: '/development/architecture' },
-          { text: '变更日志', link: '/changelog' },
+          { text: '变更日志', link: '/development/changelog' },
         ],
       },
     ],

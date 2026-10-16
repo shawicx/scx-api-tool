@@ -7,7 +7,7 @@ export default defineConfig({
   // 类型生成格式：'typescript' | 'zod'
   // - 'typescript': 生成 TypeScript 类型定义（编译时类型检查）
   // - 'zod': 生成 Zod Schema（运行时验证）
-  typesFormat: 'typescript',
+  typesFormat: 'zod',
   // 是否生成 API 请求方法
   generateApi: true,
   // 是否生成类型定义（在接口文件中）

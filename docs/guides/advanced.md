@@ -6,7 +6,7 @@
 
 ### 完全自定义命名
 
-`namingStrategy` 配置允许你完全覆盖默认的命名生成逻辑：
+`namingStrategy` 配置允许你完全覆盖默认的命名生成逻辑。五个钩子函数（`interfaceName` / `functionName` / `hookName` / `requestTypeName` / `responseTypeName`）均为可选，只覆盖你需要改的部分：
 
 ```typescript
 import { defineConfig, type NamingContext } from '@scxfe/api-tool';
@@ -95,11 +95,7 @@ interface NamingContext {
 `hooks` 配置允许你在代码生成过程的不同阶段执行自定义操作：
 
 ```typescript
-import { defineConfig } from '@scxfe/api-tool';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
+import { defineConfig } from '@scx/api-tool';
 
 export default defineConfig({
   baseOutputDir: 'src/service',
@@ -115,7 +111,7 @@ export default defineConfig({
       console.log('代码生成完成');
     },
 
-    // 生成单个文件前的钩子（可以修改内容）
+    // 生成单个文件前的钩子（可以修改内容，返回值作为写入内容）
     beforeWriteFile: (filePath: string, content: string) => {
       console.log(`正在写入文件: ${filePath}`);
       return content;
@@ -137,6 +133,14 @@ export default defineConfig({
   ],
 });
 ```
+
+### 按服务执行的语义
+
+生命周期钩子（`beforeGenerate` / `afterGenerate`）与文件钩子一致，**按服务执行**：
+
+- 顶层 `hooks` 被每个服务继承，随各服务生成各执行一次（多服务配置下 `beforeGenerate` 会触发 N 次）；
+- 服务级 `hooks` 覆盖公共值，仅在该服务生成前后执行；
+- 数据获取失败的服务不进入生成阶段，其生命周期钩子不会执行。
 
 ### 实用钩子示例
 
@@ -507,12 +511,7 @@ api:generate:
   "typescript.updateImportsOnFileMove.enabled": "always",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true,
     "source.organizeImports": true
-  },
-  "files.exclude": {
-    "**/.api-cache": true,
-    "**/.api-hash.json": true
   }
 }
 ```
@@ -526,33 +525,29 @@ api:generate:
 
 ## 调试和故障排除
 
-### 启用调试模式
+### 诊断模式（不生成文件）
 
-使用 `api-power debug` 命令可以在代码生成过程中显示详细的调试信息：
+`api-power debug` 是 dry-run 诊断命令：加载配置 → 拉取 API 数据 → 处理 → 打印诊断报告（接口/类型/分类数量与摘要），**不生成、不写入、不清空任何文件**，适合在生成前确认数据源与配置是否符合预期：
 
 ```bash
 api-power debug
 ```
 
-或通过设置环境变量达到相同效果：
+`debug` 命令同时启用 debug 级别日志，输出配置解析细节、API 请求/响应详情、数据处理统计等。
+
+### 在真实生成时开启 debug 日志
+
+logger 支持通过环境变量开启 debug 日志（模块导入时读取一次），配合真实的 `generate` 使用：
 
 ```bash
-DEBUG=true api-power
+DEBUG=true api-power generate
+DEBUG=true api-power generate --verbose   # 再叠加错误堆栈
 ```
 
-**调试输出的信息包括：**
+**两者区别：**
 
-- 配置处理的详细信息
-- API 请求详情（URL、headers、请求体等）
-- API 响应详情（状态码、数据类型等）
-- 数据处理统计（接口数、类型数、分类数）
-- 文件生成进度
-- 模板编译和缓存状态
-
-**两种方式的区别：**
-
-- `api-power debug`：默认启用 verbose 模式（显示详细错误堆栈）
-- `DEBUG=true api-power`：需要手动添加 `--verbose` 选项才能显示详细错误信息
+- `api-power debug`：dry-run 诊断，不写文件，默认启用 verbose（错误堆栈）
+- `DEBUG=true api-power generate`：真实生成，附带 debug 级别日志
 
 ### 常见问题
 
@@ -585,18 +580,6 @@ hooks: {
 #### 3. Watch 模式不触发
 
 检查配置文件路径是否正确，确保文件在监视范围内。
-
-#### 4. 调试信息不够详细
-
-如果需要查看更详细的调试信息，可以使用以下方式：
-
-```bash
-# 方式 1: 使用 debug 命令
-api-power debug --verbose
-
-# 方式 2: 设置环境变量并启用 verbose
-DEBUG=true api-power --verbose
-```
 
 这将显示所有的调试信息，包括 API 请求详情、数据处理统计、文件生成进度等。
 

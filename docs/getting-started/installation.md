@@ -166,8 +166,8 @@ api-power --help
 # 显示版本信息
 api-power --version
 
-# 调试模式
-api-power --debug
+# 诊断模式（检查配置与数据源，不生成文件）
+api-power debug
 ```
 
 ## 下一步

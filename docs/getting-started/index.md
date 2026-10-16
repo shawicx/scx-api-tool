@@ -1,14 +1,14 @@
 # 快速开始
 
-欢迎使用 `@scx/api-tool`！这是一个强大的 CLI 工具，可以帮助你从 OpenAPI 3.0、Swagger 和 Apifox 等 API 管理平台自动生成 TypeScript/JavaScript 代码。
+欢迎使用 `@scx/api-tool`！这是一个 CLI 工具，帮助你从 OpenAPI 3.0 / Swagger 和 Apifox 的接口定义自动生成 TypeScript/JavaScript 的类型与请求函数代码。
 
 ## 🚀 5 分钟上手
 
 ### 1. 安装工具
 
 ```bash
-# 使用 npx（推荐，无需安装）
-npx @scxfe/api-tool
+# 项目本地安装（推荐）
+npm install @scxfe/api-tool --save-dev
 
 # 或者全局安装
 npm install -g @scxfe/api-tool
@@ -28,26 +28,21 @@ npx api-power init
 
 ```typescript
 // api-power.config.ts
-import { defineConfig } from '@scx/api-tool';
+import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  // 公共输出根目录（原 outputDir 改名）
+  // 公共根输出目录
   baseOutputDir: 'src/service',
-
-  // 是否生成 API 请求方法
-  generateApi: true,
-  // 是否生成类型定义（在接口文件中）
-  generateTypes: true,
   // 类型生成格式：'typescript' | 'zod'
   typesFormat: 'typescript',
 
   // 服务声明（单服务：数组长度为 1）
   services: [
     {
-      name: 'main', // 服务名（唯一）
-      folder: '.', // 输出直接落在 baseOutputDir（等价于旧的单源配置）
+      name: 'main',
+      folder: '.', // 输出直接落在 baseOutputDir
       source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-      token: 'YOUR_TOKEN_HERE',
+      token: 'APS-YourAccessTokenHere',
     },
   ],
 });
@@ -63,9 +58,9 @@ npx api-power gen
 
 工具将自动生成：
 
-- TypeScript 类型定义
-- HTTP 请求函数
-- 接口分组文件
+- TypeScript 类型定义（接口三件套：请求类型 / 响应类型 / 请求函数）
+- 共享的 `request.ts` 请求文件
+- 按 API 分组（tag）组织的目录结构与入口 barrel
 
 ### 5. 监视模式
 
@@ -79,163 +74,73 @@ npx api-power gen -w
 
 ## 📁 生成的文件结构
 
-根据配置的不同，生成的文件结构可能略有差异：
+以仓库自身的真实多服务配置（4 个服务）为例：
 
-### 标准结构
+![多服务输出结构](../assets/gen-structure.png)
 
-```
-src/service/
-├── types.ts           # 所有类型定义
-├── request.ts         # HTTP 请求函数
-├── index.ts           # 主入口文件
-└── [category]/        # 按分类分组的接口
-    ├── index.ts
-    └── types/
-        └── *.ts       # 分类下的类型文件
-```
-
-### 当使用 Zod 类型时
+单服务（`folder: '.'`）时输出直接落在 `baseOutputDir`：
 
 ```
 src/service/
-├── schemas.ts         # Zod 验证模式定义
-├── request.ts         # HTTP 请求函数
-├── index.ts           # 主入口文件
-└── [category]/        # 按分类分组的接口
-    ├── index.ts
-    └── schemas/
-        └── *.ts       # 分类下的 Zod 模式文件
+├── request.ts              # 共享请求文件（仅首次生成）
+├── index.ts                # 主入口（barrel）
+├── QuanXianGuanLi/         # 分组目录（中文 tag 自动转拼音）
+│   └── index.ts            # 接口三件套 + 请求函数
+└── types/                  # 类型定义目录
+    ├── RoleResponseDto.ts
+    └── index.ts
 ```
 
-注意：当 `typesFormat` 设置为 `'zod'` 时，会生成 Zod 验证模式而不是 TypeScript 类型。
+`typesFormat: 'zod'` 时类型部分改为 Zod Schema（`schemas/` 目录 + 各分组的 `schema.ts`），API 请求函数照常生成。
 
 ## 🛠️ CLI 命令
 
-### generate (gen)
+| 命令                  | 别名  | 说明                                      |
+| --------------------- | ----- | ----------------------------------------- |
+| `api-power init`      | —     | 初始化配置文件                            |
+| `api-power generate`  | `gen` | 生成代码（核心命令）                      |
+| `api-power verify`    | —     | 对生成产物运行 TypeScript 类型检查        |
+| `api-power debug`     | —     | 诊断模式：检查配置与 API 定义，不生成文件 |
+| `api-power visualize` | `viz` | 启动可视化配置服务器                      |
 
-生成 API 代码和类型定义：
+> 注意：`api-power` 没有默认子命令，直接运行只会显示帮助；生成代码必须使用 `generate`（或 `gen`）。
 
-```bash
-npx api-power generate
-# 或简写
-npx api-power gen
-# 监视模式
-npx api-power gen -w
-# 指定配置文件
-npx api-power gen -c ./my-config.ts
-```
+完整命令与选项见 [CLI 命令参考](../guides/cli.md)。
 
-### init
+## ⚙️ 常用配置选项
 
-初始化配置文件：
+| 选项            | 类型                           | 默认值          | 描述                                           |
+| --------------- | ------------------------------ | --------------- | ---------------------------------------------- |
+| `baseOutputDir` | `string`                       | `'src/service'` | 公共根输出目录                                 |
+| `services`      | `ServiceConfig[]`              | —（必填）       | 服务声明数组（name / source / token / folder） |
+| `generateApi`   | `boolean`                      | `true`          | 是否生成 API 请求方法                          |
+| `generateTypes` | `boolean`                      | `true`          | 是否生成类型定义                               |
+| `typesFormat`   | `'typescript' \| 'zod'`        | `'typescript'`  | 类型生成格式                                   |
+| `target`        | `'javascript' \| 'typescript'` | `'typescript'`  | 目标语言                                       |
 
-```bash
-npx api-power init
-# 强制覆盖现有配置文件
-npx api-power init -f
-```
+> 全部字段（含请求、Hooks、命名策略、钩子等）的类型、默认值与校验规则，统一见[配置参考](../guides/config-reference.md)。
 
-### debug
+## 🔥 支持的平台
 
-启用详细输出模式，在代码生成过程中显示更多调试信息：
+| 平台                | 支持状态 | 说明                                         |
+| ------------------- | -------- | -------------------------------------------- |
+| Apifox              | ✅       | 需要 OpenAPI 导出地址与访问令牌（`APS-xxx`） |
+| Swagger/OpenAPI 3.0 | ✅       | 任何返回 OpenAPI JSON 的 URL，无需 token     |
 
-```bash
-npx api-power debug
-```
+## 💡 常见用例
 
-也可以通过设置环境变量达到相同效果：
+```typescript
+import { getPermissionsTreeFunc } from '@/service/rbac/QuanXianGuanLi';
+import type { GetPermissionsTreeResultType } from '@/service/rbac/QuanXianGuanLi';
 
-```bash
-DEBUG=true npx api-power
-```
-
-**调试输出的信息包括：**
-
-- 配置处理的详细信息
-- API 请求和响应详情
-- 数据处理统计（接口数、类型数、分类数）
-- 文件生成进度和状态
-- 模板编译和缓存状态
-
-### visualize (viz)
-
-启动可视化配置服务器：
-
-```bash
-npx api-power visualize
-# 指定端口和主机
-npx api-power viz -p 8080 --host 0.0.0.0
+// 参数与返回值都有完整的类型约束
+const tree: GetPermissionsTreeResultType = await getPermissionsTreeFunc({});
 ```
 
 ## 🎯 下一步
 
 - [安装指南](./installation) - 详细的安装说明
-- [快速开始示例](./quick-start) - 完整的实战示例
-- [配置指南](../guides/configuration) - 深入了解配置选项
+- [快速开始示例](./quick-start) - 完整的实战教程（含真实产物截图）
+- [配置指南](../guides/configuration) - 配置文件的组织方式
+- [配置参考](../guides/config-reference) - 全部配置字段
 - [CLI 命令参考](../guides/cli) - 所有命令的详细说明
-
-## ⚙️ 配置选项
-
-以下是最常用的配置选项：
-
-| 选项                  | 类型                           | 默认值          | 描述                                                              |
-| --------------------- | ------------------------------ | --------------- | ----------------------------------------------------------------- |
-| `services`            | `ServiceConfig[]`              | -               | 服务声明数组（每个服务独立的数据源、token、folder）               |
-| `baseOutputDir`       | `string`                       | `'src/service'` | 公共根输出目录（原 `outputDir` 改名，共享 `request.ts` 所在层级） |
-| `generateApi`         | `boolean`                      | `true`          | 是否生成 API 请求方法（公共配置，可被服务覆盖）                   |
-| `generateTypes`       | `boolean`                      | `true`          | 是否生成类型定义（公共配置，可被服务覆盖）                        |
-| `typesFormat`         | `'typescript' \| 'zod'`        | `'typescript'`  | 类型生成格式（公共配置，可被服务覆盖）                            |
-| `target`              | `'javascript' \| 'typescript'` | `'typescript'`  | 目标语言                                                          |
-| `indentSize`          | `number`                       | `2`             | 缩进大小                                                          |
-| `comment`             | `boolean`                      | `true`          | 是否生成注释                                                      |
-| `requestFunctionName` | `string`                       | `'request'`     | 自定义请求函数名                                                  |
-| `prodEnvName`         | `string`                       | `'production'`  | 生产环境名称                                                      |
-
-> `services` 数组中每个服务（`ServiceConfig`）的必填/重要字段：`name`（唯一）、`source`、`token`（Swagger 可省）、`folder`（可选，默认取 `name`，可多段如 `'trade/order'`）。完整字段说明见[配置指南](../guides/configuration.md)。
-
-### 高级配置选项
-
-| 选项                 | 类型                                      | 默认值     | 描述                                   |
-| -------------------- | ----------------------------------------- | ---------- | -------------------------------------- |
-| `requestMethodStyle` | `'config' \| 'method-specific' \| 'both'` | `'config'` | 请求方法调用风格                       |
-| `concurrency`        | `number`                                  | `50`       | 并发写入数量（用于文件生成的并发控制） |
-| `namingStrategy`     | `NamingStrategy`                          | -          | 自定义命名策略                         |
-
-## 🔥 支持的平台
-
-| 平台                | 支持状态 | 说明     |
-| ------------------- | -------- | -------- |
-| Apifox              | ✅       | 完全支持 |
-| Swagger/OpenAPI 3.0 | ✅       | 完全支持 |
-| YApi                | 🚧       | 计划支持 |
-
-## 💡 常见用例
-
-### React 项目
-
-```typescript
-import { getUserInfo } from '@/service';
-
-// 在组件中使用
-function UserProfile() {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    getUserInfo().then(setUser);
-  }, []);
-
-  return <div>{user?.name}</div>;
-}
-```
-
-### Node.js 项目
-
-```typescript
-import { createOrder } from '@/service';
-
-// 在 API 路由中使用
-app.post('/orders', async (req, res) => {
-  const order = await createOrder(req.body);
-  res.json(order);
-});
-```

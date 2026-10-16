@@ -14,7 +14,7 @@
 
 ## 版本管理
 
-该项目使用 [changesets](https://github.com/changesets/changesets) 进行版本管理，遵循 [Conventional Commits](https://www.conventionalcommits.org/) 规范。
+该项目使用 [standard-version](https://github.com/conventional-changelog/standard-version) 进行版本管理与 CHANGELOG 生成，遵循 [Conventional Commits](https://www.conventionalcommits.org/) 规范。
 
 ### 版本号格式
 

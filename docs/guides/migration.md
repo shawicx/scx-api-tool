@@ -57,7 +57,7 @@ export default defineConfig({
 > 1. 把顶层 `source`/`token` 移入 `services[0]`，并补一个 `name`（如 `'main'`）。
 > 2. 顶层 `outputDir` 改名为 `baseOutputDir`。
 > 3. 单源保持输出位置不变：`baseOutputDir` 设为原 `outputDir`，`folder` 设为 `'.'`。
-> 4. 如果原本同时对接多个后端，可直接声明多个 `services` 元素（详见 [配置指南 - 多服务配置](./configuration.md#多服务--微服务配置)）。
+> 4. 如果原本同时对接多个后端，可直接声明多个 `services` 元素（详见[配置指南](./configuration.md)与[配置参考](./config-reference.md)）。
 > 5. 注意 `defineConfig` 现在返回数组；若有代码直接消费其返回值，需适配。
 
 ### 2. 移除 `validation` 配置项
@@ -147,9 +147,10 @@ src/service/
 ├── request.ts
 ├── index.ts
 ├── AIFuWu/
-│   ├── index.ts                # 接口文件
-│   ├── User.ts                # 类型定义
-│   └── PostAiCompletion.ts   # 类型定义
+│   └── index.ts              # 接口文件（RequestType/ResultType 类型内联 + 请求函数）
+└── types/                    # 类型定义目录（components/schemas）
+    ├── User.ts
+    └── index.ts
 ```
 
 ### 4. 导入路径变更
@@ -364,10 +365,11 @@ A: 位置取决于 `typesFormat` 配置：
 
 - **Zod 模式**：
   - 接口 Schema：在每个分类目录的 `schema.ts` 文件中
-  - 类型 Schema：在 `schemas/` 目录中
+  - 类型 Schema：在服务输出目录的 `schemas/` 目录中
 
 - **TypeScript 模式**：
-  - 类型定义：在每个分类目录的独立 `.ts` 文件中以及 `types/` 目录中
+  - 接口的请求/响应类型：内联在分类目录的 `index.ts` 中
+  - `components/schemas` 类型：在服务输出目录的 `types/` 目录中
 
 ### Q: 如何切换到 Zod 模式？
 

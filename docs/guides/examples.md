@@ -1,517 +1,246 @@
 # 使用示例
 
-本文档提供完整的使用示例，展示不同配置选项下的生成代码。
+本文档展示不同配置模式下的**真实生成产物**。所有截图均来自真实生成结果（仓库 `src/service/` 为多服务真实数据，Zod / Hooks / 多服务 isolated 示例来自项目 E2E 测试的真实链路产物）。
 
-## 示例 1: Zod 模式（推荐）
+## 示例 1: TypeScript 模式（默认）
 
-Zod 模式提供运行时验证能力，适合需要数据校验的项目。
-
-### 配置文件
-
-`api-power.config.ts`:
+### 配置
 
 ```typescript
 import { defineConfig } from '@scxfe/api-tool';
 
 export default defineConfig({
-  // 公共输出根目录
   baseOutputDir: 'src/service',
+  typesFormat: 'typescript', // 默认值，可省略
+  generateApi: true,
+  generateTypes: true,
 
-  // 类型生成格式：使用 Zod Schema（运行时验证）
+  services: [
+    {
+      name: 'main',
+      folder: '.',
+      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
+      token: 'APS-YourAccessTokenHere',
+    },
+  ],
+});
+```
+
+### 输出结构
+
+```
+src/service/
+├── request.ts                  # 共享请求文件（仅首次生成）
+├── index.ts                    # 根导出 barrel
+├── QuanXianGuanLi/index.ts     # tag 目录：接口三件套（RequestType/ResultType + xxxFunc）
+└── types/                      # components/schemas 类型目录
+    ├── RoleResponseDto.ts
+    └── index.ts
+```
+
+### 真实产物
+
+接口文件（请求类型 + 响应类型 + 请求函数，path 参数插值、query/body 自动分离）：
+
+![生成的接口文件](../assets/gen-interface.png)
+
+类型文件：
+
+![生成的类型文件](../assets/gen-types.png)
+
+请求文件：
+
+![生成的 request.ts](../assets/gen-request.png)
+
+### 使用
+
+```typescript
+import { putPermissionsUpdateFunc } from '@/service/rbac/QuanXianGuanLi';
+
+// 参数结构与 PutPermissionsUpdateRequestType 一一对应
+const updated = await putPermissionsUpdateFunc({
+  id: '1',
+  name: '用户管理',
+});
+
+// 第二参数可选：透传单次请求级 Axios 配置
+const result = await putPermissionsUpdateFunc(
+  { id: '1' },
+  { timeout: 10_000, headers: { 'X-Trace-Id': 'abc' } },
+);
+```
+
+## 示例 2: Zod 模式
+
+`typesFormat: 'zod'` 时，类型以 Zod Schema 生成，**同样会生成 API 请求函数**（由 `generateApi` 控制，与 typesFormat 无关），并提供运行时验证能力。
+
+### 配置
+
+```typescript
+export default defineConfig({
+  baseOutputDir: 'src/service',
   typesFormat: 'zod',
 
-  // 输出配置
-  generateApi: true,
-  generateTypes: true,
-
-  // 请求函数配置
-  requestFunctionName: 'request',
-  requestParamName: 'params',
-
-  // 代码生成选项
-  comment: true,
-
-  // 服务声明（单服务）
   services: [
     {
-      name: 'main',
-      folder: '.',
-      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-      token: 'APS-YourAccessTokenHere',
+      name: 'pet',
+      source: 'https://petstore.example.com/v3/api-docs',
     },
   ],
 });
 ```
 
-**说明**：`generateApi` 控制是否生成 API 函数，`typesFormat` 控制类型生成格式。两者是独立配置。
-
-### 生成的文件结构
+### 输出结构
 
 ```
-src/service/
-├── request.ts                    # 请求函数（axios 封装）
-├── index.ts                      # 根导出文件（从各分类的 schema 导出）
-├── AIFuWu/                      # 分类目录
-│   ├── index.ts                  # API 函数（当 generateApi: true 时生成）
-│   └── schema.ts                 # Schema 文件（从 schemas/ 导入并导出类型）
-├── YongHuGuanLi/                 # 分类目录
-│   ├── index.ts
-│   └── schema.ts
-└── schemas/                      # 类型 Schema 目录
-    ├── CompletionRequestDtoSchema.ts   # 单独的 Schema 文件
-    ├── UserResponseDtoSchema.ts
-    ├── RoleSchema.ts
-    └── index.ts                  # Schema 索引
+src/service/pet/
+├── index.ts                     # API 函数（类型从 schema.ts 导入）
+├── ChongWuGuanLi/
+│   ├── index.ts                 # API 请求函数
+│   └── schema.ts                # 接口级 Request/Result Schema + z.infer 类型
+└── schemas/                     # components/schemas 中每个类型一个 Schema 文件
+    ├── PetSchema.ts
+    └── index.ts
 ```
 
-### 生成的代码示例
+### 真实产物
 
-#### 接口级 Schema 文件 (`src/service/AIFuWu/schema.ts`)
+类型 Schema 文件（`schemas/PetSchema.ts`）：
+
+![生成的类型 Schema](../assets/gen-zod-type-schema.png)
+
+接口级合并 Schema 文件（`ChongWuGuanLi/schema.ts`，请求/响应 Schema + 推导类型）：
+
+![生成的接口级 Schema](../assets/gen-zod-interface-schema.png)
+
+### 使用
 
 ```typescript
-import { z } from 'zod';
-import { CompletionRequestDtoSchema } from '../schemas/CompletionRequestDtoSchema';
+import { getPetsFunc } from '@/service/pet/ChongWuGuanLi';
+import { PetSchema } from '@/service/pet/schemas';
 
-/**
- * @description 生成 AI 回复
- */
-export const PostAiCompletionRequestTypeSchema = CompletionRequestDtoSchema;
+// 正常调用（返回值类型由 z.infer 推导）
+const page = await getPetsFunc({ page: 1, pageSize: 20 });
 
-/**
- * @description 生成 AI 回复
- */
-export const PostAiCompletionResponseTypeSchema = z.object({
-  success: z.boolean().optional(),
-  data: z
-    .object({
-      content: z.string().optional(),
-      model: z.string().optional(),
-      tokensUsed: z
-        .object({
-          prompt: z.number().optional(),
-          completion: z.number().optional(),
-          total: z.number().optional(),
-        })
-        .optional(),
-      finishReason: z.string().optional(),
-      provider: z.string().optional(),
-    })
-    .optional(),
-});
-
-// 推导类型
-export type PostAiCompletionRequestType = z.infer<typeof PostAiCompletionRequestTypeSchema>;
-export type PostAiCompletionResponseType = z.infer<typeof PostAiCompletionResponseTypeSchema>;
-```
-
-#### 类型 Schema 文件 (`src/service/schemas/UserSchema.ts`)
-
-```typescript
-import { z } from 'zod';
-
-/**
- * @description 用户信息
- */
-export const UserSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string().email(),
-});
-
-// 推导类型
-export type User = z.infer<typeof UserSchema>;
-```
-
-### 使用示例
-
-```typescript
-import { postAiCompletionApi } from '@/service/AIFuWu';
-import type { PostAiCompletionRequestType } from '@/service/AIFuWu';
-import { UserSchema } from '@/service/schemas';
-
-// 调用 API（当 generateApi: true 时，会生成 API 函数）
-const result = await postAiCompletionApi({
-  messages: [{ role: 'user', content: 'Hello' }],
-  options: {
-    provider: 'copilot',
-  },
-});
-
-// 使用 Zod Schema 进行运行时验证
-const userData = {
-  name: 'John',
-  email: 'john@example.com',
-};
-
-const validatedUser = UserSchema.parse(userData);
-```
-
-## 示例 2: TypeScript 模式
-
-TypeScript 模式只生成类型定义，适合只需要编译时类型检查的项目。
-
-### 配置文件
-
-`api-power.config.ts`:
-
-```typescript
-import { defineConfig } from '@scxfe/api-tool';
-
-export default defineConfig({
-  // 公共输出根目录
-  baseOutputDir: 'src/service',
-
-  // 类型生成格式：使用 TypeScript 类型定义
-  typesFormat: 'typescript',
-
-  // 输出配置
-  generateApi: true,
-  generateTypes: true,
-
-  // 请求函数配置
-  requestFunctionName: 'request',
-  requestParamName: 'params',
-
-  // 代码生成选项
-  comment: true,
-
-  // 服务声明（单服务）
-  services: [
-    {
-      name: 'main',
-      folder: '.',
-      source: 'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-      token: 'APS-YourAccessTokenHere',
-    },
-  ],
-});
-```
-
-### 生成的文件结构
-
-```
-src/service/
-├── request.ts                    # 请求函数
-├── index.ts                      # 根导出文件
-├── AIFuWu/                      # 分类目录
-│   ├── index.ts                  # 类型定义文件（包含所有接口类型）
-│   ├── User.ts                   # 单独类型定义
-│   └── PostAiCompletion.ts       # 单独类型定义
-├── YongHuGuanLi/                 # 分类目录
-│   ├── index.ts
-│   ├── User.ts
-│   └── Role.ts
-```
-
-### 注意：TypeScript 模式不生成 API 函数
-
-TypeScript 模式只生成类型定义文件，不生成 API 函数。用户需要：
-
-1. 使用 `@/service/request` 中的 `request` 函数自行调用 API
-2. 使用生成的类型定义进行类型检查
-
-```typescript
-// 示例：使用类型定义并手动调用 API
-import type { PostAiCompletionRequestType } from '@/service/AIFuWu';
-import { request } from '@/service/request';
-
-const response = await request({
-  url: '/api/ai/completion',
-  method: 'POST',
-  data: {
-    messages: [{ role: 'user', content: 'Hello' }],
-    options: { provider: 'copilot' },
-  } as PostAiCompletionRequestType,
-});
+// 需要运行时校验时，用 Schema.parse 校验任意数据
+const pet = PetSchema.parse(someUntrustedData);
 ```
 
 ## 示例 3: 只生成类型（Types Only）
 
-只生成类型定义，不生成 API 函数。
-
-### 配置文件
-
 ```typescript
-import { defineConfig } from '@scxfe/api-tool';
-
 export default defineConfig({
   baseOutputDir: 'src/service',
-
-  // 只生成类型，不生成 API 函数
   generateApi: false,
   generateTypes: true,
 
-  // 选择类型格式
+  services: [{ name: 'main', folder: '.', source: 'https://...', token: 'APS-xxx' }],
+});
+```
+
+不生成请求函数与 `request.ts`，只生成类型（TypeScript 模式为 `types/` 目录 + 接口文件中的类型；Zod 模式为 `schemas/` + `schema.ts`）。适合只需要类型契约、请求层自建的项目。
+
+反过来，`generateApi: true, generateTypes: false` 则只生成请求函数，参数与返回值类型退化为 `any`。
+
+## 示例 4: 生成数据请求 Hooks
+
+`generateHooks: true` 在 API 函数之上生成 Hook 包装（`GET`/`HEAD` → query hook，其余 → mutation hook）：
+
+```typescript
+export default defineConfig({
+  baseOutputDir: 'src/service',
+  generateApi: true,
+  generateHooks: true,
+  hooksLibrary: 'react-query', // 需自行安装 @tanstack/react-query@^5
+  queryKeyPrefix: ['pet'], // 多服务场景建议用服务名隔离缓存
+
+  services: [{ name: 'pet', source: 'https://petstore.example.com/v3/api-docs' }],
+});
+```
+
+每个 tag 目录多生成一个 `hooks.ts`，服务根目录生成 `hooks.ts` barrel。真实产物（query hook 透传 `signal` 支持请求取消，mutation 通过 `mutate` / `mutateAsync` 触发）：
+
+![生成的 hooks.ts](../assets/gen-hooks.png)
+
+### 使用
+
+```tsx
+function PetDetail({ petId }: { petId: number }) {
+  const { data, isPending, error } = useGetPetsByPetIdFunc({ petId });
+  if (isPending) return <div>加载中...</div>;
+  if (error) return <div>加载失败</div>;
+  return <div>{data.name}</div>;
+}
+```
+
+除 `react-query` 外还支持 `vue-query`、`swr`、`ahooks`，语义差异与 `hooksValidateResponse`（Hook 内注入 Zod 响应校验）见[配置参考 - Hooks 生成](./config-reference.md#hooks-生成)。
+
+## 示例 5: 多服务 / 微服务
+
+多个后端服务统一声明在一个配置里，共享公共配置与 `baseOutputDir` 下的 `request.ts`：
+
+```typescript
+export default defineConfig({
+  baseOutputDir: 'src/service',
   typesFormat: 'typescript',
 
   services: [
+    { name: 'user', source: 'https://user-svc.example.com/v3/api-docs', token: 'APS-xxx' },
     {
-      name: 'main',
-      folder: '.',
-      source: 'YOUR_API_SOURCE',
-      token: 'YOUR_TOKEN',
+      name: 'order',
+      folder: 'trade/order', // 多段 folder → src/service/trade/order
+      source: 'https://order-svc.example.com/swagger.json',
+      generateTypes: false, // 服务级覆盖：order 服务不生成类型
+    },
+    {
+      name: 'legacy',
+      source: 'https://legacy-svc.example.com/swagger.json',
+      requestMode: 'isolated', // 独立 request 文件 + axios.create 私有实例
+      requestBaseURL: 'https://legacy-svc.example.com',
     },
   ],
 });
 ```
 
-### 使用示例
+仓库自身的真实多服务结构（4 个服务）：
+
+![多服务输出结构](../assets/gen-structure.png)
+
+要点：
+
+- 每个服务输出到 `join(baseOutputDir, folder ?? name)`，校验保证互不相同、不嵌套；
+- 共享 `request.ts` 只生成一次；`isolated` 服务在自己的输出目录内获得独立请求文件与私有 axios 实例；
+- 单个服务数据获取失败不会中断其他服务，失败服务被跳过并逐个报告。
+
+## 示例 6: 环境变量管理敏感信息
 
 ```typescript
-// 只导入类型定义
-import type { User } from '@/service/AIFuWu/User';
-import type { Role } from '@/service/YongHuGuanLi/Role';
-
-// 在代码中使用类型
-const user: User = {
-  id: '123',
-  name: 'John',
-  email: 'john@example.com',
-};
-```
-
-## 示例 4: 只生成 API（API Only）
-
-只生成 API 函数，不生成类型定义（不使用类型系统）。
-
-### 配置文件
-
-```typescript
-import { defineConfig } from '@scxfe/api-tool';
-
-export default defineConfig({
-  baseOutputDir: 'src/service',
-
-  // 只生成 API 函数，不生成类型
-  generateApi: true,
-  generateTypes: false,
-
-  services: [
-    {
-      name: 'main',
-      folder: '.',
-      source: 'YOUR_API_SOURCE',
-      token: 'YOUR_TOKEN',
-    },
-  ],
-});
-```
-
-### 使用示例
-
-```typescript
-import { postAiCompletionApi } from '@/service/AIFuWu';
-
-// 调用 API（参数类型为 any）
-const result = await postAiCompletionApi({
-  messages: [{ role: 'user', content: 'Hello' }],
-  options: {
-    provider: 'copilot',
-  },
-});
-```
-
-## 示例 5: 自定义命名策略
-
-使用自定义命名策略覆盖默认的命名规则。
-
-### 配置文件
-
-```typescript
-import { defineConfig } from '@scxfe/api-tool';
-
-export default defineConfig({
-  baseOutputDir: 'src/service',
-  typesFormat: 'zod',
-
-  // 自定义命名策略
-  namingStrategy: {
-    // 自定义接口名称
-    interfaceName: (info) => {
-      const method = info.method.charAt(0).toUpperCase() + info.method.slice(1).toLowerCase();
-      const pathName = info.path
-        .replace(/\{[^}]+\}/g, '')
-        .replace(/^\//, '')
-        .replace(/\//g, '-')
-        .replace(/^-+|-+$/g, '');
-      return `${method}${pathName}`;
-    },
-
-    // 自定义函数名称
-    functionName: (info) => {
-      const method = info.method.toLowerCase();
-      const pathName = info.path
-        .replace(/\{[^}]+\}/g, '')
-        .replace(/^\//, '')
-        .replace(/\//g, '-')
-        .replace(/^-+|-+$/g, '');
-      return `${method}${pathName}Func`;
-    },
-
-    // 自定义请求类型名称
-    requestTypeName: (info) => {
-      const interfaceName = info.summary || 'Api';
-      return `${interfaceName}RequestType`;
-    },
-
-    // 自定义响应类型名称
-    responseTypeName: (info) => {
-      const interfaceName = info.summary || 'Api';
-      return `${interfaceName}ResponseType`;
-    },
-  },
-
-  services: [
-    {
-      name: 'main',
-      folder: '.',
-      source: 'YOUR_API_SOURCE',
-      token: 'YOUR_TOKEN',
-    },
-  ],
-});
-```
-
-## 示例 6: 环境变量配置
-
-使用环境变量管理配置。
-
-### 配置文件
-
-```typescript
-import { defineConfig } from '@scxfe/api-tool';
-
 export default defineConfig({
   baseOutputDir: process.env.OUTPUT_DIR || 'src/service',
-  typesFormat: (process.env.TYPES_FORMAT as 'typescript' | 'zod') || 'typescript',
 
   services: [
     {
       name: 'main',
       folder: '.',
-      source:
-        process.env.API_SOURCE ||
-        'https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi',
-      token: process.env.API_TOKEN || 'default-token',
+      source: process.env.API_SOURCE!,
+      token: process.env.API_TOKEN!,
     },
   ],
 });
-```
-
-### .env 文件
-
-```bash
-# .env
-API_SOURCE=https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi
-API_TOKEN=APS-YourAccessTokenHere
-OUTPUT_DIR=src/service
-TYPES_FORMAT=zod
 ```
 
 ## 模式对比
 
-| 特性           | TypeScript 模式 | Zod 模式 |
-| -------------- | --------------- | -------- |
-| 编译时类型检查 | ✅              | ✅       |
-| 运行时验证     | ✅              | ✅       |
-| Schema 定义    | ✅              | ✅       |
-| 文件数量       | 较多            | 较少     |
-| 生成速度       | 较快            | 较慢     |
-| 运行时开销     | 无              | 较小     |
-| 代码复杂度     | 简单            | 中等     |
-
-## 推荐配置
-
-### 推荐配置 1: 标准项目（单服务 - Zod 模式）
-
-适合需要运行时验证的 Web 应用。只有一个数据源时，使用 `services` 数组长度为 1 的配置，并设置 `folder: '.'` 让输出直接落在 `baseOutputDir`。
-
-```typescript
-export default defineConfig({
-  baseOutputDir: 'src/service',
-  typesFormat: 'zod',
-  generateApi: true,
-  generateTypes: true,
-
-  services: [
-    {
-      name: 'main',
-      folder: '.',
-      source: process.env.API_SOURCE!,
-      token: process.env.API_TOKEN!,
-    },
-  ],
-});
-```
-
-### 推荐配置 2: 简化项目（单服务 - TypeScript 模式）
-
-适合只需要类型检查的项目。
-
-```typescript
-export default defineConfig({
-  baseOutputDir: 'src/service',
-  typesFormat: 'typescript',
-  generateApi: true,
-  generateTypes: true,
-
-  services: [
-    {
-      name: 'main',
-      folder: '.',
-      source: process.env.API_SOURCE!,
-      token: process.env.API_TOKEN!,
-    },
-  ],
-});
-```
-
-### 推荐配置 3: 微服务（多服务）
-
-多服务是本工具的核心能力。同时对接多个后端服务时，声明多个 `services` 元素：每个服务有独立的数据源、token 与输出子目录（`folder`），共享 `baseOutputDir` 下的 `request.ts`。各服务还可以通过服务级字段覆盖公共配置（如下方 order 服务的 `generateTypes: false`）。
-
-```typescript
-export default defineConfig({
-  baseOutputDir: 'src/service', // request.ts 生成于此层级并被共享
-  generateApi: true,
-  generateTypes: true,
-  typesFormat: 'typescript',
-
-  services: [
-    {
-      name: 'user', // folder 默认取 name → 输出 src/service/user
-      source: process.env.USER_API_SOURCE!,
-      token: process.env.USER_API_TOKEN!,
-    },
-    {
-      name: 'order',
-      source: process.env.ORDER_API_SOURCE!,
-      token: process.env.ORDER_API_TOKEN!,
-      folder: 'trade/order', // 多段 folder → 输出 src/service/trade/order
-      generateTypes: false, // 服务级覆盖：order 服务不生成类型
-    },
-  ],
-});
-```
-
-对应输出结构：
-
-```
-src/service/                    # baseOutputDir
-├── request.ts                  # 共享请求函数（仅生成一次）
-├── user/                       # src/service/user
-│   ├── index.ts
-│   ├── <tag拼音>/index.ts
-│   └── types/
-└── trade/order/                # src/service/trade/order
-    ├── index.ts
-    └── <tag拼音>/index.ts      # order 服务未生成 types/
-```
-
-> 注意：各服务计算后的 `outputDir` 不能相同或互相嵌套，否则会抛 `E1002`。`name` 也不能重复。详见[配置指南 - 多服务配置](./configuration.md#多服务--微服务配置)。
+| 特性           | TypeScript 模式  | Zod 模式                |
+| -------------- | ---------------- | ----------------------- |
+| 编译时类型检查 | ✓（interface）   | ✓（`z.infer` 推导类型） |
+| 运行时验证     | ✗                | ✓（`Schema.parse`）     |
+| API 请求函数   | ✓                | ✓                       |
+| 类型产物形态   | `interface` 文件 | `z.object` Schema 文件  |
+| 运行时依赖     | 无               | 需安装 zod              |
 
 ## 下一步
 
-- 查看[迁移指南](./migration.md)了解如何从旧版本迁移
-- 查看[配置文档](./configuration.md)了解所有配置选项
-- 查看[高级用法](./advanced.md)学习自定义模板和钩子
+- [配置参考](./config-reference.md) — 全部字段的类型、默认值与校验规则
+- [高级用法](./advanced.md) — 命名策略、钩子系统、请求扩展点
+- [迁移指南](./migration.md) — 从旧版本迁移
