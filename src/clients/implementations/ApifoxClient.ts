@@ -115,6 +115,10 @@ export class ApifoxClient extends BaseClient {
 
   /**
    * @description 标准化 Apifox 响应（统一为 content 包装格式）
+   *
+   * 已有 content 时原样保留全部 content-type（如 SSE 的 text/event-stream，
+   * 强改 application/json 会丢失其 schema，导致生成端退化 data: unknown）；
+   * 无 content 的旧格式才兜底为 application/json + 顶层 schema。
    */
   private static normalizeResponses(responses: unknown): Record<string, OpenApiResponse> {
     if (!responses) return {};
@@ -122,11 +126,10 @@ export class ApifoxClient extends BaseClient {
     for (const [statusCode, response] of Object.entries(responses as Record<string, any>)) {
       processed[statusCode] = {
         description: response.description || '',
-        content: {
-          'application/json': {
-            schema: response.content?.['application/json']?.schema || response.schema || {},
-          },
-        },
+        content:
+          response.content && typeof response.content === 'object'
+            ? response.content
+            : { 'application/json': { schema: response.schema || {} } },
       };
     }
     return processed;

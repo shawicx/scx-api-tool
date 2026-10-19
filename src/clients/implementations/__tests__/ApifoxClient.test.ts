@@ -198,6 +198,34 @@ describe('ApifoxClient.normalize', () => {
     });
   });
 
+  it('应原样保留非 JSON content-type 的响应 schema（如 SSE）', () => {
+    const apifoxDoc = {
+      openapi: '3.0.0',
+      paths: {
+        '/ai/chat': {
+          post: {
+            responses: {
+              '200': {
+                description: 'SSE 事件流',
+                content: {
+                  'text/event-stream': { schema: { type: 'string' } },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const normalized = client.publicNormalize(apifoxDoc);
+    const response = normalized.paths!['/ai/chat'].post.responses!['200'];
+
+    // 不强改为 application/json，保留原始 content-type 与 schema
+    expect(response.content).toEqual({
+      'text/event-stream': { schema: { type: 'string' } },
+    });
+  });
+
   it('应处理带 content 的请求体（保留所有 content-type）', () => {
     const apifoxDoc = {
       openapi: '3.0.0',
