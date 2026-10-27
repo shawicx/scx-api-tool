@@ -560,6 +560,45 @@ describe('validateNumberFields', () => {
     expect(errors).toHaveLength(1);
     expect(errors[0]!.field).toBe('requestTimeout');
   });
+
+  it('returns no errors when fetchTimeout / fetchMaxRetries / fetchRetryDelay are valid', () => {
+    const config = {
+      ...validSwaggerUserConfig,
+      fetchTimeout: 60000,
+      fetchMaxRetries: 0,
+      fetchRetryDelay: 500,
+    };
+    const errors = validateNumberFields(config);
+
+    expect(errors).toHaveLength(0);
+  });
+
+  it('returns error for non-positive fetchTimeout', () => {
+    const config = { ...validSwaggerUserConfig, fetchTimeout: 0 };
+    const errors = validateNumberFields(config);
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.field).toBe('fetchTimeout');
+    expect(errors[0]!.code).toBe('INVALID_NUMBER');
+  });
+
+  it('returns error for negative or non-integer fetchMaxRetries', () => {
+    const negative = validateNumberFields({ ...validSwaggerUserConfig, fetchMaxRetries: -1 });
+    expect(negative).toHaveLength(1);
+    expect(negative[0]!.field).toBe('fetchMaxRetries');
+
+    const fractional = validateNumberFields({ ...validSwaggerUserConfig, fetchMaxRetries: 1.5 });
+    expect(fractional).toHaveLength(1);
+    expect(fractional[0]!.field).toBe('fetchMaxRetries');
+  });
+
+  it('returns error for negative fetchRetryDelay', () => {
+    const config = { ...validSwaggerUserConfig, fetchRetryDelay: -100 };
+    const errors = validateNumberFields(config);
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.field).toBe('fetchRetryDelay');
+  });
 });
 
 // ---------------------------------------------------------------------------

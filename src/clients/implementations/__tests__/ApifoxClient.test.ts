@@ -5,11 +5,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { HTTPError, TimeoutError, RequestError } from 'got';
 import { logger } from '@/utils/logger';
 import { ApifoxClient } from '../ApifoxClient';
 import { apifoxApiConfig } from '../../../../tests/fixtures/mockData';
 import type { OpenApiDocument } from '@/types';
 import { FetchError } from '@/errors/errorClasses';
+import { ErrorCode } from '@/errors/errorCodes';
 
 /**
  * @description 暴露 protected normalize 以便测试
@@ -43,6 +45,32 @@ import { ErrorFactory } from '@/errors';
 
 const mockMakeRequestWithProgress = vi.mocked(makeRequestWithProgress);
 
+/**
+ * @description 构造带完整内部结构的 got HTTPError
+ * got 的 HTTPError 构造函数会读取 response.request.options（method/url），
+ * 且 error.response 依赖 request 对象上的 response 回链，直接传扁平对象会崩溃
+ * @param statusCode HTTP 状态码
+ * @param body 响应体（字符串）
+ * @returns 可用于 instanceof 判断的 HTTPError 实例
+ */
+function createHttpError(statusCode: number, body = ''): HTTPError {
+  const fakeResponse = {
+    statusCode,
+    statusMessage: 'Error',
+    body,
+    headers: {},
+  } as any;
+  fakeResponse.request = {
+    _onResponse: true, // 通过 got 内部的 isRequest 检查，使 error.response 生效
+    response: fakeResponse,
+    options: {
+      method: 'POST',
+      url: new URL('https://api.apifox.com/v1/projects/123456/export-openapi'),
+    },
+  };
+  return new HTTPError(fakeResponse);
+}
+
 describe('ApifoxClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -51,9 +79,9 @@ describe('ApifoxClient', () => {
   it('成功获取时应返回响应数据', async () => {
     const mockData = { openapi: '3.1.0', info: { title: 'Apifox API' } };
     mockMakeRequestWithProgress.mockResolvedValueOnce({
-      data: mockData,
-      status: 200,
+      statusCode: 200,
       headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(mockData),
     });
 
     const client = new TestableApifoxClient({ maxRetries: 0 });
@@ -72,21 +100,34 @@ describe('ApifoxClient', () => {
 
   it('响应 content-type 非 json 时应抛出 invalidResponse 错误', async () => {
     mockMakeRequestWithProgress.mockResolvedValueOnce({
-      data: '<html>not json</html>',
-      status: 200,
+      statusCode: 200,
       headers: { 'content-type': 'text/html' },
+      body: '<html>not json</html>',
     });
 
     const client = new TestableApifoxClient({ maxRetries: 0 });
     await expect(client.fetch(apifoxApiConfig)).rejects.toThrow();
   });
 
+  it('响应体不是有效 JSON 时应抛出 invalidResponse 错误', async () => {
+    mockMakeRequestWithProgress.mockResolvedValueOnce({
+      statusCode: 200,
+      headers: { 'content-type': 'application/json' },
+      body: '<html>broken</html>',
+    });
+
+    const client = new TestableApifoxClient({ maxRetries: 0 });
+    await expect(client.fetch(apifoxApiConfig)).rejects.toMatchObject({
+      code: ErrorCode.FETCH_INVALID_RESPONSE,
+    });
+  });
+
   it('DEBUG 日志中不应包含明文 token（脱敏回归）', async () => {
     const sensitiveConfig = { ...apifoxApiConfig, token: 'sk-secret-token-xxxxx' };
     mockMakeRequestWithProgress.mockResolvedValueOnce({
-      data: { openapi: '3.1.0' },
-      status: 200,
+      statusCode: 200,
       headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ openapi: '3.1.0' }),
     });
 
     const client = new TestableApifoxClient({ maxRetries: 0 });
@@ -100,11 +141,56 @@ describe('ApifoxClient', () => {
     expect(combined).not.toContain('sk-secret-token-xxxxx');
   });
 
-  it('所有重试均失败时应抛出 FetchError', async () => {
+  it('401 响应应映射为 unauthorized 错误（E2002）且不重试', async () => {
+    mockMakeRequestWithProgress.mockRejectedValue(
+      createHttpError(401, JSON.stringify({ message: 'invalid token' })),
+    );
+
+    const client = new TestableApifoxClient({ maxRetries: 3, retryDelay: 1 });
+
+    await expect(client.fetch(apifoxApiConfig)).rejects.toMatchObject({
+      code: ErrorCode.FETCH_UNAUTHORIZED,
+    });
+    // token 失效属于确定性失败，不应触发重试
+    expect(mockMakeRequestWithProgress).toHaveBeenCalledTimes(1);
+  });
+
+  it('超时错误应映射为 timeout 错误（E2003）', async () => {
+    mockMakeRequestWithProgress.mockRejectedValue(new TimeoutError('request', {} as any));
+
+    const client = new TestableApifoxClient({ maxRetries: 0 });
+
+    await expect(client.fetch(apifoxApiConfig)).rejects.toMatchObject({
+      code: ErrorCode.FETCH_TIMEOUT,
+    });
+  });
+
+  it('域名解析失败应映射为 networkError 错误（E2005）', async () => {
+    mockMakeRequestWithProgress.mockRejectedValue(
+      new RequestError('getaddrinfo ENOTFOUND api.apifox.com', { code: 'ENOTFOUND' } as any),
+    );
+
+    const client = new TestableApifoxClient({ maxRetries: 0 });
+
+    await expect(client.fetch(apifoxApiConfig)).rejects.toMatchObject({
+      code: ErrorCode.FETCH_NETWORK_ERROR,
+    });
+  });
+
+  it('所有重试均失败时应抛出带失败明细的 FetchError', async () => {
     mockMakeRequestWithProgress.mockRejectedValue(new Error('持续失败'));
 
     const client = new TestableApifoxClient({ maxRetries: 1, retryDelay: 1 });
-    await expect(client.fetch(apifoxApiConfig)).rejects.toThrow();
+    const error: any = await client.fetch(apifoxApiConfig).catch((e) => e);
+
+    // 重试 1 次 + 首次尝试 = 2 次调用
+    expect(mockMakeRequestWithProgress).toHaveBeenCalledTimes(2);
+    expect(error).toBeInstanceOf(FetchError);
+    expect(error.code).toBe(ErrorCode.FETCH_REQUEST_FAILED);
+    // 错误消息应列出每次尝试的可读失败原因
+    expect(error.message).toContain('失败明细（共尝试 2 次）');
+    expect(error.message).toContain('第 1 次尝试: 持续失败');
+    expect(error.message).toContain('第 2 次尝试: 持续失败');
   });
 });
 

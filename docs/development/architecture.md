@@ -59,15 +59,15 @@ graph TB
 
 ## 一次生成的数据流
 
-| 阶段            | 输入                        | 承担者                                                       | 输出                                          |
-| --------------- | --------------------------- | ------------------------------------------------------------ | --------------------------------------------- |
-| 1. 命令解析     | 命令行参数                  | `src/cli/main.ts` + `src/cli/commands/*`                     | 待执行的子命令                                |
-| 2. 配置加载     | `api-power.config.ts/.js`   | `src/config/loader.ts`（动态 import + TTL 缓存 + 缓存穿透）  | `ApiConfig[]`（已在 defineConfig 内校验合并） |
-| 3. 数据源拉取   | 各服务 `source`             | `src/clients/implementations/*`（axios，多服务并发）         | 平台无关的 OpenAPI 文档                       |
-| 4. 数据处理     | OpenAPI 文档                | `src/processors/openapi.ts`（接口按 path+method 粒度）       | 接口 / 类型 / 分类中间表示                    |
-| 5. 命名决策     | 中间表示 + `namingStrategy` | `src/naming/` + `src/utils/path.ts`（pinyin-pro 中文转拼音） | 合法标识符与 tag 目录名                       |
-| 6. 模板渲染     | 命名结果 + 模板             | `src/generator/generators/*` + `src/generator/template/*`    | 未格式化的代码文本                            |
-| 7. 格式化与落盘 | 渲染结果                    | `src/utils/formatter.ts`（Prettier）+ fileWriter（并发）     | 写入输出目录的最终文件                        |
+| 阶段            | 输入                        | 承担者                                                              | 输出                                          |
+| --------------- | --------------------------- | ------------------------------------------------------------------- | --------------------------------------------- |
+| 1. 命令解析     | 命令行参数                  | `src/cli/main.ts` + `src/cli/commands/*`                            | 待执行的子命令                                |
+| 2. 配置加载     | `api-power.config.ts/.js`   | `src/config/loader.ts`（动态 import + TTL 缓存 + 缓存穿透）         | `ApiConfig[]`（已在 defineConfig 内校验合并） |
+| 3. 数据源拉取   | 各服务 `source`             | `src/clients/implementations/*`（got，多服务并发，超时/重试可配置） | 平台无关的 OpenAPI 文档                       |
+| 4. 数据处理     | OpenAPI 文档                | `src/processors/openapi.ts`（接口按 path+method 粒度）              | 接口 / 类型 / 分类中间表示                    |
+| 5. 命名决策     | 中间表示 + `namingStrategy` | `src/naming/` + `src/utils/path.ts`（pinyin-pro 中文转拼音）        | 合法标识符与 tag 目录名                       |
+| 6. 模板渲染     | 命名结果 + 模板             | `src/generator/generators/*` + `src/generator/template/*`           | 未格式化的代码文本                            |
+| 7. 格式化与落盘 | 渲染结果                    | `src/utils/formatter.ts`（Prettier）+ fileWriter（并发）            | 写入输出目录的最终文件                        |
 
 要点：
 

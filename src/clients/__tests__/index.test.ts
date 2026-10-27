@@ -24,13 +24,9 @@ vi.mock('@/utils/progress', () => ({
   makeRequestWithProgress: vi.fn((fn) => fn()),
 }));
 
-// Mock axios
-vi.mock('axios', () => ({
-  default: {
-    get: vi.fn(),
-    post: vi.fn(),
-    isAxiosError: vi.fn(() => false),
-  },
+// Mock got 请求封装（客户端层统一经 httpFetch 发请求）
+vi.mock('@/clients/base/httpRequest', () => ({
+  httpFetch: vi.fn(),
 }));
 
 // Mock ErrorFactory
@@ -40,18 +36,18 @@ vi.mock('@/errors', () => ({
     fetchError: vi.fn((message: string) => new Error(message)),
     unauthorized: vi.fn(() => new Error('Unauthorized')),
     timeout: vi.fn(() => new Error('Timeout')),
-    fetchFailed: vi.fn(() => new Error('Fetch failed')),
+    fetchFailed: vi.fn((url: string, status?: number) => new Error(`Fetch failed: ${status}`)),
     invalidResponse: vi.fn(() => new Error('Invalid response')),
+    networkError: vi.fn(() => new Error('Network error')),
   },
 }));
 
 import { fetchData, clientRegistry } from '../index';
-import axios from 'axios';
+import { httpFetch } from '@/clients/base/httpRequest';
 import { ErrorFactory } from '@/errors';
 import type { ConfigError } from '@/errors';
 
-const mockAxiosGet = vi.mocked(axios.get);
-const mockAxiosPost = vi.mocked(axios.post);
+const mockHttpFetch = vi.mocked(httpFetch);
 const mockConfigInvalid = vi.mocked(ErrorFactory.configInvalid);
 
 describe('fetchData', () => {
@@ -67,13 +63,22 @@ describe('fetchData', () => {
     } as ApiConfig;
 
     const mockResponse = { openapi: '3.0.0', info: { title: 'Swagger Test' } };
-    mockAxiosGet.mockResolvedValue({ data: mockResponse, status: 200, headers: {} });
+    mockHttpFetch.mockResolvedValueOnce({
+      statusCode: 200,
+      headers: {},
+      body: JSON.stringify(mockResponse),
+    });
 
     const result = await fetchData(swaggerConfig);
 
     expect(result).toEqual(mockResponse);
-    expect(mockAxiosGet).toHaveBeenCalledTimes(1);
-    expect(mockAxiosPost).not.toHaveBeenCalled();
+    expect(mockHttpFetch).toHaveBeenCalledTimes(1);
+    expect(mockHttpFetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://petstore.swagger.io/v2/swagger.json',
+        method: 'GET',
+      }),
+    );
   });
 
   it('should call ApifoxClient for Apifox serverType', async () => {
@@ -84,17 +89,22 @@ describe('fetchData', () => {
     } as ApiConfig;
 
     const mockResponse = { openapi: '3.1.0', info: { title: 'Test' } };
-    mockAxiosPost.mockResolvedValue({
-      data: mockResponse,
-      status: 200,
+    mockHttpFetch.mockResolvedValueOnce({
+      statusCode: 200,
       headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(mockResponse),
     });
 
     const result = await fetchData(apifoxConfig);
 
     expect(result).toEqual(mockResponse);
-    expect(mockAxiosPost).toHaveBeenCalledTimes(1);
-    expect(mockAxiosGet).not.toHaveBeenCalled();
+    expect(mockHttpFetch).toHaveBeenCalledTimes(1);
+    expect(mockHttpFetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://api.apifox.com/v1/projects/123/export-openapi?locale=zh-CN',
+        method: 'POST',
+      }),
+    );
   });
 
   it('should auto-detect Swagger client from URL pattern', async () => {
@@ -105,12 +115,33 @@ describe('fetchData', () => {
     } as ApiConfig;
 
     const mockResponse = { openapi: '3.0.0', info: { title: 'Auto-detected' } };
-    mockAxiosGet.mockResolvedValue({ data: mockResponse, status: 200, headers: {} });
+    mockHttpFetch.mockResolvedValueOnce({
+      statusCode: 200,
+      headers: {},
+      body: JSON.stringify(mockResponse),
+    });
 
     const result = await fetchData(config);
 
     expect(result).toEqual(mockResponse);
-    expect(mockAxiosGet).toHaveBeenCalledTimes(1);
+    expect(mockHttpFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('fetchMaxRetries 配置应透传到客户端（0 表示失败后不重试）', async () => {
+    mockHttpFetch.mockRejectedValue(new Error('network down'));
+
+    const config = {
+      serverType: ServerType.Swagger,
+      source: 'https://example.com/api/swagger.json',
+      token: '',
+      fetchMaxRetries: 0,
+    } as ApiConfig;
+
+    // 本文件 mock 了 ErrorFactory，包装后的错误消息为 mock 文本
+    await expect(fetchData(config)).rejects.toThrow('Fetch failed');
+
+    // fetchMaxRetries: 0 → 仅首次尝试，不重试
+    expect(mockHttpFetch).toHaveBeenCalledTimes(1);
   });
 
   it('should throw error for unsupported server type', async () => {

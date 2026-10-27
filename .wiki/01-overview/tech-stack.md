@@ -23,7 +23,7 @@
 
 本页基于仓库中依赖清单与源码 import 扫描结果，说明该项目的技术选型全貌：运行时为 **ESM**，包管理器为 **pnpm**，源码以 TypeScript 编写并运行在 Node 生态之上；命令行入口基于 `commander` 拆分为 `debug` / `generate` / `init` / `verify` / `visualize` 五个子命令（锚点：`src/cli/commands/debug.ts`、`src/cli/commands/generate.ts`、`src/cli/commands/init.ts`、`src/cli/commands/verify.ts`、`src/cli/commands/visualize.ts`）。
 
-从 import 分布可以看出三层核心能力：**远程接口描述获取**（`axios`，落在 `src/clients/implementations/ApifoxClient.ts`、`src/clients/implementations/SwaggerClient.ts`）、**模板化产物生成**（`handlebars`，落在 `src/generator/template/compiler.ts`、`src/generator/template/templateHelpers.ts`、`src/generator/template/templatePartials.ts`）、以及**产物格式化与日志输出**（`prettier`、`consola`）。开发侧则由 `tsdown`（构建/打包配置）、`vitest`（测试）、`oxlint`（静态检查）、`vitepress`（文档站点）、`husky` + `standard-version`（提交钩子与版本发布）构成工具链。
+从 import 分布可以看出三层核心能力：**远程接口描述获取**（`got`，落在 `src/clients/base/httpRequest.ts`，由 `src/clients/implementations/ApifoxClient.ts`、`src/clients/implementations/SwaggerClient.ts` 使用；CLI 取数层已从 axios 迁移到 got，含可配置超时/重试与错误映射 `src/clients/base/requestErrorMapper.ts`）、**模板化产物生成**（`handlebars`，落在 `src/generator/template/compiler.ts`、`src/generator/template/templateHelpers.ts`、`src/generator/template/templatePartials.ts`；模板中出现的 axios 属于**生成产物**的依赖，由使用方项目自行安装）、以及**产物格式化与日志输出**（`prettier`、`consola`）。开发侧则由 `tsdown`（构建/打包配置）、`vitest`（测试）、`oxlint`（静态检查）、`vitepress`（文档站点）、`husky` + `standard-version`（提交钩子与版本发布）构成工具链。
 
 ## 技术选型总览
 
@@ -33,7 +33,7 @@
 | 包管理器    | pnpm                                                                      | 依赖清单包管理器字段（pnpm）                           |
 | 构建工具    | 数据未识别为具体工具；开发依赖中存在 `tsdown` 及其配置 `tsdown.config.ts` | `tsdown.config.ts`                                     |
 | CLI 框架    | commander                                                                 | 五个命令文件，见下文                                   |
-| HTTP 客户端 | axios                                                                     | `src/clients/implementations/ApifoxClient.ts`          |
+| HTTP 客户端 | got（CLI 取数）；axios（生成产物模板引用，devDependency）                 | `src/clients/base/httpRequest.ts`                      |
 | 模板引擎    | handlebars                                                                | `src/generator/template/compiler.ts`                   |
 | 代码格式化  | prettier（运行时依赖）                                                    | `src/utils/formatter.ts`；commit:a77450db (2026-10-11) |
 | 日志输出    | consola                                                                   | `src/utils/logger.ts`                                  |
@@ -45,10 +45,10 @@
 
 ```mermaid
 graph LR
-  axios --> a1["src/clients/implementations/ApifoxClient.ts"]
-  axios --> a2["src/clients/implementations/SwaggerClient.ts"]
-  axios --> a3["src/generator/template/requestFileGenerator.ts"]
-  axios --> a4["src/generator/template/templatePartials.ts"]
+  got --> g0["src/clients/base/httpRequest.ts"]
+  got --> g1["src/clients/base/requestErrorMapper.ts"]
+  axios --> a3["src/generator/template/requestFileGenerator.ts（模板字符串，生成产物依赖）"]
+  axios --> a4["src/generator/template/templatePartials.ts（模板字符串，生成产物依赖）"]
   commander --> c1["src/cli/commands/debug.ts"]
   commander --> c2["src/cli/commands/generate.ts"]
   commander --> c3["src/cli/commands/init.ts"]
@@ -76,11 +76,12 @@ graph LR
 
 ### 网络请求与客户端实现
 
-| 依赖  | 版本    | 首个 import 点                              | 其他使用点（锚点）                                                                                                                       |
-| ----- | ------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| axios | ^1.20.0 | src/clients/implementations/ApifoxClient.ts | src/clients/implementations/SwaggerClient.ts、src/generator/template/requestFileGenerator.ts、src/generator/template/templatePartials.ts |
+| 依赖  | 版本    | 归类       | 首个 import 点                        | 其他使用点（锚点）                                                                                                       |
+| ----- | ------- | ---------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| got   | ^14.6.6 | 运行时依赖 | src/clients/base/httpRequest.ts       | src/clients/base/requestErrorMapper.ts（错误类型）                                                                       |
+| axios | ^1.20.0 | 开发依赖   | 生成模板字符串内引用（非真实 import） | src/generator/template/requestFileGenerator.ts、src/generator/template/templatePartials.ts（均为生成产物内容）、e2e 测试 |
 
-`axios` 同时出现在客户端实现层（`src/clients/implementations/ApifoxClient.ts`、`src/clients/implementations/SwaggerClient.ts`）与生成器的模板层（`src/generator/template/requestFileGenerator.ts`、`src/generator/template/templatePartials.ts`）。后者这两个文件同时引入 `consola`，属于生成器目录内既有模板渲染又有网络与日志依赖的文件，是升级 axios 时需要重点回归的位置。
+CLI 取数层（Apifox/Swagger 客户端）已迁移到 `got`（统一封装在 `src/clients/base/httpRequest.ts`，禁用 got 内置重试，由 `BaseClient.executeWithRetry` 统一控制重试/超时，且超时与重试次数/延迟可经 `fetchTimeout`/`fetchMaxRetries`/`fetchRetryDelay` 配置）。模板层出现的 `axios` 全部位于生成产物字符串中（生成代码 import axios，由使用方项目自行安装），因此 axios 从运行时依赖移至开发依赖，供本仓库 e2e 测试与类型检查使用。
 
 ### 模板引擎
 

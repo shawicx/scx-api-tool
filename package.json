@@ -104,10 +104,10 @@
   "prettier": "prettier-config-ali",
   "dependencies": {
     "@clack/prompts": "^1.7.0",
-    "axios": "^1.20.0",
     "commander": "^15.0.0",
     "consola": "^3.4.2",
     "dayjs": "^1.11.23",
+    "got": "^14.6.6",
     "handlebars": "^4.7.9",
     "pinyin-pro": "^3.29.3",
     "prettier": "^3.9.6"
@@ -118,6 +118,7 @@
     "@tanstack/react-query": "^5.104.2",
     "@types/node": "^26.4.1",
     "@vitest/coverage-v8": "^5.0.0",
+    "axios": "^1.20.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.5.0",
     "oxlint": "^1.81.0",

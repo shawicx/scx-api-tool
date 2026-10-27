@@ -190,6 +190,20 @@ export interface CommonServiceConfig {
    * 单次请求仍可通过 RequestConfig.timeout 覆盖。
    */
   requestTimeout?: number;
+  /**
+   * @description 拉取 OpenAPI/Apifox 数据的单次请求超时（毫秒），默认 30000。
+   * 仅影响 CLI 自身的数据获取，与生成代码的 requestTimeout 无关。
+   */
+  fetchTimeout?: number;
+  /**
+   * @description 拉取数据失败后的最大重试次数（0 表示不重试），默认 3。
+   * token 失效（401/403）等确定性失败不会重试。
+   */
+  fetchMaxRetries?: number;
+  /**
+   * @description 重试基础延迟（毫秒），指数退避（第 n 次重试等待 retryDelay * 2^(n-1)），默认 1000。
+   */
+  fetchRetryDelay?: number;
   /** 请求方法调用风格 */
   requestMethodStyle?: RequestMethodStyle;
   /** 自定义请求函数名 */
@@ -301,6 +315,12 @@ export interface ApiConfig {
   requestBaseURL?: string;
   /** 默认请求超时时间（毫秒）；上传类请求不受此默认超时限制 */
   requestTimeout: number;
+  /** 拉取 OpenAPI/Apifox 数据的单次请求超时（毫秒）；运行时由 applyPreset 注入默认值 */
+  fetchTimeout?: number;
+  /** 拉取数据失败后的最大重试次数（0 表示不重试）；运行时由 applyPreset 注入默认值 */
+  fetchMaxRetries?: number;
+  /** 重试基础延迟（毫秒），指数退避；运行时由 applyPreset 注入默认值 */
+  fetchRetryDelay?: number;
   /** 请求方法调用风格 */
   requestMethodStyle: RequestMethodStyle;
   /** 自定义请求函数名 */

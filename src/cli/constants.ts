@@ -38,6 +38,13 @@ export default defineConfig({
   comment: true,
   // 并发写入数量（用于文件生成的并发控制）
   concurrency: 5,
+  // 拉取数据（CLI 自身请求 Apifox/OpenAPI）的超时与重试（可选，与生成代码无关）
+  // - fetchTimeout: 单次请求超时（毫秒），默认 30000
+  // - fetchMaxRetries: 失败后最大重试次数（默认 3；token 失效等确定性失败不重试）
+  // - fetchRetryDelay: 重试基础延迟（毫秒），指数退避（默认 1000）
+  // fetchTimeout: 30000,
+  // fetchMaxRetries: 3,
+  // fetchRetryDelay: 1000,
 
   // ========== 服务列表 ==========
   // 每个服务独立生成到各自的子文件夹（默认 folder = name），互不干扰

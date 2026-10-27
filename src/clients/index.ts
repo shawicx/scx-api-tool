@@ -5,7 +5,7 @@
  */
 
 import type { ApiConfig, OpenApiDocument } from '@/types';
-import { clientRegistry } from './base/registry';
+import { clientRegistry, resolveClientOptions } from './base/registry';
 import { createSwaggerClient } from './implementations/SwaggerClient';
 import { createApifoxClient } from './implementations/ApifoxClient';
 import type { SwaggerClient } from './implementations/SwaggerClient';
@@ -66,7 +66,7 @@ export async function fetchData(config: ApiConfig): Promise<OpenApiDocument> {
  * @returns OpenAPI 数据对象
  */
 export async function fetchSwaggerData(config: ApiConfig): Promise<OpenApiDocument> {
-  const client = clientRegistry.getClient<SwaggerClient>('swagger');
+  const client = clientRegistry.getClient<SwaggerClient>('swagger', resolveClientOptions(config));
   const result = await client.fetch(config);
   return result.data;
 }
@@ -78,7 +78,7 @@ export async function fetchSwaggerData(config: ApiConfig): Promise<OpenApiDocume
  * @returns OpenAPI 数据对象
  */
 export async function fetchApifoxData(config: ApiConfig): Promise<OpenApiDocument> {
-  const client = clientRegistry.getClient<ApifoxClient>('apifox');
+  const client = clientRegistry.getClient<ApifoxClient>('apifox', resolveClientOptions(config));
   const result = await client.fetch(config);
   return result.data;
 }

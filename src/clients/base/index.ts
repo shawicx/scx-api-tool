@@ -3,5 +3,5 @@
  */
 
 export { BaseClient } from './BaseClient';
-export type { ClientMetadata, ClientOptions, FetchResult } from './BaseClient';
-export { clientRegistry } from './registry';
+export type { ClientMetadata, ClientOptions, FetchResult, AttemptFailure } from './BaseClient';
+export { clientRegistry, resolveClientOptions } from './registry';

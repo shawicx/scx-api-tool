@@ -412,6 +412,50 @@ export function validateNumberFields(config: CommonServiceConfig): ValidationErr
     }
   }
 
+  // 验证拉取数据相关数值字段（fetchTimeout / fetchMaxRetries / fetchRetryDelay）
+  const fetchNumericRules: Array<{
+    field: 'fetchTimeout' | 'fetchMaxRetries' | 'fetchRetryDelay';
+    isValid: (value: number) => boolean;
+    message: string;
+    suggestion: string;
+  }> = [
+    {
+      field: 'fetchTimeout',
+      isValid: (value) => Number.isFinite(value) && value > 0,
+      message: 'fetchTimeout 必须是正数（毫秒）',
+      suggestion:
+        '请设置正数超时毫秒数，例如 60000 表示 60 秒（仅影响 CLI 拉取数据，与生成代码无关）',
+    },
+    {
+      field: 'fetchMaxRetries',
+      isValid: (value) => Number.isInteger(value) && value >= 0,
+      message: 'fetchMaxRetries 必须是大于等于 0 的整数',
+      suggestion: '请设置 0（不重试）或正整数，默认 3；token 失效等确定性失败不会重试',
+    },
+    {
+      field: 'fetchRetryDelay',
+      isValid: (value) => Number.isFinite(value) && value >= 0,
+      message: 'fetchRetryDelay 必须是大于等于 0 的数值（毫秒）',
+      suggestion: '请设置非负毫秒数，默认 1000；实际等待按指数退避（1x/2x/4x...）递增',
+    },
+  ];
+
+  for (const { field, isValid, message, suggestion } of fetchNumericRules) {
+    const value = config[field];
+    if (value !== undefined && (typeof value !== 'number' || !isValid(value))) {
+      errors.push(
+        createValidationError(
+          field,
+          'INVALID_NUMBER',
+          message,
+          ValidationSeverity.ERROR,
+          suggestion,
+          value,
+        ),
+      );
+    }
+  }
+
   return errors;
 }
 

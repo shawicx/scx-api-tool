@@ -5,6 +5,19 @@
 
 import type { ApiConfig, OpenApiDocument } from '@/types';
 import { ErrorFactory } from '@/errors';
+import { FetchError } from '@/errors/errorClasses';
+import { logger } from '@/utils/logger';
+import { describeRequestError, isRetryableError } from './requestErrorMapper';
+
+/**
+ * @description 单次尝试的失败记录（用于日志与最终错误信息中的失败明细）
+ */
+export interface AttemptFailure {
+  /** 尝试序号（从 1 开始） */
+  attempt: number;
+  /** 可读失败原因（单行） */
+  reason: string;
+}
 
 /**
  * @description API 数据获取结果
@@ -113,9 +126,14 @@ export abstract class BaseClient {
       ]);
     }
 
+    const failures: AttemptFailure[] = [];
+
     try {
-      // 执行数据获取（带重试）
-      const data = await this.executeWithRetry(() => this.fetchDataInternal(config));
+      // 执行数据获取（带重试），记录每次失败的可读原因
+      const data = await this.executeWithRetry(
+        () => this.fetchDataInternal(config),
+        (failure) => failures.push(failure),
+      );
       // 标准化为统一 OpenAPI 文档格式（平台特定适配在各客户端 normalize 中实现）
       const normalized = this.normalize(data);
 
@@ -125,29 +143,48 @@ export abstract class BaseClient {
         timestamp: Date.now(),
       };
     } catch (error: unknown) {
-      throw this.wrapError(error, config);
+      throw this.wrapError(error, config, failures);
     }
   }
 
   /**
    * @description 带重试机制的执行
+   * 每次失败输出可读的警告日志；token 失效/响应格式错误等确定性失败不重试
    * @param fn 要执行的异步函数
+   * @param onAttemptFailed 单次尝试失败回调（记录失败明细，可选）
    * @returns 执行结果
    */
-  protected async executeWithRetry<T>(fn: () => Promise<T>): Promise<T> {
+  protected async executeWithRetry<T>(
+    fn: () => Promise<T>,
+    onAttemptFailed?: (failure: AttemptFailure) => void,
+  ): Promise<T> {
     let lastError: Error | null = null;
+    const maxRetries = this.options.maxRetries || 0;
+    const totalAttempts = maxRetries + 1;
 
-    for (let attempt = 0; attempt <= (this.options.maxRetries || 0); attempt++) {
+    for (let attempt = 1; attempt <= totalAttempts; attempt++) {
       try {
         return await fn();
       } catch (error: unknown) {
         lastError = error instanceof Error ? error : new Error(String(error));
+        const reason = describeRequestError(lastError);
 
-        // 最后一次重试失败，不再延迟
-        if (attempt < (this.options.maxRetries || 0)) {
+        onAttemptFailed?.({ attempt, reason });
+
+        // 确定性失败（token 失效/响应格式错误等）重试不会成功，直接终止
+        if (!isRetryableError(lastError)) {
+          throw lastError;
+        }
+
+        if (attempt < totalAttempts) {
           // 指数退避延迟
-          const delay = (this.options.retryDelay || 1000) * Math.pow(2, attempt);
+          const delay = (this.options.retryDelay || 1000) * Math.pow(2, attempt - 1);
+          logger.warn(
+            `请求失败（第 ${attempt}/${totalAttempts} 次尝试）：${reason}，${delay}ms 后重试`,
+          );
           await this.sleep(delay);
+        } else {
+          logger.warn(`请求失败（第 ${attempt}/${totalAttempts} 次尝试）：${reason}`);
         }
       }
     }
@@ -157,22 +194,39 @@ export abstract class BaseClient {
 
   /**
    * @description 包装客户端错误
+   * 多次尝试均失败时，将失败明细列表（每次尝试的可读原因）附加到错误消息中
    * @param error 原始错误
    * @param config API 配置
+   * @param failures 各次尝试的失败记录（来自 executeWithRetry）
    * @returns 包装后的错误
    */
-  protected wrapError(error: unknown, config: ApiConfig): Error {
-    // 如果已经是我们的错误类型，直接返回
-    if (error instanceof Error && error.name === 'FetchError') {
-      return error;
+  protected wrapError(error: unknown, config: ApiConfig, failures: AttemptFailure[] = []): Error {
+    let base: FetchError;
+
+    // 如果已经是我们的错误类型，保留其错误码与解决方案
+    if (error instanceof FetchError) {
+      base = error;
+    } else {
+      // 否则包装为 FetchError
+      base = ErrorFactory.fetchFailed(
+        config.source,
+        undefined,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
 
-    // 否则包装为 FetchError
-    return ErrorFactory.fetchFailed(
-      config.source,
-      undefined,
-      error instanceof Error ? error : new Error(String(error)),
-    );
+    // 多次尝试均失败时附加失败明细，单次失败保持原消息
+    if (failures.length > 1) {
+      const detail = failures.map((f) => `  第 ${f.attempt} 次尝试: ${f.reason}`).join('\n');
+      return new FetchError(
+        `${base.message}\n失败明细（共尝试 ${failures.length} 次）:\n${detail}`,
+        base.solutions,
+        base.originalError,
+        base.code,
+      );
+    }
+
+    return base;
   }
 
   /**

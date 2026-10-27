@@ -30,6 +30,28 @@ interface RegisteredClient {
 }
 
 /**
+ * @description 从 API 配置提取客户端选项（单次请求超时/重试次数/重试延迟）
+ * 未配置的字段为 undefined，由 BaseClient 构造函数回退到内置默认值
+ * @param config API 配置
+ * @returns 客户端选项
+ *
+ * @example
+ * ```typescript
+ * resolveClientOptions({ fetchTimeout: 60000, fetchMaxRetries: 0 });
+ * // => { timeout: 60000, maxRetries: 0, retryDelay: undefined }
+ * ```
+ */
+export function resolveClientOptions(
+  config: Pick<ApiConfig, 'fetchTimeout' | 'fetchMaxRetries' | 'fetchRetryDelay'>,
+): ClientOptions {
+  return {
+    timeout: config.fetchTimeout,
+    maxRetries: config.fetchMaxRetries,
+    retryDelay: config.fetchRetryDelay,
+  };
+}
+
+/**
  * @description 客户端注册器类
  */
 export class ClientRegistry {
@@ -60,9 +82,10 @@ export class ClientRegistry {
   /**
    * @description 获取指定类型的客户端实例
    * @param type 客户端类型
+   * @param options 客户端配置选项（超时/重试，可选）
    * @returns 客户端实例
    */
-  getClient<T extends BaseClient = BaseClient>(type: string): T {
+  getClient<T extends BaseClient = BaseClient>(type: string, options?: ClientOptions): T {
     const registered = this.registeredClients.get(type);
     if (!registered) {
       throw ErrorFactory.configInvalid(`未注册的客户端类型: ${type}`, [
@@ -73,18 +96,22 @@ export class ClientRegistry {
       ]);
     }
 
-    return registered.factory() as T;
+    return registered.factory(options) as T;
   }
 
   /**
    * @description 根据配置自动选择合适的客户端
+   * 配置中的 fetchTimeout/fetchMaxRetries/fetchRetryDelay 会透传给客户端实例
    * @param config API 配置
    * @returns 匹配的客户端实例
    */
   autoSelectClient(config: ApiConfig): BaseClient {
+    // 从配置提取超时/重试选项（未配置时由 BaseClient 使用内置默认值）
+    const clientOptions = resolveClientOptions(config);
+
     // 首先根据 serverType 精确匹配
     if (config.serverType) {
-      const client = this.getClientByType(config.serverType);
+      const client = this.getClientByType(config.serverType, clientOptions);
       if (client && client.supports(config)) {
         return client;
       }
@@ -96,7 +123,7 @@ export class ClientRegistry {
     ); // 按优先级降序排列
 
     for (const entry of registered) {
-      const client = entry.factory();
+      const client = entry.factory(clientOptions);
       if (client.supports(config)) {
         return client;
       }
@@ -114,11 +141,12 @@ export class ClientRegistry {
   /**
    * @description 根据类型获取客户端
    * @param type 客户端类型
+   * @param options 客户端配置选项（超时/重试，可选）
    * @returns 客户端实例或 null
    */
-  private getClientByType(type: string): BaseClient | null {
+  private getClientByType(type: string, options?: ClientOptions): BaseClient | null {
     try {
-      return this.getClient(type);
+      return this.getClient(type, options);
     } catch {
       return null;
     }

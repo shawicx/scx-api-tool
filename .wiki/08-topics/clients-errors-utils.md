@@ -17,17 +17,19 @@
 
 ## 一、职责与范围
 
-主题覆盖 5 个文件，按职责分为三层：
+主题覆盖 7 个文件，按职责分为三层：
 
 | 文件                                           | 主题内分工                                               | 关键锚点                                                                    |
 | ---------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `src/errors/errorClasses.ts`                   | 定义错误解决方案结构与多个错误类的构造、格式化输出       | `src/errors/errorClasses.ts:8` 、`:60` 、`:84` 、`:151` 、`:179` 、`:207`   |
 | `src/clients/base/BaseClient.ts`               | 客户端抽象基类，提供公共 `fetch`、重试执行、URL 模式匹配 | `src/clients/base/BaseClient.ts:1` 、`:100` 、`:137` 、`:219`               |
+| `src/clients/base/httpRequest.ts`              | 基于 got 的 HTTP 请求封装（禁用内置重试、超时、进度）    | `src/clients/base/httpRequest.ts:1` 、`:70`                                 |
+| `src/clients/base/requestErrorMapper.ts`       | got 错误 → 可读 FetchError 映射与重试判断                | `src/clients/base/requestErrorMapper.ts:1` 、`:84` 、`:107`                 |
 | `src/clients/implementations/SwaggerClient.ts` | Swagger/OpenAPI 客户端实现                               | `src/clients/implementations/SwaggerClient.ts:1` 、`:15` 、`:23` 、`:72`    |
 | `src/clients/implementations/ApifoxClient.ts`  | Apifox 客户端实现                                        | `src/clients/implementations/ApifoxClient.ts:1` 、`:23` 、`:31` 、`:160`    |
 | `src/utils/progress.ts`                        | 轻量级进度显示模块，承接步骤开始/完成/失败与时间格式化   | `src/utils/progress.ts:1` 、`:11` 、`:41` 、`:72` 、`:81` 、`:123` 、`:184` |
 
-分工关系可概括为：`BaseClient` 定义**做什么**（公共接口与通用能力），两个 `*Client.ts` 定义**从哪里取**（Swagger 端点 / Apifox 平台），`errorClasses.ts` 定义**出错时怎么表达**，`progress.ts` 定义**过程中怎么反馈**。
+分工关系可概括为：`BaseClient` 定义**做什么**（公共接口与通用能力），`httpRequest.ts` 定义**怎么发请求**（got 封装），`requestErrorMapper.ts` 定义**出错怎么解释**（错误映射与重试判断），两个 `*Client.ts` 定义**从哪里取**（Swagger 端点 / Apifox 平台），`errorClasses.ts` 定义**出错时怎么表达**，`progress.ts` 定义**过程中怎么反馈**。
 
 ---
 
@@ -48,7 +50,7 @@ executeWithRetry<T>(fn: () => Promise<T>)
 matchUrlPatterns(url: string, patterns: RegExp[]): boolean
 ```
 
-`fetch` 是公共数据获取接口，注释说明其"提供重试、超时、错误处理等通用功能" ，返回 `Promise<FetchResult>`；`FetchResult` 本身在 `src/clients/base/BaseClient.ts:12` 被注释为"API 数据获取结果" 。`executeWithRetry` 承担带重试机制的执行，接收一个返回 Promise 的异步函数 ，其重试节奏由内部调用的 `sleep`（`src/clients/base/BaseClient.ts:182`）实现 。`matchUrlPatterns` 用于验证 URL 是否匹配指定模式数组 ，是客户端选择逻辑的判断依据。
+`fetch` 是公共数据获取接口，注释说明其"提供重试、超时、错误处理等通用功能" ，返回 `Promise<FetchResult>`；`FetchResult` 本身在 `src/clients/base/BaseClient.ts:12` 被注释为"API 数据获取结果" 。`executeWithRetry` 承担带重试机制的执行，接收一个返回 Promise 的异步函数 ，其重试节奏由内部调用的 `sleep`（`src/clients/base/BaseClient.ts:182`）实现 ：重试次数/延迟/单次超时可经配置的 `fetchMaxRetries`/`fetchRetryDelay`/`fetchTimeout` 控制（经 `registry.ts` 的 `resolveClientOptions` 透传到客户端），默认 3 次、指数退避（1x/2x/4x）；每次失败输出可读警告日志，全部失败时最终错误附失败明细列表；token 失效（E2002）/响应格式错误（E2004）等确定性失败不重试（判断在 `requestErrorMapper.ts` 的 `isRetryableError`）。`matchUrlPatterns` 用于验证 URL 是否匹配指定模式数组 ，是客户端选择逻辑的判断依据。
 
 基类还定义了 `ClientOptions`（`:24`，"客户端配置选项" ）与 `ClientMetadata`（`:36`，"客户端元信息" ）两个契约，它们被两个实现类共用。
 

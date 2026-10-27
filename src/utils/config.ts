@@ -39,6 +39,9 @@ const DEFAULT_CONFIG_VALUES: Omit<
   requestMode: 'shared' as 'shared' | 'isolated', // 默认共享一份 request 文件（全局 axios）
   requestBaseURL: undefined as string | undefined, // 仅 isolated 模式生效
   requestTimeout: 5 * 1000, // 默认请求超时；上传类请求（FormData/Blob）不受此默认超时限制
+  fetchTimeout: 30000, // 拉取 OpenAPI/Apifox 数据的单次请求超时（仅 CLI 自身获取数据）
+  fetchMaxRetries: 3, // 拉取数据失败后的最大重试次数（0 表示不重试）
+  fetchRetryDelay: 1000, // 重试基础延迟（指数退避：1x/2x/4x...）
   requestMethodStyle: RequestMethodStyle.CONFIG, // 默认为标准配置方式
   requestFunctionName: 'request',
   requestMethodsObjectName: 'requestMethods',

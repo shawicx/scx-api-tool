@@ -35,9 +35,13 @@ describe('SwaggerClient', () => {
     vi.clearAllMocks();
   });
 
-  it('成功获取时应返回响应数据', async () => {
+  it('成功获取时应返回响应数据（JSON 响应体自动解析）', async () => {
     const mockData = { openapi: '3.0.0', info: { title: 'Test API', version: '1.0.0' } };
-    mockMakeRequestWithProgress.mockResolvedValueOnce({ data: mockData });
+    mockMakeRequestWithProgress.mockResolvedValueOnce({
+      statusCode: 200,
+      headers: {},
+      body: JSON.stringify(mockData),
+    });
 
     const client = new SwaggerClient({ maxRetries: 0 });
     const result = await client.fetch(minimalApiConfig);
@@ -46,9 +50,25 @@ describe('SwaggerClient', () => {
     expect(mockMakeRequestWithProgress).toHaveBeenCalledTimes(1);
   });
 
+  it('非 JSON 响应体（如 YAML 源）应原样返回字符串', async () => {
+    mockMakeRequestWithProgress.mockResolvedValueOnce({
+      statusCode: 200,
+      headers: {},
+      body: 'openapi: 3.0.0\ninfo:\n  title: yaml api',
+    });
+
+    const client = new SwaggerClient({ maxRetries: 0 });
+    const result = await client.fetch(minimalApiConfig);
+
+    expect(result.data).toBe('openapi: 3.0.0\ninfo:\n  title: yaml api');
+  });
+
   it('应通过 logger.debug 记录获取位置', async () => {
-    const mockData = { openapi: '3.0.0' };
-    mockMakeRequestWithProgress.mockResolvedValueOnce({ data: mockData });
+    mockMakeRequestWithProgress.mockResolvedValueOnce({
+      statusCode: 200,
+      headers: {},
+      body: JSON.stringify({ openapi: '3.0.0' }),
+    });
 
     const client = new SwaggerClient({ maxRetries: 0 });
     await client.fetch(minimalApiConfig);

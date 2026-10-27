@@ -106,6 +106,35 @@ transformPath: (p) => '/api/v1' + p,
 
 `isolated` 服务未显式配置 `requestFunctionFilePath` 时，默认路径为 `join(outputDir, 'request.<ext>')`（服务输出目录内）。
 
+### 数据获取
+
+控制 CLI 自身从 Apifox / OpenAPI 端点拉取数据的行为（基于 [got](https://github.com/sindresorhus/got)），**与生成代码的请求行为无关**。
+
+| 字段              | 类型     | 默认值  | 说明                                                                                                 |
+| ----------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| `fetchTimeout`    | `number` | `30000` | 拉取数据的单次请求超时（毫秒）                                                                       |
+| `fetchMaxRetries` | `number` | `3`     | 拉取失败后的最大重试次数（`0` 表示不重试）。**401/403 未授权、响应格式错误属于确定性失败，不会重试** |
+| `fetchRetryDelay` | `number` | `1000`  | 重试基础延迟（毫秒），按指数退避递增（第 1/2/3 次重试分别等待 `1x`/`2x`/`4x`）                       |
+
+```typescript
+export default defineConfig({
+  baseOutputDir: 'src/service',
+  // 网络较差时：放宽超时、减少重试
+  fetchTimeout: 60000,
+  fetchMaxRetries: 1,
+  fetchRetryDelay: 2000,
+  services: [
+    {
+      name: 'main',
+      source: 'https://api.apifox.com/v1/projects/123/export-openapi',
+      token: 'APS-xxx',
+    },
+  ],
+});
+```
+
+每次重试会输出可读的警告日志（如 `请求失败（第 1/2 次尝试）：域名解析失败（ENOTFOUND）...，1000ms 后重试`）；重试耗尽后抛出的错误会列出每次尝试的失败原因明细。非法取值（如负数、非整数次数）在配置校验阶段报 `E1002`。
+
 ### Hooks 生成
 
 在 API 请求函数之上额外生成数据请求 Hook，**依赖 `generateApi: true`**（否则校验报 `E1002`）。

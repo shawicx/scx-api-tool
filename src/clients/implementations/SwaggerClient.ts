@@ -2,11 +2,14 @@
  * @description Swagger/OpenAPI 客户端实现
  */
 
-import axios from 'axios';
 import { BaseClient, ClientMetadata, ClientOptions } from '../base/BaseClient';
+import { httpFetch } from '../base/httpRequest';
+import { mapRequestError } from '../base/requestErrorMapper';
 import type { ApiConfig, OpenApiDocument } from '@/types';
 import { logger } from '@/utils/logger';
 import { makeRequestWithProgress } from '@/utils/progress';
+import { ErrorFactory } from '@/errors';
+import { FetchError } from '@/errors/errorClasses';
 
 /**
  * @description Swagger/OpenAPI 客户端
@@ -71,31 +74,48 @@ export class SwaggerClient extends BaseClient {
    */
   protected async fetchDataInternal(config: ApiConfig): Promise<unknown> {
     const apiUrl = config.source;
+    const timeout = this.options.timeout || 30000;
 
     // 如果启用，则记录调试信息
     logger.debug(`[SwaggerClient] 正在从以下位置获取数据: ${apiUrl}`);
 
-    // 使用带进度显示的请求
-    const response = await makeRequestWithProgress(
-      async (onProgress) => {
-        const requestPromise = axios.get(apiUrl, {
-          onDownloadProgress: (progressEvent) => {
-            if (onProgress && progressEvent.total) {
-              onProgress(progressEvent.loaded, progressEvent.total);
-            }
-          },
-        });
+    try {
+      // 使用带进度显示的请求
+      const response = await makeRequestWithProgress(
+        async (onProgress) =>
+          this.withTimeout(
+            httpFetch({
+              url: apiUrl,
+              method: 'GET',
+              timeout,
+              onProgress: (loaded, total) => onProgress?.(loaded, total),
+            }),
+            timeout,
+          ),
+        {
+          url: apiUrl,
+          method: 'GET',
+          timeout,
+        },
+      );
 
-        // 应用超时
-        return this.withTimeout(requestPromise, this.options.timeout || 30000);
-      },
-      {
-        url: apiUrl,
-        method: 'GET',
-      },
-    );
+      if (response.statusCode !== 200) {
+        throw ErrorFactory.fetchFailed(apiUrl, response.statusCode);
+      }
 
-    return response.data;
+      // 与历史 axios 行为对齐：优先按 JSON 解析，失败时（如 YAML 源）原样返回字符串
+      try {
+        return JSON.parse(response.body);
+      } catch {
+        return response.body;
+      }
+    } catch (error: unknown) {
+      // 已是本项目的 FetchError，原样透传；其余映射为可读的 FetchError
+      if (error instanceof FetchError) {
+        throw error;
+      }
+      throw mapRequestError(error, apiUrl, timeout);
+    }
   }
 }
 
