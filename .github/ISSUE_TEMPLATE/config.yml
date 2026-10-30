@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 文档 | Documentation
+    url: https://github.com/shawicx/scx-api-tool/tree/main/docs
+    about: 使用前建议先阅读文档（中文）。
+  - name: 💬 讨论 | Discussions
+    url: https://github.com/shawicx/scx-api-tool/discussions
+    about: 使用问题与想法交流请使用 Discussions（如未开启请使用 Issues）。

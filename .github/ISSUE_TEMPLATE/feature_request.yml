@@ -1,0 +1,36 @@
+name: 💡 功能建议 | Feature Request
+description: 提出新功能或改进建议 | Suggest a new feature or improvement
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢提议！请描述你的场景与想要的能力。
+        Thanks for the suggestion! Please describe your use case and the capability you want.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 使用场景 | Is your feature request related to a problem?
+      description: 你遇到了什么问题/不便 | What problem or inconvenience are you running into
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 期望方案 | Describe the solution you'd like
+      description: 你希望工具如何工作（可含配置示例）| How you'd like the tool to behave (config examples welcome)
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 备选方案 | Alternatives considered
+      description: 你考虑过的其他做法 | Other approaches you have considered
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充信息 | Additional context

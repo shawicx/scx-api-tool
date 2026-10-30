@@ -1,0 +1,66 @@
+name: 🐛 Bug 报告 | Bug Report
+description: 报告一个可复现的问题 | Report a reproducible problem
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！请尽量填写以下信息，以便快速定位问题。
+        Thanks for reporting! Please fill in the following so we can diagnose it quickly.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 问题描述 | What happened?
+      description: 清晰描述遇到的问题，以及你期望的行为 | A clear description of the problem and what you expected instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤 | Steps to reproduce
+      description: 最小可复现的步骤或配置片段（**请勿包含真实 token**）| Minimal steps or config snippet (please redact real tokens)
+      placeholder: |
+        1. npx api-power init
+        2. 配置 ...
+        3. npx api-power
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为 | Expected behavior
+      description: 你认为正确的行为应该是什么 | What you expected to happen
+
+  - type: textarea
+    id: actual-output
+    attributes:
+      label: 实际输出 | Actual output
+      description: 报错信息 / 生成的错误代码片段 | Error message or the wrongly generated code snippet
+
+  - type: input
+    id: version
+    attributes:
+      label: 工具版本 | Tool version
+      description: 如 0.6.11（`npx api-power --version`）| e.g. 0.6.11
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境信息 | Environment
+      description: Node 版本、包管理器、操作系统 | Node version, package manager, OS
+      placeholder: Node v22.12.0 / pnpm 9 / macOS 15
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 确认 | Confirm
+      options:
+        - label: 输出中不包含敏感信息（token 等）| No sensitive info (tokens etc.) in the content above
+          required: true
+        - label: 我已搜索过现有 Issues，没有重复报告 | I have searched existing issues for duplicates
+          required: true

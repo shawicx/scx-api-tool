@@ -1,5 +1,7 @@
 # 贡献指南
 
+> 仓库根目录的 [CONTRIBUTING.md](https://github.com/shawicx/scx-api-tool/blob/main/CONTRIBUTING.md) 为中英双语完整版（GitHub 会在新建 Issue/PR 时自动引用）；本页为其站点版。
+
 感谢您对 `@scxfe/api-tool` 项目的关注！我们欢迎各种形式的贡献，包括但不限于：
 
 - 🐛 报告 Bug

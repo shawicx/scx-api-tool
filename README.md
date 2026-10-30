@@ -1,4 +1,10 @@
-# @scx/api-tool
+# @scxfe/api-tool
+
+[English](./README.en.md) | 简体中文
+
+[![npm version](https://img.shields.io/npm/v/@scxfe/api-tool.svg)](https://www.npmjs.com/package/@scxfe/api-tool)
+[![license](https://img.shields.io/npm/l/@scxfe/api-tool.svg)](./LICENSE)
+[![node](https://img.shields.io/node/v/@scxfe/api-tool.svg)](./package.json)
 
 一个强大的 Node.js CLI 工具，专门用于从各种 API 管理平台（如 Swagger/OpenAPI 3.0、Apifox）自动生成 TypeScript/JavaScript 代码。
 
@@ -11,7 +17,7 @@
 - 灵活配置: 支持自定义命名策略、输出目录、代码风格等
 - 钩子系统: 在代码生成过程的不同阶段执行自定义操作
 - Watch 模式: 监视配置文件变化，自动重新生成代码
-- Hooks 生成: 可选生成 React Query v5 风格的 `useQuery` / `useMutation` Hook（`generateHooks: true`）
+- Hooks 生成: 可选生成 React Query v5 风格的 `useQuery` / `useMutation` Hook（`generateHooks: true`），另支持 vue-query、SWR、ahooks
 
 ## 快速开始
 
@@ -312,7 +318,12 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request！
+欢迎提交 Issue 和 Pull Request！开始前请阅读[贡献指南](./CONTRIBUTING.md)（中英双语），参与本项目需遵守[行为准则](./CODE_OF_CONDUCT.md)。
+
+- [贡献指南](./CONTRIBUTING.md)（中文 + English）
+- [行为准则](./CODE_OF_CONDUCT.md)（中文 + English）
+- [安全策略](./SECURITY.md)（中文 + English）
+- [变更记录](./CHANGELOG.md)
 
 ## 联系方式
 
